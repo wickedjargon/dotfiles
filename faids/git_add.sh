@@ -33,5 +33,4 @@ git add .config/keynav/
 git add .vscode-oss
 git add .config/VSCodium/
 git add README.md 
-git add faids/git_add.sh
-git add faids/progs.csv
+git add faids/
