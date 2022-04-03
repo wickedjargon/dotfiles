@@ -1,5 +1,5 @@
-to install dotfiles, run:
+to install dotfiles, run (as root):
 ```
-sh -LO larbs.xyz/larbs.sh
-sh larbs.sh -r https://github.com/wickedjargon/dotfiles.git -p 
+curl -LO https://raw.githubusercontent.com/wickedjargon/dotfiles/main/faids/larbs.sh
+sh larbs.sh
 ```
