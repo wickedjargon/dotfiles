@@ -1,0 +1,22 @@
+[2022-03-27 18:20:13.059] [renderer1] [error] [Extension Host] (node:19163) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `codium --trace-deprecation ...` to show where the warning was created)
+[2022-03-27 18:20:23.281] [renderer1] [error] Unable to write to Workspace Settings because no workspace is opened. Please open a workspace first and try again.: Error: Unable to write to Workspace Settings because no workspace is opened. Please open a workspace first and try again.
+    at C.toConfigurationEditingError (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2351:12542)
+    at C.validate (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2351:15689)
+    at C.doWriteConfiguration (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2351:9059)
+    at Object.factory (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2351:8915)
+    at T.consume (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:71:15882)
+    at vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:71:15697
+    at new Promise (<anonymous>)
+    at T.queue (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:71:15621)
+    at C.writeConfiguration (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2351:8884)
+    at B.writeConfigurationValue (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2351:41550)
+    at vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2351:27276
+    at Array.map (<anonymous>)
+    at B.updateValue (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2351:27264)
+    at processTicksAndRejections (internal/process/task_queues.js:93:5)
+[2022-03-27 18:22:07.923] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 9 ('\n').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 9 ('\n').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)

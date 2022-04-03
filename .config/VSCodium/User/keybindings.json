@@ -1,0 +1,149 @@
+// Place your key bindings in this file to override the defaultsauto[]
+[
+    {
+        "key": "ctrl+k",
+        "command": "editor.action.smartSelect.expand",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "shift+alt+right",
+        "command": "-editor.action.smartSelect.expand",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "ctrl+shift+k",
+        "command": "editor.action.smartSelect.shrink",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "shift+alt+left",
+        "command": "-editor.action.smartSelect.shrink",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "f9 c",
+        "command": "notebook.cell.execute",
+        "when": "notebookCellListFocused && notebookMissingKernelExtension && !notebookCellExecuting && notebookCellType == 'code' || notebookCellListFocused && !notebookCellExecuting && notebookCellType == 'code' && notebookKernelCount > 0"
+    },
+    {
+        "key": "meta+enter",
+        "command": "-notebook.cell.execute",
+        "when": "notebookCellListFocused && notebookMissingKernelExtension && !notebookCellExecuting && notebookCellType == 'code' || notebookCellListFocused && !notebookCellExecuting && notebookCellType == 'code' && notebookKernelCount > 0"
+    },
+    {
+        "key": "f9 c",
+        "command": "notebook.cell.quitEdit",
+        "when": "inputFocus && notebookEditorFocused && notebookCellType == 'markup'"
+    },
+    {
+        "key": "meta+enter",
+        "command": "-notebook.cell.quitEdit",
+        "when": "inputFocus && notebookEditorFocused && notebookCellType == 'markup'"
+    },
+    {
+        "key": "ctrl+c",
+        "command": "-extension.vim_ctrl+c",
+        "when": "editorTextFocus && vim.active && vim.overrideCtrlC && vim.use<C-c> && !inDebugRepl"
+    }
+
+{ 
+    "key": "f9 s", 
+    "command": "workbench.action.files.save" 
+},
+
+{ "key": "f9 tab",              "command": "workbench.action.quickOpenPreviousRecentlyUsedEditorInGroup",}
+
+
+
+{ "key": "f9 f9",          "command": "workbench.action.showCommands" },
+{ "key": "f9 f9",          "command": "workbench.action.quickOpenNavigatePreviousInFilePicker",
+                                     "when": "inFilesPicker && inQuickOpen" },
+
+{ "key": "f9 w",                "command": "workbench.action.closeActiveEditor" },
+
+{ "key": "f9 w",                "command": "workbench.action.closeGroup",
+                                     "when": "activeEditorGroupEmpty && multipleEditorGroups" },
+
+{ "key": "f9 w",                "command": "workbench.action.terminal.killEditor",
+                                     "when": "terminalEditorFocus && terminalFocus && terminalHasBeenCreated && resourceScheme == 'vscode-terminal' || terminalEditorFocus && terminalFocus && terminalProcessSupported && resourceScheme == 'vscode-terminal'" },
+
+{
+  "key": "ctrl+e",
+  "command": "cursorEnd",
+  "when": "textInputFocus"
+},
+{
+    "key": "ctrl+a",
+    "command": "cursorHome",
+    "when": "textInputFocus"
+  },
+{
+  "key": "f9 l",
+  "command": "cursorEnd",
+  "when": "textInputFocus"
+},
+{
+    "key": "f9 h",
+    "command": "cursorHome",
+    "when": "textInputFocus"
+  },
+  {
+    "key": "ctrl+c",
+    "command": "editor.action.clipboardCopyAction"
+  },
+  {
+    "key": "ctrl+v",
+    "command": "editor.action.clipboardPasteAction"
+  },
+
+  {
+    "key": "ctrl+w",
+    "command": "workbench.action.closeActiveEditor"
+  },
+
+  {
+    "key": "f9 q",
+    "command": "workbench.action.closeActiveEditor"
+  },
+
+  {
+    "key": "ctrl+enter",
+    "command": "notebook.cell.insertCodeCellBelow",
+    "when": "notebookCellListFocused && !inputFocus"
+  },
+
+  {
+    "key": "f9 j",
+    "command": "notebook.cell.insertCodeCellBelow",
+    "when": "notebookCellListFocused && !inputFocus"
+  },
+
+  {
+    "key": "f9 i",
+    "command": "workbench.action.files.newUntitledFile"
+  },
+
+  {
+    "key": "f9 shift+d",
+    "command": "editor.action.showHover",
+    "when": "editorTextFocus"
+  },
+
+  {
+    "key": "f9 shift+d",
+    "command": "editor.debug.action.showDebugHover",
+    "when": "editorTextFocus && inDebugMode"
+  },
+  {
+    "key": "ctrl+d",
+    "command": "notebook.cell.delete",
+    "when": "notebookEditable && notebookEditorFocused && !inputFocus"
+  },
+
+
+  {
+    "key": "f9 c",
+    "command": "workbench.action.debug.start",
+    "when": "debuggersAvailable && debugState == 'inactive'"
+  }
+]

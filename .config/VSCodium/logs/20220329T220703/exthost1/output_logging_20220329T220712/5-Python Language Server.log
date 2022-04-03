@@ -1,0 +1,45 @@
+ERROR:pygls.protocol:Failed to handle request 38 textDocument/documentHighlight partial_result_token=None work_done_token=None text_document=TextDocumentIdentifier(uri='file:///home/ff/d/python/seb/test.py') position=6:12
+Traceback (most recent call last):
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 331, in _handle_request
+    self._execute_request(msg_id, handler, params)
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 260, in _execute_request
+    method_name, method_type, msg_id, handler(params))
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi_language_server/server.py", line 329, in highlight
+    names = jedi_script.get_references(*jedi_lines, scope="file")
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi/api/helpers.py", line 484, in wrapper
+    raise ValueError('`column` parameter (%d) is not in a valid range '
+ValueError: `column` parameter (12) is not in a valid range (0-11) for line 7 ('for i in ra\n').
+[Error - 10:07:48 PM] Request textDocument/documentHighlight failed.
+  Message: ValueError: `column` parameter (12) is not in a valid range (0-11) for line 7 ('for i in ra\n').
+  Code: -32602 
+{'traceback': ['  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 331, in _handle_request\n    self._execute_request(msg_id, handler, params)\n', '  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 260, in _execute_request\n    method_name, method_type, msg_id, handler(params))\n', '  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi_language_server/server.py", line 329, in highlight\n    names = jedi_script.get_references(*jedi_lines, scope="file")\n', '  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi/api/helpers.py", line 484, in wrapper\n    raise ValueError(\'`column` parameter (%d) is not in a valid range \'\n']}
+ERROR:pygls.protocol:Failed to handle request 39 textDocument/documentHighlight partial_result_token=None work_done_token=None text_document=TextDocumentIdentifier(uri='file:///home/ff/d/python/seb/test.py') position=6:11
+Traceback (most recent call last):
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 331, in _handle_request
+    self._execute_request(msg_id, handler, params)
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 260, in _execute_request
+    method_name, method_type, msg_id, handler(params))
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi_language_server/server.py", line 329, in highlight
+    names = jedi_script.get_references(*jedi_lines, scope="file")
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi/api/helpers.py", line 484, in wrapper
+    raise ValueError('`column` parameter (%d) is not in a valid range '
+ValueError: `column` parameter (11) is not in a valid range (0-10) for line 7 ('for i in r\n').
+[Error - 10:07:48 PM] Request textDocument/documentHighlight failed.
+  Message: ValueError: `column` parameter (11) is not in a valid range (0-10) for line 7 ('for i in r\n').
+  Code: -32602 
+{'traceback': ['  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 331, in _handle_request\n    self._execute_request(msg_id, handler, params)\n', '  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 260, in _execute_request\n    method_name, method_type, msg_id, handler(params))\n', '  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi_language_server/server.py", line 329, in highlight\n    names = jedi_script.get_references(*jedi_lines, scope="file")\n', '  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi/api/helpers.py", line 484, in wrapper\n    raise ValueError(\'`column` parameter (%d) is not in a valid range \'\n']}
+ERROR:pygls.protocol:Failed to handle request 40 textDocument/documentHighlight partial_result_token=None work_done_token=None text_document=TextDocumentIdentifier(uri='file:///home/ff/d/python/seb/test.py') position=6:10
+Traceback (most recent call last):
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 331, in _handle_request
+    self._execute_request(msg_id, handler, params)
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 260, in _execute_request
+    method_name, method_type, msg_id, handler(params))
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi_language_server/server.py", line 329, in highlight
+    names = jedi_script.get_references(*jedi_lines, scope="file")
+  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi/api/helpers.py", line 484, in wrapper
+    raise ValueError('`column` parameter (%d) is not in a valid range '
+ValueError: `column` parameter (10) is not in a valid range (0-9) for line 7 ('for i in \n').
+[Error - 10:07:48 PM] Request textDocument/documentHighlight failed.
+  Message: ValueError: `column` parameter (10) is not in a valid range (0-9) for line 7 ('for i in \n').
+  Code: -32602 
+{'traceback': ['  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 331, in _handle_request\n    self._execute_request(msg_id, handler, params)\n', '  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/pygls/protocol.py", line 260, in _execute_request\n    method_name, method_type, msg_id, handler(params))\n', '  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi_language_server/server.py", line 329, in highlight\n    names = jedi_script.get_references(*jedi_lines, scope="file")\n', '  File "/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/jedilsp/jedi/api/helpers.py", line 484, in wrapper\n    raise ValueError(\'`column` parameter (%d) is not in a valid range \'\n']}

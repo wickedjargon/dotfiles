@@ -1,0 +1,64 @@
+[2022-03-26 08:16:52.332] [renderer1] [critical] FAILED to destory notebook {"logTelemetry":false,"fileOperationResult":1,"options":{}}
+[2022-03-26 08:16:52.334] [renderer1] [error] Error: Unable to read file '/home/ff/model.ipynb' (Error: Unable to resolve nonexistent file '/home/ff/model.ipynb')
+    at v.doReadFileStream (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:605:42041)
+    at async as.resolveFromFile (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2410:55596)
+    at async p.doResolve (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2410:71580)
+    at async Jn.load (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2401:4628)
+    at async d.createReferencedObject (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2410:80983)
+    at async resolve (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2410:83284)
+    at async on.resolve (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:1197:1104)
+    at async Dr.setInput (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:1296:95437)
+    at async i.doSetInput (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2376:26829)
+    at async i.doOpenEditor (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2376:25202)
+    at async i.openEditor (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2376:24828)
+    at async vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2576:16600
+[2022-03-26 08:17:15.731] [renderer1] [error] [Extension Host] (node:140183) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `codium --trace-deprecation ...` to show where the warning was created)
+[2022-03-26 08:18:32.141] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 6 ('\n').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 6 ('\n').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-26 08:18:33.417] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 8 ('').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 8 ('').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-26 08:18:35.474] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 8 ('').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 8 ('').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-26 08:18:40.897] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 8 ('').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 8 ('').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-26 08:18:47.244] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 6 ('').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 6 ('').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-26 09:04:19.218] [renderer1] [error] [text file model] handleSaveError(140) - exit - resulted in a save error: Error: Unable to write file '/home/ff/test.py' (Error: File Modified Since) file:///home/ff/test.py
+[2022-03-26 09:04:50.545] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 10 ('\n').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 10 ('\n').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-26 09:04:53.492] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 10 ('\n').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 10 ('\n').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-26 09:05:07.575] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 10 ('\n').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 10 ('\n').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-26 09:05:08.244] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 11 ('').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 11 ('').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-26 09:05:49.113] [renderer1] [error] [Extension Host] (node:150352) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `codium --trace-deprecation ...` to show where the warning was created)

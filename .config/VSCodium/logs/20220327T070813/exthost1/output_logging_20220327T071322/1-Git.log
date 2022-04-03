@@ -1,0 +1,4 @@
+[2022-03-27T11:13:25.477Z] Validating found git in: git
+[2022-03-27T11:13:25.536Z] Using git 2.35.1 from git
+[2022-03-27T11:13:25.615Z] > git rev-parse --git-dir [14ms]
+[2022-03-27T11:13:25.638Z] Open repository: /home/ff

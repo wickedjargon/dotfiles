@@ -1,0 +1,35 @@
+[2022-03-27 18:20:11.559] [exthost] [info] Extension host with pid 19163 started
+[2022-03-27 18:20:11.921] [exthost] [info] ExtensionService#_doActivateExtension ms-python.python, startup: false, activationEvent: 'onLanguage:python'
+[2022-03-27 18:20:12.336] [exthost] [info] ExtensionService#_doActivateExtension ms-toolsai.jupyter, startup: false, activationEvent: 'onLanguage:python'
+[2022-03-27 18:20:12.575] [exthost] [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: true, activationEvent: '*'
+[2022-03-27 18:20:12.578] [exthost] [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: vscode.github
+[2022-03-27 18:20:12.583] [exthost] [info] ExtensionService#_doActivateExtension vscode.ipynb, startup: true, activationEvent: '*'
+[2022-03-27 18:20:12.587] [exthost] [info] ExtensionService#_doActivateExtension vscodevim.vim, startup: true, activationEvent: '*'
+[2022-03-27 18:20:13.156] [exthost] [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*'
+[2022-03-27 18:20:13.214] [exthost] [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+[2022-03-27 18:20:13.355] [exthost] [info] Eager extensions activated
+[2022-03-27 18:20:13.429] [exthost] [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onStartupFinished'
+[2022-03-27 18:20:13.480] [exthost] [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+[2022-03-27 18:20:23.496] [exthost] [warning] [Decorations] CAPPING events from decorations provider vscode.git 10001
+[2022-03-27 18:20:27.689] [exthost] [info] ExtensionService#_doActivateExtension vscode.debug-server-ready, startup: false, activationEvent: 'onDebugResolve'
+[2022-03-27 18:22:07.906] [exthost] [error] [ms-python.python] provider FAILED
+[2022-03-27 18:22:07.920] [exthost] [error] Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 9 ('\n').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-27 18:36:16.396] [exthost] [info] extension host terminating: renderer closed the socket
+[2022-03-27 18:36:16.961] [exthost] [error] TypeError: Converting circular structure to JSON
+    --> starting at object with constructor 't'
+    |     property '_readableState' -> object with constructor 'M'
+    |     property 'pipes' -> object with constructor 'Array'
+    |     index 0 -> object with constructor 't.ConsoleForElectron'
+    --- property 'parent' closes the circle
+    at JSON.stringify (<anonymous>)
+    at /home/ff/.vscode-oss/extensions/vscodevim.vim-1.22.2/src/register/register.ts:357:16
+    at runMicrotasks (<anonymous>)
+    at process.async (internal/process/task_queues.js:93:5)
+    at Object.e.deactivate (/home/ff/.vscode-oss/extensions/vscodevim.vim-1.22.2/extension.ts:64:8)
+    at async Promise.all (index 10)
+    at deactivateAll (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:90:10249)
+[2022-03-27 18:36:16.961] [exthost] [info] Extension host with pid 19163 exiting with code 0

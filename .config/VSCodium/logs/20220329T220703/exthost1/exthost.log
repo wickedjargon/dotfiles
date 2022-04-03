@@ -1,0 +1,47 @@
+[2022-03-29 22:07:12.584] [exthost] [info] Extension host with pid 325086 started
+[2022-03-29 22:07:12.584] [exthost] [info] Skipping acquiring lock for /home/ff/.config/VSCodium/User/workspaceStorage/33573b89c1a4c7591cd38fa888e91f6d.
+[2022-03-29 22:07:14.120] [exthost] [info] ExtensionService#_doActivateExtension ms-python.python, startup: false, activationEvent: 'onLanguage:python'
+[2022-03-29 22:07:15.359] [exthost] [info] ExtensionService#_doActivateExtension ms-toolsai.jupyter, startup: false, activationEvent: 'onLanguage:python'
+[2022-03-29 22:07:15.990] [exthost] [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: true, activationEvent: '*'
+[2022-03-29 22:07:16.002] [exthost] [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: vscode.github
+[2022-03-29 22:07:16.014] [exthost] [info] ExtensionService#_doActivateExtension vscode.ipynb, startup: true, activationEvent: '*'
+[2022-03-29 22:07:16.031] [exthost] [info] ExtensionService#_doActivateExtension vscodevim.vim, startup: true, activationEvent: '*'
+[2022-03-29 22:07:19.873] [exthost] [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*'
+[2022-03-29 22:07:20.059] [exthost] [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+[2022-03-29 22:07:20.632] [exthost] [info] Eager extensions activated
+[2022-03-29 22:07:20.996] [exthost] [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onStartupFinished'
+[2022-03-29 22:07:21.164] [exthost] [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+[2022-03-29 22:07:48.219] [exthost] [error] [ms-python.python] provider FAILED
+[2022-03-29 22:07:48.244] [exthost] [error] Error: ValueError: `column` parameter (12) is not in a valid range (0-11) for line 7 ('for i in ra\n').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-29 22:07:48.337] [exthost] [error] [ms-python.python] provider FAILED
+[2022-03-29 22:07:48.337] [exthost] [error] Error: ValueError: `column` parameter (11) is not in a valid range (0-10) for line 7 ('for i in r\n').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-29 22:07:48.391] [exthost] [error] [ms-python.python] provider FAILED
+[2022-03-29 22:07:48.391] [exthost] [error] Error: ValueError: `column` parameter (10) is not in a valid range (0-9) for line 7 ('for i in \n').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (internal/timers.js:461:21)
+[2022-03-29 22:17:22.905] [exthost] [info] ExtensionService#_doActivateExtension vscode.debug-server-ready, startup: false, activationEvent: 'onDebugResolve'
+[2022-03-29 23:06:21.245] [exthost] [info] extension host terminating: renderer closed the socket
+[2022-03-29 23:06:21.823] [exthost] [error] TypeError: Converting circular structure to JSON
+    --> starting at object with constructor 't'
+    |     property '_readableState' -> object with constructor 'M'
+    |     property 'pipes' -> object with constructor 'Array'
+    |     index 0 -> object with constructor 't.ConsoleForElectron'
+    --- property 'parent' closes the circle
+    at JSON.stringify (<anonymous>)
+    at /home/ff/.vscode-oss/extensions/vscodevim.vim-1.22.2/src/register/register.ts:357:16
+    at runMicrotasks (<anonymous>)
+    at process.async (internal/process/task_queues.js:93:5)
+    at Object.e.deactivate (/home/ff/.vscode-oss/extensions/vscodevim.vim-1.22.2/extension.ts:64:8)
+    at async Promise.all (index 10)
+    at deactivateAll (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:90:10249)
+[2022-03-29 23:06:21.823] [exthost] [info] Extension host with pid 325086 exiting with code 0

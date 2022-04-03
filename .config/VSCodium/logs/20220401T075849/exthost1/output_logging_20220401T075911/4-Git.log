@@ -1,0 +1,18 @@
+[2022-04-01T11:59:13.432Z] Validating found git in: git
+[2022-04-01T11:59:14.260Z] Using git 2.35.1 from git
+[2022-04-01T11:59:14.354Z] > git rev-parse --git-dir [9ms]
+[2022-04-01T11:59:14.362Z] Open repository: /home/ff
+[2022-04-01T11:59:15.135Z] > git ls-files --stage -- /home/ff/d/python/seb/test.py [30ms]
+[2022-04-01T11:59:20.381Z] > git symbolic-ref --short HEAD [5ms]
+[2022-04-01T11:59:20.395Z] > git for-each-ref --format=%(refname)%00%(upstream:short)%00%(objectname)%00%(upstream:track) refs/heads/master refs/remotes/master [5ms]
+[2022-04-01T11:59:20.423Z] > git remote --verbose [2ms]
+[2022-04-01T11:59:20.424Z] > git for-each-ref --sort -committerdate --format %(refname) %(objectname) %(*objectname) [16ms]
+[2022-04-01T11:59:23.674Z] > git config --get commit.template [79ms]
+[2022-04-01T11:59:23.676Z] > git rev-parse --git-dir [3ms]
+[2022-04-01T11:59:23.679Z] Open repository: /home/ff/.config/mpv/script_modules/mpvSockets
+[2022-04-01T11:59:23.703Z] > git symbolic-ref --short HEAD [0ms]
+[2022-04-01T11:59:23.703Z] fatal: ref HEAD is not a symbolic ref
+[2022-04-01T11:59:23.715Z] > git rev-parse HEAD [2ms]
+[2022-04-01T11:59:23.735Z] > git for-each-ref --sort -committerdate --format %(refname) %(objectname) %(*objectname) [10ms]
+[2022-04-01T11:59:23.736Z] > git remote --verbose [2ms]
+[2022-04-01T11:59:23.749Z] > git config --get commit.template [2ms]

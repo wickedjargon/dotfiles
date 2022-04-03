@@ -1,0 +1,991 @@
+file:///home/ff/d/python/data_analysis/google_play_store.ipynb {"mtime":1648379578879,"ctime":1648379433976,"size":859,"etag":"38g61fjdmrm","orphaned":false,"typeId":"notebook/jupyter-notebook"}
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data = pd.read_csv('googleplaystore.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>App</th>\n",
+       "      <th>Category</th>\n",
+       "      <th>Rating</th>\n",
+       "      <th>Reviews</th>\n",
+       "      <th>Size</th>\n",
+       "      <th>Installs</th>\n",
+       "      <th>Type</th>\n",
+       "      <th>Price</th>\n",
+       "      <th>Content Rating</th>\n",
+       "      <th>Genres</th>\n",
+       "      <th>Last Updated</th>\n",
+       "      <th>Current Ver</th>\n",
+       "      <th>Android Ver</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Photo Editor &amp; Candy Camera &amp; Grid &amp; ScrapBook</td>\n",
+       "      <td>ART_AND_DESIGN</td>\n",
+       "      <td>4.1</td>\n",
+       "      <td>159</td>\n",
+       "      <td>19M</td>\n",
+       "      <td>10,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Everyone</td>\n",
+       "      <td>Art &amp; Design</td>\n",
+       "      <td>January 7, 2018</td>\n",
+       "      <td>1.0.0</td>\n",
+       "      <td>4.0.3 and up</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Coloring book moana</td>\n",
+       "      <td>ART_AND_DESIGN</td>\n",
+       "      <td>3.9</td>\n",
+       "      <td>967</td>\n",
+       "      <td>14M</td>\n",
+       "      <td>500,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Everyone</td>\n",
+       "      <td>Art &amp; Design;Pretend Play</td>\n",
+       "      <td>January 15, 2018</td>\n",
+       "      <td>2.0.0</td>\n",
+       "      <td>4.0.3 and up</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>U Launcher Lite – FREE Live Cool Themes, Hide ...</td>\n",
+       "      <td>ART_AND_DESIGN</td>\n",
+       "      <td>4.7</td>\n",
+       "      <td>87510</td>\n",
+       "      <td>8.7M</td>\n",
+       "      <td>5,000,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Everyone</td>\n",
+       "      <td>Art &amp; Design</td>\n",
+       "      <td>August 1, 2018</td>\n",
+       "      <td>1.2.4</td>\n",
+       "      <td>4.0.3 and up</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Sketch - Draw &amp; Paint</td>\n",
+       "      <td>ART_AND_DESIGN</td>\n",
+       "      <td>4.5</td>\n",
+       "      <td>215644</td>\n",
+       "      <td>25M</td>\n",
+       "      <td>50,000,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Teen</td>\n",
+       "      <td>Art &amp; Design</td>\n",
+       "      <td>June 8, 2018</td>\n",
+       "      <td>Varies with device</td>\n",
+       "      <td>4.2 and up</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Pixel Draw - Number Art Coloring Book</td>\n",
+       "      <td>ART_AND_DESIGN</td>\n",
+       "      <td>4.3</td>\n",
+       "      <td>967</td>\n",
+       "      <td>2.8M</td>\n",
+       "      <td>100,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Everyone</td>\n",
+       "      <td>Art &amp; Design;Creativity</td>\n",
+       "      <td>June 20, 2018</td>\n",
+       "      <td>1.1</td>\n",
+       "      <td>4.4 and up</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>5</th>\n",
+       "      <td>Paper flowers instructions</td>\n",
+       "      <td>ART_AND_DESIGN</td>\n",
+       "      <td>4.4</td>\n",
+       "      <td>167</td>\n",
+       "      <td>5.6M</td>\n",
+       "      <td>50,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Everyone</td>\n",
+       "      <td>Art &amp; Design</td>\n",
+       "      <td>March 26, 2017</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>2.3 and up</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>6</th>\n",
+       "      <td>Smoke Effect Photo Maker - Smoke Editor</td>\n",
+       "      <td>ART_AND_DESIGN</td>\n",
+       "      <td>3.8</td>\n",
+       "      <td>178</td>\n",
+       "      <td>19M</td>\n",
+       "      <td>50,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Everyone</td>\n",
+       "      <td>Art &amp; Design</td>\n",
+       "      <td>April 26, 2018</td>\n",
+       "      <td>1.1</td>\n",
+       "      <td>4.0.3 and up</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7</th>\n",
+       "      <td>Infinite Painter</td>\n",
+       "      <td>ART_AND_DESIGN</td>\n",
+       "      <td>4.1</td>\n",
+       "      <td>36815</td>\n",
+       "      <td>29M</td>\n",
+       "      <td>1,000,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Everyone</td>\n",
+       "      <td>Art &amp; Design</td>\n",
+       "      <td>June 14, 2018</td>\n",
+       "      <td>6.1.61.1</td>\n",
+       "      <td>4.2 and up</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>8</th>\n",
+       "      <td>Garden Coloring Book</td>\n",
+       "      <td>ART_AND_DESIGN</td>\n",
+       "      <td>4.4</td>\n",
+       "      <td>13791</td>\n",
+       "      <td>33M</td>\n",
+       "      <td>1,000,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Everyone</td>\n",
+       "      <td>Art &amp; Design</td>\n",
+       "      <td>September 20, 2017</td>\n",
+       "      <td>2.9.2</td>\n",
+       "      <td>3.0 and up</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>9</th>\n",
+       "      <td>Kids Paint Free - Drawing Fun</td>\n",
+       "      <td>ART_AND_DESIGN</td>\n",
+       "      <td>4.7</td>\n",
+       "      <td>121</td>\n",
+       "      <td>3.1M</td>\n",
+       "      <td>10,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Everyone</td>\n",
+       "      <td>Art &amp; Design;Creativity</td>\n",
+       "      <td>July 3, 2018</td>\n",
+       "      <td>2.8</td>\n",
+       "      <td>4.0.3 and up</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                                 App        Category  Rating  \\\n",
+       "0     Photo Editor & Candy Camera & Grid & ScrapBook  ART_AND_DESIGN     4.1   \n",
+       "1                                Coloring book moana  ART_AND_DESIGN     3.9   \n",
+       "2  U Launcher Lite – FREE Live Cool Themes, Hide ...  ART_AND_DESIGN     4.7   \n",
+       "3                              Sketch - Draw & Paint  ART_AND_DESIGN     4.5   \n",
+       "4              Pixel Draw - Number Art Coloring Book  ART_AND_DESIGN     4.3   \n",
+       "5                         Paper flowers instructions  ART_AND_DESIGN     4.4   \n",
+       "6            Smoke Effect Photo Maker - Smoke Editor  ART_AND_DESIGN     3.8   \n",
+       "7                                   Infinite Painter  ART_AND_DESIGN     4.1   \n",
+       "8                               Garden Coloring Book  ART_AND_DESIGN     4.4   \n",
+       "9                      Kids Paint Free - Drawing Fun  ART_AND_DESIGN     4.7   \n",
+       "\n",
+       "  Reviews  Size     Installs  Type Price Content Rating  \\\n",
+       "0     159   19M      10,000+  Free     0       Everyone   \n",
+       "1     967   14M     500,000+  Free     0       Everyone   \n",
+       "2   87510  8.7M   5,000,000+  Free     0       Everyone   \n",
+       "3  215644   25M  50,000,000+  Free     0           Teen   \n",
+       "4     967  2.8M     100,000+  Free     0       Everyone   \n",
+       "5     167  5.6M      50,000+  Free     0       Everyone   \n",
+       "6     178   19M      50,000+  Free     0       Everyone   \n",
+       "7   36815   29M   1,000,000+  Free     0       Everyone   \n",
+       "8   13791   33M   1,000,000+  Free     0       Everyone   \n",
+       "9     121  3.1M      10,000+  Free     0       Everyone   \n",
+       "\n",
+       "                      Genres        Last Updated         Current Ver  \\\n",
+       "0               Art & Design     January 7, 2018               1.0.0   \n",
+       "1  Art & Design;Pretend Play    January 15, 2018               2.0.0   \n",
+       "2               Art & Design      August 1, 2018               1.2.4   \n",
+       "3               Art & Design        June 8, 2018  Varies with device   \n",
+       "4    Art & Design;Creativity       June 20, 2018                 1.1   \n",
+       "5               Art & Design      March 26, 2017                 1.0   \n",
+       "6               Art & Design      April 26, 2018                 1.1   \n",
+       "7               Art & Design       June 14, 2018            6.1.61.1   \n",
+       "8               Art & Design  September 20, 2017               2.9.2   \n",
+       "9    Art & Design;Creativity        July 3, 2018                 2.8   \n",
+       "\n",
+       "    Android Ver  \n",
+       "0  4.0.3 and up  \n",
+       "1  4.0.3 and up  \n",
+       "2  4.0.3 and up  \n",
+       "3    4.2 and up  \n",
+       "4    4.4 and up  \n",
+       "5    2.3 and up  \n",
+       "6  4.0.3 and up  \n",
+       "7    4.2 and up  \n",
+       "8    3.0 and up  \n",
+       "9  4.0.3 and up  "
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.head(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(10841, 13)"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 10841 entries, 0 to 10840\n",
+      "Data columns (total 13 columns):\n",
+      " #   Column          Non-Null Count  Dtype  \n",
+      "---  ------          --------------  -----  \n",
+      " 0   App             10841 non-null  object \n",
+      " 1   Category        10841 non-null  object \n",
+      " 2   Rating          9367 non-null   float64\n",
+      " 3   Reviews         10841 non-null  object \n",
+      " 4   Size            10841 non-null  object \n",
+      " 5   Installs        10841 non-null  object \n",
+      " 6   Type            10840 non-null  object \n",
+      " 7   Price           10841 non-null  object \n",
+      " 8   Content Rating  10840 non-null  object \n",
+      " 9   Genres          10841 non-null  object \n",
+      " 10  Last Updated    10841 non-null  object \n",
+      " 11  Current Ver     10833 non-null  object \n",
+      " 12  Android Ver     10838 non-null  object \n",
+      "dtypes: float64(1), object(12)\n",
+      "memory usage: 1.1+ MB\n"
+     ]
+    }
+   ],
+   "source": [
+    "data.info()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "ROBLOX                                                9\n",
+       "CBS Sports App - Scores, News, Stats & Watch Live     8\n",
+       "ESPN                                                  7\n",
+       "Duolingo: Learn Languages Free                        7\n",
+       "Candy Crush Saga                                      7\n",
+       "                                                     ..\n",
+       "Meet U - Get Friends for Snapchat, Kik & Instagram    1\n",
+       "U-Report                                              1\n",
+       "U of I Community Credit Union                         1\n",
+       "Waiting For U Launcher Theme                          1\n",
+       "iHoroscope - 2018 Daily Horoscope & Astrology         1\n",
+       "Name: App, Length: 9660, dtype: int64"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.App.value_counts()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data=data.drop_duplicates(subset=[\"App\"],keep=\"first\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(9660, 13)"
+      ]
+     },
+     "execution_count": 15,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array(['ART_AND_DESIGN', 'AUTO_AND_VEHICLES', 'BEAUTY',\n",
+       "       'BOOKS_AND_REFERENCE', 'BUSINESS', 'COMICS', 'COMMUNICATION',\n",
+       "       'DATING', 'EDUCATION', 'ENTERTAINMENT', 'EVENTS', 'FINANCE',\n",
+       "       'FOOD_AND_DRINK', 'HEALTH_AND_FITNESS', 'HOUSE_AND_HOME',\n",
+       "       'LIBRARIES_AND_DEMO', 'LIFESTYLE', 'GAME', 'FAMILY', 'MEDICAL',\n",
+       "       'SOCIAL', 'SHOPPING', 'PHOTOGRAPHY', 'SPORTS', 'TRAVEL_AND_LOCAL',\n",
+       "       'TOOLS', 'PERSONALIZATION', 'PRODUCTIVITY', 'PARENTING', 'WEATHER',\n",
+       "       'VIDEO_PLAYERS', 'NEWS_AND_MAGAZINES', 'MAPS_AND_NAVIGATION',\n",
+       "       '1.9'], dtype=object)"
+      ]
+     },
+     "execution_count": 22,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# category\n",
+    "data['Category'].unique()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "34"
+      ]
+     },
+     "execution_count": 24,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "len(data['Category'].unique())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>App</th>\n",
+       "      <th>Category</th>\n",
+       "      <th>Rating</th>\n",
+       "      <th>Reviews</th>\n",
+       "      <th>Size</th>\n",
+       "      <th>Installs</th>\n",
+       "      <th>Type</th>\n",
+       "      <th>Price</th>\n",
+       "      <th>Content Rating</th>\n",
+       "      <th>Genres</th>\n",
+       "      <th>Last Updated</th>\n",
+       "      <th>Current Ver</th>\n",
+       "      <th>Android Ver</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>10472</th>\n",
+       "      <td>Life Made WI-Fi Touchscreen Photo Frame</td>\n",
+       "      <td>1.9</td>\n",
+       "      <td>19.0</td>\n",
+       "      <td>3.0M</td>\n",
+       "      <td>1,000+</td>\n",
+       "      <td>Free</td>\n",
+       "      <td>0</td>\n",
+       "      <td>Everyone</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>February 11, 2018</td>\n",
+       "      <td>1.0.19</td>\n",
+       "      <td>4.0 and up</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                           App Category  Rating Reviews  \\\n",
+       "10472  Life Made WI-Fi Touchscreen Photo Frame      1.9    19.0    3.0M   \n",
+       "\n",
+       "         Size Installs Type     Price Content Rating             Genres  \\\n",
+       "10472  1,000+     Free    0  Everyone            NaN  February 11, 2018   \n",
+       "\n",
+       "      Last Updated Current Ver Android Ver  \n",
+       "10472       1.0.19  4.0 and up         NaN  "
+      ]
+     },
+     "execution_count": 27,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data[data[\"Category\"]==\"1.9\"]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data=data.drop([10472], axis=0)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>App</th>\n",
+       "      <th>Category</th>\n",
+       "      <th>Rating</th>\n",
+       "      <th>Reviews</th>\n",
+       "      <th>Size</th>\n",
+       "      <th>Installs</th>\n",
+       "      <th>Type</th>\n",
+       "      <th>Price</th>\n",
+       "      <th>Content Rating</th>\n",
+       "      <th>Genres</th>\n",
+       "      <th>Last Updated</th>\n",
+       "      <th>Current Ver</th>\n",
+       "      <th>Android Ver</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "Empty DataFrame\n",
+       "Columns: [App, Category, Rating, Reviews, Size, Installs, Type, Price, Content Rating, Genres, Last Updated, Current Ver, Android Ver]\n",
+       "Index: []"
+      ]
+     },
+     "execution_count": 29,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data[data[\"Category\"]==\"1.9\"]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(9659, 13)"
+      ]
+     },
+     "execution_count": 31,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "count    8196.000000\n",
+       "mean        4.173243\n",
+       "std         0.536625\n",
+       "min         1.000000\n",
+       "25%         4.000000\n",
+       "50%         4.300000\n",
+       "75%         4.500000\n",
+       "max         5.000000\n",
+       "Name: Rating, dtype: float64"
+      ]
+     },
+     "execution_count": 30,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.Rating.describe()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "1463"
+      ]
+     },
+     "execution_count": 33,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.Rating.isnull().sum()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(8190, 13)"
+      ]
+     },
+     "execution_count": 36,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data = data.dropna()\n",
+    "data.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0           159\n",
+       "1           967\n",
+       "2         87510\n",
+       "3        215644\n",
+       "4           967\n",
+       "          ...  \n",
+       "10834         7\n",
+       "10836        38\n",
+       "10837         4\n",
+       "10839       114\n",
+       "10840    398307\n",
+       "Name: Reviews, Length: 8190, dtype: object"
+      ]
+     },
+     "execution_count": 37,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.Reviews"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "8190"
+      ]
+     },
+     "execution_count": 39,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.Reviews.str.isnumeric().sum()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data.Reviews=pd.to_numeric(data.Reviews)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0           159\n",
+       "1           967\n",
+       "2         87510\n",
+       "3        215644\n",
+       "4           967\n",
+       "          ...  \n",
+       "10834         7\n",
+       "10836        38\n",
+       "10837         4\n",
+       "10839       114\n",
+       "10840    398307\n",
+       "Name: Reviews, Length: 8190, dtype: int64"
+      ]
+     },
+     "execution_count": 41,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.Reviews"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 43,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "count    8.190000e+03\n",
+       "mean     2.554354e+05\n",
+       "std      1.986309e+06\n",
+       "min      1.000000e+00\n",
+       "25%      1.260000e+02\n",
+       "50%      3.009500e+03\n",
+       "75%      4.391425e+04\n",
+       "max      7.815831e+07\n",
+       "Name: Reviews, dtype: float64"
+      ]
+     },
+     "execution_count": 43,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.Reviews.describe()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 44,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0                       19M\n",
+       "1                       14M\n",
+       "2                      8.7M\n",
+       "3                       25M\n",
+       "4                      2.8M\n",
+       "                ...        \n",
+       "10834                  2.6M\n",
+       "10836                   53M\n",
+       "10837                  3.6M\n",
+       "10839    Varies with device\n",
+       "10840                   19M\n",
+       "Name: Size, Length: 8190, dtype: object"
+      ]
+     },
+     "execution_count": 44,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.Size"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 45,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Varies with device    1169\n",
+       "14M                    148\n",
+       "12M                    146\n",
+       "13M                    143\n",
+       "11M                    143\n",
+       "                      ... \n",
+       "383k                     1\n",
+       "454k                     1\n",
+       "812k                     1\n",
+       "442k                     1\n",
+       "619k                     1\n",
+       "Name: Size, Length: 413, dtype: int64"
+      ]
+     },
+     "execution_count": 45,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.Size.value_counts()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "m -- kb 1000\n",
+    "14m 14000\n",
+    "m - 000\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 50,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data.Size=data.Size.apply(lambda x : x.replace('M', '000') if 'M' in x else x)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 52,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0                     19000\n",
+       "1                     14000\n",
+       "2                    8.7000\n",
+       "3                     25000\n",
+       "4                    2.8000\n",
+       "                ...        \n",
+       "10834                2.6000\n",
+       "10836                 53000\n",
+       "10837                3.6000\n",
+       "10839    Varies with device\n",
+       "10840                 19000\n",
+       "Name: Size, Length: 8190, dtype: object"
+      ]
+     },
+     "execution_count": 52,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.Size"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 54,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data.Size=data.Size.apply(lambda x : x.replace('k', '') if 'k' in x else x)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 55,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Varies with device    1169\n",
+       "14000                  148\n",
+       "12000                  146\n",
+       "13000                  143\n",
+       "11000                  143\n",
+       "                      ... \n",
+       "383                      1\n",
+       "454                      1\n",
+       "812                      1\n",
+       "442                      1\n",
+       "619                      1\n",
+       "Name: Size, Length: 413, dtype: int64"
+      ]
+     },
+     "execution_count": 55,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.Size.value_counts()"
+   ]
+  }
+ ],
+ "metadata": {
+  "interpreter": {
+   "hash": "c0f07d335d4c87f1c9359258f96017867debba305c0543e49bb1cc81df68884c"
+  },
+  "kernelspec": {
+   "display_name": "Python 3.9.7 ('base')",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.7"
+  },
+  "orig_nbformat": 4
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

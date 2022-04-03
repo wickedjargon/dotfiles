@@ -1,0 +1,6 @@
+[2022-03-27 07:08:31.967] [renderer1] [error] [Extension Host] (node:4769) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `codium --trace-deprecation ...` to show where the warning was created)
+[2022-03-27 07:10:34.321] [renderer1] [error] [Extension Host] Completed
+[2022-03-27 07:13:11.613] [renderer1] [warning] [backup tracker] suspended, ignoring dirty change event file:///home/ff/test.py 
+[2022-03-27 07:13:33.536] [renderer1] [error] [Extension Host] (node:6627) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `codium --trace-deprecation ...` to show where the warning was created)

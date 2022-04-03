@@ -1,0 +1,17 @@
+[2022-04-01 07:58:49.426] [main] [info] window#load: attempt to load window (id: 1)
+[2022-04-01 07:58:49.448] [main] [info] update#setState idle
+[2022-04-01 07:58:49.517] [main] [info] ExtensionHostStarterWorker created
+[2022-04-01 07:58:51.293] [main] [info] window#load: window reported ready (id: 1)
+[2022-04-01 07:58:51.813] [main] [info] Starting extension host with pid 89125 (fork() took 22 ms).
+[2022-04-01 07:58:51.814] [main] [info] ExtensionHostStarterWorker.start() took 27 ms.
+[2022-04-01 07:59:06.842] [main] [info] window#load: attempt to load window (id: 1)
+[2022-04-01 07:59:06.912] [main] [info] Extension host with pid 89125 exited with code: 0, signal: null.
+[2022-04-01 07:59:08.670] [main] [info] window#load: window reported ready (id: 1)
+[2022-04-01 07:59:09.210] [main] [info] Starting extension host with pid 89379 (fork() took 21 ms).
+[2022-04-01 07:59:09.211] [main] [info] ExtensionHostStarterWorker.start() took 31 ms.
+[2022-04-01 07:59:19.450] [main] [info] update#setState checking for updates
+[2022-04-01 07:59:19.563] [main] [info] update#setState available for download
+[2022-04-01 07:59:23.701] [main] [info] Enabling inspect port on extension host with pid 89379.
+[2022-04-01 07:59:23.964] [main] [info] Enabling inspect port on extension host with pid 89379.
+[2022-04-01 08:31:53.087] [main] [info] Waiting for extension host with pid 89379 to exit.
+[2022-04-01 08:31:53.203] [main] [info] Extension host with pid 89379 exited with code: 0, signal: null.

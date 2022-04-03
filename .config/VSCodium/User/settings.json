@@ -1,0 +1,15 @@
+{
+    "workbench.colorTheme": "Default Dark+",
+    "security.workspace.trust.untrustedFiles": "open",
+    "window.zoomLevel": 1,
+    "editor.minimap.enabled": false,
+    "python.defaultInterpreterPath": "/bin/python",
+    "errorLens.gutterIconsEnabled": true,
+    // "errorLens.messageEnabled": false,
+    "python.linting.enabled": false,
+    "python.linting.flake8Enabled": false,
+    "python.linting.pylintEnabled": true,
+
+
+
+}

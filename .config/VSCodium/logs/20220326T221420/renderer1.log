@@ -1,0 +1,5 @@
+[2022-03-26 22:14:38.605] [renderer1] [error] [Extension Host] (node:310376) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `codium --trace-deprecation ...` to show where the warning was created)
+[2022-03-26 22:15:22.236] [renderer1] [error] [Extension Host] (node:310667) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `codium --trace-deprecation ...` to show where the warning was created)
+[2022-03-26 22:33:28.950] [renderer1] [error] [text file model] handleSaveError(639) - exit - resulted in a save error: Error: Unable to write file '/home/ff/test.py' (Error: File Modified Since) file:///home/ff/test.py

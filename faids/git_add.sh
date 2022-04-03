@@ -1,0 +1,37 @@
+#!/bin/sh
+
+git add .bash_logout
+git add .bash_profile
+git add .bashrc
+git add .config/calcurse/
+git add .config/dunst/
+git add .config/emacs/
+git add .config/fontconfig/
+git add .config/gtk-2.0/
+git add .config/gtk-3.0/
+git add .config/htop/
+git add .config/mimeapps.list
+git add .config/mpd/
+git add .config/mpv/
+git add .config/ncmpcpp/
+git add .config/neofetch/
+git add .config/nvim/
+git add .config/pulse/daemon.conf
+git add .config/shell/
+git add .config/sxiv/
+git add .config/user-dirs.dirs
+git add .config/wal/
+git add .config/wget/
+git add .config/x11/
+git add .config/zathura/
+git add .config/zsh/
+git add .local/bin/
+git add .xprofile
+git add .zprofile
+git add .gitconfig
+git add .config/keynav/
+git add .vscode-oss
+git add .config/VSCodium/
+git add README.md 
+git add faids/git_add.sh
+git add faids/progs.csv

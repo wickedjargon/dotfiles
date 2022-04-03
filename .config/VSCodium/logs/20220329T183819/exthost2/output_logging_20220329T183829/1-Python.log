@@ -1,0 +1,8 @@
+Telemetry level is off
+Experiments are disabled, only manually opted experiments are active.
+> conda info --json
+> /bin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+Python interpreter path: /bin/python
+> /sbin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+> /usr/bin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+> /usr/sbin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py

@@ -1,0 +1,16 @@
+Telemetry level is off
+Experiments are disabled, only manually opted experiments are active.
+> conda info --json
+> /bin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+> ~/.conda/bin/conda info --json
+> ~/anaconda3/bin/conda info --json
+Python interpreter path: /bin/python
+> /sbin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+> /usr/bin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+> /usr/sbin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+> . ~/anaconda3/bin/activate && conda activate base && echo 'e8b39361-0157-4923-80e1-22d70d46dee6' && python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/printEnvVariables.py
+> ~/anaconda3/bin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+Starting Jedi language server.
+> . ~/anaconda3/bin/activate && conda activate base && echo 'e8b39361-0157-4923-80e1-22d70d46dee6' && python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/printEnvVariables.py
+> . ~/anaconda3/bin/activate && conda activate base && echo 'e8b39361-0157-4923-80e1-22d70d46dee6' && python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/printEnvVariables.py
+> . ~/anaconda3/bin/activate && conda activate base && echo 'e8b39361-0157-4923-80e1-22d70d46dee6' && python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/printEnvVariables.py

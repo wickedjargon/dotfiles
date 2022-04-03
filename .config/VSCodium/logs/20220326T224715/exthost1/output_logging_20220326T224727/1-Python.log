@@ -1,0 +1,113 @@
+Telemetry level is off
+Experiments are disabled, only manually opted experiments are active.
+> conda info --json
+> /bin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+> ~/.conda/bin/conda info --json
+> ~/anaconda3/bin/conda info --json
+Python interpreter path: /bin/python
+> /sbin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+> /usr/bin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+> /usr/sbin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+> ~/anaconda3/bin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/get_output_via_markers.py ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/interpreterInfo.py
+Starting Jedi language server.
+> /bin/python ~/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/linter.py -m pylint ~/test.py
+cwd: ~
+##########Linting Output - pylint##########
+
+[
+    {
+        "type": "convention",
+        "module": "test",
+        "obj": "",
+        "line": 11,
+        "column": 17,
+        "endLine": null,
+        "endColumn": null,
+        "path": "test.py",
+        "symbol": "trailing-whitespace",
+        "message": "Trailing whitespace",
+        "message-id": "C0303"
+    },
+    {
+        "type": "convention",
+        "module": "test",
+        "obj": "",
+        "line": 13,
+        "column": 0,
+        "endLine": null,
+        "endColumn": null,
+        "path": "test.py",
+        "symbol": "line-too-long",
+        "message": "Line too long (113/100)",
+        "message-id": "C0301"
+    },
+    {
+        "type": "convention",
+        "module": "test",
+        "obj": "",
+        "line": 15,
+        "column": 19,
+        "endLine": null,
+        "endColumn": null,
+        "path": "test.py",
+        "symbol": "trailing-whitespace",
+        "message": "Trailing whitespace",
+        "message-id": "C0303"
+    },
+    {
+        "type": "convention",
+        "module": "test",
+        "obj": "",
+        "line": 46,
+        "column": 0,
+        "endLine": null,
+        "endColumn": null,
+        "path": "test.py",
+        "symbol": "trailing-newlines",
+        "message": "Trailing newlines",
+        "message-id": "C0305"
+    },
+    {
+        "type": "convention",
+        "module": "test",
+        "obj": "",
+        "line": 1,
+        "column": 0,
+        "endLine": null,
+        "endColumn": null,
+        "path": "test.py",
+        "symbol": "missing-module-docstring",
+        "message": "Missing module docstring",
+        "message-id": "C0114"
+    },
+    {
+        "type": "convention",
+        "module": "test",
+        "obj": "func",
+        "line": 40,
+        "column": 9,
+        "endLine": 40,
+        "endColumn": 10,
+        "path": "test.py",
+        "symbol": "invalid-name",
+        "message": "Argument name \"y\" doesn't conform to snake_case naming style",
+        "message-id": "C0103"
+    },
+    {
+        "type": "convention",
+        "module": "test",
+        "obj": "func",
+        "line": 40,
+        "column": 0,
+        "endLine": 41,
+        "endColumn": 18,
+        "path": "test.py",
+        "symbol": "missing-function-docstring",
+        "message": "Missing function or method docstring",
+        "message-id": "C0116"
+    }
+]
+
+DAP Server launched with command: /bin/python /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/python/debugpy/adapter
+DAP Server launched with command: /bin/python /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/python/debugpy/adapter
+DAP Server launched with command: /bin/python /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/pythonFiles/lib/python/debugpy/adapter

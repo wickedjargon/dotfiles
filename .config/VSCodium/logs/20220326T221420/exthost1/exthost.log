@@ -1,0 +1,34 @@
+[2022-03-26 22:14:31.314] [exthost] [info] Extension host with pid 310376 started
+[2022-03-26 22:14:32.961] [exthost] [info] ExtensionService#_doActivateExtension ms-python.python, startup: false, activationEvent: 'onLanguage:python'
+[2022-03-26 22:14:34.167] [exthost] [info] ExtensionService#_doActivateExtension ms-toolsai.jupyter, startup: false, activationEvent: 'onLanguage:python'
+[2022-03-26 22:14:34.737] [exthost] [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: true, activationEvent: '*'
+[2022-03-26 22:14:34.757] [exthost] [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: vscode.github
+[2022-03-26 22:14:34.789] [exthost] [info] ExtensionService#_doActivateExtension vscode.ipynb, startup: true, activationEvent: '*'
+[2022-03-26 22:14:34.822] [exthost] [info] ExtensionService#_doActivateExtension vscodevim.vim, startup: true, activationEvent: '*'
+[2022-03-26 22:14:38.977] [exthost] [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*'
+[2022-03-26 22:14:39.063] [exthost] [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+[2022-03-26 22:14:40.216] [exthost] [info] Eager extensions activated
+[2022-03-26 22:14:40.555] [exthost] [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onStartupFinished'
+[2022-03-26 22:14:40.656] [exthost] [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+[2022-03-26 22:14:59.903] [exthost] [info] extension host terminating: renderer closed the socket
+[2022-03-26 22:15:00.048] [exthost] [info] Extension host with pid 310376 exiting with code 0
+[2022-03-26 22:15:15.219] [exthost] [info] Extension host with pid 310667 started
+[2022-03-26 22:15:18.709] [exthost] [info] ExtensionService#_doActivateExtension ms-python.python, startup: false, activationEvent: 'onLanguage:python'
+[2022-03-26 22:15:20.323] [exthost] [info] ExtensionService#_doActivateExtension ms-toolsai.jupyter, startup: false, activationEvent: 'onLanguage:python'
+[2022-03-26 22:15:20.863] [exthost] [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: true, activationEvent: '*'
+[2022-03-26 22:15:20.873] [exthost] [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: vscode.github
+[2022-03-26 22:15:20.880] [exthost] [info] ExtensionService#_doActivateExtension vscode.ipynb, startup: true, activationEvent: '*'
+[2022-03-26 22:15:21.142] [exthost] [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*'
+[2022-03-26 22:15:21.206] [exthost] [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+[2022-03-26 22:15:22.552] [exthost] [info] Eager extensions activated
+[2022-03-26 22:15:22.852] [exthost] [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onStartupFinished'
+[2022-03-26 22:15:22.892] [exthost] [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+[2022-03-26 22:24:46.281] [exthost] [error] [ms-python.python] provider FAILED
+[2022-03-26 22:24:46.282] [exthost] [error] Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 28 ('\n').
+	at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+	at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+	at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+	at processImmediate (internal/timers.js:461:21)
+[2022-03-26 22:33:29.292] [exthost] [info] ExtensionService#_doActivateExtension vscode.debug-server-ready, startup: false, activationEvent: 'onDebugResolve'
+[2022-03-26 22:47:09.191] [exthost] [info] extension host terminating: renderer closed the socket
+[2022-03-26 22:47:09.329] [exthost] [info] Extension host with pid 310667 exiting with code 0

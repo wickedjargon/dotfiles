@@ -1,0 +1,127 @@
+VSCodium (1.65.2, undefined, desktop)
+Jupyter Extension Version: 2022.3.1000752054.
+Python Extension Version: 2022.2.1924087327.
+Info 07:08:29: ZMQ install verified.
+Info 07:08:33: Experiment status for python is {"enabled":true,"optInto":[],"optOutFrom":[]}
+Info 07:08:33: Getting activation commands for /bin/python are not cached. May take a while.
+Info 07:08:33: Process Execution: > /bin/python -m pip list
+> /bin/python -m pip list
+Info 07:08:52: Creating controller for jupyter-notebook with interpreter /bin/python
+Info 07:08:53: Find preferred kernel for untitled:Untitled-1.ipynb?jupyter-notebook with metadata {"orig_nbformat":4,"language_info":{"name":"python"}} & preferred interpreter /bin/python
+Info 07:08:53: findKernel found Python 3.10.2 64-bit
+Info 07:08:53: PreferredConnection: .jvsc74a57bd0e7370f93d1d0cde622a1f8e1c04877d8463912d04d973331ad4851f04de6915a./bin/python./bin/python.-m#ipykernel_launcher found for NotebookDocument: untitled:Untitled-1.ipynb?jupyter-notebook
+Info 07:08:53: TargetController found ID: .jvsc74a57bd0e7370f93d1d0cde622a1f8e1c04877d8463912d04d973331ad4851f04de6915a./bin/python./bin/python.-m#ipykernel_launcher for document untitled:Untitled-1.ipynb?jupyter-notebook
+Info 07:08:53: Setting controller affinity for untitled:Untitled-1.ipynb?jupyter-notebook .jvsc74a57bd0e7370f93d1d0cde622a1f8e1c04877d8463912d04d973331ad4851f04de6915a./bin/python./bin/python.-m#ipykernel_launcher
+Info 07:08:53: Interrupt requested & no kernel.
+Info 07:08:53: Setting setActiveController for untitled:Untitled-1.ipynb?jupyter-notebook
+Info 07:08:53: KernelProvider switched kernel to id = .jvsc74a57bd0c0f07d335d4c87f1c9359258f96017867debba305c0543e49bb1cc81df68884c./home/ff/anaconda3/python./home/ff/anaconda3/python.-m#ipykernel_launcher
+Info 07:08:53: Starting Notebook in kernel.ts id = .jvsc74a57bd0c0f07d335d4c87f1c9359258f96017867debba305c0543e49bb1cc81df68884c./home/ff/anaconda3/python./home/ff/anaconda3/python.-m#ipykernel_launcher
+Info 07:08:53: Creating raw notebook for untitled:Untitled-1.ipynb?jupyter-notebook
+Info 07:08:53: Getting preferred kernel for untitled:Untitled-1.ipynb?jupyter-notebook
+Info 07:08:53: Computing working directory untitled:Untitled-1.ipynb?jupyter-notebook
+Info 07:08:53: Starting raw kernel base (Python 3.9.7) for interpreter ~/anaconda3/bin/python
+Info 07:08:53: Kernel launching with ports 9000,9001,9002,9003,9004. Start port is 9000
+Info 07:09:00: Process Execution: > ~/anaconda3/bin/python -c "import ipykernel; print(ipykernel.__version__); print("5dc3a68c-e34e-4080-9c3e-2a532b2ccb4d"); print(ipykernel.__file__)"
+> ~/anaconda3/bin/python -c "import ipykernel; print(ipykernel.__version__); print("5dc3a68c-e34e-4080-9c3e-2a532b2ccb4d"); print(ipykernel.__file__)"
+Info 07:09:00: Adding env Variable PYTHONNOUSERSITE to ~/anaconda3/bin/python
+Info 07:09:00: Process Execution: > ~/anaconda3/bin/python -m ipykernel_launcher --ip=127.0.0.1 --stdin=9003 --control=9001 --hb=9000 --Session.signature_scheme="hmac-sha256" --Session.key=b"7039daf6-7935-4e17-ae72-c95b4b40ef4f" --shell=9002 --transport="tcp" --iopub=9004 --f=/tmp/tmp-4769zzwrlyH1pz34.json
+> ~/anaconda3/bin/python -m ipykernel_launcher --ip=127.0.0.1 --stdin=9003 --control=9001 --hb=9000 --Session.signature_scheme="hmac-sha256" --Session.key=b"7039daf6-7935-4e17-ae72-c95b4b40ef4f" --shell=9002 --transport="tcp" --iopub=9004 --f=/tmp/tmp-4769zzwrlyH1pz34.json
+Info 07:09:00: Process Execution: cwd: ~/
+cwd: ~/
+Info 07:09:01: Process Execution: > ~/anaconda3/bin/python -m pip list
+> ~/anaconda3/bin/python -m pip list
+Info 07:09:02: ipykernel version 6.4.1 for ~/anaconda3/bin/python
+Info 07:09:02: ipykernel location ~/anaconda3/lib/python3.9/site-packages/ipykernel/__init__.py for ~/anaconda3/bin/python
+Info 07:09:04: Got activated conda env vars ourselves for ~/anaconda3/bin/python in 10947
+Error 07:09:07: Live Notebook not available for untitled:Untitled-1.ipynb?jupyter-notebook
+Warn 07:09:07: StdErr from Kernel Process /home/ff/anaconda3/lib/python3.9/site-packages/traitlets/traitlets.py:2202: FutureWarning: Supporting extra quotes around strings is deprecated in traitlets 5.0. You can use 'hmac-sha256' instead of '"hmac-sha256"' if you require traitlets >=5.
+  warn(
+
+Warn 07:09:07: StdErr from Kernel Process /home/ff/anaconda3/lib/python3.9/site-packages/traitlets/traitlets.py:2157: FutureWarning: Supporting extra quotes around Bytes is deprecated in traitlets 5.0. Use '7039daf6-7935-4e17-ae72-c95b4b40ef4f' instead of 'b"7039daf6-7935-4e17-ae72-c95b4b40ef4f"'.
+  warn(
+
+Info 07:09:08: Kernel Output: NOTE: When using the `ipython kernel` entry point, Ctrl-C will not work.
+
+To exit, you will have to explicitly quit this process, by either sending
+"quit" from a client, or using Ctrl-\ in UNIX-like environments.
+
+To read more about this, see https://github.com/ipython/ipython/issues/2049
+
+
+To connect another client to this kernel, use:
+    --existing /tmp/tmp-4769zzwrlyH1pz34.json
+
+Error 07:09:08: Live Notebook not available for untitled:Untitled-1.ipynb?jupyter-notebook
+Info 07:09:08: Raw session started and connected
+Started kernel base (Python 3.9.7)
+Info 07:09:08: Finished connecting 86d4f29c-6b44-452a-9e6d-f139fc6c59e1
+Error 07:09:08: Live Notebook not available for untitled:Untitled-1.ipynb?jupyter-notebook
+Info 07:09:08: Executing silently Code (idle) = import site\nsite.addsitedir(site.getusersitepackages())\n__vsc_ipynb_file__ = "Untitled-1.ipynb"\n%con
+Info 07:09:08: Executing silently Code (completed) = import site\nsite.addsitedir(site.getusersitepackages())\n__vsc_ipynb_file__ = "Untitled-1.ipynb"\n%con
+Info 07:09:08: Waiting for idle on (kernel): d458f4bf-11e1-4e7a-89a2-f818e8fc524c -> idle
+Info 07:09:08: Finished waiting for idle on (kernel): d458f4bf-11e1-4e7a-89a2-f818e8fc524c -> idle
+Info 07:10:34: Creating controller for jupyter-notebook with interpreter /bin/python
+Info 07:10:34: Find preferred kernel for ~/d/python/data_analysis/google_play_store.ipynb with metadata {"orig_nbformat":4,"language_info":{"name":"python"}} & preferred interpreter /bin/python
+Info 07:10:34: findKernel found Python 3.10.3 64-bit
+Info 07:10:34: PreferredConnection: .jvsc74a57bd0e7370f93d1d0cde622a1f8e1c04877d8463912d04d973331ad4851f04de6915a./bin/python./bin/python.-m#ipykernel_launcher found for NotebookDocument: ~/d/python/data_analysis/google_play_store.ipynb
+Info 07:10:34: TargetController found ID: .jvsc74a57bd0e7370f93d1d0cde622a1f8e1c04877d8463912d04d973331ad4851f04de6915a./bin/python./bin/python.-m#ipykernel_launcher for document ~/d/python/data_analysis/google_play_store.ipynb
+Info 07:10:34: Setting controller affinity for ~/d/python/data_analysis/google_play_store.ipynb .jvsc74a57bd0e7370f93d1d0cde622a1f8e1c04877d8463912d04d973331ad4851f04de6915a./bin/python./bin/python.-m#ipykernel_launcher
+Info 07:10:34: Disposing kernel .jvsc74a57bd0c0f07d335d4c87f1c9359258f96017867debba305c0543e49bb1cc81df68884c./home/ff/anaconda3/python./home/ff/anaconda3/python.-m#ipykernel_launcher for notebook untitled:Untitled-1.ipynb?jupyter-notebook due to selection of another kernel or closing of the notebook
+Info 07:10:34: Dispose kernel untitled:Untitled-1.ipynb?jupyter-notebook
+Info 07:10:34: Dispose Kernel process
+Info 07:10:34: Notebook Closed untitled:Untitled-1.ipynb?jupyter-notebook
+Info 07:11:08: Setting setActiveController for ~/d/python/data_analysis/google_play_store.ipynb
+Info 07:11:08: Interrupt requested & no kernel.
+Info 07:11:08: Execute Cells request 0
+Info 07:11:08: Execute Cell 0 ~/d/python/data_analysis/google_play_store.ipynb
+Info 07:11:08: Starting Notebook in kernel.ts id = .jvsc74a57bd0c0f07d335d4c87f1c9359258f96017867debba305c0543e49bb1cc81df68884c./home/ff/anaconda3/python./home/ff/anaconda3/python.-m#ipykernel_launcher
+Info 07:11:08: Creating raw notebook for ~/d/python/data_analysis/google_play_store.ipynb
+Info 07:11:08: Getting preferred kernel for ~/d/python/data_analysis/google_play_store.ipynb
+Info 07:11:08: Computing working directory ~/d/python/data_analysis/google_play_store.ipynb
+Info 07:11:08: KernelProvider switched kernel to id = .jvsc74a57bd0c0f07d335d4c87f1c9359258f96017867debba305c0543e49bb1cc81df68884c./home/ff/anaconda3/python./home/ff/anaconda3/python.-m#ipykernel_launcher
+Info 07:11:08: Starting raw kernel base (Python 3.9.7) for interpreter ~/anaconda3/bin/python
+Info 07:11:08: Process Execution: > ~/anaconda3/bin/python -c "import ipykernel; print(ipykernel.__version__); print("5dc3a68c-e34e-4080-9c3e-2a532b2ccb4d"); print(ipykernel.__file__)"
+> ~/anaconda3/bin/python -c "import ipykernel; print(ipykernel.__version__); print("5dc3a68c-e34e-4080-9c3e-2a532b2ccb4d"); print(ipykernel.__file__)"
+Info 07:11:09: Kernel launching with ports 9000,9001,9002,9003,9004. Start port is 9000
+Info 07:11:09: Adding env Variable PYTHONNOUSERSITE to ~/anaconda3/bin/python
+Info 07:11:09: Process Execution: > ~/anaconda3/bin/python -m ipykernel_launcher --ip=127.0.0.1 --stdin=9003 --control=9001 --hb=9000 --Session.signature_scheme="hmac-sha256" --Session.key=b"b093d309-08d3-4c4e-b65c-6ae61780889e" --shell=9002 --transport="tcp" --iopub=9004 --f=/tmp/tmp-4769BiY10ghk81I2.json
+> ~/anaconda3/bin/python -m ipykernel_launcher --ip=127.0.0.1 --stdin=9003 --control=9001 --hb=9000 --Session.signature_scheme="hmac-sha256" --Session.key=b"b093d309-08d3-4c4e-b65c-6ae61780889e" --shell=9002 --transport="tcp" --iopub=9004 --f=/tmp/tmp-4769BiY10ghk81I2.json
+Info 07:11:09: Process Execution: cwd: ~/d/python/data_analysis
+cwd: ~/d/python/data_analysis
+Info 07:11:11: ipykernel version 6.4.1 for ~/anaconda3/bin/python
+Info 07:11:11: ipykernel location ~/anaconda3/lib/python3.9/site-packages/ipykernel/__init__.py for ~/anaconda3/bin/python
+Warn 07:11:17: StdErr from Kernel Process /home/ff/anaconda3/lib/python3.9/site-packages/traitlets/traitlets.py:2202: FutureWarning: Supporting extra quotes around strings is deprecated in traitlets 5.0. You can use 'hmac-sha256' instead of '"hmac-sha256"' if you require traitlets >=5.
+  warn(
+
+Warn 07:11:17: StdErr from Kernel Process /home/ff/anaconda3/lib/python3.9/site-packages/traitlets/traitlets.py:2157: FutureWarning: Supporting extra quotes around Bytes is deprecated in traitlets 5.0. Use 'b093d309-08d3-4c4e-b65c-6ae61780889e' instead of 'b"b093d309-08d3-4c4e-b65c-6ae61780889e"'.
+  warn(
+
+Info 07:11:17: Kernel Output: NOTE: When using the `ipython kernel` entry point, Ctrl-C will not work.
+
+To exit, you will have to explicitly quit this process, by either sending
+"quit" from a client, or using Ctrl-\ in UNIX-like environments.
+
+To read more about this, see https://github.com/ipython/ipython/issues/2049
+
+
+To connect another client to this kernel, use:
+    --existing /tmp/tmp-4769BiY10ghk81I2.json
+
+Info 07:11:18: Raw session started and connected
+Started kernel base (Python 3.9.7)
+Info 07:11:18: Finished connecting 86d4f29c-6b44-452a-9e6d-f139fc6c59e1
+Info 07:11:18: UpdateWorkingDirectoryAndPath in Kernel
+Info 07:11:18: Executing silently Code (idle) = import site\nsite.addsitedir(site.getusersitepackages())\nimport os\nimport sys\n%cd "/home/ff/d/python/
+Info 07:11:18: Executing silently Code (completed) = import site\nsite.addsitedir(site.getusersitepackages())\nimport os\nimport sys\n%cd "/home/ff/d/python/
+Info 07:11:18: Waiting for idle on (kernel): 5f152a42-9513-444b-b4e9-1c043a71cab9 -> idle
+Info 07:11:18: Finished waiting for idle on (kernel): 5f152a42-9513-444b-b4e9-1c043a71cab9 -> idle
+Info 07:11:21: Cell 0 executed with state Success
+Info 07:13:12: Shutting down notebooks for 86d4f29c-6b44-452a-9e6d-f139fc6c59e1
+Info 07:13:12: Disposing HostJupyterExecution fe279e0e-258d-41c5-865a-5877b21caf66
+Info 07:13:12: Disposing super HostJupyterExecution fe279e0e-258d-41c5-865a-5877b21caf66
+Info 07:13:12: Dispose kernel file:///home/ff/d/python/data_analysis/google_play_store.ipynb
+Info 07:13:12: Dispose Kernel process
+Info 07:13:12: Disposing HostJupyterExecution fe279e0e-258d-41c5-865a-5877b21caf66
+Info 07:13:12: Finished disposing HostJupyterExecution  fe279e0e-258d-41c5-865a-5877b21caf66
+Info 07:13:12: Cleaning up server cache fe279e0e-258d-41c5-865a-5877b21caf66
+Info 07:13:13: Finished disposing HostJupyterExecution  fe279e0e-258d-41c5-865a-5877b21caf66

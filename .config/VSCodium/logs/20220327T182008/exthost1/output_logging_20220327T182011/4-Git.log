@@ -1,0 +1,20 @@
+[2022-03-27T22:20:13.278Z] Validating found git in: git
+[2022-03-27T22:20:13.330Z] Using git 2.35.1 from git
+[2022-03-27T22:20:13.538Z] > git rev-parse --git-dir [130ms]
+[2022-03-27T22:20:13.552Z] Open repository: /home/ff
+[2022-03-27T22:20:13.928Z] > git ls-files --stage -- /home/ff/d/python/hari/khalsahp8.py [7ms]
+[2022-03-27T22:20:23.267Z] > git symbolic-ref --short HEAD [3ms]
+[2022-03-27T22:20:23.281Z] > git for-each-ref --format=%(refname)%00%(upstream:short)%00%(objectname)%00%(upstream:track) refs/heads/master refs/remotes/master [4ms]
+[2022-03-27T22:20:23.301Z] > git remote --verbose [3ms]
+[2022-03-27T22:20:23.303Z] > git for-each-ref --sort -committerdate --format %(refname) %(objectname) %(*objectname) [12ms]
+[2022-03-27T22:20:25.781Z] > git config --get commit.template [44ms]
+[2022-03-27T22:20:25.785Z] > git rev-parse --git-dir [3ms]
+[2022-03-27T22:20:25.788Z] Open repository: /home/ff/.config/mpv/script_modules/mpvSockets
+[2022-03-27T22:20:25.810Z] > git symbolic-ref --short HEAD [2ms]
+[2022-03-27T22:20:25.810Z] fatal: ref HEAD is not a symbolic ref
+[2022-03-27T22:20:25.820Z] > git rev-parse HEAD [2ms]
+[2022-03-27T22:20:25.838Z] > git for-each-ref --sort -committerdate --format %(refname) %(objectname) %(*objectname) [10ms]
+[2022-03-27T22:20:25.840Z] > git remote --verbose [3ms]
+[2022-03-27T22:20:25.852Z] > git config --get commit.template [2ms]
+[2022-03-27T22:21:32.777Z] > git ls-files --stage -- /home/ff/d/python/hari/khalsahp8.py [10ms]
+[2022-03-27T22:22:03.315Z] > git ls-files --stage -- /home/ff/d/python/hari/khalsahp9.py [5ms]
