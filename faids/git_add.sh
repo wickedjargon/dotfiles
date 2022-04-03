@@ -26,6 +26,8 @@ git add .config/x11/
 git add .config/zathura/
 git add .config/zsh/
 git add .local/bin/
+git add .local/share/bg.png
+git add .local/share/bg
 git add .xprofile
 git add .zprofile
 git add .gitconfig
