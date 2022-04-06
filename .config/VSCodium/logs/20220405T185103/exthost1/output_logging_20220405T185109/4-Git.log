@@ -1,0 +1,5 @@
+[2022-04-05T22:51:12.105Z] Validating found git in: git
+[2022-04-05T22:51:12.272Z] Using git 2.35.1 from git
+[2022-04-05T22:51:12.545Z] > git rev-parse --git-dir [55ms]
+[2022-04-05T22:51:12.605Z] Open repository: /home/ff
+[2022-04-05T22:51:13.874Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp10module.py [16ms]

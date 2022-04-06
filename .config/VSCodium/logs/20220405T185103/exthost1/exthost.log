@@ -1,0 +1,14 @@
+[2022-04-05 18:51:09.525] [exthost] [info] Extension host with pid 146495 started
+[2022-04-05 18:51:09.525] [exthost] [info] Skipping acquiring lock for /home/ff/.config/VSCodium/User/workspaceStorage/95148ec00273d5b346e257e301dd84b7.
+[2022-04-05 18:51:09.958] [exthost] [info] ExtensionService#_doActivateExtension ms-python.python, startup: false, activationEvent: 'onLanguage:python'
+[2022-04-05 18:51:10.209] [exthost] [info] ExtensionService#_doActivateExtension ms-toolsai.jupyter, startup: false, activationEvent: 'onLanguage:python'
+[2022-04-05 18:51:10.727] [exthost] [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: true, activationEvent: '*'
+[2022-04-05 18:51:10.734] [exthost] [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: vscode.git
+[2022-04-05 18:51:10.748] [exthost] [info] ExtensionService#_doActivateExtension vscode.ipynb, startup: true, activationEvent: '*'
+[2022-04-05 18:51:11.532] [exthost] [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*'
+[2022-04-05 18:51:11.598] [exthost] [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+[2022-04-05 18:51:12.302] [exthost] [info] Eager extensions activated
+[2022-04-05 18:51:12.869] [exthost] [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onStartupFinished'
+[2022-04-05 18:51:12.899] [exthost] [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+[2022-04-05 18:51:29.596] [exthost] [info] extension host terminating: renderer closed the socket
+[2022-04-05 18:51:29.624] [exthost] [info] Extension host with pid 146495 exiting with code 0

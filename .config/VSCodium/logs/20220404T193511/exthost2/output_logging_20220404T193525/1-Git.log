@@ -1,0 +1,31 @@
+[2022-04-04T23:35:28.068Z] Validating found git in: git
+[2022-04-04T23:35:28.282Z] Using git 2.35.1 from git
+[2022-04-04T23:37:02.222Z] > git rev-parse --git-dir [1ms]
+[2022-04-04T23:37:02.242Z] Open repository: /home/ff
+[2022-04-04T23:37:04.105Z] > git ls-files --stage -- /home/ff/d/clients/hari/test2.py [227ms]
+[2022-04-04T23:37:36.301Z] > git symbolic-ref --short HEAD [16ms]
+[2022-04-04T23:37:36.383Z] > git for-each-ref --format=%(refname)%00%(upstream:short)%00%(objectname)%00%(upstream:track) refs/heads/main refs/remotes/main [24ms]
+[2022-04-04T23:37:36.497Z] > git for-each-ref --sort -committerdate --format %(refname) %(objectname) %(*objectname) [31ms]
+[2022-04-04T23:37:36.527Z] > git remote --verbose [31ms]
+[2022-04-04T23:37:46.220Z] > git config --get commit.template [381ms]
+[2022-04-04T23:37:46.324Z] > git rev-parse --git-dir [9ms]
+[2022-04-04T23:37:46.334Z] Open repository: /home/ff/.config/nvim/plugged/vim-surround
+[2022-04-04T23:37:46.698Z] > git symbolic-ref --short HEAD [191ms]
+[2022-04-04T23:37:46.733Z] > git rev-parse --git-dir [50ms]
+[2022-04-04T23:37:46.737Z] Open repository: /home/ff/.config/nvim/plugged/vim-expand-region
+[2022-04-04T23:37:46.837Z] > git for-each-ref --format=%(refname)%00%(upstream:short)%00%(objectname)%00%(upstream:track) refs/heads/master refs/remotes/master [105ms]
+[2022-04-04T23:37:46.876Z] > git for-each-ref --sort -committerdate --format %(refname) %(objectname) %(*objectname) [22ms]
+[2022-04-04T23:37:46.879Z] > git symbolic-ref --short HEAD [43ms]
+[2022-04-04T23:37:46.940Z] > git for-each-ref --format=%(refname)%00%(upstream:short)%00%(objectname)%00%(upstream:track) refs/heads/master refs/remotes/master [34ms]
+[2022-04-04T23:37:47.008Z] > git remote --verbose [138ms]
+[2022-04-04T23:37:47.047Z] > git for-each-ref --sort -committerdate --format %(refname) %(objectname) %(*objectname) [83ms]
+[2022-04-04T23:37:47.047Z] > git rev-parse --git-dir [113ms]
+[2022-04-04T23:37:47.053Z] Open repository: /home/ff/.config/nvim/plugged/vim-commentary
+[2022-04-04T23:37:47.152Z] > git config --get commit.template [106ms]
+[2022-04-04T23:37:47.158Z] > git remote --verbose [152ms]
+[2022-04-04T23:37:47.203Z] > git symbolic-ref --short HEAD [52ms]
+[2022-04-04T23:37:47.276Z] > git for-each-ref --format=%(refname)%00%(upstream:short)%00%(objectname)%00%(upstream:track) refs/heads/master refs/remotes/master [38ms]
+[2022-04-04T23:37:47.339Z] > git config --get commit.template [139ms]
+[2022-04-04T23:37:47.345Z] > git remote --verbose [5ms]
+[2022-04-04T23:37:47.346Z] > git for-each-ref --sort -committerdate --format %(refname) %(objectname) %(*objectname) [45ms]
+[2022-04-04T23:37:47.415Z] > git config --get commit.template [5ms]

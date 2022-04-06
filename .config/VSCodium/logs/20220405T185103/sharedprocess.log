@@ -1,0 +1,16 @@
+[2022-04-05 18:51:10.544] [sharedprocess] [info] Starting worker process with pid 146555 (type: fileWatcher, window: 1).
+[2022-04-05 18:51:14.653] [sharedprocess] [warning] No ptyHost heartbeat after 6 seconds
+[2022-04-05 18:51:14.966] [sharedprocess] [info] Getting Manifest... ms-vscode.js-debug-companion
+[2022-04-05 18:51:14.994] [sharedprocess] [info] Getting Manifest... ms-vscode.references-view
+[2022-04-05 18:51:15.816] [sharedprocess] [info] Installing extension: ms-vscode.js-debug-companion
+[2022-04-05 18:51:15.820] [sharedprocess] [info] Installing extension: ms-vscode.references-view
+[2022-04-05 18:51:17.126] [sharedprocess] [info] Downloaded extension: ms-vscode.references-view /home/ff/.config/VSCodium/CachedExtensionVSIXs/ms-vscode.references-view-0.0.89
+[2022-04-05 18:51:17.132] [sharedprocess] [info] Downloaded extension: ms-vscode.js-debug-companion /home/ff/.config/VSCodium/CachedExtensionVSIXs/ms-vscode.js-debug-companion-1.0.17
+[2022-04-05 18:51:17.200] [sharedprocess] [info] Extracted extension to /home/ff/.vscode-oss/extensions/.0ec76e6e-1f43-421a-a93a-0f735108630c: ms-vscode.references-view
+[2022-04-05 18:51:17.207] [sharedprocess] [info] Extracted extension to /home/ff/.vscode-oss/extensions/.6b92f39e-5325-48f2-a104-49acdc86f542: ms-vscode.js-debug-companion
+[2022-04-05 18:51:17.211] [sharedprocess] [info] Renamed to /home/ff/.vscode-oss/extensions/ms-vscode.references-view-0.0.89
+[2022-04-05 18:51:17.213] [sharedprocess] [info] Extracting completed. ms-vscode.references-view
+[2022-04-05 18:51:17.214] [sharedprocess] [info] Renamed to /home/ff/.vscode-oss/extensions/ms-vscode.js-debug-companion-1.0.17
+[2022-04-05 18:51:17.216] [sharedprocess] [info] Extracting completed. ms-vscode.js-debug-companion
+[2022-04-05 18:51:17.224] [sharedprocess] [info] Extension installed successfully: ms-vscode.references-view
+[2022-04-05 18:51:17.249] [sharedprocess] [info] Extension installed successfully: ms-vscode.js-debug-companion

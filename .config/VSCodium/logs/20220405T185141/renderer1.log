@@ -1,0 +1,44 @@
+[2022-04-05 18:51:44.917] [renderer1] [critical] Extension 'ms-python.python CANNOT USE these API proposals 'quickPickSortByLabel, testObserver, notebookEditor'. You MUST start in extension development mode or use the --enable-proposed-api command line flag
+[2022-04-05 18:51:44.918] [renderer1] [critical] Extension 'ms-toolsai.jupyter CANNOT USE these API proposals 'notebookConcatTextDocument, notebookControllerKind, notebookDebugOptions, notebookDeprecated, notebookEditor, notebookEditorDecorationType, notebookEditorEdit, notebookMessaging, notebookMime, notebookCellExecutionState, portsAttributes, textDocumentNotebook, quickPickSortByLabel'. You MUST start in extension development mode or use the --enable-proposed-api command line flag
+[2022-04-05 18:51:44.949] [renderer1] [info] Ignoring configured affinity for 'pub.name' because the extension is unknown or cannot execute.
+[2022-04-05 18:51:45.225] [renderer1] [error] [ms-toolsai.jupyter]: interactive/toolbar is a proposed menu identifier. It requires 'package.json#enabledApiProposals: ["notebookEditor"]' and is only available when running out of dev or with the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+[2022-04-05 18:51:45.227] [renderer1] [error] [ms-toolsai.jupyter]: interactive/cell/title is a proposed menu identifier. It requires 'package.json#enabledApiProposals: ["notebookEditor"]' and is only available when running out of dev or with the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+[2022-04-05 18:51:45.687] [renderer1] [info] Ignoring configured affinity for 'pub.name' because the extension is unknown or cannot execute.
+[2022-04-05 18:52:09.944] [renderer1] [error] [Extension Host] extension activation failed Error: Extension 'ms-toolsai.jupyter' CANNOT use API proposal: notebookEditor.
+Its package.json#enabledApiProposals-property declares:  but NOT notebookEditor.
+ The missing proposal MUST be added and you must start in extension development mode or use the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+	at g (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:83:66154)
+	at Object.onDidChangeCellMetadata (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:99:52439)
+	at u.addEventHandlers (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:735175)
+	at new u (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:733840)
+	at Object.t.resolveInstance (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2667221)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669159
+	at Array.map (<anonymous>)
+	at Object.t.resolveInstance (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2666995)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669159
+	at Object.t.resolve (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669422)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652835
+	at e._get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652601)
+	at e.get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2651244)
+	at e.dynamicValue (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2674821)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668648
+	at c (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2667664)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668588
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668077
+	at Array.map (<anonymous>)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668049
+	at Array.map (<anonymous>)
+	at Object.t.resolveInstance (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2666995)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669159
+	at Object.t.resolve (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669422)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652835
+	at e._get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652601)
+	at e.get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2651244)
+	at a.get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:1109349)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:4538183
+	at processTicksAndRejections (node:internal/process/task_queues:96:5)
+	at async /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:4535892
+	at async e.activate (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:4535127)
+	at async g._activate (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:85:8154)
+	at async g._waitForDepsThenActivate (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:85:8096)
+	at async g._initialize (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:85:7460)

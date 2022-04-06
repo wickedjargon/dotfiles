@@ -1,3 +1,0 @@
-[2022-03-27 07:08:25.522] [sharedprocess] [info] Starting worker process with pid 4824 (type: fileWatcher, window: 1).
-[2022-03-27 07:13:12.133] [sharedprocess] [info] Worker process with pid 4824 terminated normally (type: fileWatcher, window: 1).
-[2022-03-27 07:13:19.913] [sharedprocess] [info] Starting worker process with pid 6628 (type: fileWatcher, window: 1).

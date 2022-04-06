@@ -2,8 +2,8 @@
     "telemetry.machineId": "1754ac502645678baa3a6c4ba5b3ebd882c20c3ae9c507af3fe0381fbe4fba28",
     "windowsState": {
         "lastActiveWindow": {
-            "folder": "file:///home/ff/d/python/seb",
-            "backupPath": "/home/ff/.config/VSCodium/Backups/5b2e2b709363f0bdf98bc2e7c1177078",
+            "folder": "file:///home/ff/d/clients/hari",
+            "backupPath": "/home/ff/.config/VSCodium/Backups/7208ea2ab31490220b908c4cbca1c069",
             "uiState": {
                 "mode": 1,
                 "x": 203,
@@ -52,8 +52,7 @@
                             "items": [
                                 {
                                     "id": "workbench.action.reopenClosedEditor",
-                                    "label": "&&Reopen Closed Editor",
-                                    "enabled": false
+                                    "label": "&&Reopen Closed Editor"
                                 },
                                 {
                                     "id": "vscode.menubar.separator"
@@ -62,13 +61,13 @@
                                     "id": "openRecentFolder",
                                     "uri": {
                                         "$mid": 1,
-                                        "fsPath": "/home/ff/d/python/seb",
-                                        "external": "file:///home/ff/d/python/seb",
-                                        "path": "/home/ff/d/python/seb",
+                                        "fsPath": "/home/ff/d/clients/hari",
+                                        "external": "file:///home/ff/d/clients/hari",
+                                        "path": "/home/ff/d/clients/hari",
                                         "scheme": "file"
                                     },
                                     "enabled": true,
-                                    "label": "~/d/python/seb"
+                                    "label": "~/d/clients/hari"
                                 },
                                 {
                                     "id": "openRecentFolder",
@@ -83,6 +82,17 @@
                                 },
                                 {
                                     "id": "vscode.menubar.separator"
+                                },
+                                {
+                                    "id": "openRecentFile",
+                                    "uri": {
+                                        "$mid": 1,
+                                        "external": "file:///home/ff/d/ankit/bs4_mycourse.ipynb",
+                                        "path": "/home/ff/d/ankit/bs4_mycourse.ipynb",
+                                        "scheme": "file"
+                                    },
+                                    "enabled": true,
+                                    "label": "~/d/ankit/bs4_mycourse.ipynb"
                                 },
                                 {
                                     "id": "openRecentFile",
@@ -206,7 +216,8 @@
                     },
                     {
                         "id": "saveAll",
-                        "label": "Save A&&ll"
+                        "label": "Save A&&ll",
+                        "enabled": false
                     },
                     {
                         "id": "vscode.menubar.separator"
@@ -481,7 +492,12 @@
                                 },
                                 {
                                     "id": "workbench.action.toggleSidebarVisibility",
-                                    "label": "Show &&Side Bar"
+                                    "label": "Show &&Primary Side Bar",
+                                    "checked": true
+                                },
+                                {
+                                    "id": "workbench.action.toggleAuxiliaryBar",
+                                    "label": "Show Secondary Si&&de Bar"
                                 },
                                 {
                                     "id": "workbench.action.toggleStatusbarVisibility",
@@ -499,15 +515,11 @@
                                     "checked": true
                                 },
                                 {
-                                    "id": "workbench.action.toggleAuxiliaryBar",
-                                    "label": "Show Si&&de Panel"
-                                },
-                                {
                                     "id": "vscode.menubar.separator"
                                 },
                                 {
                                     "id": "workbench.action.toggleSidebarPosition",
-                                    "label": "&&Move Side Bar Right"
+                                    "label": "&&Move Primary Side Bar Right"
                                 },
                                 {
                                     "id": "submenuitem.32",
@@ -593,13 +605,6 @@
                                 {
                                     "id": "workbench.action.splitEditorRight",
                                     "label": "Split &&Right"
-                                },
-                                {
-                                    "id": "vscode.menubar.separator"
-                                },
-                                {
-                                    "id": "workbench.action.splitEditorInGroup",
-                                    "label": "Split in &&Group"
                                 },
                                 {
                                     "id": "vscode.menubar.separator"
@@ -724,8 +729,7 @@
                 "items": [
                     {
                         "id": "workbench.action.navigateBack",
-                        "label": "&&Back",
-                        "enabled": false
+                        "label": "&&Back"
                     },
                     {
                         "id": "workbench.action.navigateForward",
@@ -734,7 +738,8 @@
                     },
                     {
                         "id": "workbench.action.navigateToLastEditLocation",
-                        "label": "&&Last Edit Location"
+                        "label": "&&Last Edit Location",
+                        "enabled": false
                     },
                     {
                         "id": "vscode.menubar.separator"
@@ -1386,11 +1391,6 @@
                 "isNative": false,
                 "userSettingsLabel": "ctrl+numpad0"
             },
-            "workbench.action.splitEditorInGroup": {
-                "label": "Ctrl+K Ctrl+Shift+\\",
-                "isNative": false,
-                "userSettingsLabel": "ctrl+k ctrl+shift+\\"
-            },
             "workbench.action.toggleEditorGroupLayout": {
                 "label": "Shift+Alt+0",
                 "userSettingsLabel": "shift+alt+0"
@@ -1630,10 +1630,10 @@
             "editorPartMinWidth": 220,
             "titleBarHeight": 0,
             "activityBarWidth": 48,
-            "sideBarWidth": 0,
+            "sideBarWidth": 270,
             "statusBarHeight": 22,
             "windowBorder": false
         }
     },
-    "pickerWorkingDir": "/home/ff/d/python/hari"
+    "pickerWorkingDir": "/home/ff/d/ankit"
 }

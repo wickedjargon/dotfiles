@@ -31,31 +31,33 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (custom-set-faces
- '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 139 :width normal))))
+ '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 120 :width normal))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
- '(ein:basecell-input-area-face ((t (:extend t :background "gray3"))))
- '(font-lock-doc-face ((t (:inherit font-lock-comment-face :foreground "white")))))
+ '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
+ '(font-lock-doc-face ((t (:inherit font-lock-comment-face)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; config outside of use-package:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(tool-bar-mode -1)				 ;; no tool bar
-(setq inhibit-startup-message t)		 ;; no splash screen
-(defalias 'yes-or-no-p 'y-or-n-p)		 ;; just type `y`, not `yes`
-(global-display-line-numbers-mode)		 ;; global line numbers
-(menu-bar-mode +1)				 ;; I like the menu bar
-(setq make-backup-files nil)			 ;; no backup files
-(setq create-lockfiles nil)                      ;; no lock files
-(blink-cursor-mode -1)				 ;; don't blink my cursor
-(setq global-auto-revert-non-file-buffers t)	 ;; auto revert my files
-(global-auto-revert-mode +1)			 ;; auto revert files and buffers
-(delete-selection-mode +1)                       ;; delete selction when hitting backspace on region
-(set-default 'truncate-lines t)                  ;; don't wrap my text
-(add-hook 'prog-mode-hook #'hs-minor-mode)       ;; let me toggle shrink and expansion of code blocks 
+(tool-bar-mode -1)					;; no tool bar
+(setq inhibit-startup-message t)			;; no splash screen
+(defalias 'yes-or-no-p 'y-or-n-p)			;; just type `y`, not `yes`
+(global-display-line-numbers-mode)			;; global line numbers
+(menu-bar-mode +1)					;; I like the menu bar
+(setq make-backup-files nil)				;; no backup files
+(setq create-lockfiles nil)				;; no lock files
+(blink-cursor-mode -1)					;; don't blink my cursor
+(setq global-auto-revert-non-file-buffers t)		;; auto revert my files
+(global-auto-revert-mode +1)				;; auto revert files and buffers
+(delete-selection-mode +1)				;; delete selction when hitting backspace on region
+(set-default 'truncate-lines t)				;; don't wrap my text
+(add-hook 'prog-mode-hook #'hs-minor-mode)		;; let me toggle shrink and expansion of code blocks 
 (setq custom-file (locate-user-emacs-file "custom.el")) ;; separate custom.el file
 (when (file-exists-p custom-file) (load custom-file))   ;; when it exists, load it
+(setq initial-scratch-message "")			;; no message on scratch buffer
+(global-unset-key (kbd "C-x C-c"))			;; I accidently hit this sometimes
 
 ;; don't show `active processes exist` warning:
 (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
@@ -65,7 +67,6 @@
 
 ;; prevent active process when closing a shell like vterm or eshell:
 (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
-(global-unset-key (kbd "C-x C-c")) ;; I accidently hit this sometimes
 
 ;; set C-i and C-m to work:
 (if (daemonp)
@@ -76,7 +77,6 @@
 (define-key input-decode-map [?\C-i] [C-i])
 (define-key input-decode-map [?\C-m] [C-m])
 
-(setq initial-scratch-message "")          ;; no message on scratch buffer
 (setq display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)))
 
 ;; show startup time on launch
@@ -337,6 +337,32 @@ in whole buffer.  With neither, delete comments on current line."
    (line-beginning-position)
    (line-end-position)))
 
+(defun fff-switch-to-previous-buffer ()
+  (interactive)
+  (switch-to-buffer (other-buffer (current-buffer) 1)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; load site-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package yasnippet-snippets 
+  :ensure nil
+  :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/yasnippet-snippets/"))
+  :load-path "yasnippet-snippets.el"
+  :config
+  (yas-reload-all)
+  (add-hook 'prog-mode-hook #'yas-minor-mode)
+  )
+
+;; (use-package evil-collection 
+;;   :after evil
+;;   :ensure nil
+;;   :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/evil-collection/"))
+;;   :load-path "evil-collection.el"
+;;   :config
+;;   (evil-collection-init)
+;;   )
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; use package setup:
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -393,6 +419,9 @@ in whole buffer.  With neither, delete comments on current line."
     (fset 'fff-C-c-C-c
 	  (kmacro-lambda-form [?\C-c ?\C-c] 0 "%d"))
 
+    (fset 'fff-C-x-C-e
+	  (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
+
     (evil-leader/set-leader "<SPC>")
     (evil-leader/set-key "SPC" 'execute-extended-command)
     (evil-leader/set-key "a" 'yas-insert-snippet)
@@ -400,7 +429,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "c" 'fff-C-c-C-c)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "D" 'elpy-doc)
-    (evil-leader/set-key "e" 'eval-last-sexp)
+    (evil-leader/set-key "e" 'fff-C-x-C-e)
     (evil-leader/set-key "h" 'beginning-of-line)
     (evil-leader/set-key "t" 'vterm)
     (evil-leader/set-key "T" 'terminal-here)
@@ -482,6 +511,9 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-normal-state-map (kbd "[") 'fff-backward-paragraph)
     (define-key evil-normal-state-map (kbd "]") nil)
     (define-key evil-normal-state-map (kbd "]") 'fff-down-paragraph)
+    (define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
+    (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
+    (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
 
 
     (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
@@ -628,12 +660,12 @@ in whole buffer.  With neither, delete comments on current line."
   (global-company-mode)
   )
 
-(use-package yasnippet
-  :ensure t
-  :config
-  (yas-reload-all)
-  (add-hook 'prog-mode-hook #'yas-minor-mode)
-  )
+;; (use-package yasnippet
+;;   :ensure t
+;;   :config
+;;   (yas-reload-all)
+;;   (add-hook 'prog-mode-hook #'yas-minor-mode)
+;;   )
 
 (use-package restart-emacs
   :ensure t
@@ -649,25 +681,18 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; load site-lisp
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package yasnippet-snippets 
-  :ensure nil
-  :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/yasnippet-snippets/"))
-  :load-path "yasnippet-snippets.el")
-
-;; (use-package evil-collection 
-;;   :after evil
-;;   :ensure nil
-;;   :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/evil-collection/"))
-;;   :load-path "evil-collection.el"
-;;   :config
-;;   (evil-collection-init)
-;;   )
 
 (use-package emmet-mode
   :ensure t
   :init (add-hook 'sgml-mode-hook 'emmet-mode)
   )
+
+(use-package org
+  :ensure t
+  :init
+  (setq org-confirm-babel-evaluate nil)
+  :config
+  (org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t))))
+

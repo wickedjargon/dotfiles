@@ -1,0 +1,14 @@
+[2022-04-04T23:46:23.825Z] Validating found git in: git
+[2022-04-04T23:46:23.887Z] Using git 2.35.1 from git
+[2022-04-04T23:46:23.963Z] > git rev-parse --git-dir [21ms]
+[2022-04-04T23:46:23.977Z] Open repository: /home/ff
+[2022-04-04T23:46:38.777Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp11.py [585ms]
+[2022-04-04T23:46:54.281Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp10.py [26ms]
+[2022-04-04T23:47:04.315Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp11.py [3ms]
+[2022-04-04T23:47:34.221Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp10_main.py [5ms]
+[2022-04-04T23:47:36.770Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp10.py [5ms]
+[2022-04-04T23:47:47.321Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp10_main.py [5ms]
+[2022-04-04T23:47:58.052Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp10main.py [18ms]
+[2022-04-04T23:47:59.636Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp10.py [3ms]
+[2022-04-04T23:48:08.488Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp10module.py [14ms]
+[2022-04-04T23:48:11.294Z] > git ls-files --stage -- /home/ff/d/clients/hari/khalsahp10main.py [6ms]

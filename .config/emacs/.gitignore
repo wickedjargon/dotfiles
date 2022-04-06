@@ -59,3 +59,4 @@ site-lisp/package/
 *.sync-conflict*
 /elpy/
 /bookmarks
+/request/

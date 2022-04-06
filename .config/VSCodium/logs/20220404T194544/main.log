@@ -1,0 +1,40 @@
+[2022-04-04 19:45:44.400] [main] [info] window#load: attempt to load window (id: 1)
+[2022-04-04 19:45:44.426] [main] [info] update#setState idle
+[2022-04-04 19:45:44.522] [main] [info] ExtensionHostStarterWorker created
+[2022-04-04 19:45:46.338] [main] [info] window#load: window reported ready (id: 1)
+[2022-04-04 19:45:46.805] [main] [info] Starting extension host with pid 195154 (fork() took 75 ms).
+[2022-04-04 19:45:46.805] [main] [info] ExtensionHostStarterWorker.start() took 88 ms.
+[2022-04-04 19:46:14.430] [main] [info] update#setState checking for updates
+[2022-04-04 19:46:14.613] [main] [info] update#setState idle
+[2022-04-04 19:46:15.351] [main] [info] window#load: attempt to load window (id: 1)
+[2022-04-04 19:46:15.447] [main] [info] Extension host with pid 195154 exited with code: 0, signal: null.
+[2022-04-04 19:46:18.568] [main] [info] window#load: window reported ready (id: 1)
+[2022-04-04 19:46:19.741] [main] [info] Starting extension host with pid 195409 (fork() took 48 ms).
+[2022-04-04 19:46:19.752] [main] [info] ExtensionHostStarterWorker.start() took 70 ms.
+[2022-04-04 19:56:45.024] [main] [info] window#load: attempt to load window (id: 1)
+[2022-04-04 19:56:46.153] [main] [info] Extension host with pid 195409 exited with code: 0, signal: null.
+[2022-04-04 19:56:50.175] [main] [info] window#load: window reported ready (id: 1)
+[2022-04-04 19:56:51.038] [main] [info] Starting extension host with pid 197572 (fork() took 66 ms).
+[2022-04-04 19:56:51.039] [main] [info] ExtensionHostStarterWorker.start() took 180 ms.
+[2022-04-04 20:46:14.538] [main] [info] update#setState checking for updates
+[2022-04-04 20:46:15.397] [main] [info] update#setState idle
+[2022-04-04 21:46:14.646] [main] [info] update#setState checking for updates
+[2022-04-04 21:46:15.155] [main] [info] update#setState idle
+[2022-04-04 22:46:14.750] [main] [info] update#setState checking for updates
+[2022-04-04 22:46:15.272] [main] [info] update#setState idle
+[2022-04-04 23:46:14.852] [main] [info] update#setState checking for updates
+[2022-04-04 23:46:15.362] [main] [info] update#setState idle
+[2022-04-05 00:46:14.952] [main] [info] update#setState checking for updates
+[2022-04-05 00:46:15.451] [main] [info] update#setState idle
+[2022-04-05 01:46:15.052] [main] [info] update#setState checking for updates
+[2022-04-05 01:46:15.568] [main] [info] update#setState idle
+[2022-04-05 02:46:15.119] [main] [info] update#setState checking for updates
+[2022-04-05 02:46:15.625] [main] [info] update#setState idle
+[2022-04-05 03:46:15.221] [main] [info] update#setState checking for updates
+[2022-04-05 03:46:15.708] [main] [info] update#setState idle
+[2022-04-05 04:46:15.324] [main] [info] update#setState checking for updates
+[2022-04-05 04:46:15.826] [main] [info] update#setState idle
+[2022-04-05 05:46:15.426] [main] [info] update#setState checking for updates
+[2022-04-05 05:46:15.926] [main] [info] update#setState idle
+[2022-04-05 06:46:15.528] [main] [info] update#setState checking for updates
+[2022-04-05 06:46:16.031] [main] [info] update#setState idle

@@ -1,0 +1,121 @@
+[2022-04-04 19:45:46.611] [renderer1] [error] Error: File not found
+    at g.handleSetInputError (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2636:112725)
+    at async g.setInput (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2636:112400)
+    at async i.doSetInput (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2636:26823)
+    at async i.doOpenEditor (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2636:25196)
+    at async i.openEditor (vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2636:24822)
+    at async vscode-file://vscode-app/opt/vscodium-bin/resources/app/out/vs/workbench/workbench.desktop.main.js:2842:17260
+[2022-04-04 19:45:46.972] [renderer1] [critical] Extension 'ms-python.python CANNOT USE these API proposals 'quickPickSortByLabel, testObserver, notebookEditor'. You MUST start in extension development mode or use the --enable-proposed-api command line flag
+[2022-04-04 19:45:46.973] [renderer1] [critical] Extension 'ms-toolsai.jupyter CANNOT USE these API proposals 'notebookConcatTextDocument, notebookControllerKind, notebookDebugOptions, notebookDeprecated, notebookEditor, notebookEditorDecorationType, notebookEditorEdit, notebookMessaging, notebookMime, notebookCellExecutionState, portsAttributes, textDocumentNotebook, quickPickSortByLabel'. You MUST start in extension development mode or use the --enable-proposed-api command line flag
+[2022-04-04 19:45:47.004] [renderer1] [info] Ignoring configured affinity for 'pub.name' because the extension is unknown or cannot execute.
+[2022-04-04 19:45:47.143] [renderer1] [error] [ms-toolsai.jupyter]: interactive/toolbar is a proposed menu identifier. It requires 'package.json#enabledApiProposals: ["notebookEditor"]' and is only available when running out of dev or with the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+[2022-04-04 19:45:47.144] [renderer1] [error] [ms-toolsai.jupyter]: interactive/cell/title is a proposed menu identifier. It requires 'package.json#enabledApiProposals: ["notebookEditor"]' and is only available when running out of dev or with the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+[2022-04-04 19:45:47.566] [renderer1] [info] Ignoring configured affinity for 'pub.name' because the extension is unknown or cannot execute.
+[2022-04-04 19:46:19.857] [renderer1] [critical] Extension 'ms-python.python CANNOT USE these API proposals 'quickPickSortByLabel, testObserver, notebookEditor'. You MUST start in extension development mode or use the --enable-proposed-api command line flag
+[2022-04-04 19:46:19.858] [renderer1] [critical] Extension 'ms-toolsai.jupyter CANNOT USE these API proposals 'notebookConcatTextDocument, notebookControllerKind, notebookDebugOptions, notebookDeprecated, notebookEditor, notebookEditorDecorationType, notebookEditorEdit, notebookMessaging, notebookMime, notebookCellExecutionState, portsAttributes, textDocumentNotebook, quickPickSortByLabel'. You MUST start in extension development mode or use the --enable-proposed-api command line flag
+[2022-04-04 19:46:19.886] [renderer1] [info] Ignoring configured affinity for 'pub.name' because the extension is unknown or cannot execute.
+[2022-04-04 19:46:20.285] [renderer1] [error] [ms-toolsai.jupyter]: interactive/toolbar is a proposed menu identifier. It requires 'package.json#enabledApiProposals: ["notebookEditor"]' and is only available when running out of dev or with the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+[2022-04-04 19:46:20.292] [renderer1] [error] [ms-toolsai.jupyter]: interactive/cell/title is a proposed menu identifier. It requires 'package.json#enabledApiProposals: ["notebookEditor"]' and is only available when running out of dev or with the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+[2022-04-04 19:46:21.599] [renderer1] [info] Ignoring configured affinity for 'pub.name' because the extension is unknown or cannot execute.
+[2022-04-04 19:46:23.393] [renderer1] [error] [ms-toolsai.jupyter]: interactive/toolbar is a proposed menu identifier. It requires 'package.json#enabledApiProposals: ["notebookEditor"]' and is only available when running out of dev or with the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+[2022-04-04 19:46:23.402] [renderer1] [error] [ms-toolsai.jupyter]: interactive/cell/title is a proposed menu identifier. It requires 'package.json#enabledApiProposals: ["notebookEditor"]' and is only available when running out of dev or with the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+[2022-04-04 19:46:23.455] [renderer1] [info] Ignoring configured affinity for 'pub.name' because the extension is unknown or cannot execute.
+[2022-04-04 19:46:38.798] [renderer1] [error] [Extension Host] extension activation failed Error: Extension 'ms-toolsai.jupyter' CANNOT use API proposal: notebookEditor.
+Its package.json#enabledApiProposals-property declares:  but NOT notebookEditor.
+ The missing proposal MUST be added and you must start in extension development mode or use the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+    at g (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:83:66154)
+    at Object.onDidChangeCellMetadata (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:99:52439)
+    at u.addEventHandlers (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:735175)
+    at new u (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:733840)
+    at Object.t.resolveInstance (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2667221)
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669159
+    at Array.map (<anonymous>)
+    at Object.t.resolveInstance (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2666995)
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669159
+    at Object.t.resolve (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669422)
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652835
+    at e._get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652601)
+    at e.get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2651244)
+    at e.dynamicValue (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2674821)
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668648
+    at c (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2667664)
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668588
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668077
+    at Array.map (<anonymous>)
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668049
+    at Array.map (<anonymous>)
+    at Object.t.resolveInstance (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2666995)
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669159
+    at Object.t.resolve (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669422)
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652835
+    at e._get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652601)
+    at e.get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2651244)
+    at a.get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:1109349)
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:4538183
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+    at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:4535892
+    at e.activate (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:4535127)
+    at g._activate (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:85:8154)
+    at g._waitForDepsThenActivate (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:85:8096)
+    at g._initialize (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:85:7460)
+[2022-04-04 19:46:43.821] [renderer1] [error] Extension 'ms-python.python' CANNOT use API proposal: testObserver.
+Its package.json#enabledApiProposals-property declares:  but NOT testObserver.
+ The missing proposal MUST be added and you must start in extension development mode or use the following command line switch: --enable-proposed-api ms-python.python: Error: Extension 'ms-python.python' CANNOT use API proposal: testObserver.
+Its package.json#enabledApiProposals-property declares:  but NOT testObserver.
+ The missing proposal MUST be added and you must start in extension development mode or use the following command line switch: --enable-proposed-api ms-python.python
+    at g (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:83:66154)
+    at Object.get testResults [as testResults] (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:99:33543)
+    at w.activate (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:85:74911)
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:87919
+    at Array.map (<anonymous>)
+    at f.activateWorkspace (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:87910)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+[2022-04-04 19:56:37.162] [renderer1] [error] ValueError: `column` parameter (1) is not in a valid range (0-0) for line 92 ('').: Error: ValueError: `column` parameter (1) is not in a valid range (0-0) for line 92 ('').
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139263
+    at /home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139557
+    at Immediate.<anonymous> (/home/ff/.vscode-oss/extensions/ms-python.python-2022.2.1924087327/out/client/extension.js:67:139920)
+    at processImmediate (node:internal/timers:464:21)
+[2022-04-04 19:56:52.883] [renderer1] [critical] Extension 'ms-python.python CANNOT USE these API proposals 'quickPickSortByLabel, testObserver, notebookEditor'. You MUST start in extension development mode or use the --enable-proposed-api command line flag
+[2022-04-04 19:56:52.890] [renderer1] [critical] Extension 'ms-toolsai.jupyter CANNOT USE these API proposals 'notebookConcatTextDocument, notebookControllerKind, notebookDebugOptions, notebookDeprecated, notebookEditor, notebookEditorDecorationType, notebookEditorEdit, notebookMessaging, notebookMime, notebookCellExecutionState, portsAttributes, textDocumentNotebook, quickPickSortByLabel'. You MUST start in extension development mode or use the --enable-proposed-api command line flag
+[2022-04-04 19:56:52.987] [renderer1] [info] Ignoring configured affinity for 'pub.name' because the extension is unknown or cannot execute.
+[2022-04-04 19:56:53.523] [renderer1] [error] [ms-toolsai.jupyter]: interactive/toolbar is a proposed menu identifier. It requires 'package.json#enabledApiProposals: ["notebookEditor"]' and is only available when running out of dev or with the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+[2022-04-04 19:56:53.531] [renderer1] [error] [ms-toolsai.jupyter]: interactive/cell/title is a proposed menu identifier. It requires 'package.json#enabledApiProposals: ["notebookEditor"]' and is only available when running out of dev or with the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+[2022-04-04 19:56:55.950] [renderer1] [info] Ignoring configured affinity for 'pub.name' because the extension is unknown or cannot execute.
+[2022-04-04 19:57:04.828] [renderer1] [error] [Extension Host] extension activation failed Error: Extension 'ms-toolsai.jupyter' CANNOT use API proposal: notebookEditor.
+Its package.json#enabledApiProposals-property declares:  but NOT notebookEditor.
+ The missing proposal MUST be added and you must start in extension development mode or use the following command line switch: --enable-proposed-api ms-toolsai.jupyter
+	at g (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:83:66154)
+	at Object.onDidChangeCellMetadata (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:99:52439)
+	at u.addEventHandlers (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:735175)
+	at new u (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:733840)
+	at Object.t.resolveInstance (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2667221)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669159
+	at Array.map (<anonymous>)
+	at Object.t.resolveInstance (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2666995)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669159
+	at Object.t.resolve (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669422)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652835
+	at e._get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652601)
+	at e.get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2651244)
+	at e.dynamicValue (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2674821)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668648
+	at c (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2667664)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668588
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668077
+	at Array.map (<anonymous>)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2668049
+	at Array.map (<anonymous>)
+	at Object.t.resolveInstance (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2666995)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669159
+	at Object.t.resolve (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2669422)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652835
+	at e._get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2652601)
+	at e.get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:2651244)
+	at a.get (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:1109349)
+	at /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:4538183
+	at processTicksAndRejections (node:internal/process/task_queues:96:5)
+	at async /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:4535892
+	at async e.activate (/home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000901801/out/extension.js:2:4535127)
+	at async g._activate (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:85:8154)
+	at async g._waitForDepsThenActivate (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:85:8096)
+	at async g._initialize (/opt/vscodium-bin/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:85:7460)

@@ -1,0 +1,4 @@
+[2022-04-04 19:35:32.134] [sharedprocess] [info] Starting worker process with pid 192367 (type: fileWatcher, window: 1).
+[2022-04-04 19:35:32.389] [sharedprocess] [info] Starting worker process with pid 192368 (type: fileWatcher, window: 2).
+[2022-04-04 19:35:33.612] [sharedprocess] [info] Deleted from disk ms-toolsai.jupyter /home/ff/.vscode-oss/extensions/ms-toolsai.jupyter-2022.3.1000752054
+[2022-04-04 19:40:21.018] [sharedprocess] [info] Worker process with pid 192367 terminated normally (type: fileWatcher, window: 1).

@@ -1,5 +1,0 @@
-[2022-03-27T02:14:39.469Z] Validating found git in: git
-[2022-03-27T02:14:40.147Z] Using git 2.35.1 from git
-[2022-03-27T02:14:40.323Z] > git rev-parse --git-dir [13ms]
-[2022-03-27T02:14:40.369Z] Open repository: /home/ff
-[2022-03-27T02:14:41.425Z] > git ls-files --stage -- /home/ff/test.py [83ms]
