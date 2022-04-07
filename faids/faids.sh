@@ -34,7 +34,7 @@ error() { printf "%s\n" "$1" >&2; exit 1; }
 welcomemsg() { \
 	dialog --title "Welcome to FAIDS" --msgbox "This is FAIDS: Freddie's Auto Installer of Dotfiles Script. This will install my personal dot files. mmkay?" 10 60
 
-	dialog --colors --title "Warning" --yes-label "I'm ready" --no-label "Go back" --yesno "Be your system packages are up-to-date by running pacman -Syyu before this installation" 8 70
+	dialog --colors --title "Warning" --yes-label "I'm ready" --no-label "Go back" --yesno "Be sure system packages are up-to-date by running pacman -Syyu before this installation" 8 70
 	}
 
 getuserandpass() { \
