@@ -1,9 +1,4 @@
-;; TODO: set `SPC x` and SPC c` to emulate C-x and C-c
-
-;; TODO: why is this needed here. It's already in use-package's init part of evil:
-;; (setq evil-undo-system 'undo-fu)
-;; (setq evil-want-integration t)
-;; (setq evil-want-keybinding nil)
+;; TODO: some ein commands disable evil's keybindings. I will find a way to fix this.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; starting our engines...
@@ -58,6 +53,7 @@
 (when (file-exists-p custom-file) (load custom-file))   ;; when it exists, load it
 (setq initial-scratch-message "")			;; no message on scratch buffer
 (global-unset-key (kbd "C-x C-c"))			;; I accidently hit this sometimes
+(setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
 
 ;; don't show `active processes exist` warning:
 (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
