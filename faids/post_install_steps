@@ -7,4 +7,13 @@ git submodule add https://github.com/tpope/vim-surround.git .config/nvim/plugged
 2. update /etc/hosts:
 update hosts file <included in faids dir>
 
-3. update zsh themes file:
+3. use perl-file-mimeinfo to update default package for pdfs
+
+4. emacs
+    - setup zterm
+    - install elpy dependencies
+    - install ein dependencies
+
+5. python
+    - install pip using bootstrapping script (do not install using pacman)
+    - install needed dependencies

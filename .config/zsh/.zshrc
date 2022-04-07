@@ -93,13 +93,9 @@ vterm_printf(){
 # Load syntax highlighting; should be last.
 source /usr/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh 2>/dev/null
 
-
-
 bindkey '^e' end-of-line
 bindkey '^a' beginning-of-line
 bindkey '^E' end-of-line
-
-
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
