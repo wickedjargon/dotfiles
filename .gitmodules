@@ -1,21 +1,9 @@
-[submodule ".config/mpv/script_modules/mpvSockets"]
-	path = .config/mpv/script_modules/mpvSockets
-	url = https://github.com/wis/mpvSockets.git
-[submodule ".config/nvim/plugged/vim-surround"]
-	path = .config/nvim/plugged/vim-surround
-	url = https://github.com/tpope/vim-surround.git
-[submodule ".config/nvim/plugged/vim-expand-region"]
-	path = .config/nvim/plugged/vim-expand-region
-	url = https://github.com/terryma/vim-expand-region.git
 [submodule ".config/nvim/plugged/vim-commentary"]
 	path = .config/nvim/plugged/vim-commentary
 	url = https://github.com/tpope/vim-commentary.git
-[submodule "faids/.config/nvim/plugged/vim-commentary"]
-	path = faids/.config/nvim/plugged/vim-commentary
-	url = https://github.com/tpope/vim-commentary.git
-[submodule "faids/.config/nvim/plugged/vim-expand-region"]
-	path = faids/.config/nvim/plugged/vim-expand-region
+[submodule ".config/nvim/plugged/vim-expand-region"]
+	path = .config/nvim/plugged/vim-expand-region
 	url = https://github.com/terryma/vim-expand-region.git
-[submodule "faids/.config/nvim/plugged/vim-surround"]
-	path = faids/.config/nvim/plugged/vim-surround
+[submodule ".config/nvim/plugged/vim-surround"]
+	path = .config/nvim/plugged/vim-surround
 	url = https://github.com/tpope/vim-surround.git

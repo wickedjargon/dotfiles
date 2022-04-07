@@ -1,21 +1,24 @@
-1. add these submodules:
+
+[ ] add these submodules:
 
 git submodule add https://github.com/tpope/vim-commentary.git .config/nvim/plugged/vim-commentary
 git submodule add https://github.com/terryma/vim-expand-region.git .config/nvim/plugged/vim-expand-region
 git submodule add https://github.com/tpope/vim-surround.git .config/nvim/plugged/vim-surround
 
-2. perform a git add via /faids/git_add.sh
+[ ] perform a git add via /faids/git_add.sh
 
-2. update /etc/hosts:
+[ ] sync brave browser
+
+[ ] update /etc/hosts:
 update hosts file <included in faids dir>
 
-3. use perl-file-mimeinfo to update default package for pdfs
+[ ] use perl-file-mimeinfo to update default package for pdfs
 
-4. emacs
+[ ] emacs
     - setup zterm
     - install elpy dependencies
     - install ein dependencies
 
-5. python
+[ ] python
     - install pip using bootstrapping script (do not install using pacman)
     - install needed dependencies
