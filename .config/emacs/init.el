@@ -11,10 +11,12 @@
 (unless (assoc-default "nongnu" package-archives)
   (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t))
 
-(setq package-list '(use-package ein))
+(setq ein:output-area-inlined-images t)
+
+(setq package-list '(use-package evil ein ob-ipython))
 
 (unless package-archive-contents (package-refresh-contents))
-;; (package-refresh-contents)
+; (package-refresh-contents)
 
 (unless package-archive-contents
   (package-refresh-contents))
@@ -22,12 +24,30 @@
   (unless (package-installed-p package)
     (package-install package)))
 
+(setq evil-want-integration t) ;; This is optional since it's already set to t by default.
+(setq evil-want-keybinding nil)
+
 (require 'use-package)
 
 (add-to-list 'load-path "/home/ff/.config/emacs/site-lisp/evil/")
 (require 'evil)
-(evil-mode 1)
+(add-hook 'ein:ipdb-mode-hook 'evil-mode)
+(add-hook 'ein:$kernel-after-execute-hook 'evil-mode)
+(add-hook 'ein:$kernel-after-start-hook 'evil-mode)
+(add-hook 'ein:ipdb-mode-hook 'evil-mode)
+(add-hook 'ein:markdown-mode-hook 'evil-mode)
+(add-hook 'ein:notebook-after-rename-hook 'evil-mode)
+(add-hook 'ein:notebook-mode-hook 'evil-mode)
+(add-hook 'ein:notebooklist-first-open-hook 'evil-mode)
+(add-hook 'ein:notebooklist-mode-hook 'evil-mode)
+(add-hook 'ein:pager-mode-hook 'evil-mode)
+(add-hook 'ein:shared-output-mode-hook 'evil-mode)
+(add-hook 'ein:traceback-mode-hook 'evil-mode)
+(add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
+(add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
 
+
+(evil-mode 1)
 
 (with-eval-after-load 'evil-maps
 
@@ -98,8 +118,16 @@
 (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
 (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
 (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
-
 )
+
+(use-package evil-collection
+  :after evil
+  :ensure t
+  :config
+(evil-collection-init)
+  )
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; set up font:
@@ -109,7 +137,12 @@
  '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 120 :width normal))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
- '(font-lock-doc-face ((t (:inherit font-lock-comment-face)))))
+ '(font-lock-doc-face ((t (:inherit font-lock-comment-face))))
+ '(ein:basecell-input-area-face ((t (:extend t :background "gray13"))))
+ )
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; config outside of use-package:
@@ -157,6 +190,19 @@
 ;; show startup time on launch
 (defun display-startup-echo-area-message ()
   (message "(emacs-init-time) -> %s" (emacs-init-time)))
+
+;; setup org babel for python
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)
+   (ipython . t)
+   )
+ )
+  (setq org-src-fontify-natively t
+        org-src-window-setup 'current-window ;; edit in current window
+        org-src-strip-leading-and-trailing-blank-lines t
+        org-src-preserve-indentation t ;; do not put two spaces on the left
+        org-src-tab-acts-natively t)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; my functions:
@@ -327,7 +373,6 @@
   (interactive)
   (insert "	"))
 
-
 (defun fff-toggle-flycheck-mode ()
   (interactive)
   (if (not flycheck-mode)
@@ -435,7 +480,17 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (delete-region
    (line-beginning-position)
-   (line-end-position)))
+   (line-end-position))
+  )
+(defun fff-delete-current-line ()
+  "Deletes the current line"
+  (interactive)
+  (delete-region
+   (line-beginning-position)
+   (line-end-position))
+  (evil-ex-delete-backward-char)
+  )
+
 
 (defun fff-switch-to-previous-buffer ()
   (interactive)
@@ -444,6 +499,13 @@ in whole buffer.  With neither, delete comments on current line."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; load site-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package yasnippet
+  :ensure t
+  :config
+  (yas-reload-all)
+  (add-hook 'prog-mode-hook #'yas-minor-mode)
+  )
 
 (use-package yasnippet-snippets 
   :ensure nil
@@ -454,11 +516,12 @@ in whole buffer.  With neither, delete comments on current line."
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   )
 
+(yas-reload-all)
+(add-hook 'prog-mode-hook #'yas-minor-mode)
+
 ;; ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; ;; use package setup:
 ;; ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 
 (use-package modus-themes
   :ensure t
@@ -469,8 +532,6 @@ in whole buffer.  With neither, delete comments on current line."
   ;; after the package is loaded:
   (modus-themes-load-vivendi)
   )
-
-
 
 (use-package evil-surround
   :ensure t
@@ -560,12 +621,6 @@ in whole buffer.  With neither, delete comments on current line."
   (global-company-mode)
   )
 
-(use-package yasnippet
-  :ensure t
-  :config
-  (yas-reload-all)
-  (add-hook 'prog-mode-hook #'yas-minor-mode)
-  )
 
 (use-package restart-emacs
   :ensure t
@@ -576,11 +631,9 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   )
 
-
 (use-package crux
   :ensure t
   )
-
 
 (use-package emmet-mode
   :ensure t
@@ -670,3 +723,5 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "U" 'pop-global-mark)
     )
   )
+
+(global-set-key (kbd "<f1>") 'turn-on-evil-mode)
