@@ -11,15 +11,95 @@
 (unless (assoc-default "nongnu" package-archives)
   (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t))
 
-(setq package-list '(use-package))
+(setq package-list '(use-package evil ein))
 
 (unless package-archive-contents (package-refresh-contents))
+;; (package-refresh-contents)
 
 (unless package-archive-contents
   (package-refresh-contents))
 (dolist (package package-list)
   (unless (package-installed-p package)
     (package-install package)))
+
+(require 'use-package)
+
+(add-to-list 'load-path "/home/ff/.config/emacs/site-lisp/evil/")
+(require 'evil)
+(evil-mode 1)
+
+
+(with-eval-after-load 'evil-maps
+
+(define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
+(define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
+(define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
+(define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
+(define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
+(define-key evil-visual-state-map (kbd "C-/") 'comment-line)
+
+(define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
+(define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
+(define-key evil-insert-state-map (kbd "C-d") 'delete-char)
+(define-key evil-insert-state-map (kbd "C-w") 'kill-region)
+(define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
+(define-key evil-insert-state-map (kbd "C-y") 'yank)
+(define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
+(define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
+(define-key evil-insert-state-map (kbd "C-'") 'company-complete)
+(define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
+
+(define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
+(define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
+(define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
+(define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
+(define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
+(define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
+(define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
+(define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
+(define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
+(define-key evil-normal-state-map (kbd "C-/") 'comment-line)
+(define-key evil-normal-state-map (kbd "[") 'fff-backward-paragraph)
+(define-key evil-normal-state-map (kbd "]") nil)
+(define-key evil-normal-state-map (kbd "]") 'fff-down-paragraph)
+(define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
+(define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
+(define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
+
+
+(define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
+(define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
+(define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
+(define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
+(define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
+(define-key evil-visual-state-map (kbd "C-/") 'comment-line)
+
+(define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
+(define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
+(define-key evil-insert-state-map (kbd "C-d") 'delete-char)
+(define-key evil-insert-state-map (kbd "C-w") 'kill-region)
+(define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
+(define-key evil-insert-state-map (kbd "C-y") 'yank)
+(define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
+(define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
+(define-key evil-insert-state-map (kbd "C-'") 'company-complete)
+(define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
+
+(define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
+(define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
+(define-key evil-normal-state-map (kbd "-") 'text-scale-adjust)
+(define-key evil-normal-state-map (kbd "=") 'text-scale-adjust)
+(define-key evil-normal-state-map (kbd "0") 'text-scale-adjust)
+(define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
+(define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
+(define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
+(define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
+(define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
+(define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
+(define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
+(define-key evil-normal-state-map (kbd "C-/") 'comment-line)
+
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; set up font:
@@ -29,7 +109,6 @@
  '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 120 :width normal))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
- '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
  '(font-lock-doc-face ((t (:inherit font-lock-comment-face)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -82,6 +161,31 @@
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; my functions:
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    (defun comment-line (n)
+      (interactive "p")
+      (if (use-region-p)
+	  (comment-or-uncomment-region
+	   (save-excursion
+             (goto-char (region-beginning))
+             (line-beginning-position))
+	   (save-excursion
+             (goto-char (region-end))
+             ;; (line-end-position)
+             ))
+	(when (and (eq last-command 'comment-line-backward)
+		   (natnump n))
+	  (setq n (- n)))
+	(let ((range
+               (list (line-beginning-position)
+                     (goto-char (line-end-position n)))))
+	  (comment-or-uncomment-region
+	   (apply #'min range)
+	   (apply #'max range)))
+	(forward-line 1)
+	(back-to-indentation)
+	(unless (natnump n) (setq this-command 'comment-line-backward)))
+      )
 
 (defun fff-remove-blank-lines ()
   (interactive)
@@ -143,7 +247,7 @@
   (interactive)
   (define-key input-decode-map [?\C-m] [C-m])
   (define-key input-decode-map [?\C-i] [C-i])
-  (set-cursor-color "red"))
+  )
 
 (defun fff-access-config ()
   (interactive)
@@ -350,24 +454,11 @@ in whole buffer.  With neither, delete comments on current line."
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   )
 
-;; (use-package evil-collection 
-;;   :after evil
-;;   :ensure nil
-;;   :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/evil-collection/"))
-;;   :load-path "evil-collection.el"
-;;   :config
-;;   (evil-collection-init)
-;;   )
+;; ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; ;; use package setup:
+;; ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; use package setup:
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require 'use-package)
-
-(setq evil-undo-system 'undo-fu)
-(setq evil-want-integration t)
-(setq evil-want-keybinding nil)
 
 (use-package modus-themes
   :ensure t
@@ -377,6 +468,123 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   ;; after the package is loaded:
   (modus-themes-load-vivendi)
+  )
+
+
+
+(use-package evil-surround
+  :ensure t
+  :config
+  (global-evil-surround-mode +1))
+
+(use-package ivy
+  :ensure t
+  :config
+  (setq ivy-initial-inputs-alist nil)
+  (setq ivy-on-del-error-function #'ignore)
+  :init
+  (ivy-mode)
+  )
+
+(use-package counsel
+  :ensure t
+  :config
+  :init
+  (counsel-mode)
+  )
+
+(use-package elpy
+  :ensure t
+  :config
+  (setq elpy-shell-starting-directory 'current-directory) 
+  :init
+  (elpy-enable)
+  )
+
+(use-package expand-region
+  :ensure t
+  )
+
+(use-package vterm
+  :ensure t)
+
+(use-package slime
+  :ensure t
+  :init
+  (setq inferior-lisp-program "/usr/bin/clisp")
+  )
+
+(use-package terminal-here
+  :ensure t
+  :init
+  (setq terminal-here-linux-terminal-command 'st)
+  (setq ivy-on-del-error-function #'ignore)
+  )
+
+(use-package so-long
+  :ensure t
+  :init
+  (global-so-long-mode +1))
+
+(use-package lorem-ipsum
+  :ensure t
+  )
+
+(use-package hydra
+  :ensure t
+  :commands defhydra
+  :config
+  (progn
+    (defhydra hydra-left-shift (global-map "<f9>")
+      ("h" evil-backward-paragraph)
+      ("l" evil-forward-paragraph)
+      ("d" evil-scroll-down)
+      ("u" evil-scroll-up)
+      ( "=" text-scale-increase)
+      ( "-" text-scale-decrease)
+      ( "0"  (text-scale-set 0))
+      ("H" windsize-left)
+      ("L" windsize-right)
+      ("J" windsize-down)
+      ("K" windsize-up)
+      )
+    (defhydra hydra-right-shift (global-map "<f10>")
+      ("d" fff-delete-current-line :exit t )
+      )
+    ))
+
+(use-package company
+  :ensure t
+  :defer t
+  :init
+  (global-company-mode)
+  )
+
+(use-package yasnippet
+  :ensure t
+  :config
+  (yas-reload-all)
+  (add-hook 'prog-mode-hook #'yas-minor-mode)
+  )
+
+(use-package restart-emacs
+  :ensure t
+  )
+
+(use-package windsize
+  :ensure t
+  :config
+  )
+
+
+(use-package crux
+  :ensure t
+  )
+
+
+(use-package emmet-mode
+  :ensure t
+  :init (add-hook 'sgml-mode-hook 'emmet-mode)
   )
 
 (use-package evil-leader
@@ -462,233 +670,3 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "U" 'pop-global-mark)
     )
   )
-
-(use-package evil
-  :after evil-leader
-  :ensure t
-  :init
-  (setq evil-undo-system 'undo-fu)
-  (setq evil-want-integration t)
-  (setq evil-want-keybinding nil)
-  (setq evil-search-wrap 'nil)
-  :config
-  (progn
-    (fset 'fff-down-paragraph
-	  (kmacro-lambda-form [?\}] 0 "%d"))
-    (evil-mode 1)
-    (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
-    (define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
-    (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
-    (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
-
-    (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
-    (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
-    (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
-    (define-key evil-insert-state-map (kbd "C-y") 'yank)
-    (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
-    (define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
-    (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
-    (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
-
-    (define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
-    (define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
-    (define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
-    (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
-    (define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
-    (define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
-    (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
-    (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
-    (define-key evil-normal-state-map (kbd "[") 'fff-backward-paragraph)
-    (define-key evil-normal-state-map (kbd "]") nil)
-    (define-key evil-normal-state-map (kbd "]") 'fff-down-paragraph)
-    (define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
-    (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
-    (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
-
-
-    (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
-    (define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
-    (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
-    (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
-
-    (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
-    (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
-    (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
-    (define-key evil-insert-state-map (kbd "C-y") 'yank)
-    (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
-    (define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
-    (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
-    (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
-
-    (define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
-    (define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
-    (define-key evil-normal-state-map (kbd "-") 'text-scale-adjust)
-    (define-key evil-normal-state-map (kbd "=") 'text-scale-adjust)
-    (define-key evil-normal-state-map (kbd "0") 'text-scale-adjust)
-    (define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
-    (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
-    (define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
-    (define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
-    (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
-    (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
-
-    ))
-
-(use-package undo-fu
-  :ensure t)
-
-(use-package evil-collection
-  :after evil
-  :ensure t
-  :config
-  (evil-collection-init)
-  )
-
-(use-package evil-surround
-  :ensure t
-  :config
-  (global-evil-surround-mode +1))
-
-(use-package ivy
-  :ensure t
-  :config
-  (setq ivy-initial-inputs-alist nil)
-  (setq ivy-on-del-error-function #'ignore)
-  :init
-  (ivy-mode)
-  )
-
-(use-package counsel
-  :ensure t
-  :config
-  :init
-  (counsel-mode)
-  )
-
-(use-package elpy
-  :ensure t
-  :config
-  (setq elpy-shell-starting-directory 'current-directory) 
-  :init
-  (elpy-enable)
-  )
-
-(use-package ein
-  :after evil
-  :ensure t
-  :defer t
-  :commands (ein:run ein:login)
-  :init
-  (defun fff-set-ein-key-map ()
-    (define-key ein:notebook-mode-map (kbd "C-c C-c") nil)
-    (define-key ein:notebook-mode-map (kbd "C-c C-c") 'ein:worksheet-execute-cell))
-  (add-hook 'ein:notebooklist-mode-hook #'fff-set-ein-key-map)
-  )
-
-(use-package expand-region
-  :ensure t
-  )
-
-(use-package vterm
-  :ensure t)
-
-(use-package slime
-  :ensure t
-  :init
-  (setq inferior-lisp-program "/usr/bin/clisp")
-  )
-
-(use-package terminal-here
-  :ensure t
-  :init
-  (setq terminal-here-linux-terminal-command 'st)
-  (setq ivy-on-del-error-function #'ignore)
-  )
-
-(use-package so-long
-  :ensure t
-  :init
-  (global-so-long-mode +1))
-
-(use-package lorem-ipsum
-  :ensure t
-  )
-
-(use-package hydra
-  :ensure t
-  :commands defhydra
-  :config
-  (progn
-    (defhydra hydra-left-shift (global-map "<f9>")
-      ("h" evil-backward-paragraph)
-      ("l" evil-forward-paragraph)
-      ("d" evil-scroll-down)
-      ("u" evil-scroll-up)
-      ( "=" text-scale-increase)
-      ( "-" text-scale-decrease)
-      ( "0"  (text-scale-set 0))
-      ("H" windsize-left)
-      ("L" windsize-right)
-      ("J" windsize-down)
-      ("K" windsize-up)
-      )
-    (defhydra hydra-right-shift (global-map "<f10>")
-      ("d" fff-delete-current-line :exit t )
-      )
-    ))
-
-(use-package company
-  :ensure t
-  :defer t
-  :init
-  (global-company-mode)
-  )
-
-;; (use-package yasnippet
-;;   :ensure t
-;;   :config
-;;   (yas-reload-all)
-;;   (add-hook 'prog-mode-hook #'yas-minor-mode)
-;;   )
-
-(use-package restart-emacs
-  :ensure t
-  )
-
-(use-package windsize
-  :ensure t
-  :config
-  )
-
-
-(use-package crux
-  :ensure t
-  )
-
-
-(use-package emmet-mode
-  :ensure t
-  :init (add-hook 'sgml-mode-hook 'emmet-mode)
-  )
-
-(use-package org
-  :ensure t
-  :init
-  (setq org-confirm-babel-evaluate nil)
-  :config
-  (org-babel-do-load-languages
- 'org-babel-load-languages
- '((python . t))))
-

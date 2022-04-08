@@ -7,3 +7,6 @@
 [submodule ".config/nvim/plugged/vim-surround"]
 	path = .config/nvim/plugged/vim-surround
 	url = https://github.com/tpope/vim-surround.git
+[submodule ".config/emacs/site-lisp/evil"]
+	path = .config/emacs/site-lisp/evil
+	url = https://github.com/emacs-evil/evil.git
