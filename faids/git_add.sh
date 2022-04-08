@@ -32,7 +32,5 @@ git add .xprofile
 git add .zprofile
 git add .gitconfig
 git add .config/keynav/
-git add .vscode-oss
-git add .config/VSCodium/
 git add README.md 
 git add faids/

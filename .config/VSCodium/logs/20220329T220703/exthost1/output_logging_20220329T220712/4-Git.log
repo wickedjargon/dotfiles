@@ -1,5 +1,0 @@
-[2022-03-30T02:07:20.330Z] Validating found git in: git
-[2022-03-30T02:07:20.537Z] Using git 2.35.1 from git
-[2022-03-30T02:07:20.804Z] > git rev-parse --git-dir [16ms]
-[2022-03-30T02:07:20.846Z] Open repository: /home/ff
-[2022-03-30T02:07:22.876Z] > git ls-files --stage -- /home/ff/d/python/seb/test.py [107ms]
