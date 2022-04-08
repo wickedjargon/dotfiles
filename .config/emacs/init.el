@@ -11,7 +11,7 @@
 (unless (assoc-default "nongnu" package-archives)
   (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t))
 
-(setq package-list '(use-package evil ein))
+(setq package-list '(use-package ein))
 
 (unless package-archive-contents (package-refresh-contents))
 ;; (package-refresh-contents)
