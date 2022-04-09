@@ -41,15 +41,10 @@
     ;; embark specific commands. `isearch-forward' isn't defined, use
     ;; `evil-search-forward' instead.
     "a" 'embark-act
-    "A" 'embark-act-all
+    "A" 'embark-collect-direct-action-minor-mode
     "E" 'embark-export                   ;; was e
-    "m" 'embark-collect-mark
     "T" 'embark-collect-zebra-minor-mode ;; was z
-    "t" 'embark-collect-toggle-marks
-    "u" 'embark-collect-unmark
-    "U" 'embark-collect-unmark-all
     (kbd "M-q") 'embark-collect-toggle-view
-    (kbd "M-a") 'embark-collect-direct-action-minor-mode
 
     "gr" 'revert-buffer))
 

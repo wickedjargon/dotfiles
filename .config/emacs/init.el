@@ -11,123 +11,15 @@
 (unless (assoc-default "nongnu" package-archives)
   (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t))
 
-(setq ein:output-area-inlined-images t)
-
-(setq package-list '(use-package evil ein ob-ipython))
+(setq package-list '(use-package))
 
 (unless package-archive-contents (package-refresh-contents))
-; (package-refresh-contents)
 
 (unless package-archive-contents
   (package-refresh-contents))
 (dolist (package package-list)
   (unless (package-installed-p package)
     (package-install package)))
-
-(setq evil-want-integration t) ;; This is optional since it's already set to t by default.
-(setq evil-want-keybinding nil)
-
-(require 'use-package)
-
-(add-to-list 'load-path "/home/ff/.config/emacs/site-lisp/evil/")
-(require 'evil)
-(add-hook 'ein:ipdb-mode-hook 'evil-mode)
-(add-hook 'ein:$kernel-after-execute-hook 'evil-mode)
-(add-hook 'ein:$kernel-after-start-hook 'evil-mode)
-(add-hook 'ein:ipdb-mode-hook 'evil-mode)
-(add-hook 'ein:markdown-mode-hook 'evil-mode)
-(add-hook 'ein:notebook-after-rename-hook 'evil-mode)
-(add-hook 'ein:notebook-mode-hook 'evil-mode)
-(add-hook 'ein:notebooklist-first-open-hook 'evil-mode)
-(add-hook 'ein:notebooklist-mode-hook 'evil-mode)
-(add-hook 'ein:pager-mode-hook 'evil-mode)
-(add-hook 'ein:shared-output-mode-hook 'evil-mode)
-(add-hook 'ein:traceback-mode-hook 'evil-mode)
-(add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
-(add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
-
-
-(evil-mode 1)
-
-(with-eval-after-load 'evil-maps
-
-(define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
-(define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
-(define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
-(define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
-(define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
-(define-key evil-visual-state-map (kbd "C-/") 'comment-line)
-
-(define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
-(define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
-(define-key evil-insert-state-map (kbd "C-d") 'delete-char)
-(define-key evil-insert-state-map (kbd "C-w") 'kill-region)
-(define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
-(define-key evil-insert-state-map (kbd "C-y") 'yank)
-(define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
-(define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
-(define-key evil-insert-state-map (kbd "C-'") 'company-complete)
-(define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
-
-(define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
-(define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
-(define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
-(define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
-(define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
-(define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
-(define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
-(define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
-(define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
-(define-key evil-normal-state-map (kbd "C-/") 'comment-line)
-(define-key evil-normal-state-map (kbd "[") 'fff-backward-paragraph)
-(define-key evil-normal-state-map (kbd "]") nil)
-(define-key evil-normal-state-map (kbd "]") 'fff-down-paragraph)
-(define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
-(define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
-(define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
-
-
-(define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
-(define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
-(define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
-(define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
-(define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
-(define-key evil-visual-state-map (kbd "C-/") 'comment-line)
-
-(define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
-(define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
-(define-key evil-insert-state-map (kbd "C-d") 'delete-char)
-(define-key evil-insert-state-map (kbd "C-w") 'kill-region)
-(define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
-(define-key evil-insert-state-map (kbd "C-y") 'yank)
-(define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
-(define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
-(define-key evil-insert-state-map (kbd "C-'") 'company-complete)
-(define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
-
-(define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
-(define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
-(define-key evil-normal-state-map (kbd "-") 'text-scale-adjust)
-(define-key evil-normal-state-map (kbd "=") 'text-scale-adjust)
-(define-key evil-normal-state-map (kbd "0") 'text-scale-adjust)
-(define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
-(define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
-(define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
-(define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
-(define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
-(define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
-(define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
-(define-key evil-normal-state-map (kbd "C-/") 'comment-line)
-)
-
-(use-package evil-collection
-  :after evil
-  :ensure t
-  :config
-(evil-collection-init)
-  )
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; set up font:
@@ -137,12 +29,8 @@
  '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 120 :width normal))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
- '(font-lock-doc-face ((t (:inherit font-lock-comment-face))))
- '(ein:basecell-input-area-face ((t (:extend t :background "gray13"))))
- )
-
-
-
+ '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
+ '(font-lock-doc-face ((t (:inherit font-lock-comment-face)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; config outside of use-package:
@@ -191,47 +79,9 @@
 (defun display-startup-echo-area-message ()
   (message "(emacs-init-time) -> %s" (emacs-init-time)))
 
-;; setup org babel for python
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((python . t)
-   (ipython . t)
-   )
- )
-  (setq org-src-fontify-natively t
-        org-src-window-setup 'current-window ;; edit in current window
-        org-src-strip-leading-and-trailing-blank-lines t
-        org-src-preserve-indentation t ;; do not put two spaces on the left
-        org-src-tab-acts-natively t)
-
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; my functions:
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    (defun comment-line (n)
-      (interactive "p")
-      (if (use-region-p)
-	  (comment-or-uncomment-region
-	   (save-excursion
-             (goto-char (region-beginning))
-             (line-beginning-position))
-	   (save-excursion
-             (goto-char (region-end))
-             ;; (line-end-position)
-             ))
-	(when (and (eq last-command 'comment-line-backward)
-		   (natnump n))
-	  (setq n (- n)))
-	(let ((range
-               (list (line-beginning-position)
-                     (goto-char (line-end-position n)))))
-	  (comment-or-uncomment-region
-	   (apply #'min range)
-	   (apply #'max range)))
-	(forward-line 1)
-	(back-to-indentation)
-	(unless (natnump n) (setq this-command 'comment-line-backward)))
-      )
 
 (defun fff-remove-blank-lines ()
   (interactive)
@@ -373,6 +223,7 @@
   (interactive)
   (insert "	"))
 
+
 (defun fff-toggle-flycheck-mode ()
   (interactive)
   (if (not flycheck-mode)
@@ -480,17 +331,7 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (delete-region
    (line-beginning-position)
-   (line-end-position))
-  )
-(defun fff-delete-current-line ()
-  "Deletes the current line"
-  (interactive)
-  (delete-region
-   (line-beginning-position)
-   (line-end-position))
-  (evil-ex-delete-backward-char)
-  )
-
+   (line-end-position)))
 
 (defun fff-switch-to-previous-buffer ()
   (interactive)
@@ -499,13 +340,6 @@ in whole buffer.  With neither, delete comments on current line."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; load site-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package yasnippet
-  :ensure t
-  :config
-  (yas-reload-all)
-  (add-hook 'prog-mode-hook #'yas-minor-mode)
-  )
 
 (use-package yasnippet-snippets 
   :ensure nil
@@ -516,12 +350,24 @@ in whole buffer.  With neither, delete comments on current line."
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   )
 
-(yas-reload-all)
-(add-hook 'prog-mode-hook #'yas-minor-mode)
+;; (use-package evil-collection 
+;;   :after evil
+;;   :ensure nil
+;;   :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/evil-collection/"))
+;;   :load-path "evil-collection.el"
+;;   :config
+;;   (evil-collection-init)
+;;   )
 
-;; ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; ;; use package setup:
-;; ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; use package setup:
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'use-package)
+
+(setq evil-undo-system nil)
+(setq evil-want-integration t)
+(setq evil-want-keybinding nil)
 
 (use-package modus-themes
   :ensure t
@@ -531,6 +377,198 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   ;; after the package is loaded:
   (modus-themes-load-vivendi)
+  )
+
+(use-package evil-leader
+  :commands (evil-leader-mode)
+  :ensure t
+  :init (global-evil-leader-mode)
+  :config
+  (progn
+    ;; let's use some advise instead of over writing like this:
+    (defun comment-line (n)
+      (interactive "p")
+      (if (use-region-p)
+	  (comment-or-uncomment-region
+	   (save-excursion
+             (goto-char (region-beginning))
+             (line-beginning-position))
+	   (save-excursion
+             (goto-char (region-end))
+             ;; (line-end-position)
+             ))
+	(when (and (eq last-command 'comment-line-backward)
+		   (natnump n))
+	  (setq n (- n)))
+	(let ((range
+               (list (line-beginning-position)
+                     (goto-char (line-end-position n)))))
+	  (comment-or-uncomment-region
+	   (apply #'min range)
+	   (apply #'max range)))
+	(forward-line 1)
+	(back-to-indentation)
+	(unless (natnump n) (setq this-command 'comment-line-backward))))
+
+
+    (fset 'fff-C-x-C-e
+	  (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
+
+    (fset 'fff-C-x-C-s
+	  (kmacro-lambda-form [?\C-x ?\C-s] 0 "%d"))
+
+    (evil-leader/set-leader "<SPC>")
+    (evil-leader/set-key "SPC" 'execute-extended-command)
+    (evil-leader/set-key ";" 'eval-expression)
+    (evil-leader/set-key "0" 'counsel-buffer-or-recentf)
+    (evil-leader/set-key "7" 'fff-access-config)
+    (evil-leader/set-key "8" 'fff-access-home-dir)
+    (evil-leader/set-key "9" 'fff-access-sched)
+    (evil-leader/set-key "a" 'yas-insert-snippet)
+    (evil-leader/set-key "b" 'fff-access-bookmarks)
+    (evil-leader/set-key "d" 'delete-blank-lines)
+    (evil-leader/set-key "D" 'elpy-doc)
+    (evil-leader/set-key "e" 'fff-C-x-C-e)
+    (evil-leader/set-key "h" 'beginning-of-line)
+    (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
+    (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-fundamental-mode)
+    (evil-leader/set-key "t" 'vterm)
+    (evil-leader/set-key "T" 'terminal-here)
+    (evil-leader/set-key "p" 'crux-open-with)
+    (evil-leader/set-key "<tab>" 'ivy-switch-buffer)
+    (evil-leader/set-key "o" 'counsel-find-file)
+    (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
+    (evil-leader/set-key "l" 'end-of-line)
+    (evil-leader/set-key "j" 'ein:run)
+    (evil-leader/set-key "q" 'kill-buffer-and-window)
+    (evil-leader/set-key "r" 'fff-evil-regex-search)
+    (evil-leader/set-key "R" 'anzu-query-replace-regexp)
+    (evil-leader/set-key "s" 'fff-C-x-C-s)
+
+    (evil-leader/set-key "u" 'pop-tag-mark)
+    (evil-leader/set-key "U" 'pop-global-mark)
+    (evil-leader/set-key "v" 'turn-on-evil-mode)
+    (evil-leader/set-key "x <tab>" 'fff-insert-tab)
+    (evil-leader/set-key "x x" ctl-x-map)
+    (evil-leader/set-key "x 0" 'delete-window)
+    (evil-leader/set-key "x 1" 'delete-other-windows)
+    (evil-leader/set-key "x 2" 'split-window-below)
+    (evil-leader/set-key "x 3" 'split-window-right)
+    (evil-leader/set-key "x o" 'other-window)
+    (evil-leader/set-key "x f" 'counsel-find-file)
+    (evil-leader/set-key "x w" 'write-file)
+    (evil-leader/set-key "x h" 'mark-whole-buffer)
+    (evil-leader/set-key "x SPC b" 'list-buffers)
+    (evil-leader/set-key "y" 'fff-access-sched)
+    )
+ ) 
+
+(use-package evil
+  :after evil-leader
+  :ensure t
+  :init
+  (setq evil-undo-system nil)
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-fine-undo t)
+  (setq evil-search-wrap 'nil)
+  :config
+  (progn
+    (add-hook 'ein:ipdb-mode-hook 'evil-mode)
+    (add-hook 'ein:$kernel-after-execute-hook 'evil-mode)
+    (add-hook 'ein:$kernel-after-start-hook 'evil-mode)
+    (add-hook 'ein:ipdb-mode-hook 'evil-mode)
+    (add-hook 'ein:markdown-mode-hook 'evil-mode)
+    (add-hook 'ein:notebook-after-rename-hook 'evil-mode)
+    (add-hook 'ein:notebook-mode-hook 'evil-mode)
+    (add-hook 'ein:notebooklist-first-open-hook 'evil-mode)
+    (add-hook 'ein:notebooklist-mode-hook 'evil-mode)
+    (add-hook 'ein:pager-mode-hook 'evil-mode)
+    (add-hook 'ein:shared-output-mode-hook 'evil-mode)
+    (add-hook 'ein:traceback-mode-hook 'evil-mode)
+    (add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
+    (add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
+    (fset 'fff-down-paragraph
+	  (kmacro-lambda-form [?\}] 0 "%d"))
+    (evil-mode 1)
+    (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
+    (define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
+    (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
+    (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
+    (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
+    (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
+
+    (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
+    (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
+    (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
+    (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
+    (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
+    (define-key evil-insert-state-map (kbd "C-y") 'yank)
+    (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
+    (define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
+    (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
+    (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
+
+    (define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
+    (define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
+    (define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
+    (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
+    (define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
+    (define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
+    (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
+    (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
+    (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
+    (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
+    (define-key evil-normal-state-map (kbd "[") 'fff-backward-paragraph)
+    (define-key evil-normal-state-map (kbd "]") nil)
+    (define-key evil-normal-state-map (kbd "]") 'fff-down-paragraph)
+    (define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
+    (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
+    (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
+
+
+    (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
+    (define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
+    (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
+    (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
+    (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
+    (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
+
+    (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
+    (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
+    (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
+    (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
+    (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
+    (define-key evil-insert-state-map (kbd "C-y") 'yank)
+    (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
+    (define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
+    (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
+    (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
+
+    (define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
+    (define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
+    (define-key evil-normal-state-map (kbd "-") 'text-scale-adjust)
+    (define-key evil-normal-state-map (kbd "=") 'text-scale-adjust)
+    (define-key evil-normal-state-map (kbd "0") 'text-scale-adjust)
+    (define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
+    (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
+    (define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
+    (define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
+    (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
+    (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
+    (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
+    (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
+
+    ))
+
+;; (use-package undo-fu
+;;   :ensure t)
+
+(use-package evil-collection
+  :after evil
+  :ensure t
+  :config
+  (evil-collection-init)
   )
 
 (use-package evil-surround
@@ -561,6 +599,21 @@ in whole buffer.  With neither, delete comments on current line."
   :init
   (elpy-enable)
   )
+
+(use-package ein
+  :after evil
+  :ensure t
+  :defer t
+  :commands (ein:run ein:login)
+  :init
+  (defun fff-set-ein-key-map ()
+    (define-key ein:notebook-mode-map (kbd "C-c C-c") nil)
+    (define-key ein:notebook-mode-map (kbd "C-c C-c") 'ein:worksheet-execute-cell))
+  (add-hook 'ein:notebooklist-mode-hook #'fff-set-ein-key-map)
+  )
+
+
+
 
 (use-package expand-region
   :ensure t
@@ -621,7 +674,6 @@ in whole buffer.  With neither, delete comments on current line."
   (global-company-mode)
   )
 
-
 (use-package restart-emacs
   :ensure t
   )
@@ -631,97 +683,25 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   )
 
+
 (use-package crux
   :ensure t
   )
+
 
 (use-package emmet-mode
   :ensure t
   :init (add-hook 'sgml-mode-hook 'emmet-mode)
   )
 
-(use-package evil-leader
-  :commands (evil-leader-mode)
+(use-package org
   :ensure t
-  :init (global-evil-leader-mode)
+  :init
+  (setq org-confirm-babel-evaluate nil)
   :config
-  (progn
-    ;; let's use some advise instead of over writing like this:
-    (defun comment-line (n)
-      (interactive "p")
-      (if (use-region-p)
-	  (comment-or-uncomment-region
-	   (save-excursion
-             (goto-char (region-beginning))
-             (line-beginning-position))
-	   (save-excursion
-             (goto-char (region-end))
-             ;; (line-end-position)
-             ))
-	(when (and (eq last-command 'comment-line-backward)
-		   (natnump n))
-	  (setq n (- n)))
-	(let ((range
-               (list (line-beginning-position)
-                     (goto-char (line-end-position n)))))
-	  (comment-or-uncomment-region
-	   (apply #'min range)
-	   (apply #'max range)))
-	(forward-line 1)
-	(back-to-indentation)
-	(unless (natnump n) (setq this-command 'comment-line-backward))))
+  (org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t))))
 
-    (fset 'fff-save
-	  (kmacro-lambda-form [?\C-x ?\C-s] 0 "%d"))
-    (fset 'fff-C-c-C-c
-	  (kmacro-lambda-form [?\C-c ?\C-c] 0 "%d"))
-
-    (fset 'fff-C-x-C-e
-	  (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
-
-    (evil-leader/set-leader "<SPC>")
-    (evil-leader/set-key "SPC" 'execute-extended-command)
-    (evil-leader/set-key "a" 'yas-insert-snippet)
-    (evil-leader/set-key "b" 'fff-access-bookmarks)
-    (evil-leader/set-key "c" 'fff-C-c-C-c)
-    (evil-leader/set-key "d" 'delete-blank-lines)
-    (evil-leader/set-key "D" 'elpy-doc)
-    (evil-leader/set-key "e" 'fff-C-x-C-e)
-    (evil-leader/set-key "h" 'beginning-of-line)
-    (evil-leader/set-key "t" 'vterm)
-    (evil-leader/set-key "T" 'terminal-here)
-    (evil-leader/set-key "p" 'crux-open-with)
-    (evil-leader/set-key "<tab>" 'ivy-switch-buffer)
-    (evil-leader/set-key "q" 'kill-buffer-and-window)
-    (evil-leader/set-key "s" 'fff-save)
-    (evil-leader/set-key "o" 'counsel-find-file)
-    (evil-leader/set-key "0" 'counsel-buffer-or-recentf)
-    (evil-leader/set-key "7" 'fff-access-config)
-    (evil-leader/set-key "8" 'fff-access-home-dir)
-    (evil-leader/set-key "9" 'fff-access-sched)
-    (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
-    (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
-    (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-fundamental-mode)
-    (evil-leader/set-key "y" 'fff-access-sched)
-    (evil-leader/set-key "x x" ctl-x-map)
-    (evil-leader/set-key "x 0" 'delete-window)
-    (evil-leader/set-key "x 1" 'delete-other-windows)
-    (evil-leader/set-key "x 2" 'split-window-below)
-    (evil-leader/set-key "x 3" 'split-window-right)
-    (evil-leader/set-key "x o" 'other-window)
-    (evil-leader/set-key "x f" 'counsel-find-file)
-    (evil-leader/set-key "x w" 'write-file)
-    (evil-leader/set-key "x h" 'mark-whole-buffer)
-    (evil-leader/set-key "x SPC b" 'list-buffers)
-    (evil-leader/set-key "l" 'end-of-line)
-    (evil-leader/set-key "j" 'ein:run)
-    (evil-leader/set-key "x <tab>" 'fff-insert-tab)
-    (evil-leader/set-key "r" 'fff-evil-regex-search)
-    (evil-leader/set-key "R" 'anzu-query-replace-regexp)
-    (evil-leader/set-key ";" 'eval-expression)
-    (evil-leader/set-key "u" 'pop-tag-mark)
-    (evil-leader/set-key "U" 'pop-global-mark)
-    )
-  )
-
-(global-set-key (kbd "<f1>") 'turn-on-evil-mode)
+(autoload 'prolog-mode "prolog" "Major mode for editing Prolog programs." t)
+(add-to-list 'auto-mode-alist '("\\.pl\\'" . prolog-mode))

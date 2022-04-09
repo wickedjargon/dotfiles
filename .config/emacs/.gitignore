@@ -59,6 +59,4 @@ site-lisp/package/
 *.sync-conflict*
 /elpy/
 /bookmarks
-/request
-/games
-/snippets
+/request/
