@@ -25,7 +25,7 @@ site-lisp/package/
 /var
 /.sqli_history
 /frame-restore-parameters
-/.achievements
+/.achievggements
 /.bookmarks.el
 /history
 /helm-adaptive-history
@@ -60,3 +60,6 @@ site-lisp/package/
 /elpy/
 /bookmarks
 /request/
+/snippets/
+/url/
+/snippets/

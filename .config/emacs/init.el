@@ -26,7 +26,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (custom-set-faces
- '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 120 :width normal))))
+ '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 115 :width normal))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
  '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
@@ -346,7 +346,7 @@ in whole buffer.  With neither, delete comments on current line."
   :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/yasnippet-snippets/"))
   :load-path "yasnippet-snippets.el"
   :config
-  (yas-reload-all)
+  ;; (yas-reload-all)
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   )
 
