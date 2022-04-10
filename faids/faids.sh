@@ -270,6 +270,17 @@ pkill -15 -x 'pulseaudio'; sudo -u "$name" pulseaudio --start
 newperms "%wheel ALL=(ALL) ALL #LARBS
 %wheel ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/paru,/usr/bin/pacman -Syyuw --noconfirm"
 
+# added by ff
+cd /home/"$name"/faids/ && { curl -O https://bootstrap.pypa.io/get-pip.py ; cd -; }
+sudo -u "$name" python home/"$name"/faids/get-pip.py
+sudo -u "$name" pip install requests
+sudo -u "$name" pip install beautifulsoup4
+sudo -u "$name" pip install selenium
+sudo -u "$name" pip install pandas
+sudo -u "$name" pip install matplotlib
+sudo -u "$name" pip install numpy
+# ff ends here
+
 # Last message! Install complete!
 finalize
 clear
