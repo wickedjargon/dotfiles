@@ -13,8 +13,10 @@
 
 (setq package-list '(use-package))
 
+;; if package-archive-contents is nill, package-refresh-contents
 (unless package-archive-contents (package-refresh-contents))
 
+;; if package-archive-contents is nil, install packages from package-list
 (unless package-archive-contents
   (package-refresh-contents))
 (dolist (package package-list)
@@ -73,11 +75,16 @@
 (define-key input-decode-map [?\C-i] [C-i])
 (define-key input-decode-map [?\C-m] [C-m])
 
+;; I prefer a full screen new buffer, not a split screen:
 (setq display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)))
 
 ;; show startup time on launch
 (defun display-startup-echo-area-message ()
   (message "(emacs-init-time) -> %s" (emacs-init-time)))
+
+;; open .pl files in prolog
+(autoload 'prolog-mode "prolog" "Major mode for editing Prolog programs." t)
+(add-to-list 'auto-mode-alist '("\\.pl\\'" . prolog-mode))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; my functions:
@@ -349,15 +356,6 @@ in whole buffer.  With neither, delete comments on current line."
   ;; (yas-reload-all)
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   )
-
-;; (use-package evil-collection 
-;;   :after evil
-;;   :ensure nil
-;;   :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/evil-collection/"))
-;;   :load-path "evil-collection.el"
-;;   :config
-;;   (evil-collection-init)
-;;   )
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; use package setup:
@@ -652,8 +650,8 @@ in whole buffer.  With neither, delete comments on current line."
     (defhydra hydra-left-shift (global-map "<f9>")
       ("h" evil-backward-paragraph)
       ("l" evil-forward-paragraph)
-      ("d" evil-scroll-down)
-      ("u" evil-scroll-up)
+      ("D" evil-scroll-down)
+      ("U" evil-scroll-up)
       ( "=" text-scale-increase)
       ( "-" text-scale-decrease)
       ( "0"  (text-scale-set 0))
@@ -703,5 +701,3 @@ in whole buffer.  With neither, delete comments on current line."
  'org-babel-load-languages
  '((python . t))))
 
-(autoload 'prolog-mode "prolog" "Major mode for editing Prolog programs." t)
-(add-to-list 'auto-mode-alist '("\\.pl\\'" . prolog-mode))

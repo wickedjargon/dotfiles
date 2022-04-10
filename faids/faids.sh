@@ -103,14 +103,14 @@ manualinstall() { # Installs $1 manually. Used only for AUR helper here.
 }
 
 maininstall() { # Installs all needed programs from main repo.
-	dialog --title "LARBS Installation" --infobox "Installing \`$1\` ($n of $total). $1 $2" 5 70
+	dialog --title "FAIDS Installation" --infobox "Installing \`$1\` ($n of $total). $1 $2" 5 70
 	installpkg "$1"
 	}
 
 gitmakeinstall() {
 	progname="$(basename "$1" .git)"
 	dir="$repodir/$progname"
-	dialog --title "LARBS Installation" --infobox "Installing \`$progname\` ($n of $total) via \`git\` and \`make\`. $(basename "$1") $2" 5 70
+	dialog --title "FAIDS Installation" --infobox "Installing \`$progname\` ($n of $total) via \`git\` and \`make\`. $(basename "$1") $2" 5 70
 	sudo -u "$name" git clone --depth 1 "$1" "$dir" >/dev/null 2>&1 || { cd "$dir" || return 1 ; sudo -u "$name" git pull --force origin master;}
 	cd "$dir" || exit 1
 	make >/dev/null 2>&1
@@ -118,13 +118,13 @@ gitmakeinstall() {
 	cd /tmp || return 1 ;}
 
 aurinstall() { \
-	dialog --title "LARBS Installation" --infobox "Installing \`$1\` ($n of $total) from the AUR. $1 $2" 5 70
+	dialog --title "FAIDS Installation" --infobox "Installing \`$1\` ($n of $total) from the AUR. $1 $2" 5 70
 	echo "$aurinstalled" | grep -q "^$1$" && return 1
 	sudo -u "$name" $aurhelper -S --noconfirm "$1" >/dev/null 2>&1
 	}
 
 pipinstall() { \
-	dialog --title "LARBS Installation" --infobox "Installing the Python package \`$1\` ($n of $total). $1 $2" 5 70
+	dialog --title "FAIDS Installation" --infobox "Installing the Python package \`$1\` ($n of $total). $1 $2" 5 70
 	[ -x "$(command -v "pip")" ] || installpkg python-pip >/dev/null 2>&1
 	yes | pip install "$1"
 	}
@@ -188,11 +188,11 @@ preinstallmsg || error "User exited."
 refreshkeys || error "Error automatically refreshing Arch keyring. Consider doing so manually."
 
 for x in curl ca-certificates base-devel git ntp zsh ; do
-	dialog --title "LARBS Installation" --infobox "Installing \`$x\` which is required to install and configure other programs." 5 70
+	dialog --title "FAIDS Installation" --infobox "Installing \`$x\` which is required to install and configure other programs." 5 70
 	installpkg "$x"
 done
 
-dialog --title "LARBS Installation" --infobox "Synchronizing system time to ensure successful and secure installation of software..." 4 70
+dialog --title "FAIDS Installation" --infobox "Synchronizing system time to ensure successful and secure installation of software..." 4 70
 ntpdate 0.us.pool.ntp.org >/dev/null 2>&1
 
 adduserandpass || error "Error adding username and/or password."
@@ -218,7 +218,7 @@ manualinstall yay || error "Failed to install AUR helper."
 # and all build dependencies are installed.
 installationloop
 
-dialog --title "LARBS Installation" --infobox "Finally, installing \`libxft-bgra\` to enable color emoji in suckless software without crashes." 5 70
+dialog --title "FAIDS Installation" --infobox "Finally, installing \`libxft-bgra\` to enable color emoji in suckless software without crashes." 5 70
 yes | sudo -u "$name" $aurhelper -S libxft-bgra-git >/dev/null 2>&1
 
 # Install the dotfiles in the user's home directory
@@ -270,16 +270,16 @@ pkill -15 -x 'pulseaudio'; sudo -u "$name" pulseaudio --start
 newperms "%wheel ALL=(ALL) ALL #LARBS
 %wheel ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/paru,/usr/bin/pacman -Syyuw --noconfirm"
 
-# added by ff
-cd /home/"$name"/faids/ && { curl -O https://bootstrap.pypa.io/get-pip.py ; cd -; }
-sudo -u "$name" python home/"$name"/faids/get-pip.py
-sudo -u "$name" pip install requests
-sudo -u "$name" pip install beautifulsoup4
-sudo -u "$name" pip install selenium
-sudo -u "$name" pip install pandas
-sudo -u "$name" pip install matplotlib
-sudo -u "$name" pip install numpy
-# ff ends here
+# # added by ff
+# cd /home/"$name"/faids/ && { curl -O https://bootstrap.pypa.io/get-pip.py ; cd -; }
+# sudo -u "$name" python home/"$name"/faids/get-pip.py
+# sudo -u "$name" pip install requests
+# sudo -u "$name" pip install beautifulsoup4
+# sudo -u "$name" pip install selenium
+# sudo -u "$name" pip install pandas
+# sudo -u "$name" pip install matplotlib
+# sudo -u "$name" pip install numpy
+# # ff ends here
 
 # Last message! Install complete!
 finalize
