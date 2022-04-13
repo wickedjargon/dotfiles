@@ -11,7 +11,7 @@
 (unless (assoc-default "nongnu" package-archives)
   (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t))
 
-(setq package-list '(use-package))
+(setq package-list '(use-package markdown-mode))
 
 ;; if package-archive-contents is nill, package-refresh-contents
 (unless package-archive-contents (package-refresh-contents))
@@ -82,7 +82,7 @@
 (defun display-startup-echo-area-message ()
   (message "(emacs-init-time) -> %s" (emacs-init-time)))
 
-;; open .pl files in prolog
+;; open .pl files in prolog-mode
 (autoload 'prolog-mode "prolog" "Major mode for editing Prolog programs." t)
 (add-to-list 'auto-mode-alist '("\\.pl\\'" . prolog-mode))
 
@@ -307,6 +307,9 @@ in whole buffer.  With neither, delete comments on current line."
         (goto-char (if arg (point-min) beg)))
       (fff-comment-delete (or lines 1)))))
 
+(defun fff-comment-delete-all ()
+  (interactive)
+  (fff-comment-delete-dwim (point-min) (point-max) +1))
 
 (defun fff-toggle-window-split ()
   (interactive)
@@ -333,7 +336,8 @@ in whole buffer.  With neither, delete comments on current line."
           (select-window first-win)
           (if this-win-2nd (other-window 1))))))
 
-(defun fff-delete-current-line ()
+
+(defun fff-clear-line ()
   "Deletes the current line"
   (interactive)
   (delete-region
@@ -408,7 +412,6 @@ in whole buffer.  With neither, delete comments on current line."
 	(back-to-indentation)
 	(unless (natnump n) (setq this-command 'comment-line-backward))))
 
-
     (fset 'fff-C-x-C-e
 	  (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
 
@@ -426,6 +429,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "b" 'fff-access-bookmarks)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "D" 'elpy-doc)
+
     (evil-leader/set-key "e" 'fff-C-x-C-e)
     (evil-leader/set-key "h" 'beginning-of-line)
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
@@ -441,7 +445,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "q" 'kill-buffer-and-window)
     (evil-leader/set-key "r" 'fff-evil-regex-search)
     (evil-leader/set-key "R" 'anzu-query-replace-regexp)
-    (evil-leader/set-key "s" 'fff-C-x-C-s)
+    (evil-leader/set-key "s" 'save-buffer)
 
     (evil-leader/set-key "u" 'pop-tag-mark)
     (evil-leader/set-key "U" 'pop-global-mark)
@@ -523,7 +527,6 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
     (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
-
 
     (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
     (define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
@@ -610,9 +613,6 @@ in whole buffer.  With neither, delete comments on current line."
   (add-hook 'ein:notebooklist-mode-hook #'fff-set-ein-key-map)
   )
 
-
-
-
 (use-package expand-region
   :ensure t
   )
@@ -661,7 +661,7 @@ in whole buffer.  With neither, delete comments on current line."
       ("K" windsize-up)
       )
     (defhydra hydra-right-shift (global-map "<f10>")
-      ("d" fff-delete-current-line :exit t )
+      ("d" fff-clear-line :exit t )
       )
     ))
 
@@ -681,11 +681,9 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   )
 
-
 (use-package crux
   :ensure t
   )
-
 
 (use-package emmet-mode
   :ensure t
@@ -696,8 +694,33 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :init
   (setq org-confirm-babel-evaluate nil)
+  :bind
+  (
+   ("C-k" . nil)
+   ("C-k" . er/expand-region)
+   )
   :config
-  (org-babel-do-load-languages
- 'org-babel-load-languages
- '((python . t))))
+  (progn
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((python . t)))
+    (customize-set-value 'org-latex-hyperref-template "
+\\hypersetup{\n pdfauthor={%a},\n pdftitle={%t},\n pdfkeywords={%k},
+ pdfsubject={%d},\n pdfcreator={%c},\n pdflang={%L},\n colorlinks=true}\n")
+  ))
 
+(use-package markdown-mode
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown"))
+
+(use-package pyvenv
+  :ensure t
+  :config
+  (pyvenv-mode t)
+  (setq pyvenv-post-activate-hooks
+        (list (lambda ()
+                (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python3")))))
+  (setq pyvenv-post-deactivate-hooks
+        (list (lambda ()
+                (setq python-shell-interpreter "python3")))))
