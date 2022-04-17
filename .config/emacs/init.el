@@ -563,8 +563,8 @@ in whole buffer.  With neither, delete comments on current line."
 
     ))
 
-;; (use-package undo-fu
-;;   :ensure t)
+(use-package undo-fu
+  :ensure t)
 
 (use-package evil-collection
   :after evil
