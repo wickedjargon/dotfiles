@@ -14,14 +14,15 @@ git submodule add https://github.com/tpope/vim-surround.git .config/nvim/plugged
 git submodule add https://github.com/emacs-evil/evil.git .config/emacs/site-lisp/evil
 
 ## git add, commit, push
-git add via /faids/git_add.sh
+/faids/git_add.sh
 git commit -m "--"
 git push
 
 # network and browsing
 
 ## copy hosts file to /etc/hosts
-sudo cat hosts >> /etc/hosts
+sudo su
+cat hosts >> /etc/hosts
 
 ## setup firefox
 
@@ -34,6 +35,7 @@ sudo cat hosts >> /etc/hosts
 - vimium
 - ublock origin
 - dark reader
+- darker jupyter
 
 ### some settings
 - set `g` as prefix for google search

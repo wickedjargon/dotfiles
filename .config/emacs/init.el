@@ -29,10 +29,11 @@
 
 (custom-set-faces
  '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 115 :width normal))))
+ '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
- '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
- '(font-lock-doc-face ((t (:inherit font-lock-comment-face)))))
+ '(font-lock-doc-face ((t (:inherit font-lock-comment-face))))
+ )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; config outside of use-package:
@@ -694,11 +695,6 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :init
   (setq org-confirm-babel-evaluate nil)
-  :bind
-  (
-   ("C-k" . nil)
-   ("C-k" . er/expand-region)
-   )
   :config
   (progn
     (org-babel-do-load-languages

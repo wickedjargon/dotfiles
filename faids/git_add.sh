@@ -28,6 +28,8 @@ git add .config/zsh/
 git add .local/bin/
 git add .local/share/bg.png
 git add .local/share/bg
+git add .local/share/weatherreport
+git add .local/share/applications/
 git add .xprofile
 git add .zprofile
 git add .config/keynav/
