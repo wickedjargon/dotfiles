@@ -64,3 +64,6 @@ site-lisp/package/
 /url/
 /snippets/
 tutorial/
+/config/
+/backups/
+/lockfiles/

@@ -44,8 +44,10 @@
 (defalias 'yes-or-no-p 'y-or-n-p)			;; just type `y`, not `yes`
 (global-display-line-numbers-mode)			;; global line numbers
 (menu-bar-mode +1)					;; I like the menu bar
-(setq make-backup-files nil)				;; no backup files
-(setq create-lockfiles nil)				;; no lock files
+(setq auto-save-file-name-transforms                    ;;  (save auto save data
+      '((".*" "~/.config/emacs/auto-save-list/" t)))    ;;  in a separate directory)
+(setq backup-directory-alist                            ;; (save backup files
+      '(("." . "~/.config/emacs/backups")))             ;; in a separate directory)
 (blink-cursor-mode -1)					;; don't blink my cursor
 (setq global-auto-revert-non-file-buffers t)		;; auto revert my files
 (global-auto-revert-mode +1)				;; auto revert files and buffers
@@ -348,6 +350,7 @@ in whole buffer.  With neither, delete comments on current line."
 (defun fff-switch-to-previous-buffer ()
   (interactive)
   (switch-to-buffer (other-buffer (current-buffer) 1)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; load site-lisp
