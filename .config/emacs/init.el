@@ -59,6 +59,7 @@
 (setq initial-scratch-message "")			;; no message on scratch buffer
 (global-unset-key (kbd "C-x C-c"))			;; I accidently hit this sometimes
 (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
+(setq-default indent-tabs-mode nil)                     ;; I prefer spaces instead of tabs
 
 ;; don't show `active processes exist` warning:
 (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
@@ -446,7 +447,10 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
     (evil-leader/set-key "l" 'end-of-line)
     (evil-leader/set-key "j" 'ein:run)
-    (evil-leader/set-key "q" 'kill-buffer-and-window)
+    ;; (evil-leader/set-key "q" 'kill-buffer-and-window)
+    (evil-leader/set-key "q" 'delete-window)
+    (evil-leader/set-key "Q" 'kill-buffer-and-window)
+    (evil-leader/set-key "k" 'evil-record-macro)
     (evil-leader/set-key "r" 'fff-evil-regex-search)
     (evil-leader/set-key "R" 'anzu-query-replace-regexp)
     (evil-leader/set-key "s" 'save-buffer)
@@ -503,6 +507,12 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
     (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
+    ;; (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
+    ;; (define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
+    ;; (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
+    ;; (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
+    ;; (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
+    ;; (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
 
     (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
     (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
@@ -514,11 +524,26 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
     (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
     (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
+    ;; (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
+    ;; (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
+    ;; (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
+    ;; (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
+    ;; (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
+    ;; (define-key evil-insert-state-map (kbd "C-y") 'yank)
+    ;; (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
+    ;; (define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
+    ;; (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
+    ;; (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
 
+
+
+    (define-key evil-normal-state-map (kbd "-") 'text-scale-adjust)
+    (define-key evil-normal-state-map (kbd "=") 'text-scale-adjust)
+    (define-key evil-normal-state-map (kbd "0") 'text-scale-adjust)
     (define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
     (define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
     (define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
-    (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
+    (define-key evil-normal-state-map (kbd "Q") nil)
     (define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
     (define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
     (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
@@ -531,38 +556,12 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
     (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
-
-    (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
-    (define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
-    (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
-    (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
-
-    (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
-    (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
-    (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
-    (define-key evil-insert-state-map (kbd "C-y") 'yank)
-    (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
-    (define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
-    (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
-    (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
-
-    (define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
-    (define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
-    (define-key evil-normal-state-map (kbd "-") 'text-scale-adjust)
-    (define-key evil-normal-state-map (kbd "=") 'text-scale-adjust)
-    (define-key evil-normal-state-map (kbd "0") 'text-scale-adjust)
-    (define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
-    (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
-    (define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
-    (define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
-    (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
-    (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
+    ;; (define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
+    ;; (define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
+    ;; (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
+    ;; (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
+    ;; (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
+    ;; (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
 
     ))
 
@@ -723,3 +722,7 @@ in whole buffer.  With neither, delete comments on current line."
   (setq pyvenv-post-deactivate-hooks
         (list (lambda ()
                 (setq python-shell-interpreter "python3")))))
+
+(use-package mw-thesaurus
+  :ensure t
+  )
