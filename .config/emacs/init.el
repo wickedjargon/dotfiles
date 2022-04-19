@@ -21,11 +21,11 @@
   (unless (package-installed-p package)
     (package-install package)))
 
-(use-package benchmark-init
- :ensure t
- :config
- ;; To disable collection of benchmark data after init is done.
- (add-hook 'after-init-hook 'benchmark-init/deactivate))
+;; (use-package benchmark-init
+;;  :ensure t
+;;  :config
+;;  ;; To disable collection of benchmark data after init is done.
+;;  (add-hook 'after-init-hook 'benchmark-init/deactivate))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; set up font:
@@ -565,7 +565,7 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t)
 
 (use-package evil-collection
-  :defer t
+  ;; :defer t
   :after evil
   :ensure t
   :config
