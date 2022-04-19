@@ -1,5 +1,3 @@
-;; TODO: some ein commands disable evil's keybindings. I will find a way to fix this.
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; starting our engines...
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -250,8 +248,13 @@
 (defun fff-toggle-visual-line-mode ()
   (interactive)
   (if (not visual-line-mode)
-      (visual-line-mode +1)
-    (visual-line-mode -1)))
+      (progn
+        (visual-line-mode +1)
+        (message "visual line mode on"))
+    (progn
+      (visual-line-mode -1)
+      (message "visual line mode off")
+      )))
 
 (defun fff-send-to-clipboard (x)
   (with-temp-buffer
@@ -374,7 +377,6 @@ in whole buffer.  With neither, delete comments on current line."
   :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/yasnippet-snippets/"))
   :load-path "yasnippet-snippets.el"
   :config
-  ;; (yas-reload-all)
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   )
 
@@ -437,10 +439,11 @@ in whole buffer.  With neither, delete comments on current line."
 
     (evil-leader/set-leader "<SPC>")
     (evil-leader/set-key "SPC" 'execute-extended-command)
+    (evil-leader/set-key "<tab>" 'ivy-switch-buffer)
+    (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
     (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "0" 'counsel-buffer-or-recentf)
     (evil-leader/set-key "6" 'fff-access-hosts)
-
     (evil-leader/set-key "7" 'fff-access-config)
     (evil-leader/set-key "8" 'fff-access-home-dir)
     (evil-leader/set-key "9" 'fff-access-sched)
@@ -448,27 +451,23 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "b" 'fff-access-bookmarks)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "D" 'elpy-doc)
-
     (evil-leader/set-key "e" 'fff-C-x-C-e)
     (evil-leader/set-key "h" 'beginning-of-line)
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-fundamental-mode)
-    (evil-leader/set-key "t" 'vterm)
-    (evil-leader/set-key "T" 'terminal-here)
-    (evil-leader/set-key "p" 'crux-open-with)
-    (evil-leader/set-key "<tab>" 'ivy-switch-buffer)
-    (evil-leader/set-key "o" 'counsel-find-file)
-    (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
+    (evil-leader/set-key "k" 'evil-record-macro)
     (evil-leader/set-key "l" 'end-of-line)
+    (evil-leader/set-key "o" 'counsel-find-file)
+    (evil-leader/set-key "p" 'crux-open-with)
     ;; (evil-leader/set-key "j" 'ein:run)
     ;; (evil-leader/set-key "q" 'kill-buffer-and-window)
     (evil-leader/set-key "q" 'delete-window)
     (evil-leader/set-key "Q" 'kill-buffer-and-window)
-    (evil-leader/set-key "k" 'evil-record-macro)
     (evil-leader/set-key "r" 'fff-evil-regex-search)
     (evil-leader/set-key "R" 'anzu-query-replace-regexp)
     (evil-leader/set-key "s" 'save-buffer)
-
+    (evil-leader/set-key "t" 'vterm)
+    (evil-leader/set-key "T" 'terminal-here)
     (evil-leader/set-key "u" 'pop-tag-mark)
     (evil-leader/set-key "U" 'pop-global-mark)
     (evil-leader/set-key "v" 'fff-toggle-visual-line-mode)
@@ -484,8 +483,9 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "x h" 'mark-whole-buffer)
     (evil-leader/set-key "x SPC b" 'list-buffers)
     (evil-leader/set-key "y" 'fff-access-sched)
+
     )
- ) 
+  ) 
 
 (use-package evil
   :after evil-leader
@@ -498,6 +498,7 @@ in whole buffer.  With neither, delete comments on current line."
   (setq evil-search-wrap 'nil)
   :config
   (progn
+
     ;; (add-hook 'ein:ipdb-mode-hook 'evil-mode)
     ;; (add-hook 'ein:$kernel-after-execute-hook 'evil-mode)
     ;; (add-hook 'ein:$kernel-after-start-hook 'evil-mode)
@@ -515,18 +516,10 @@ in whole buffer.  With neither, delete comments on current line."
     (fset 'fff-down-paragraph
           (kmacro-lambda-form [?\}] 0 "%d"))
     (evil-mode 1)
-    (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
-    (define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
     (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
     (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
     (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
-    ;; (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
-    ;; (define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
-    ;; (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
-    ;; (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
-    ;; (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
-    ;; (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
 
     (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
     (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
@@ -538,24 +531,10 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
     (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
     (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
-    ;; (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
-    ;; (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
-    ;; (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
-    ;; (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
-    ;; (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
-    ;; (define-key evil-insert-state-map (kbd "C-y") 'yank)
-    ;; (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
-    ;; (define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
-    ;; (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
-    ;; (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
-
-
 
     (define-key evil-normal-state-map (kbd "-") 'text-scale-adjust)
     (define-key evil-normal-state-map (kbd "=") 'text-scale-adjust)
     (define-key evil-normal-state-map (kbd "0") 'text-scale-adjust)
-    (define-key evil-normal-state-map (kbd "gl") 'evil-end-of-line)
-    (define-key evil-normal-state-map (kbd "gh") 'evil-beginning-of-line)
     (define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
     (define-key evil-normal-state-map (kbd "Q") nil)
     (define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
@@ -570,12 +549,7 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
     (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
-    ;; (define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
-    ;; (define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
-    ;; (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
-    ;; (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
-    ;; (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
-    ;; (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
+    (define-key evil-normal-state-map (kbd "<up>") 'other-window)
 
     ))
 
@@ -647,7 +621,6 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :init
   (setq terminal-here-linux-terminal-command 'st)
-  (setq ivy-on-del-error-function #'ignore)
   )
 
 (use-package so-long
@@ -719,7 +692,7 @@ in whole buffer.  With neither, delete comments on current line."
     (customize-set-value 'org-latex-hyperref-template "
 \\hypersetup{\n pdfauthor={%a},\n pdftitle={%t},\n pdfkeywords={%k},
  pdfsubject={%d},\n pdfcreator={%c},\n pdflang={%L},\n colorlinks=true}\n")
-  ))
+    ))
 
 (use-package markdown-mode
   :ensure t
