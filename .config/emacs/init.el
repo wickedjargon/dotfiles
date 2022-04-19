@@ -487,7 +487,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "x w" 'write-file)
     (evil-leader/set-key "x h" 'mark-whole-buffer)
     (evil-leader/set-key "x SPC b" 'list-buffers)
-    (evil-leader/set-key "y" 'fff-access-sched)
+    ;; (evil-leader/set-key "y" 'fff-access-sched)
 
     )
   ) 
