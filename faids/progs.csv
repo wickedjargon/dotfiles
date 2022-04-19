@@ -85,4 +85,5 @@ A,vscodium-bin,"libre version of visual studio code."
 ,cmake,"is a build tool."
 ,perl-file-mimeinfo , "to change default applications easily."
 ,zip, "to zip / unzip files".
-,chromium, "to web scrape".
+,chromium, "to web scrape."
+,libreoffice-fresh, "to do word-processing and spreadsheet."
