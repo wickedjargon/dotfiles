@@ -29,7 +29,7 @@
 
 (custom-set-faces
  '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 115 :width normal))))
- '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
+ ;; '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
  '(font-lock-doc-face ((t (:inherit font-lock-comment-face))))
@@ -39,25 +39,25 @@
 ;; config outside of use-package:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(tool-bar-mode -1)					;; no tool bar
-(setq inhibit-startup-message t)			;; no splash screen
-(defalias 'yes-or-no-p 'y-or-n-p)			;; just type `y`, not `yes`
-(global-display-line-numbers-mode)			;; global line numbers
-(menu-bar-mode +1)					;; I like the menu bar
+(tool-bar-mode -1)                                      ;; no tool bar
+(setq inhibit-startup-message t)                        ;; no splash screen
+(defalias 'yes-or-no-p 'y-or-n-p)                       ;; just type `y`, not `yes`
+(global-display-line-numbers-mode)                      ;; global line numbers
+(menu-bar-mode +1)                                      ;; I like the menu bar
 (setq auto-save-file-name-transforms                    ;;  (save auto save data
       '((".*" "~/.config/emacs/auto-save-list/" t)))    ;;  in a separate directory)
 (setq backup-directory-alist                            ;; (save backup files
       '(("." . "~/.config/emacs/backups")))             ;; in a separate directory)
-(blink-cursor-mode -1)					;; don't blink my cursor
-(setq global-auto-revert-non-file-buffers t)		;; auto revert my files
-(global-auto-revert-mode +1)				;; auto revert files and buffers
-(delete-selection-mode +1)				;; delete selction when hitting backspace on region
-(set-default 'truncate-lines t)				;; don't wrap my text
-(add-hook 'prog-mode-hook #'hs-minor-mode)		;; let me toggle shrink and expansion of code blocks 
+(blink-cursor-mode -1)                                  ;; don't blink my cursor
+(setq global-auto-revert-non-file-buffers t)            ;; auto revert my files
+(global-auto-revert-mode +1)                            ;; auto revert files and buffers
+(delete-selection-mode +1)                              ;; delete selction when hitting backspace on region
+(set-default 'truncate-lines t)                         ;; don't wrap my text
+(add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks 
 (setq custom-file (locate-user-emacs-file "custom.el")) ;; separate custom.el file
 (when (file-exists-p custom-file) (load custom-file))   ;; when it exists, load it
-(setq initial-scratch-message "")			;; no message on scratch buffer
-(global-unset-key (kbd "C-x C-c"))			;; I accidently hit this sometimes
+(setq initial-scratch-message "")                       ;; no message on scratch buffer
+(global-unset-key (kbd "C-x C-c"))                      ;; I accidently hit this sometimes
 (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
 (setq-default indent-tabs-mode nil)                     ;; I prefer spaces instead of tabs
 
@@ -173,6 +173,11 @@
   (find-file "/home/ff/d/bm.md"))
 
 
+(defun fff-access-hosts ()
+  (interactive)
+  (find-file "/sudo:root@localhost:/etc/hosts"))
+
+
 ;; don't ask which buffer to kill, just kill current buffer
 (defun fff-kill-this-buffer ()
   "Kill the current buffer."
@@ -232,7 +237,7 @@
 
 (defun fff-insert-tab()
   (interactive)
-  (insert "	"))
+  (insert "     "))
 
 
 (defun fff-toggle-flycheck-mode ()
@@ -240,6 +245,13 @@
   (if (not flycheck-mode)
       (flycheck-mode +1)
     (flycheck-mode -1)))
+
+
+(defun fff-toggle-visual-line-mode ()
+  (interactive)
+  (if (not visual-line-mode)
+      (visual-line-mode +1)
+    (visual-line-mode -1)))
 
 (defun fff-send-to-clipboard (x)
   (with-temp-buffer
@@ -287,14 +299,14 @@ lines starting with this one."
     (save-excursion
       (beginning-of-line)
       (let ((cs (comment-search-forward (line-end-position) t)))
-	(when cs
-	  (goto-char cs)
-	  (skip-syntax-backward " ")
-	  (setq cs (point))
-	  (comment-forward)
-	  ;; (kill-region cs (if (bolp) (1- (point)) (point))) ; original
-	  (delete-region cs (if (bolp) (1- (point)) (point)))  ; replace kill-region with delete-region
-	  (indent-according-to-mode))))
+        (when cs
+          (goto-char cs)
+          (skip-syntax-backward " ")
+          (setq cs (point))
+          (comment-forward)
+          ;; (kill-region cs (if (bolp) (1- (point)) (point))) ; original
+          (delete-region cs (if (bolp) (1- (point)) (point)))  ; replace kill-region with delete-region
+          (indent-according-to-mode))))
     (if arg (forward-line 1))))
 
 (defun fff-comment-delete-dwim (beg end arg)
@@ -396,37 +408,39 @@ in whole buffer.  With neither, delete comments on current line."
     (defun comment-line (n)
       (interactive "p")
       (if (use-region-p)
-	  (comment-or-uncomment-region
-	   (save-excursion
+          (comment-or-uncomment-region
+           (save-excursion
              (goto-char (region-beginning))
              (line-beginning-position))
-	   (save-excursion
+           (save-excursion
              (goto-char (region-end))
              ;; (line-end-position)
              ))
-	(when (and (eq last-command 'comment-line-backward)
-		   (natnump n))
-	  (setq n (- n)))
-	(let ((range
+        (when (and (eq last-command 'comment-line-backward)
+                   (natnump n))
+          (setq n (- n)))
+        (let ((range
                (list (line-beginning-position)
                      (goto-char (line-end-position n)))))
-	  (comment-or-uncomment-region
-	   (apply #'min range)
-	   (apply #'max range)))
-	(forward-line 1)
-	(back-to-indentation)
-	(unless (natnump n) (setq this-command 'comment-line-backward))))
+          (comment-or-uncomment-region
+           (apply #'min range)
+           (apply #'max range)))
+        (forward-line 1)
+        (back-to-indentation)
+        (unless (natnump n) (setq this-command 'comment-line-backward))))
 
     (fset 'fff-C-x-C-e
-	  (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
+          (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
 
     (fset 'fff-C-x-C-s
-	  (kmacro-lambda-form [?\C-x ?\C-s] 0 "%d"))
+          (kmacro-lambda-form [?\C-x ?\C-s] 0 "%d"))
 
     (evil-leader/set-leader "<SPC>")
     (evil-leader/set-key "SPC" 'execute-extended-command)
     (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "0" 'counsel-buffer-or-recentf)
+    (evil-leader/set-key "6" 'fff-access-hosts)
+
     (evil-leader/set-key "7" 'fff-access-config)
     (evil-leader/set-key "8" 'fff-access-home-dir)
     (evil-leader/set-key "9" 'fff-access-sched)
@@ -446,7 +460,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "o" 'counsel-find-file)
     (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
     (evil-leader/set-key "l" 'end-of-line)
-    (evil-leader/set-key "j" 'ein:run)
+    ;; (evil-leader/set-key "j" 'ein:run)
     ;; (evil-leader/set-key "q" 'kill-buffer-and-window)
     (evil-leader/set-key "q" 'delete-window)
     (evil-leader/set-key "Q" 'kill-buffer-and-window)
@@ -457,7 +471,7 @@ in whole buffer.  With neither, delete comments on current line."
 
     (evil-leader/set-key "u" 'pop-tag-mark)
     (evil-leader/set-key "U" 'pop-global-mark)
-    (evil-leader/set-key "v" 'turn-on-evil-mode)
+    (evil-leader/set-key "v" 'fff-toggle-visual-line-mode)
     (evil-leader/set-key "x <tab>" 'fff-insert-tab)
     (evil-leader/set-key "x x" ctl-x-map)
     (evil-leader/set-key "x 0" 'delete-window)
@@ -484,22 +498,22 @@ in whole buffer.  With neither, delete comments on current line."
   (setq evil-search-wrap 'nil)
   :config
   (progn
-    (add-hook 'ein:ipdb-mode-hook 'evil-mode)
-    (add-hook 'ein:$kernel-after-execute-hook 'evil-mode)
-    (add-hook 'ein:$kernel-after-start-hook 'evil-mode)
-    (add-hook 'ein:ipdb-mode-hook 'evil-mode)
-    (add-hook 'ein:markdown-mode-hook 'evil-mode)
-    (add-hook 'ein:notebook-after-rename-hook 'evil-mode)
-    (add-hook 'ein:notebook-mode-hook 'evil-mode)
-    (add-hook 'ein:notebooklist-first-open-hook 'evil-mode)
-    (add-hook 'ein:notebooklist-mode-hook 'evil-mode)
-    (add-hook 'ein:pager-mode-hook 'evil-mode)
-    (add-hook 'ein:shared-output-mode-hook 'evil-mode)
-    (add-hook 'ein:traceback-mode-hook 'evil-mode)
-    (add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
-    (add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
+    ;; (add-hook 'ein:ipdb-mode-hook 'evil-mode)
+    ;; (add-hook 'ein:$kernel-after-execute-hook 'evil-mode)
+    ;; (add-hook 'ein:$kernel-after-start-hook 'evil-mode)
+    ;; (add-hook 'ein:ipdb-mode-hook 'evil-mode)
+    ;; (add-hook 'ein:markdown-mode-hook 'evil-mode)
+    ;; (add-hook 'ein:notebook-after-rename-hook 'evil-mode)
+    ;; (add-hook 'ein:notebook-mode-hook 'evil-mode)
+    ;; (add-hook 'ein:notebooklist-first-open-hook 'evil-mode)
+    ;; (add-hook 'ein:notebooklist-mode-hook 'evil-mode)
+    ;; (add-hook 'ein:pager-mode-hook 'evil-mode)
+    ;; (add-hook 'ein:shared-output-mode-hook 'evil-mode)
+    ;; (add-hook 'ein:traceback-mode-hook 'evil-mode)
+    ;; (add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
+    ;; (add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
     (fset 'fff-down-paragraph
-	  (kmacro-lambda-form [?\}] 0 "%d"))
+          (kmacro-lambda-form [?\}] 0 "%d"))
     (evil-mode 1)
     (define-key evil-visual-state-map (kbd "gl") 'evil-end-of-line)
     (define-key evil-visual-state-map (kbd "gh") 'evil-beginning-of-line)
@@ -604,17 +618,17 @@ in whole buffer.  With neither, delete comments on current line."
   (elpy-enable)
   )
 
-(use-package ein
-  :after evil
-  :ensure t
-  :defer t
-  :commands (ein:run ein:login)
-  :init
-  (defun fff-set-ein-key-map ()
-    (define-key ein:notebook-mode-map (kbd "C-c C-c") nil)
-    (define-key ein:notebook-mode-map (kbd "C-c C-c") 'ein:worksheet-execute-cell))
-  (add-hook 'ein:notebooklist-mode-hook #'fff-set-ein-key-map)
-  )
+;; (use-package ein
+;;   :after evil
+;;   :ensure t
+;;   :defer t
+;;   :commands (ein:run ein:login)
+;;   :init
+;;   (defun fff-set-ein-key-map ()
+;;     (define-key ein:notebook-mode-map (kbd "C-c C-c") nil)
+;;     (define-key ein:notebook-mode-map (kbd "C-c C-c") 'ein:worksheet-execute-cell))
+;;   (add-hook 'ein:notebooklist-mode-hook #'fff-set-ein-key-map)
+;;   )
 
 (use-package expand-region
   :ensure t

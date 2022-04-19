@@ -35,7 +35,8 @@ cat hosts >> /etc/hosts
 - vimium
 - ublock origin
 - dark reader
-- darker jupyter
+- Decentraleyes
+- I don't care about cookies
 
 ### some settings
 - set `g` as prefix for google search
