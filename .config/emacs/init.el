@@ -21,6 +21,12 @@
   (unless (package-installed-p package)
     (package-install package)))
 
+(use-package benchmark-init
+ :ensure t
+ :config
+ ;; To disable collection of benchmark data after init is done.
+ (add-hook 'after-init-hook 'benchmark-init/deactivate))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; set up font:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -34,7 +40,7 @@
  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; config outside of use-package:
+;; general config:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (tool-bar-mode -1)                                      ;; no tool bar
@@ -237,13 +243,11 @@
   (interactive)
   (insert "     "))
 
-
 (defun fff-toggle-flycheck-mode ()
   (interactive)
   (if (not flycheck-mode)
       (flycheck-mode +1)
     (flycheck-mode -1)))
-
 
 (defun fff-toggle-visual-line-mode ()
   (interactive)
@@ -367,12 +371,14 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (switch-to-buffer (other-buffer (current-buffer) 1)))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; load site-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(require 'use-package)
+
 (use-package yasnippet-snippets 
+  :defer t
   :ensure nil
   :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/yasnippet-snippets/"))
   :load-path "yasnippet-snippets.el"
@@ -383,8 +389,6 @@ in whole buffer.  With neither, delete comments on current line."
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; use package setup:
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(require 'use-package)
 
 (setq evil-undo-system nil)
 (setq evil-want-integration t)
@@ -401,6 +405,7 @@ in whole buffer.  With neither, delete comments on current line."
   )
 
 (use-package evil-leader
+  :defer t
   :commands (evil-leader-mode)
   :ensure t
   :init (global-evil-leader-mode)
@@ -488,6 +493,7 @@ in whole buffer.  With neither, delete comments on current line."
   ) 
 
 (use-package evil
+  :defer t
   :after evil-leader
   :ensure t
   :init
@@ -513,6 +519,7 @@ in whole buffer.  With neither, delete comments on current line."
     ;; (add-hook 'ein:traceback-mode-hook 'evil-mode)
     ;; (add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
     ;; (add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
+
     (fset 'fff-down-paragraph
           (kmacro-lambda-form [?\}] 0 "%d"))
     (evil-mode 1)
@@ -554,9 +561,11 @@ in whole buffer.  With neither, delete comments on current line."
     ))
 
 (use-package undo-fu
+  :defer t
   :ensure t)
 
 (use-package evil-collection
+  :defer t
   :after evil
   :ensure t
   :config
@@ -564,11 +573,13 @@ in whole buffer.  With neither, delete comments on current line."
   )
 
 (use-package evil-surround
+  :defer t
   :ensure t
   :config
   (global-evil-surround-mode +1))
 
 (use-package ivy
+  :defer t
   :ensure t
   :config
   (setq ivy-initial-inputs-alist nil)
@@ -578,6 +589,7 @@ in whole buffer.  With neither, delete comments on current line."
   )
 
 (use-package counsel
+  :defer t
   :ensure t
   :config
   :init
@@ -585,6 +597,7 @@ in whole buffer.  With neither, delete comments on current line."
   )
 
 (use-package elpy
+  :defer t
   :ensure t
   :config
   (setq elpy-shell-starting-directory 'current-directory) 
@@ -593,9 +606,9 @@ in whole buffer.  With neither, delete comments on current line."
   )
 
 ;; (use-package ein
+;;   :defer t
 ;;   :after evil
 ;;   :ensure t
-;;   :defer t
 ;;   :commands (ein:run ein:login)
 ;;   :init
 ;;   (defun fff-set-ein-key-map ()
@@ -605,34 +618,41 @@ in whole buffer.  With neither, delete comments on current line."
 ;;   )
 
 (use-package expand-region
+  :defer t
   :ensure t
   )
 
 (use-package vterm
+  :defer t
   :ensure t)
 
 (use-package slime
+  :defer t
   :ensure t
   :init
   (setq inferior-lisp-program "/usr/bin/clisp")
   )
 
 (use-package terminal-here
+  :defer t
   :ensure t
   :init
   (setq terminal-here-linux-terminal-command 'st)
   )
 
 (use-package so-long
+  :defer t
   :ensure t
   :init
   (global-so-long-mode +1))
 
 (use-package lorem-ipsum
+  :defer t
   :ensure t
   )
 
 (use-package hydra
+  :defer t
   :ensure t
   :commands defhydra
   :config
@@ -656,31 +676,36 @@ in whole buffer.  With neither, delete comments on current line."
     ))
 
 (use-package company
-  :ensure t
   :defer t
+  :ensure t
   :init
   (global-company-mode)
   )
 
 (use-package restart-emacs
+  :defer t
   :ensure t
   )
 
 (use-package windsize
+  :defer t
   :ensure t
   :config
   )
 
 (use-package crux
+  :defer t
   :ensure t
   )
 
 (use-package emmet-mode
+  :defer t
   :ensure t
   :init (add-hook 'sgml-mode-hook 'emmet-mode)
   )
 
 (use-package org
+  :defer t
   :ensure t
   :init
   (setq org-confirm-babel-evaluate nil)
@@ -695,11 +720,13 @@ in whole buffer.  With neither, delete comments on current line."
     ))
 
 (use-package markdown-mode
+  :defer t
   :ensure t
   :mode ("README\\.md\\'" . gfm-mode)
   :init (setq markdown-command "multimarkdown"))
 
 (use-package pyvenv
+  :defer t
   :ensure t
   :config
   (pyvenv-mode t)
@@ -711,5 +738,6 @@ in whole buffer.  With neither, delete comments on current line."
                 (setq python-shell-interpreter "python3")))))
 
 (use-package mw-thesaurus
+  :defer t
   :ensure t
   )
