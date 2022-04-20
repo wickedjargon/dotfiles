@@ -53,12 +53,14 @@ Here is a table some find useful when determining an appropriate swap:
 
 ### table of recommended swap space
 
-| Amount of RAM Installed 	| Min SWAP space (no hib) 	| Min SWAP space (/w hib)                  	|
+| Amount of RAM Installed 	| Min SWAP space (no hib) 	| Min SWAP space (w/ hib)                  	|
 |-------------------------	|-------------------------	|------------------------------------------	|
 | ≤ 2GB                   	| 2X RAM                  	| 3X RAM                                   	|
 | 2GB – 8GB               	| 1X RAM                  	| 2X RAM                                   	|
 | 8GB – 64GB              	| 4G to 0.5X RAM          	| 1.5X RAM                                 	|
 | >64GB                   	| Minimum 4GB             	| Hibernation not recommended (disable it) 	|
+
+I have 4 GB of RAM and have a swap size of 12 GB
 
 ## (3) root partition:
 I choose
