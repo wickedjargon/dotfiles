@@ -52,11 +52,13 @@ for 4GB even with no hibernation
 Here is a table some find useful when determining an appropriate swap:
 
 ### table of recommended swap space
-Amount of RAM installed in system		Min Recommended swap space	Min Recommended swap space with hibernation
-≤ 2GB									2X RAM	                    3X RAM
-2GB – 8GB								1X RAM	                    2X RAM
-8GB – 64GB								4G to 0.5X RAM	            1.5X RAM
->64GB									Minimum 4GB	                Hibernation not recommended (disable it)
+
+| Amount of RAM Installed 	| Min SWAP space (no hib) 	| Min SWAP space (/w hib)                  	|
+|-------------------------	|-------------------------	|------------------------------------------	|
+| ≤ 2GB                   	| 2X RAM                  	| 3X RAM                                   	|
+| 2GB – 8GB               	| 1X RAM                  	| 2X RAM                                   	|
+| 8GB – 64GB              	| 4G to 0.5X RAM          	| 1.5X RAM                                 	|
+| >64GB                   	| Minimum 4GB             	| Hibernation not recommended (disable it) 	|
 
 ## (3) root partition:
 I choose
