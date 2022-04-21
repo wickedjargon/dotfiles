@@ -11,21 +11,13 @@
 
 (setq package-list '(use-package markdown-mode))
 
-;; if package-archive-contents is nill, package-refresh-contents
 (unless package-archive-contents (package-refresh-contents))
 
-;; if package-archive-contents is nil, install packages from package-list
 (unless package-archive-contents
   (package-refresh-contents))
 (dolist (package package-list)
   (unless (package-installed-p package)
     (package-install package)))
-
-;; (use-package benchmark-init
-;;  :ensure t
-;;  :config
-;;  ;; To disable collection of benchmark data after init is done.
-;;  (add-hook 'after-init-hook 'benchmark-init/deactivate))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; set up font:
@@ -33,7 +25,6 @@
 
 (custom-set-faces
  '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 115 :width normal))))
- ;; '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
  '(font-lock-doc-face ((t (:inherit font-lock-comment-face))))
@@ -182,9 +173,8 @@
   (find-file "/sudo:root@localhost:/etc/hosts"))
 
 
-;; don't ask which buffer to kill, just kill current buffer
 (defun fff-kill-this-buffer ()
-  "Kill the current buffer."
+  "Kill the current buffer without asking."
   (interactive)
   (kill-buffer (current-buffer)))
 
@@ -231,13 +221,6 @@
   (progn
     (evil-normal-state)
     (evil-ex "%s/")))
-
-(defun fff-open-in-vim ()
-  (interactive)
-  (async-shell-command
-   (format "nvim +%d %s"
-           (+ (if (bolp) 1 0) (count-lines 1 (point)))
-           (shell-quote-argument buffer-file-name))))
 
 (defun fff-insert-tab()
   (interactive)
@@ -411,7 +394,7 @@ in whole buffer.  With neither, delete comments on current line."
   :init (global-evil-leader-mode)
   :config
   (progn
-    ;; let's use some advise instead of over writing like this:
+    ;; TODO: let's use some advise instead of over writing like this:
     (defun comment-line (n)
       (interactive "p")
       (if (use-region-p)
@@ -464,7 +447,6 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "l" 'end-of-line)
     (evil-leader/set-key "o" 'counsel-find-file)
     (evil-leader/set-key "p" 'crux-open-with)
-    ;; (evil-leader/set-key "j" 'ein:run)
     ;; (evil-leader/set-key "q" 'kill-buffer-and-window)
     (evil-leader/set-key "q" 'delete-window)
     (evil-leader/set-key "Q" 'kill-buffer-and-window)
@@ -487,7 +469,6 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "x w" 'write-file)
     (evil-leader/set-key "x h" 'mark-whole-buffer)
     (evil-leader/set-key "x SPC b" 'list-buffers)
-    ;; (evil-leader/set-key "y" 'fff-access-sched)
 
     )
   ) 
@@ -505,20 +486,6 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   (progn
 
-    ;; (add-hook 'ein:ipdb-mode-hook 'evil-mode)
-    ;; (add-hook 'ein:$kernel-after-execute-hook 'evil-mode)
-    ;; (add-hook 'ein:$kernel-after-start-hook 'evil-mode)
-    ;; (add-hook 'ein:ipdb-mode-hook 'evil-mode)
-    ;; (add-hook 'ein:markdown-mode-hook 'evil-mode)
-    ;; (add-hook 'ein:notebook-after-rename-hook 'evil-mode)
-    ;; (add-hook 'ein:notebook-mode-hook 'evil-mode)
-    ;; (add-hook 'ein:notebooklist-first-open-hook 'evil-mode)
-    ;; (add-hook 'ein:notebooklist-mode-hook 'evil-mode)
-    ;; (add-hook 'ein:pager-mode-hook 'evil-mode)
-    ;; (add-hook 'ein:shared-output-mode-hook 'evil-mode)
-    ;; (add-hook 'ein:traceback-mode-hook 'evil-mode)
-    ;; (add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
-    ;; (add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
 
     (fset 'fff-down-paragraph
           (kmacro-lambda-form [?\}] 0 "%d"))
@@ -565,7 +532,6 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t)
 
 (use-package evil-collection
-  ;; :defer t
   :after evil
   :ensure t
   :config
@@ -605,17 +571,6 @@ in whole buffer.  With neither, delete comments on current line."
   (elpy-enable)
   )
 
-;; (use-package ein
-;;   :defer t
-;;   :after evil
-;;   :ensure t
-;;   :commands (ein:run ein:login)
-;;   :init
-;;   (defun fff-set-ein-key-map ()
-;;     (define-key ein:notebook-mode-map (kbd "C-c C-c") nil)
-;;     (define-key ein:notebook-mode-map (kbd "C-c C-c") 'ein:worksheet-execute-cell))
-;;   (add-hook 'ein:notebooklist-mode-hook #'fff-set-ein-key-map)
-;;   )
 
 (use-package expand-region
   :defer t
