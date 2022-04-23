@@ -60,4 +60,3 @@ cat hosts >> /etc/hosts
 ## emacs
     - setup zterm
     - install elpy dependencies
-    - install ein dependencies

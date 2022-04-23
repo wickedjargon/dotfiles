@@ -696,3 +696,8 @@ in whole buffer.  With neither, delete comments on current line."
   :defer t
   :ensure t
   )
+
+(use-package sicp
+  :defer t
+  :ensure t
+  )
