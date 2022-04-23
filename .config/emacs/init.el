@@ -31,6 +31,9 @@
  '(font-lock-doc-face ((t (:inherit font-lock-comment-face))))
  )
 
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; general config:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -356,6 +359,31 @@ in whole buffer.  With neither, delete comments on current line."
 (defun fff-switch-to-previous-buffer ()
   (interactive)
   (switch-to-buffer (other-buffer (current-buffer) 1)))
+
+(defun fff-modus-themes-toggle ()
+  (interactive)
+  (pcase (modus-themes--current-theme)
+    ('modus-operandi (progn (enable-theme 'modus-vivendi)
+                            (disable-theme 'modus-operandi)
+                            (custom-set-faces
+                             '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
+                             '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
+                             '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
+                            '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
+                             )
+                            ))
+    ('modus-vivendi (progn (enable-theme 'modus-operandi)
+                           (disable-theme 'modus-vivendi)
+                           (custom-set-faces
+                            '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
+                            '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
+                            '(font-lock-comment-delimiter-face ((t (:background "gray70" :foreground "black"))))
+                            '(ein:basecell-input-area-face ((t (:extend t :background "gray66"))))
+                            '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "black"))))
+                            '(font-lock-doc-face ((t (:background "gray80" :foreground "black"))))
+                            )
+                           ))
+    (_ (error "No Modus theme is loaded; evaluate `modus-themes-load-themes' first"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; load site-lisp
@@ -732,3 +760,7 @@ in whole buffer.  With neither, delete comments on current line."
     (add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
     (add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
   )
+
+
+
+
