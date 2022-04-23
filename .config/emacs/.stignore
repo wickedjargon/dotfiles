@@ -1,0 +1,7 @@
+!./init.el
+!./early-init.el
+!./site-lisp/
+!./recentf
+!./.gitignore
+*
+*/**
