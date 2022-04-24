@@ -11,8 +11,6 @@
 
 (setq package-list '(use-package markdown-mode))
 
-(unless package-archive-contents (package-refresh-contents))
-
 (unless package-archive-contents
   (package-refresh-contents))
 (dolist (package package-list)
@@ -24,15 +22,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (custom-set-faces
- '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 115 :width normal))))
+ '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 105 :width normal))))
  '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
- '(font-lock-doc-face ((t (:inherit font-lock-comment-face))))
+ '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
  )
-
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; general config:
@@ -69,15 +64,6 @@
 ;; prevent active process when closing a shell like vterm or eshell:
 (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
-;; set C-i and C-m to work:
-(if (daemonp)
-    (add-hook 'after-make-frame-functions
-              (lambda (frame)
-                (with-selected-frame frame
-                  (fff-set-daemon-stuff)))))
-(define-key input-decode-map [?\C-i] [C-i])
-(define-key input-decode-map [?\C-m] [C-m])
-
 ;; I prefer a full screen new buffer, not a split screen:
 (setq display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)))
 
@@ -97,10 +83,6 @@
   (interactive)
   (flush-lines "^\s*$" (point-min) (point-max))
   )
-
-(defun fff-clean-mode-line ()
-  (dolist (package package-list-diminish)
-    (diminish package)))
 
 (defun fff-run-haxe ()
   (interactive)
@@ -149,12 +131,6 @@
   (setq file-no-ext (substring (buffer-name) 0 -2))
   (shell-command (format "cd %s && g++ -w -o %s %s -lm && ./%s" dir-path file-no-ext (buffer-name) file-no-ext)))
 
-(defun fff-set-daemon-stuff ()
-  (interactive)
-  (define-key input-decode-map [?\C-m] [C-m])
-  (define-key input-decode-map [?\C-i] [C-i])
-  )
-
 (defun fff-access-config ()
   (interactive)
   (find-file (expand-file-name "init.el" user-emacs-directory)))
@@ -165,17 +141,16 @@
 
 (defun fff-access-sched ()
   (interactive)
-  (find-file "/home/ff/d/personal-notes.md"))
+  (find-file "~/d/personal-notes.md"))
 
 (defun fff-access-bookmarks ()
   (interactive)
-  (find-file "/home/ff/d/bm.md"))
+  (find-file "~/d/bm.md"))
 
 
 (defun fff-access-hosts ()
   (interactive)
   (find-file "/sudo:root@localhost:/etc/hosts"))
-
 
 (defun fff-kill-this-buffer ()
   "Kill the current buffer without asking."
@@ -186,10 +161,10 @@
   (interactive)
   (switch-to-buffer "*scratch*"))
 
-(defun fff-switch-to-scratch-buffer-fundamental-mode ()
+(defun fff-switch-to-scratch-buffer-text-mode ()
   (interactive)
   (switch-to-buffer "*scratch*")
-  (fundamental-mode))
+  (text-mode))
 
 (defun fff-copy-file-path ()
   "Put the current file path on the clipboard"
@@ -202,6 +177,8 @@
         (insert filename)
         (clipboard-kill-region (point-min) (point-max)))
       (message filename))))
+
+;; TODO: make a toggle function for the 3 funcs below
 
 (defun fff-space-makes-space ()
   (interactive)
@@ -228,8 +205,8 @@
 
 (defun fff-insert-tab()
   (interactive)
-  (insert "     "))
-
+  (insert "	"))
+	
 (defun fff-toggle-flycheck-mode ()
   (interactive)
   (if (not flycheck-mode)
@@ -259,29 +236,9 @@
   (fff-send-to-clipboard (format "cd %s && cc -w -o %s %s -lm && ./%s" dir-path file-no-ext (buffer-name) file-no-ext))
   )
 
-(defun fff-forward-paragraph (arg)
-  "Move forward ARG paragraphs.
-A paragraph here is simply defined: it's a block of buffer that's
-separated by `[ \t\f]*$`."
-  (interactive "p")
-  (let ((direction (/ arg (abs arg))))
-    (forward-line direction)
-    (while (not (or (bobp)
-                    (eobp)
-                    (= arg 0)))
-      (if (looking-at "[ \t\f]*$")
-          (setq arg (- arg direction))
-        (forward-line direction)))))
-
-(defun fff-backward-paragraph (arg)
-  "Move backward ARG paragraphs.
-See `my/forward-paragraph' for the behavior."
-  (interactive "p")
-  (fff-forward-paragraph (- arg)))
-
-(defun fff-undo-cursor ()
-  (interactive)
-  (set-mark-command t))
+;; (defun fff-undo-cursor ()
+;;   (interactive)
+;;   (set-mark-command t))
 
 (defun fff-comment-delete (arg)
   "Delete the first comment on this line, if any.  Don't touch
@@ -392,7 +349,6 @@ in whole buffer.  With neither, delete comments on current line."
 (require 'use-package)
 
 (use-package yasnippet-snippets 
-  :defer t
   :ensure nil
   :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/yasnippet-snippets/"))
   :load-path "yasnippet-snippets.el"
@@ -400,11 +356,12 @@ in whole buffer.  With neither, delete comments on current line."
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   )
 
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; use package setup:
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(setq evil-undo-system nil)
+(setq evil-undo-system 'undo-fu)
 (setq evil-want-integration t)
 (setq evil-want-keybinding nil)
 
@@ -473,13 +430,12 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "e" 'fff-C-x-C-e)
     (evil-leader/set-key "h" 'beginning-of-line)
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
-    (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-fundamental-mode)
+    (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
     (evil-leader/set-key "j" 'ein:run)
     (evil-leader/set-key "k" 'evil-record-macro)
     (evil-leader/set-key "l" 'end-of-line)
     (evil-leader/set-key "o" 'counsel-find-file)
     (evil-leader/set-key "p" 'crux-open-with)
-    ;; (evil-leader/set-key "q" 'kill-buffer-and-window)
     (evil-leader/set-key "q" 'delete-window)
     (evil-leader/set-key "Q" 'kill-buffer-and-window)
     (evil-leader/set-key "r" 'fff-evil-regex-search)
@@ -487,7 +443,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "s" 'save-buffer)
     (evil-leader/set-key "t" 'vterm)
     (evil-leader/set-key "T" 'terminal-here)
-    (evil-leader/set-key "u" 'pop-tag-mark)
+    (evil-leader/set-key "u" 'evil-jump-backward)
     (evil-leader/set-key "U" 'pop-global-mark)
     (evil-leader/set-key "v" 'fff-toggle-visual-line-mode)
     (evil-leader/set-key "x <tab>" 'fff-insert-tab)
@@ -517,10 +473,6 @@ in whole buffer.  With neither, delete comments on current line."
   (setq evil-search-wrap 'nil)
   :config
   (progn
-
-
-    (fset 'fff-down-paragraph
-          (kmacro-lambda-form [?\}] 0 "%d"))
     (evil-mode 1)
     (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
     (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
@@ -549,9 +501,6 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
     (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
-    (define-key evil-normal-state-map (kbd "[") 'fff-backward-paragraph)
-    (define-key evil-normal-state-map (kbd "]") nil)
-    (define-key evil-normal-state-map (kbd "]") 'fff-down-paragraph)
     (define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
     (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
@@ -571,7 +520,6 @@ in whole buffer.  With neither, delete comments on current line."
   )
 
 (use-package evil-surround
-  :defer t
   :ensure t
   :config
   (global-evil-surround-mode +1))
@@ -602,7 +550,6 @@ in whole buffer.  With neither, delete comments on current line."
   :init
   (elpy-enable)
   )
-
 
 (use-package expand-region
   :defer t
@@ -708,7 +655,6 @@ in whole buffer.  With neither, delete comments on current line."
 
 (use-package markdown-mode
   :defer t
-  :ensure t
   :mode ("README\\.md\\'" . gfm-mode)
   :init (setq markdown-command "multimarkdown"))
 
@@ -744,7 +690,6 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key ein:notebook-mode-map (kbd "C-c C-c") nil)
     (define-key ein:notebook-mode-map (kbd "C-c C-c") 'ein:worksheet-execute-cell))
   (add-hook 'ein:notebooklist-mode-hook #'fff-set-ein-key-map)
-
     (add-hook 'ein:ipdb-mode-hook 'evil-mode)
     (add-hook 'ein:$kernel-after-execute-hook 'evil-mode)
     (add-hook 'ein:$kernel-after-start-hook 'evil-mode)
@@ -760,7 +705,3 @@ in whole buffer.  With neither, delete comments on current line."
     (add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
     (add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
   )
-
-
-
-
