@@ -22,7 +22,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (custom-set-faces
- '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 105 :width normal))))
+ '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 150 :width normal))))
  '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
@@ -366,7 +366,7 @@ in whole buffer.  With neither, delete comments on current line."
 (setq evil-want-keybinding nil)
 
 (use-package modus-themes
-  :ensure t
+  :ensure nil
   :init
   ;; before the package is loaded:
   (modus-themes-load-themes)

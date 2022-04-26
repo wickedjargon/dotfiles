@@ -67,3 +67,4 @@ tutorial/
 /config/
 /backups/
 /lockfiles/
+.stignore 
