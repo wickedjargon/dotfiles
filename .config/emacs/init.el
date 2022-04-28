@@ -22,8 +22,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (custom-set-faces
- '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 150 :width normal))))
- '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
+ '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 110 :width normal))))
+ '(ein:basecell-input-area-face ((t (:extend t :background "gray8"))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
  '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
@@ -307,10 +307,12 @@ in whole buffer.  With neither, delete comments on current line."
 (defun fff-clear-line ()
   "Deletes the current line"
   (interactive) 
+  (progn
   (delete-region
    (line-beginning-position)
    (line-end-position))
-  (delete-char)
+  (evil-delete-backward-char-and-join)
+  )
   )
 
 (defun fff-switch-to-previous-buffer ()
@@ -323,7 +325,7 @@ in whole buffer.  With neither, delete comments on current line."
     ('modus-operandi (progn (enable-theme 'modus-vivendi)
                             (disable-theme 'modus-operandi)
                             (custom-set-faces
-                             '(ein:basecell-input-area-face ((t (:extend t :background "gray12"))))
+                             '(ein:basecell-input-area-face ((t (:extend t :background "gray8"))))
                              '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
                              '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
                             '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
@@ -335,7 +337,7 @@ in whole buffer.  With neither, delete comments on current line."
                             '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
                             '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
                             '(font-lock-comment-delimiter-face ((t (:background "gray70" :foreground "black"))))
-                            '(ein:basecell-input-area-face ((t (:extend t :background "gray66"))))
+                            '(ein:basecell-input-area-face ((t (:extend t :background "gray80"))))
                             '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "black"))))
                             '(font-lock-doc-face ((t (:background "gray80" :foreground "black"))))
                             )
@@ -680,15 +682,19 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   )
 
+
+
 (use-package ein
   :defer t
   :after evil
   :ensure t
   :commands (ein:run ein:login)
   :init
+  (progn
   (defun fff-set-ein-key-map ()
-    (define-key ein:notebook-mode-map (kbd "C-c C-c") nil)
-    (define-key ein:notebook-mode-map (kbd "C-c C-c") 'ein:worksheet-execute-cell))
+    ;; (define-key ein:notebook-mode-map (kbd "C-c C-c") nil)
+    ;; (define-key ein:notebook-mode-map (kbd "C-c C-c") 'ein:worksheet-execute-cell))
+
   (add-hook 'ein:notebooklist-mode-hook #'fff-set-ein-key-map)
     (add-hook 'ein:ipdb-mode-hook 'evil-mode)
     (add-hook 'ein:$kernel-after-execute-hook 'evil-mode)
@@ -704,4 +710,18 @@ in whole buffer.  With neither, delete comments on current line."
     (add-hook 'ein:traceback-mode-hook 'evil-mode)
     (add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
     (add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
+    )
+:config
+(with-eval-after-load 'racket-mode
+    (define-key ein:notebook-mode-map (kbd "<C-return>") 'ein:worksheet-execute-cell-km)
+    (define-key ein:notebook-mode-map (kbd "<S-return>") 'ein:worksheet-execute-cell-and-goto-next-km)
   )
+  )
+  )
+
+
+(use-package racket-mode
+  :ensure t
+  :defer t
+  )
+
