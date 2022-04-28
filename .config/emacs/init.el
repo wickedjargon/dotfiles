@@ -682,8 +682,6 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   )
 
-
-
 (use-package ein
   :defer t
   :after evil
@@ -719,9 +717,7 @@ in whole buffer.  With neither, delete comments on current line."
   )
   )
 
-
 (use-package racket-mode
   :ensure t
   :defer t
   )
-
