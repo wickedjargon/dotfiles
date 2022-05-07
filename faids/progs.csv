@@ -94,3 +94,4 @@ A,ungoogled-chromium-xdg-bin, "is used to be used as a secondary browser with no
 ,bcprov, "is used to unecrypt secured PDFs."
 ,xournalpp, "is used to sign PDF documents."
 ,pacman-contrib, "is a set of pacman utilities."
+,imagemagick, "is used to manipulate iamges via the command line."

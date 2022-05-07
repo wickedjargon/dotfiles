@@ -45,3 +45,5 @@ message/rfc822=userapp-Thunderbird-098E40.desktop;
 application/epub+zip=org.pwmt.zathura-pdf-mupdf.desktop;
 application/x-bittorrent=transmission-gtk.desktop;
 x-scheme-handler/tg=userapp-Telegram Desktop-R94JB1.desktop;userapp-Telegram Desktop-7358I1.desktop;
+application/x-ipynb+json=codium.desktop;
+audio/midi=mpv-usercreated-1.desktop;

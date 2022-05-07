@@ -1,17 +1,20 @@
-
 # git
 
 ## let git know who I am:
 
+```
 git config --global user.name "John Doe"
 git config --global user.email johndoe@example.com
+```
 
 ## add these submodules:
 
+```
 git submodule add https://github.com/tpope/vim-commentary.git .config/nvim/plugged/vim-commentary
 git submodule add https://github.com/terryma/vim-expand-region.git .config/nvim/plugged/vim-expand-region
 git submodule add https://github.com/tpope/vim-surround.git .config/nvim/plugged/vim-surround
 git submodule add https://github.com/emacs-evil/evil.git .config/emacs/site-lisp/evil
+```
 
 ## git add, commit, push
 /faids/git_add.sh
@@ -49,9 +52,14 @@ cat hosts >> /etc/hosts
 - remove youtube, facebook, reddit from suggestions:
     - set `browser.urlbar.suggest.topsites` to `false` in `about:config`
 
+## setup ungoogled-chromium
+
+https://github.com/NeverDecaf/chromium-web-store
+
 # the rest
 
 ## use perl-file-mimeinfo to update default package for pdfs
+https://unix.stackexchange.com/questions/339215/program-to-edit-default-applications-for-mime-types
 
 ## python
     - install pip using bootstrapping script (do not install using pacman)

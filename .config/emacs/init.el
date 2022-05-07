@@ -23,7 +23,6 @@
 
 (custom-set-faces
  '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 110 :width normal))))
- '(ein:basecell-input-area-face ((t (:extend t :background "gray8"))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
  '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
@@ -236,10 +235,6 @@
   (fff-send-to-clipboard (format "cd %s && cc -w -o %s %s -lm && ./%s" dir-path file-no-ext (buffer-name) file-no-ext))
   )
 
-;; (defun fff-undo-cursor ()
-;;   (interactive)
-;;   (set-mark-command t))
-
 (defun fff-comment-delete (arg)
   "Delete the first comment on this line, if any.  Don't touch
 the kill ring.  With prefix ARG, delete comments on that many
@@ -325,7 +320,6 @@ in whole buffer.  With neither, delete comments on current line."
     ('modus-operandi (progn (enable-theme 'modus-vivendi)
                             (disable-theme 'modus-operandi)
                             (custom-set-faces
-                             '(ein:basecell-input-area-face ((t (:extend t :background "gray8"))))
                              '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
                              '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
                             '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
@@ -337,7 +331,6 @@ in whole buffer.  With neither, delete comments on current line."
                             '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
                             '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
                             '(font-lock-comment-delimiter-face ((t (:background "gray70" :foreground "black"))))
-                            '(ein:basecell-input-area-face ((t (:extend t :background "gray80"))))
                             '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "black"))))
                             '(font-lock-doc-face ((t (:background "gray80" :foreground "black"))))
                             )
@@ -357,7 +350,6 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   )
-
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; use package setup:
@@ -433,9 +425,11 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "h" 'beginning-of-line)
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
-    (evil-leader/set-key "j" 'ein:run)
-    (evil-leader/set-key "k" 'evil-record-macro)
-    (evil-leader/set-key "l" 'end-of-line)
+    ;; (evil-leader/set-key "k" 'evil-record-macro)
+    (evil-leader/set-key "k" 'hydra-expand-region/er/expand-region)
+    (evil-leader/set-key "j" 'hydra-expand-region/er/contract-region)
+    (evil-leader/set-key "l" 'hydra-movement/evil-forward-paragraph)
+    (evil-leader/set-key "h" 'hydra-movement/evil-backward-paragraph)
     (evil-leader/set-key "o" 'counsel-find-file)
     (evil-leader/set-key "p" 'crux-open-with)
     (evil-leader/set-key "q" 'delete-window)
@@ -459,6 +453,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "x w" 'write-file)
     (evil-leader/set-key "x h" 'mark-whole-buffer)
     (evil-leader/set-key "x SPC b" 'list-buffers)
+    (evil-leader/set-key "x SPC c" 'save-buffers-kill-terminal)
 
     )
   ) 
@@ -477,9 +472,11 @@ in whole buffer.  With neither, delete comments on current line."
   (progn
     (evil-mode 1)
     (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
-    (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
+    ;; (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
+    ;; (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
+    (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
+    (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
 
     (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
     (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
@@ -496,18 +493,13 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-normal-state-map (kbd "=") 'text-scale-adjust)
     (define-key evil-normal-state-map (kbd "0") 'text-scale-adjust)
     (define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
-    (define-key evil-normal-state-map (kbd "Q") nil)
-    (define-key evil-normal-state-map (kbd "C-k") 'er/expand-region)
+    (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
     (define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
     (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
     (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
     (define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
-    (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
-    (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
-    (define-key evil-normal-state-map (kbd "<up>") 'other-window)
-
     ))
 
 (use-package undo-fu
@@ -541,7 +533,6 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :config
   :init
-  (counsel-mode)
   )
 
 (use-package elpy
@@ -593,7 +584,9 @@ in whole buffer.  With neither, delete comments on current line."
   :commands defhydra
   :config
   (progn
-    (defhydra hydra-left-shift (global-map "<f9>")
+    (defhydra hydra-movement (global-map "<f9>")
+      ("j" evil-next-visual-line)
+      ("k" evil-previous-visual-line)
       ("h" evil-backward-paragraph)
       ("l" evil-forward-paragraph)
       ("D" evil-scroll-down)
@@ -606,8 +599,9 @@ in whole buffer.  With neither, delete comments on current line."
       ("J" windsize-down)
       ("K" windsize-up)
       )
-    (defhydra hydra-right-shift (global-map "<f10>")
-      ("d" fff-clear-line :exit t )
+    (defhydra hydra-expand-region (global-map "<f10>")
+      ("k" er/expand-region)
+      ("j" er/contract-region)
       )
     ))
 
@@ -682,42 +676,12 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   )
 
-(use-package ein
-  :defer t
-  :after evil
-  :ensure t
-  :commands (ein:run ein:login)
-  :init
-  (progn
-  (defun fff-set-ein-key-map ()
-    ;; (define-key ein:notebook-mode-map (kbd "C-c C-c") nil)
-    ;; (define-key ein:notebook-mode-map (kbd "C-c C-c") 'ein:worksheet-execute-cell))
-
-  (add-hook 'ein:notebooklist-mode-hook #'fff-set-ein-key-map)
-    (add-hook 'ein:ipdb-mode-hook 'evil-mode)
-    (add-hook 'ein:$kernel-after-execute-hook 'evil-mode)
-    (add-hook 'ein:$kernel-after-start-hook 'evil-mode)
-    (add-hook 'ein:ipdb-mode-hook 'evil-mode)
-    (add-hook 'ein:markdown-mode-hook 'evil-mode)
-    (add-hook 'ein:notebook-after-rename-hook 'evil-mode)
-    (add-hook 'ein:notebook-mode-hook 'evil-mode)
-    (add-hook 'ein:notebooklist-first-open-hook 'evil-mode)
-    (add-hook 'ein:notebooklist-mode-hook 'evil-mode)
-    (add-hook 'ein:pager-mode-hook 'evil-mode)
-    (add-hook 'ein:shared-output-mode-hook 'evil-mode)
-    (add-hook 'ein:traceback-mode-hook 'evil-mode)
-    (add-hook 'ein:worksheet--which-cell-hook 'evil-mode)
-    (add-hook 'ein:worksheet-reinstall-undo-hooks 'evil-mode)
-    )
-:config
-(with-eval-after-load 'racket-mode
-    (define-key ein:notebook-mode-map (kbd "<C-return>") 'ein:worksheet-execute-cell-km)
-    (define-key ein:notebook-mode-map (kbd "<S-return>") 'ein:worksheet-execute-cell-and-goto-next-km)
-  )
-  )
-  )
-
 (use-package racket-mode
+  :ensure t
+  :defer t
+  )
+
+(use-package gh-md
   :ensure t
   :defer t
   )
