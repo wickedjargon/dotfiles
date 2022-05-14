@@ -13,11 +13,11 @@ set clipboard+=unnamedplus
 syntax on
 set number
 
-inoremap <C-A> <Home>
-inoremap <C-E> <End>
-inoremap <C-D> <Del>
-noremap <C-E> $
-noremap <C-A> 0
+" inoremap <C-A> <Home>
+" inoremap <C-E> <End>
+" inoremap <C-D> <Del>
+" noremap <C-E> $
+" noremap <C-A> 0
 noremap Q q
 noremap q :q<CR>
 noremap j gj
@@ -51,4 +51,3 @@ if !hasmapto('<Plug>Commentary') || maparg('gc','n') ==# ''
   nmap gcu <Plug>Commentary<Plug>Commentary
 endif
 map <C-_> <Leader>cj0
-

@@ -3,7 +3,7 @@
 git add .bash_logout
 git add .bash_profile
 git add .bashrc
-git add .config/calcurse/
+git add .config/calcurse/conf
 git add .config/dunst/
 git add .config/emacs/
 git add .config/fontconfig/

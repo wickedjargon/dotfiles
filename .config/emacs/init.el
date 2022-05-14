@@ -337,6 +337,11 @@ in whole buffer.  With neither, delete comments on current line."
                            ))
     (_ (error "No Modus theme is loaded; evaluate `modus-themes-load-themes' first"))))
 
+(defun fff-set-scale-to-zero ()
+  (interactive)
+  (text-scale-set 0)
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; load site-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -412,7 +417,6 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "<tab>" 'ivy-switch-buffer)
     (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
     (evil-leader/set-key ";" 'eval-expression)
-    (evil-leader/set-key "0" 'counsel-buffer-or-recentf)
     (evil-leader/set-key "6" 'fff-access-hosts)
     (evil-leader/set-key "7" 'fff-access-config)
     (evil-leader/set-key "8" 'fff-access-home-dir)
@@ -425,12 +429,15 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "h" 'beginning-of-line)
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
-    ;; (evil-leader/set-key "k" 'evil-record-macro)
     (evil-leader/set-key "k" 'hydra-expand-region/er/expand-region)
     (evil-leader/set-key "j" 'hydra-expand-region/er/contract-region)
     (evil-leader/set-key "l" 'hydra-movement/evil-forward-paragraph)
     (evil-leader/set-key "h" 'hydra-movement/evil-backward-paragraph)
+    (evil-leader/set-key "=" 'hydra-movement/text-scale-increase)
+    (evil-leader/set-key "-" 'hydra-movement/text-scale-decrease)
+    (evil-leader/set-key "0" 'fff-set-scale-to-zero)
     (evil-leader/set-key "o" 'counsel-find-file)
+    (evil-leader/set-key "O" 'counsel-buffer-or-recentf)
     (evil-leader/set-key "p" 'crux-open-with)
     (evil-leader/set-key "q" 'delete-window)
     (evil-leader/set-key "Q" 'kill-buffer-and-window)
@@ -472,14 +479,10 @@ in whole buffer.  With neither, delete comments on current line."
   (progn
     (evil-mode 1)
     (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
-    ;; (define-key evil-visual-state-map (kbd "C-e") 'end-of-line)
-    ;; (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
     (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
 
-    (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
     (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
     (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
@@ -489,17 +492,11 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
     (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
 
-    (define-key evil-normal-state-map (kbd "-") 'text-scale-adjust)
-    (define-key evil-normal-state-map (kbd "=") 'text-scale-adjust)
-    (define-key evil-normal-state-map (kbd "0") 'text-scale-adjust)
     (define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
     (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
-    (define-key evil-normal-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
     (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
-    (define-key evil-normal-state-map (kbd "\\") 'fff-switch-to-previous-buffer)
     ))
 
 (use-package undo-fu
