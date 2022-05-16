@@ -5,7 +5,6 @@ import sys
 
 warn = int(sys.argv[1])
 
-
 def get(command):
     return subprocess.check_output(command).decode("utf-8")
 
