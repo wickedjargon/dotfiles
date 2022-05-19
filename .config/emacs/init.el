@@ -51,6 +51,7 @@
 (when (file-exists-p custom-file) (load custom-file))   ;; when it exists, load it
 (setq initial-scratch-message "")                       ;; no message on scratch buffer
 (global-unset-key (kbd "C-x C-c"))                      ;; I accidently hit this sometimes
+(global-unset-key (kbd "C-a"))                          ;; I prefer the vim keybinding
 (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
 (setq-default indent-tabs-mode nil)                     ;; I prefer spaces instead of tabs
 
@@ -416,6 +417,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "SPC" 'execute-extended-command)
     (evil-leader/set-key "<tab>" 'ivy-switch-buffer)
     (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
+    (evil-leader/set-key "\\" 'evil-switch-to-windows-last-buffer)
     (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "6" 'fff-access-hosts)
     (evil-leader/set-key "7" 'fff-access-config)
@@ -432,7 +434,11 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
     (evil-leader/set-key "j" 'fff-hydra-expand-region/er/contract-region)
     (evil-leader/set-key "l" 'fff-hydra-movement/evil-forward-paragraph)
-    (evil-leader/set-key "h" 'fff=hydra-movement/evil-backward-paragraph)
+    (evil-leader/set-key "h" 'fff-hydra-movement/evil-backward-paragraph)
+
+
+    (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
+    (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
     (evil-leader/set-key "0" 'fff-set-scale-to-zero)
@@ -586,8 +592,8 @@ in whole buffer.  With neither, delete comments on current line."
       ("k" evil-previous-visual-line)
       ("h" evil-backward-paragraph)
       ("l" evil-forward-paragraph)
-      ("D" evil-scroll-down)
-      ("U" evil-scroll-up)
+      ("d" evil-scroll-down)
+      ("u" evil-scroll-up)
       )
 
     (defhydra fff-hydra-windsize ()
@@ -648,9 +654,6 @@ in whole buffer.  With neither, delete comments on current line."
     (org-babel-do-load-languages
      'org-babel-load-languages
      '((python . t)))
-    (customize-set-value 'org-latex-hyperref-template "
-\\hypersetup{\n pdfauthor={%a},\n pdftitle={%t},\n pdfkeywords={%k},
- pdfsubject={%d},\n pdfcreator={%c},\n pdflang={%L},\n colorlinks=true}\n")
     ))
 
 (use-package markdown-mode
