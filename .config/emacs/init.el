@@ -147,7 +147,6 @@
   (interactive)
   (find-file "~/d/bm.md"))
 
-
 (defun fff-access-hosts ()
   (interactive)
   (find-file "/sudo:root@localhost:/etc/hosts"))
@@ -419,15 +418,15 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
     (evil-leader/set-key "\\" 'evil-switch-to-windows-last-buffer)
     (evil-leader/set-key ";" 'eval-expression)
-    (evil-leader/set-key "6" 'fff-access-hosts)
-    (evil-leader/set-key "7" 'fff-access-config)
-    (evil-leader/set-key "8" 'fff-access-home-dir)
-    (evil-leader/set-key "9" 'fff-access-sched)
     (evil-leader/set-key "a" 'yas-insert-snippet)
     (evil-leader/set-key "b" 'fff-access-bookmarks)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "D" 'elpy-doc)
     (evil-leader/set-key "e" 'fff-C-x-C-e)
+    (evil-leader/set-key "f f" 'fff-access-sched)
+    (evil-leader/set-key "f b" 'fff-access-bookmarks)
+    (evil-leader/set-key "f h" 'fff-access-hosts)
+    (evil-leader/set-key "f o" 'fff-access-home-dir)
     (evil-leader/set-key "h" 'beginning-of-line)
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
@@ -435,7 +434,6 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "j" 'fff-hydra-expand-region/er/contract-region)
     (evil-leader/set-key "l" 'fff-hydra-movement/evil-forward-paragraph)
     (evil-leader/set-key "h" 'fff-hydra-movement/evil-backward-paragraph)
-
 
     (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
