@@ -587,27 +587,24 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   (progn
     (defhydra fff-hydra-movement ()
-      ("j" evil-next-visual-line)
-      ("k" evil-previous-visual-line)
+      ;; ("j" evil-next-visual-line)
+      ;; ("k" evil-previous-visual-line)
       ("h" evil-backward-paragraph)
       ("l" evil-forward-paragraph)
-      ("d" evil-scroll-down)
-      ("u" evil-scroll-up)
+      ;; ("d" evil-scroll-down)
+      ;; ("u" evil-scroll-up)
       )
-
     (defhydra fff-hydra-windsize ()
       ("H" windsize-left)
       ("L" windsize-right)
       ("J" windsize-down)
       ("K" windsize-up)
       )
-
     (defhydra fff-hydra-zoom ()
       ( "=" text-scale-increase)
       ( "-" text-scale-decrease)
       ( "0"  (text-scale-set 0))
       )
-
     (defhydra fff-hydra-expand-region ()
       ("k" er/expand-region)
       ("j" er/contract-region)
