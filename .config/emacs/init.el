@@ -151,6 +151,10 @@
   (interactive)
   (find-file "/sudo:root@localhost:/etc/hosts"))
 
+(defun fff-access-phonebook ()
+  (interactive)
+  (find-file "~/d/contacts.csv"))
+
 (defun fff-kill-this-buffer ()
   "Kill the current buffer without asking."
   (interactive)
@@ -427,6 +431,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "f f" 'fff-access-sched)
     (evil-leader/set-key "f h" 'fff-access-hosts)
     (evil-leader/set-key "f o" 'fff-access-home-dir)
+    (evil-leader/set-key "f p" 'fff-access-phonebook)
     (evil-leader/set-key "h" 'beginning-of-line)
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
