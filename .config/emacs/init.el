@@ -302,7 +302,6 @@ in whole buffer.  With neither, delete comments on current line."
           (select-window first-win)
           (if this-win-2nd (other-window 1))))))
 
-
 (defun fff-clear-line ()
   "Deletes the current line"
   (interactive) 
