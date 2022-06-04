@@ -420,6 +420,9 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "<tab>" 'ivy-switch-buffer)
     (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
     (evil-leader/set-key "\\" 'evil-switch-to-windows-last-buffer)
+    (evil-leader/set-key "1" 'delete-other-windows)
+    (evil-leader/set-key "2" 'split-window-below)
+    (evil-leader/set-key "3" 'split-window-right)
     (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "a" 'yas-insert-snippet)
     (evil-leader/set-key "d" 'delete-blank-lines)
@@ -676,11 +679,6 @@ in whole buffer.  With neither, delete comments on current line."
 (use-package sicp
   :defer t
   :ensure t
-  )
-
-(use-package racket-mode
-  :ensure t
-  :defer t
   )
 
 (use-package gh-md
