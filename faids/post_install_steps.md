@@ -51,10 +51,14 @@ cat hosts >> /etc/hosts
 - set as default package for html files using `perl-file-mimeinfo`
 - remove youtube, facebook, reddit from suggestions:
     - set `browser.urlbar.suggest.topsites` to `false` in `about:config`
+    
 
-## setup ungoogled-chromium
+# setup ungoogled-chromium
 
+- setup webstore
 https://github.com/NeverDecaf/chromium-web-store
+- setup same plugins above 
+- set `d` as prefix for duckduckgo search
 
 # the rest
 

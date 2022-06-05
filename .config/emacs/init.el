@@ -345,6 +345,12 @@ in whole buffer.  With neither, delete comments on current line."
   (text-scale-set 0)
   )
 
+(defun fff-run-blue ()
+  (interactive)
+  (shell-command (format "blue %s" (buffer-file-name)))
+  )
+  
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; load site-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
