@@ -42,7 +42,7 @@ cat hosts >> /etc/hosts
 - I don't care about cookies
 
 ### some settings
-- set `g` as prefix for google search
+- set `d` as prefix for duckduckgo search
 - remove all other search suggestions (amazon, wikipedia)
 - ask where to download files
 - Applications > set default PDF reader to read pdfs
