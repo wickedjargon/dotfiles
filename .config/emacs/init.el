@@ -210,11 +210,11 @@
   (interactive)
   (insert "	"))
 	
-(defun fff-toggle-flycheck-mode ()
-  (interactive)
-  (if (not flycheck-mode)
-      (flycheck-mode +1)
-    (flycheck-mode -1)))
+;; (defun fff-toggle-flycheck-mode ()
+;;   (interactive)
+;;   (if (not flycheck-mode)
+;;       (flycheck-mode +1)
+;;     (flycheck-mode -1)))
 
 (defun fff-toggle-visual-line-mode ()
   (interactive)
@@ -532,21 +532,24 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   (global-evil-surround-mode +1))
 
-(use-package ivy
+;; (use-package ivy
+;;   :defer t
+;;   :ensure t
+;;   :config
+;;   (setq ivy-initial-inputs-alist nil)
+;;   (setq ivy-on-del-error-function #'ignore)
+;;   :init
+;;   (ivy-mode)
+;;   )
+
+(use-package counsel
   :defer t
   :ensure t
   :config
   (setq ivy-initial-inputs-alist nil)
   (setq ivy-on-del-error-function #'ignore)
   :init
-  (ivy-mode)
-  )
-
-(use-package counsel
-  :defer t
-  :ensure t
-  :config
-  :init
+  (counsel-mode)
   )
 
 (use-package elpy
@@ -647,18 +650,6 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :init (add-hook 'sgml-mode-hook 'emmet-mode)
   )
-
-(use-package org
-  :defer t
-  :ensure t
-  :init
-  (setq org-confirm-babel-evaluate nil)
-  :config
-  (progn
-    (org-babel-do-load-languages
-     'org-babel-load-languages
-     '((python . t)))
-    ))
 
 (use-package markdown-mode
   :defer t
