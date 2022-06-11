@@ -100,6 +100,10 @@
   (interactive)
   (shell-command (format "lua %s" buffer-file-name)))
 
+(defun fff-run-go ()
+  (interactive)
+  (shell-command (format "go run %s" buffer-file-name)))
+
 (defun fff-run-haskell ()
   (interactive)
   (shell-command (format "runhaskell %s" buffer-file-name)))
@@ -418,6 +422,9 @@ in whole buffer.  With neither, delete comments on current line."
     (fset 'fff-C-x-C-e
           (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
 
+    ;; (fset 'fff-C-c-C-c
+    ;;       (kmacro-lambda-form [?\C-c ?\C-c] 0 "%d"))
+
     (fset 'fff-C-x-C-s
           (kmacro-lambda-form [?\C-x ?\C-s] 0 "%d"))
 
@@ -431,6 +438,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "3" 'split-window-right)
     (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "a" 'yas-insert-snippet)
+    ;; (evil-leader/set-key "c" 'fff-C-c-C-c)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "D" 'elpy-doc)
     (evil-leader/set-key "e" 'fff-C-x-C-e)
@@ -681,4 +689,11 @@ in whole buffer.  With neither, delete comments on current line."
 (use-package gh-md
   :ensure t
   :defer t
+  )
+
+(use-package go-mode
+  :ensure t
+  :defer t
+  :bind
+  ("C-c C-c" . fff-run-go)
   )
