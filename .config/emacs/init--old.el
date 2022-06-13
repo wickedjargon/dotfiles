@@ -54,8 +54,6 @@
 (global-unset-key (kbd "C-a"))                          ;; I prefer the vim keybinding
 (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
 (setq-default indent-tabs-mode nil)                     ;; I prefer spaces instead of tabs
-(setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
-
 
 ;; don't show `active processes exist` warning:
 (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
@@ -104,7 +102,6 @@
 
 (defun fff-run-go ()
   (interactive)
-  (save-buffer)
   (shell-command (format "go run %s" buffer-file-name)))
 
 (defun fff-run-haskell ()
@@ -381,10 +378,12 @@ in whole buffer.  With neither, delete comments on current line."
 (setq evil-want-keybinding nil)
 
 (use-package modus-themes
-  :ensure t
+  :ensure nil
   :init
+  ;; before the package is loaded:
   (modus-themes-load-themes)
   :config
+  ;; after the package is loaded:
   (modus-themes-load-vivendi)
   )
 
@@ -461,8 +460,8 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
     (evil-leader/set-key "0" 'fff-set-scale-to-zero)
-    (evil-leader/set-key "o" 'find-file)
-    ;; (evil-leader/set-key "O" 'counsel-buffer-or-recentf)
+    (evil-leader/set-key "o" 'counsel-find-file)
+    (evil-leader/set-key "O" 'counsel-buffer-or-recentf)
     (evil-leader/set-key "p" 'crux-open-with)
     (evil-leader/set-key "q" 'delete-window)
     (evil-leader/set-key "Q" 'kill-buffer-and-window)
@@ -481,8 +480,8 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "x 2" 'split-window-below)
     (evil-leader/set-key "x 3" 'split-window-right)
     (evil-leader/set-key "x o" 'other-window)
-    (evil-leader/set-key "x f" 'find-file)
-    ;; (evil-leader/set-key "x r" 'counsel-buffer-or-recentf)
+    (evil-leader/set-key "x f" 'counsel-find-file)
+    (evil-leader/set-key "x r" 'counsel-buffer-or-recentf)
     (evil-leader/set-key "x w" 'write-file)
     (evil-leader/set-key "x h" 'mark-whole-buffer)
     (evil-leader/set-key "x SPC b" 'list-buffers)
@@ -514,9 +513,9 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
     (define-key evil-insert-state-map (kbd "C-y") 'yank)
     (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
-    (define-key evil-insert-state-map (kbd "C-;") 'hippie-expand)
+    (define-key evil-insert-state-map (kbd "C-/") 'hippie-expand)
     (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
-    (define-key evil-insert-state-map (kbd "C-/") 'yas-expand)
+    (define-key evil-insert-state-map (kbd "C-;") 'yas-expand)
 
     (define-key evil-normal-state-map (kbd "q") 'fff-kill-this-buffer)
     (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
@@ -540,6 +539,26 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :config
   (global-evil-surround-mode +1))
+
+;; (use-package ivy
+;;   :defer t
+;;   :ensure t
+;;   :config
+;;   (setq ivy-initial-inputs-alist nil)
+;;   (setq ivy-on-del-error-function #'ignore)
+;;   :init
+;;   (ivy-mode)
+;;   )
+
+(use-package counsel
+  :defer t
+  :ensure t
+  :config
+  (setq ivy-initial-inputs-alist nil)
+  (setq ivy-on-del-error-function #'ignore)
+  :init
+  (counsel-mode)
+  )
 
 (use-package elpy
   :defer t
@@ -677,23 +696,4 @@ in whole buffer.  With neither, delete comments on current line."
   :defer t
   :bind
   ("C-c C-c" . fff-run-go)
-  )
-
-(use-package ivy
-  :defer t
-  :ensure t
-  :config
-  (setq ivy-initial-inputs-alist nil)
-  (setq ivy-on-del-error-function #'ignore)
-  :init
-  (ivy-mode)
-  )
-
-(use-package counsel
-  :defer t
-  :ensure t
-  :init
-  (setq ivy-initial-inputs-alist nil)
-  (when (commandp 'counsel-M-x)
-  (global-set-key [remap execute-extended-command] #'counsel-M-x))
   )

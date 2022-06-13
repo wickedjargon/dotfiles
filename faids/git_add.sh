@@ -20,6 +20,7 @@ git add .config/pulse/daemon.conf
 git add .config/shell/
 git add .config/sxiv/
 git add .config/user-dirs.dirs
+git add .config/VSCodium/User/settings.json
 git add .config/wal/
 git add .config/wget/
 git add .config/x11/

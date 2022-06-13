@@ -1,0 +1,15 @@
+{
+    "security.workspace.trust.untrustedFiles": "open",
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
+
+  "vim.normalModeKeyBindingsNonRecursive": [
+    {
+      "before": ["<leader>", "s"],
+      "commands": [":write"]
+    },
+  ],
+  "vim.leader": "<space>",
+  "editor.minimap.enabled": false,
+
+}
