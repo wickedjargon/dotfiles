@@ -8,8 +8,20 @@
       "before": ["<leader>", "s"],
       "commands": [":write"]
     },
+    {
+      "before": ["<leader>", "c"],
+      "commands": ["code-runner.run"]
+    },
+    {
+      "before": ["q"],
+      "commands": ["workbench.action.closeActiveEditor"]
+    },
   ],
   "vim.leader": "<space>",
   "editor.minimap.enabled": false,
+  "code-runner.saveAllFilesBeforeRun": true,
+  "code-runner.clearPreviousOutput": true,
+
+
 
 }

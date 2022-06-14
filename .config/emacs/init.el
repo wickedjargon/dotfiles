@@ -384,6 +384,7 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :init
   (modus-themes-load-themes)
+  (fmakunbound 'modus-themes-toggle)
   :config
   (modus-themes-load-vivendi)
   )
