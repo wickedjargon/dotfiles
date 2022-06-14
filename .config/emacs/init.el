@@ -217,12 +217,6 @@
   (interactive)
   (insert "	"))
 	
-;; (defun fff-toggle-flycheck-mode ()
-;;   (interactive)
-;;   (if (not flycheck-mode)
-;;       (flycheck-mode +1)
-;;     (flycheck-mode -1)))
-
 (defun fff-toggle-visual-line-mode ()
   (interactive)
   (if (not visual-line-mode)
@@ -502,6 +496,14 @@ in whole buffer.  With neither, delete comments on current line."
   (setq evil-want-keybinding nil)
   (setq evil-want-fine-undo t)
   (setq evil-search-wrap 'nil)
+  ;; hitting C-n and C-p doesn't work for the company-mode pop-up
+  ;; after using C-h. The code below resolves this issue
+(with-eval-after-load 'evil
+  (with-eval-after-load 'company
+    (define-key evil-insert-state-map (kbd "C-n") nil)
+    (define-key evil-insert-state-map (kbd "C-p") nil)
+    (evil-define-key nil company-active-map (kbd "C-n") #'company-select-next)
+    (evil-define-key nil company-active-map (kbd "C-p") #'company-select-previous)))
   :config
   (progn
     (evil-mode 1)
@@ -606,10 +608,12 @@ in whole buffer.  With neither, delete comments on current line."
       ( "-" text-scale-decrease)
       ( "0"  (text-scale-set 0))
       )
+
     (defhydra fff-hydra-expand-region ()
       ("k" er/expand-region)
       ("j" er/contract-region)
       )
+
     ))
 
 (use-package company
@@ -697,4 +701,11 @@ in whole buffer.  With neither, delete comments on current line."
   (setq ivy-initial-inputs-alist nil)
   (when (commandp 'counsel-M-x)
   (global-set-key [remap execute-extended-command] #'counsel-M-x))
+  )
+
+(use-package lsp-mode
+  :defer t
+  :ensure t
+  ;; :commands lsp
+  ;; :init
   )
