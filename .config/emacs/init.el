@@ -22,7 +22,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (custom-set-faces
- '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 110 :width normal))))
+ '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 109 :width normal))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
  '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
@@ -707,5 +707,6 @@ in whole buffer.  With neither, delete comments on current line."
   :defer t
   :ensure t
   ;; :commands lsp
-  ;; :init
+  :init
+  (setq lsp-enable-symbol-highlighting nil)
   )
