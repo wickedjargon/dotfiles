@@ -33,10 +33,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (tool-bar-mode -1)                                      ;; no tool bar
+(scroll-bar-mode -1)                                    ;; no scroll bar
 (setq inhibit-startup-message t)                        ;; no splash screen
 (defalias 'yes-or-no-p 'y-or-n-p)                       ;; just type `y`, not `yes`
 (global-display-line-numbers-mode)                      ;; global line numbers
-(menu-bar-mode +1)                                      ;; I like the menu bar
+(menu-bar-mode -1)                                      ;; no menu bar
 (setq auto-save-file-name-transforms                    ;;  (save auto save data
       '((".*" "~/.config/emacs/auto-save-list/" t)))    ;;  in a separate directory)
 (setq backup-directory-alist                            ;; (save backup files
@@ -350,6 +351,10 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (shell-command (format "blue %s" (buffer-file-name)))
   )
+
+(defun fff-flymake-list ()
+  (interactive)
+  (flymake-show-buffer-diagnostics))
   
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -452,6 +457,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "l" 'fff-hydra-movement/evil-forward-paragraph)
     (evil-leader/set-key "h" 'fff-hydra-movement/evil-backward-paragraph)
     (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
+    (evil-leader/set-key "l" '(lsp-command-map))
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
@@ -471,6 +477,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "v" 'fff-toggle-visual-line-mode)
     (evil-leader/set-key "x <tab>" 'fff-insert-tab)
     (evil-leader/set-key "x x" ctl-x-map)
+    (evil-leader/set-key "x b" 'list-buffers)
     (evil-leader/set-key "x 0" 'delete-window)
     (evil-leader/set-key "x 1" 'delete-other-windows)
     (evil-leader/set-key "x 2" 'split-window-below)
@@ -709,4 +716,13 @@ in whole buffer.  With neither, delete comments on current line."
   ;; :commands lsp
   :init
   (setq lsp-enable-symbol-highlighting nil)
+  (setq lsp-headerline-breadcrumb-enable nil)
+  :hook
+  (go-mode . lsp)
+  (cc-mode . lsp)
+  )
+
+(use-package flymake
+  :defer t
+  :ensure t
   )
