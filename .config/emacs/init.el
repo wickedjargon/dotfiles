@@ -57,7 +57,6 @@
 (setq-default indent-tabs-mode nil)                     ;; I prefer spaces instead of tabs
 (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
 
-
 ;; don't show `active processes exist` warning:
 (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
   "Prevent annoying \"Active processes exist\" query when you quit Emacs."
@@ -188,20 +187,6 @@
         (insert filename)
         (clipboard-kill-region (point-min) (point-max)))
       (message filename))))
-
-;; TODO: make a toggle function for the 3 funcs below
-
-(defun fff-space-makes-space ()
-  (interactive)
-  (setq keyboard-translate-table nil) )
-
-(defun fff-space-makes-dash ()
-  (interactive)
-  (setq keyboard-translate-table (vconcat (make-vector 32 nil) [?-])) )
-
-(defun fff-space-makes-underscore ()
-  (interactive)
-  (setq keyboard-translate-table (vconcat (make-vector 32 nil) [?_])) )
 
 (defun fff-force-kill-this-buffer ()
   (interactive)
@@ -355,7 +340,6 @@ in whole buffer.  With neither, delete comments on current line."
 (defun fff-flymake-list ()
   (interactive)
   (flymake-show-buffer-diagnostics))
-  
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; load site-lisp
@@ -392,7 +376,8 @@ in whole buffer.  With neither, delete comments on current line."
   :defer t
   :commands (evil-leader-mode)
   :ensure t
-  :init (global-evil-leader-mode)
+  :init
+  (global-evil-leader-mode)
   :config
   (progn
     ;; TODO: let's use some advise instead of over writing like this:
@@ -439,7 +424,6 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "3" 'split-window-right)
     (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "a" 'yas-insert-snippet)
-    ;; (evil-leader/set-key "c" 'fff-C-c-C-c)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "D" 'elpy-doc)
     (evil-leader/set-key "e" 'fff-C-x-C-e)
@@ -453,18 +437,17 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
     (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
-    (evil-leader/set-key "j" 'fff-hydra-expand-region/er/contract-region)
     (evil-leader/set-key "l" 'fff-hydra-movement/evil-forward-paragraph)
     (evil-leader/set-key "h" 'fff-hydra-movement/evil-backward-paragraph)
     (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
-    (evil-leader/set-key "l" '(lsp-command-map))
+    ;; (evil-leader/set-key "l" 'lsp-command-map)
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
     (evil-leader/set-key "0" 'fff-set-scale-to-zero)
     (evil-leader/set-key "o" 'find-file)
     ;; (evil-leader/set-key "O" 'counsel-buffer-or-recentf)
-    (evil-leader/set-key "p" 'crux-open-with)
+    (evil-leader/set-key "p" 'projectile-command-map)
     (evil-leader/set-key "q" 'delete-window)
     (evil-leader/set-key "Q" 'kill-buffer-and-window)
     (evil-leader/set-key "r" 'fff-evil-regex-search)
@@ -498,11 +481,12 @@ in whole buffer.  With neither, delete comments on current line."
   :after evil-leader
   :ensure t
   :init
-  (setq evil-undo-system nil)
-  (setq evil-want-integration t)
-  (setq evil-want-keybinding nil)
-  (setq evil-want-fine-undo t)
-  (setq evil-search-wrap 'nil)
+
+(setq evil-undo-system 'undo-fu)
+(setq evil-want-integration t)
+(setq evil-want-keybinding nil)
+(setq evil-want-fine-undo t)
+(setq evil-search-wrap 'nil)
   ;; hitting C-n and C-p doesn't work for the company-mode pop-up
   ;; after using C-h. The code below resolves this issue
 (with-eval-after-load 'evil
@@ -544,6 +528,7 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :config
   (evil-collection-init)
+  (evil-collection-define-key 'normal 'dired-mode-map)
   )
 
 (use-package evil-surround
@@ -600,16 +585,19 @@ in whole buffer.  With neither, delete comments on current line."
   :commands defhydra
   :config
   (progn
+
     (defhydra fff-hydra-movement ()
       ("h" evil-backward-paragraph)
       ("l" evil-forward-paragraph)
       )
+
     (defhydra fff-hydra-windsize ()
       ("H" windsize-left)
       ("L" windsize-right)
       ("J" windsize-down)
       ("K" windsize-up)
       )
+
     (defhydra fff-hydra-zoom ()
       ( "=" text-scale-increase)
       ( "-" text-scale-decrease)
@@ -626,6 +614,8 @@ in whole buffer.  With neither, delete comments on current line."
 (use-package company
   :defer t
   :ensure t
+  :bind
+  (("C-c z" . counsel-company))
   :init
   (global-company-mode)
   )
@@ -704,25 +694,54 @@ in whole buffer.  With neither, delete comments on current line."
 (use-package counsel
   :defer t
   :ensure t
+  :bind
+  (("C-c z" . counsel-company))
   :init
   (setq ivy-initial-inputs-alist nil)
   (when (commandp 'counsel-M-x)
-  (global-set-key [remap execute-extended-command] #'counsel-M-x))
+    (global-set-key [remap execute-extended-command] #'counsel-M-x))
+  (global-set-key (kbd "C-c c") 'counsel-company)
   )
 
 (use-package lsp-mode
   :defer t
   :ensure t
-  ;; :commands lsp
   :init
   (setq lsp-enable-symbol-highlighting nil)
   (setq lsp-headerline-breadcrumb-enable nil)
   :hook
   (go-mode . lsp)
-  (cc-mode . lsp)
+  (c-mode . lsp)
   )
 
 (use-package flymake
   :defer t
   :ensure t
+  )
+
+(use-package projectile
+  :ensure t
+  :init
+  (projectile-mode +1)
+ )
+
+(use-package marginalia
+  :defer t
+  :ensure t
+  :init
+  (marginalia-mode))
+	
+(use-package org
+  :defer t
+  :init
+  (setq org-confirm-babel-evaluate nil)
+  (setq org-startup-with-inline-images t)
+  :config
+  (org-babel-do-load-languages
+ 'org-babel-load-languages
+ '(
+
+   (python . t)
+
+   ))
   )
