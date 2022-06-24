@@ -202,6 +202,11 @@
 (defun fff-insert-tab()
   (interactive)
   (insert "	"))
+
+
+(defun fff-insert-4-spaces()
+  (interactive)
+  (insert "    "))
 	
 (defun fff-toggle-visual-line-mode ()
   (interactive)
@@ -681,6 +686,12 @@ in whole buffer.  With neither, delete comments on current line."
   ("C-c C-c" . fff-run-go)
   )
 
+
+(use-package cc-mode
+  :bind
+  (("C-c C-c" . fff-run-c))
+  )
+
 (use-package ivy
   :defer t
   :ensure t
@@ -703,21 +714,22 @@ in whole buffer.  With neither, delete comments on current line."
   (global-set-key (kbd "C-c c") 'counsel-company)
   )
 
-(use-package lsp-mode
-  :defer t
-  :ensure t
-  :init
-  (setq lsp-enable-symbol-highlighting nil)
-  (setq lsp-headerline-breadcrumb-enable nil)
-  :hook
-  (go-mode . lsp)
-  (c-mode . lsp)
-  )
+;; (use-package lsp-mode
+;;   :defer t
+;;   :ensure t
+;;   :init
+;;   (setq lsp-enable-symbol-highlighting nil)
+;;   (setq lsp-headerline-breadcrumb-enable nil)
+;;   :hook
+;;   (go-mode . lsp)
+;;   (c-mode . lsp)
+;;   )
 
 (use-package flymake
   :defer t
   :ensure t
   )
+
 
 (use-package projectile
   :ensure t
@@ -730,18 +742,32 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :init
   (marginalia-mode))
+
+(use-package ob-go
+  :ensure t
+  )
 	
 (use-package org
   :defer t
+  :after ob-go
   :init
   (setq org-confirm-babel-evaluate nil)
   (setq org-startup-with-inline-images t)
+  :bind
+  ("C-c s" . fff-insert-4-spaces)
   :config
   (org-babel-do-load-languages
  'org-babel-load-languages
  '(
-
    (python . t)
-
+   (go . t)
    ))
+  )
+
+(use-package emojify
+  :defer t
+  :ensure t
+  :init
+  (setq emojify-display-style 'unicode)
+  (setq emojify-emoji-styles '(unicode))
   )
