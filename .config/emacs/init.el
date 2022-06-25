@@ -686,7 +686,6 @@ in whole buffer.  With neither, delete comments on current line."
   ("C-c C-c" . fff-run-go)
   )
 
-
 (use-package cc-mode
   :bind
   (("C-c C-c" . fff-run-c))
@@ -729,7 +728,6 @@ in whole buffer.  With neither, delete comments on current line."
   :defer t
   :ensure t
   )
-
 
 (use-package projectile
   :ensure t
