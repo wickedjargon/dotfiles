@@ -1,2 +1,5 @@
 Sxiv.background: #000000
 Sxiv.foreground: #00C0FF
+xterm*background: black
+xterm*foreground: white
+xterm*font: *-fixed-*-*-*-32-*

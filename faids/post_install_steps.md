@@ -30,7 +30,7 @@ cat hosts >> /etc/hosts
 ## setup firefox
 
 ### setup firefox hardening
-- https://github.com/arkenfox/user.js/
+- user.js in faids dir
 - be sure to create a new profile (instructions below)
 - instructions: https://github.com/pyllyukko/user.js/ 
 

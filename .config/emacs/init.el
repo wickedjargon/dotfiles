@@ -36,7 +36,7 @@
 (scroll-bar-mode -1)                                    ;; no scroll bar
 (setq inhibit-startup-message t)                        ;; no splash screen
 (defalias 'yes-or-no-p 'y-or-n-p)                       ;; just type `y`, not `yes`
-(global-display-line-numbers-mode)                      ;; global line numbers
+;; (global-display-line-numbers-mode)                      ;; global line numbers
 (menu-bar-mode -1)                                      ;; no menu bar
 (setq auto-save-file-name-transforms                    ;;  (save auto save data
       '((".*" "~/.config/emacs/auto-save-list/" t)))    ;;  in a separate directory)
@@ -346,6 +346,96 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (flymake-show-buffer-diagnostics))
 
+
+
+(defun fff-title-case-region-or-line (@begin @end)
+  "Title case text between nearest brackets, or current line, or text selection.
+Capitalize first letter of each word, except words like {to, of, the, a, in, or, and, etc}. If a word already contains cap letters such as HTTP, URL, they are left as is.
+
+When called in a elisp program, *begin *end are region boundaries.
+URL `http://xahlee.info/emacs/emacs/elisp_title_case_text.html'
+Version 2017-01-11"
+  (interactive
+   (if (use-region-p)
+       (list (region-beginning) (region-end))
+     (let (
+           $p1
+           $p2
+           ($skipChars ""))
+       (progn
+         (skip-chars-backward $skipChars (line-beginning-position))
+         (setq $p1 (point))
+         (skip-chars-forward $skipChars (line-end-position))
+         (setq $p2 (point)))
+       (list $p1 $p2))))
+  (let* (
+         ($strPairs [
+                     
+                     ]))
+    (save-excursion
+      (save-restriction
+        (narrow-to-region @begin @end)
+        (upcase-initials-region (point-min) (point-max))
+        (let ((case-fold-search nil))
+          (mapc
+           (lambda ($x)
+             (goto-char (point-min))
+             (while
+                 (search-forward (aref $x 0) nil t)
+               (replace-match (aref $x 1) "FIXEDCASE" "LITERAL")))
+           $strPairs))))))
+
+(defun fff-cycle-hyphen-underscore-space ( &optional @begin @end )
+  (interactive "P")
+  (let ($p1 $p2)
+    (if (and @begin @end)
+        (setq $p1 @begin $p2 @end)
+      (if (use-region-p)
+          (setq $p1 (region-beginning) $p2 (region-end))
+        (if (nth 3 (syntax-ppss))
+            (save-excursion
+              (skip-chars-backward "^\"")
+              (setq $p1 (point))
+              (skip-chars-forward "^\"")
+              (setq $p2 (point)))
+          (let (($skipChars "^\""))
+            (skip-chars-backward $skipChars (line-beginning-position))
+            (setq $p1 (point))
+            (skip-chars-forward $skipChars (line-end-position))
+            (setq $p2 (point))
+            (set-mark $p1)))))
+    (let ( $charArray $length $regionWasActive-p $nowState $changeTo)
+      (setq $charArray ["-" "_" " "])
+      (setq $length (length $charArray))
+      (setq $regionWasActive-p (region-active-p))
+      (setq $nowState (if (eq last-command this-command) (get 'fff-cycle-hyphen-lowline-space 'state) 0 ))
+      (setq $changeTo (elt $charArray $nowState))
+      (save-excursion
+        (save-restriction
+          (narrow-to-region $p1 $p2)
+          (goto-char (point-min))
+          (while (re-search-forward (elt $charArray (% (+ $nowState 2) $length)) (point-max) "move")
+            (replace-match $changeTo t t))))
+      (when (or (string-equal $changeTo " ") $regionWasActive-p)
+        (goto-char $p2)
+        (set-mark $p1)
+        (setq deactivate-mark nil))
+      (put 'fff-cycle-hyphen-lowline-space 'state (% (+ $nowState 1) $length))))
+  (set-transient-map (let (($kmap (make-sparse-keymap))) (define-key $kmap (kbd "t") 'fff-cycle-hyphen-lowline-space ) $kmap)))
+
+(defun fff-toggle-centered-window-mode ()
+  (interactive)
+  (if (not centered-window-mode)
+      (progn
+        (centered-window-mode +1)
+        (global-display-line-numbers-mode -1)
+        (message "centered window mode on"))
+    (progn
+      (centered-window-mode -1)
+      (global-display-line-numbers-mode +1)
+      (message "centered window mode off")
+      )))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; load site-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -412,12 +502,6 @@ in whole buffer.  With neither, delete comments on current line."
 
     (fset 'fff-C-x-C-e
           (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
-
-    ;; (fset 'fff-C-c-C-c
-    ;;       (kmacro-lambda-form [?\C-c ?\C-c] 0 "%d"))
-
-    (fset 'fff-C-x-C-s
-          (kmacro-lambda-form [?\C-x ?\C-s] 0 "%d"))
 
     (evil-leader/set-leader "<SPC>")
     (evil-leader/set-key "SPC" 'execute-extended-command)
@@ -687,8 +771,9 @@ in whole buffer.  With neither, delete comments on current line."
   )
 
 (use-package cc-mode
-  :bind
-  (("C-c C-c" . fff-run-c))
+  :config
+  (define-key c-mode-map (kbd "C-c C-c") nil)
+  (define-key c-mode-map (kbd "C-c C-c") 'fff-run-c)
   )
 
 (use-package ivy
@@ -713,16 +798,16 @@ in whole buffer.  With neither, delete comments on current line."
   (global-set-key (kbd "C-c c") 'counsel-company)
   )
 
-;; (use-package lsp-mode
-;;   :defer t
-;;   :ensure t
-;;   :init
-;;   (setq lsp-enable-symbol-highlighting nil)
-;;   (setq lsp-headerline-breadcrumb-enable nil)
-;;   :hook
-;;   (go-mode . lsp)
-;;   (c-mode . lsp)
-;;   )
+(use-package lsp-mode
+  :defer t
+  :ensure t
+  :init
+  (setq lsp-enable-symbol-highlighting nil)
+  (setq lsp-headerline-breadcrumb-enable nil)
+  :hook
+  (go-mode . lsp)
+  (c-mode . lsp)
+  )
 
 (use-package flymake
   :defer t
