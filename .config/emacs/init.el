@@ -854,3 +854,11 @@ Version 2017-01-11"
   (setq emojify-display-style 'unicode)
   (setq emojify-emoji-styles '(unicode))
   )
+
+(use-package dired
+  :ensure nil
+  :config
+  (add-hook 'dired-mode-hook
+            (lambda ()
+              (dired-hide-details-mode)))
+  )
