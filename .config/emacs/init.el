@@ -22,8 +22,6 @@
 (custom-set-faces
  '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 109 :width normal))))
  '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
- '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
- '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -34,7 +32,6 @@
 (scroll-bar-mode -1)                                    ;; no scroll bar
 (setq inhibit-startup-message t)                        ;; no splash screen
 (defalias 'yes-or-no-p 'y-or-n-p)                       ;; just type `y`, not `yes`
-;; (global-display-line-numbers-mode)                      ;; global line numbers
 (menu-bar-mode -1)                                      ;; no menu bar
 (setq auto-save-file-name-transforms                    ;;  (save auto save data
       '((".*" "~/.config/emacs/auto-save-list/" t)))    ;;  in a separate directory)
@@ -57,7 +54,6 @@
 
 ;; don't show `active processes exist` warning:
 (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
-  "Prevent annoying \"Active processes exist\" query when you quit Emacs."
   (cl-letf (((symbol-function #'process-list) (lambda ())))
     ad-do-it))
 
@@ -72,12 +68,17 @@
   (message "(emacs-init-time) -> %s" (emacs-init-time)))
 
 ;; open .pl files in prolog-mode
-(autoload 'prolog-mode "prolog" "Major mode for editing Prolog programs." t)
+(autoload 'prolog-mode "prolog" "" t)
 (add-to-list 'auto-mode-alist '("\\.pl\\'" . prolog-mode))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; my functions:
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun fff-clear-shell ()
+  (interactive)
+  (let ((comint-buffer-maximum-size 0))
+    (comint-truncate-buffer)))
 
 (defun fff-remove-blank-lines ()
   (interactive)
@@ -201,11 +202,10 @@
   (interactive)
   (insert "	"))
 
-
 (defun fff-insert-4-spaces()
   (interactive)
   (insert "    "))
-	
+
 (defun fff-toggle-visual-line-mode ()
   (interactive)
   (if (not visual-line-mode)
@@ -296,11 +296,11 @@ in whole buffer.  With neither, delete comments on current line."
   "Deletes the current line"
   (interactive) 
   (progn
-  (delete-region
-   (line-beginning-position)
-   (line-end-position))
-  (evil-delete-backward-char-and-join)
-  )
+    (delete-region
+     (line-beginning-position)
+     (line-end-position))
+    (evil-delete-backward-char-and-join)
+    )
   )
 
 (defun fff-switch-to-previous-buffer ()
@@ -315,7 +315,7 @@ in whole buffer.  With neither, delete comments on current line."
                             (custom-set-faces
                              '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
                              '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
-                            '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
+                             '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
                              )
                             ))
     ('modus-vivendi (progn (enable-theme 'modus-operandi)
@@ -344,15 +344,7 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (flymake-show-buffer-diagnostics))
 
-
-
 (defun fff-title-case-region-or-line (@begin @end)
-  "Title case text between nearest brackets, or current line, or text selection.
-Capitalize first letter of each word, except words like {to, of, the, a, in, or, and, etc}. If a word already contains cap letters such as HTTP, URL, they are left as is.
-
-When called in a elisp program, *begin *end are region boundaries.
-URL `http://xahlee.info/emacs/emacs/elisp_title_case_text.html'
-Version 2017-01-11"
   (interactive
    (if (use-region-p)
        (list (region-beginning) (region-end))
@@ -434,6 +426,59 @@ Version 2017-01-11"
       (message "centered window mode off")
       )))
 
+(defun fff-mark-gt-point-exchange ()
+  (interactive)
+  (if (>  (mark) (point))
+      (exchange-point-and-mark)
+    ))
+
+(defun fff-wrap-with-function-call (function-name)
+  (interactive "sFunction name:")
+  (if (and transient-mark-mode mark-active)
+      (progn
+        (setq text-end ")")
+        (setq function-name (concat function-name "("))
+        (fff-mark-gt-point-exchange)
+        (goto-char (region-end))
+        (insert text-end)
+        (goto-char (region-beginning))
+        (insert function-name))
+    (progn
+      (setq text-end ")")
+      (setq function-name (concat function-name "("))
+      (setq bds (bounds-of-thing-at-point 'symbol))
+      (goto-char (cdr bds))
+      (insert text-end)
+      (goto-char (car bds))
+      (insert function-name))))
+
+(defun fff-print-debug-line ()
+  (interactive)
+  (save-excursion
+    (setq word (thing-at-point 'symbol))
+    (evil-open-below 1)
+    (insert word)
+    (setq text-beg (concat "print(\"" word " -->\", "))
+    (setq text-end ") # ff-debug")
+    (setq bds (bounds-of-thing-at-point 'symbol))
+    (goto-char (cdr bds))
+    (insert text-end)
+    (goto-char (car bds))
+    (insert text-beg)
+    )
+  )
+
+(defun fff-delete-debug-lines ()
+  (interactive)
+  (replace-regexp-in-region ".*# ff-debug$" "" (point-min) (point-max))
+  )
+
+(defun fff-remove-blank-lines-and-yapf ()
+  (interactive)
+  (fff-remove-blank-lines)
+  (elpy-yapf-fix-code)
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; load site-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -449,7 +494,7 @@ Version 2017-01-11"
   )
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; use package setup:
+;; ;; use-package setup:
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (setq evil-undo-system 'undo-fu)
@@ -462,8 +507,14 @@ Version 2017-01-11"
   (modus-themes-load-themes)
   (fmakunbound 'modus-themes-toggle)
   :config
-  (modus-themes-load-vivendi)
-  )
+  (modus-themes-load-operandi)
+(custom-set-faces
+                            '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
+                            '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
+                            '(font-lock-comment-delimiter-face ((t (:background "gray70" :foreground "black"))))
+                            '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "black"))))
+                            '(font-lock-doc-face ((t (:background "gray80" :foreground "black"))))
+                            )  )
 
 (use-package evil-leader
   :defer t
@@ -506,10 +557,10 @@ Version 2017-01-11"
     (evil-leader/set-key "<tab>" 'ivy-switch-buffer)
     (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
     (evil-leader/set-key "\\" 'evil-switch-to-windows-last-buffer)
+    (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "1" 'delete-other-windows)
     (evil-leader/set-key "2" 'split-window-below)
     (evil-leader/set-key "3" 'split-window-right)
-    (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "a" 'yas-insert-snippet)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "D" 'elpy-doc)
@@ -520,6 +571,7 @@ Version 2017-01-11"
     (evil-leader/set-key "f h" 'fff-access-hosts)
     (evil-leader/set-key "f o" 'fff-access-home-dir)
     (evil-leader/set-key "f p" 'fff-access-phonebook)
+    (evil-leader/set-key "f u" 'fff-access-home-dir)
     (evil-leader/set-key "h" 'beginning-of-line)
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
@@ -532,6 +584,7 @@ Version 2017-01-11"
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
     (evil-leader/set-key "0" 'fff-set-scale-to-zero)
+    (evil-leader/set-key "m" 'counsel-mark-ring)
     (evil-leader/set-key "o" 'find-file)
     ;; (evil-leader/set-key "O" 'counsel-buffer-or-recentf)
     (evil-leader/set-key "p" 'projectile-command-map)
@@ -569,19 +622,19 @@ Version 2017-01-11"
   :ensure t
   :init
 
-(setq evil-undo-system 'undo-fu)
-(setq evil-want-integration t)
-(setq evil-want-keybinding nil)
-(setq evil-want-fine-undo t)
-(setq evil-search-wrap 'nil)
+  (setq evil-undo-system 'undo-fu)
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-fine-undo t)
+  (setq evil-search-wrap 'nil)
   ;; hitting C-n and C-p doesn't work for the company-mode pop-up
   ;; after using C-h. The code below resolves this issue
-(with-eval-after-load 'evil
-  (with-eval-after-load 'company
-    (define-key evil-insert-state-map (kbd "C-n") nil)
-    (define-key evil-insert-state-map (kbd "C-p") nil)
-    (evil-define-key nil company-active-map (kbd "C-n") #'company-select-next)
-    (evil-define-key nil company-active-map (kbd "C-p") #'company-select-previous)))
+  (with-eval-after-load 'evil
+    (with-eval-after-load 'company
+      (define-key evil-insert-state-map (kbd "C-n") nil)
+      (define-key evil-insert-state-map (kbd "C-p") nil)
+      (evil-define-key nil company-active-map (kbd "C-n") #'company-select-next)
+      (evil-define-key nil company-active-map (kbd "C-p") #'company-select-previous)))
   :config
   (progn
     (evil-mode 1)
@@ -816,7 +869,7 @@ Version 2017-01-11"
   :ensure t
   :init
   (projectile-mode +1)
- )
+  )
 
 (use-package marginalia
   :defer t
@@ -827,7 +880,7 @@ Version 2017-01-11"
 (use-package ob-go
   :ensure t
   )
-	
+
 (use-package org
   :defer t
   :after ob-go
@@ -838,11 +891,11 @@ Version 2017-01-11"
   ("C-c s" . fff-insert-4-spaces)
   :config
   (org-babel-do-load-languages
- 'org-babel-load-languages
- '(
-   (python . t)
-   (go . t)
-   ))
+   'org-babel-load-languages
+   '(
+     (python . t)
+     (go . t)
+     ))
   )
 
 (use-package emojify
@@ -859,4 +912,8 @@ Version 2017-01-11"
   (add-hook 'dired-mode-hook
             (lambda ()
               (dired-hide-details-mode)))
+  )
+
+(use-package switch-window
+  :ensure t
   )
