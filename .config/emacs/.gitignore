@@ -68,5 +68,7 @@ tutorial/
 /backups/
 /lockfiles/
 .stignore 
+/.stfolder/
+.stfolder/
 /racket-mode/
 /games/

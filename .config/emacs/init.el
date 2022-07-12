@@ -51,6 +51,8 @@
 (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
 (setq-default indent-tabs-mode nil)                     ;; I prefer spaces instead of tabs
 (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
+(setq dired-listing-switches                            ;; I prefer to have dired
+      "-aBhl  --group-directories-first")               ;; group my directories
 
 ;; don't show `active processes exist` warning:
 (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
@@ -337,7 +339,7 @@ in whole buffer.  With neither, delete comments on current line."
 
 (defun fff-run-blue ()
   (interactive)
-  (shell-command (format "blue %s" (buffer-file-name)))
+  (shell-command (format "blue --line-length 300 %s" (buffer-file-name)))
   )
 
 (defun fff-flymake-list ()
@@ -427,7 +429,6 @@ in whole buffer.  With neither, delete comments on current line."
       )))
 
 (defun fff-mark-gt-point-exchange ()
-  (interactive)
   (if (>  (mark) (point))
       (exchange-point-and-mark)
     ))
@@ -452,31 +453,71 @@ in whole buffer.  With neither, delete comments on current line."
       (goto-char (car bds))
       (insert function-name))))
 
+
+(defun fff-regions-content ()
+  "Return the selected region as a string."
+  (if (use-region-p)
+      (buffer-substring (region-beginning) (region-end))))
+
 (defun fff-print-debug-line ()
   (interactive)
   (save-excursion
-    (setq word (thing-at-point 'symbol))
+    (setq expression (thing-at-point 'symbol))
+    (if (and transient-mark-mode mark-active)
+        (setq expression (fff-regions-content)))
     (evil-open-below 1)
-    (insert word)
-    (setq text-beg (concat "print(\"" word " -->\", "))
+    (insert expression)
+    (setq text-beg (concat "print(\"" expression " -->\", "))
     (setq text-end ") # ff-debug")
-    (setq bds (bounds-of-thing-at-point 'symbol))
-    (goto-char (cdr bds))
-    (insert text-end)
-    (goto-char (car bds))
+    (evil-first-non-blank)
     (insert text-beg)
+    (end-of-line)
+    (insert text-end)
     )
   )
 
+
 (defun fff-delete-debug-lines ()
   (interactive)
-  (replace-regexp-in-region ".*# ff-debug$" "" (point-min) (point-max))
+  (replace-regexp-in-region ".* # ff-debug$" "" (point-min) (point-max))
   )
 
-(defun fff-remove-blank-lines-and-yapf ()
+(defun fff-python-format ()
   (interactive)
   (fff-remove-blank-lines)
   (elpy-yapf-fix-code)
+  (fff-run-blue)
+  )
+
+(defun fff-evil-paste-and-indent-after ()
+  (interactive)
+  (evil-with-undo
+    (progn
+      (evil-paste-after 1)
+      (evil-indent (evil-get-marker ?\[) (evil-get-marker ?\])))))
+
+(defun fff-evil-paste-and-indent-before ()
+  (interactive)
+  (evil-with-undo
+    (progn
+      (evil-paste-before 1)
+      (evil-indent (evil-get-marker ?\[) (evil-get-marker ?\])))))
+
+
+
+(defun fff-display-python ()
+  (interactive)
+  (run-python (python-shell-calculate-command) nil nil)
+  (display-buffer-pop-up-window  (get-buffer-create "*Python*") nil) 
+  )
+
+
+(defun fff-run-python (&optional ARG)
+  (interactive "P")
+  (elpy-shell-send-region-or-buffer ARG)
+  (switch-to-buffer  (get-buffer-create "*Python*") nil) 
+  (end-of-buffer)
+  (evil-append-line 1)
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -492,6 +533,18 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   )
+
+
+(use-package evil-collection
+  :after evil
+  :ensure nil
+  :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/evil-collection/"))
+  :load-path "evil-collection.el"
+  :config
+  (evil-collection-init)
+  (evil-collection-define-key 'normal 'dired-mode-map)
+  )
+
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; use-package setup:
@@ -509,12 +562,12 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   (modus-themes-load-operandi)
 (custom-set-faces
-                            '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
-                            '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
-                            '(font-lock-comment-delimiter-face ((t (:background "gray70" :foreground "black"))))
-                            '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "black"))))
-                            '(font-lock-doc-face ((t (:background "gray80" :foreground "black"))))
-                            )  )
+ '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
+ '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
+ '(font-lock-comment-delimiter-face ((t (:background "gray70" :foreground "black"))))
+ '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "black"))))
+ '(font-lock-doc-face ((t (:background "gray80" :foreground "black"))))
+ ))
 
 (use-package evil-leader
   :defer t
@@ -525,6 +578,7 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   (progn
     ;; TODO: let's use some advise instead of over writing like this:
+    ;; or find out what is causing this. does this happen with evil+emacs base?
     (defun comment-line (n)
       (interactive "p")
       (if (use-region-p)
@@ -554,51 +608,56 @@ in whole buffer.  With neither, delete comments on current line."
 
     (evil-leader/set-leader "<SPC>")
     (evil-leader/set-key "SPC" 'execute-extended-command)
+    (evil-leader/set-key "<S-SPC>" 'execute-extended-command-for-buffer)
     (evil-leader/set-key "<tab>" 'ivy-switch-buffer)
     (evil-leader/set-key "<escape>" 'keyboard-escape-quit)
     (evil-leader/set-key "\\" 'evil-switch-to-windows-last-buffer)
     (evil-leader/set-key ";" 'eval-expression)
+    (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
+    (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
+    (evil-leader/set-key "0" 'fff-set-scale-to-zero)
     (evil-leader/set-key "1" 'delete-other-windows)
     (evil-leader/set-key "2" 'split-window-below)
     (evil-leader/set-key "3" 'split-window-right)
     (evil-leader/set-key "a" 'yas-insert-snippet)
+    (evil-leader/set-key "b s" 'bookmark-set)
+    (evil-leader/set-key "b l" 'bookmark-bmenu-list)
+    (evil-leader/set-key "b w" 'bookmark-save)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "D" 'elpy-doc)
     (evil-leader/set-key "e" 'fff-C-x-C-e)
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f c" 'fff-access-config)
     (evil-leader/set-key "f f" 'fff-access-sched)
-    (evil-leader/set-key "f h" 'fff-access-hosts)
+    ;; (evil-leader/set-key "f h" 'fff-access-hosts)
     (evil-leader/set-key "f o" 'fff-access-home-dir)
     (evil-leader/set-key "f p" 'fff-access-phonebook)
     (evil-leader/set-key "f u" 'fff-access-home-dir)
-    (evil-leader/set-key "h" 'beginning-of-line)
+    (evil-leader/set-key "h" 'fff-hydra-movement/evil-backward-paragraph)
+    (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
     (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
     (evil-leader/set-key "l" 'fff-hydra-movement/evil-forward-paragraph)
-    (evil-leader/set-key "h" 'fff-hydra-movement/evil-backward-paragraph)
     (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
     ;; (evil-leader/set-key "l" 'lsp-command-map)
-    (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
-    (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
-    (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
-    (evil-leader/set-key "0" 'fff-set-scale-to-zero)
     (evil-leader/set-key "m" 'counsel-mark-ring)
-    (evil-leader/set-key "o" 'find-file)
+    ;; (evil-leader/set-key "o" 'find-file)
     ;; (evil-leader/set-key "O" 'counsel-buffer-or-recentf)
-    (evil-leader/set-key "p" 'projectile-command-map)
+    ;; (evil-leader/set-key "p" 'projectile-command-map)         ;; find a new prefix
+    (evil-leader/set-key "p" 'fff-evil-paste-and-indent-after)
+    (evil-leader/set-key "P" 'fff-evil-paste-and-indent-before)
     (evil-leader/set-key "q" 'delete-window)
     (evil-leader/set-key "Q" 'kill-buffer-and-window)
     (evil-leader/set-key "r" 'fff-evil-regex-search)
-    (evil-leader/set-key "R" 'anzu-query-replace-regexp)
+    (evil-leader/set-key "R" 'query-replace)
     (evil-leader/set-key "s" 'save-buffer)
     (evil-leader/set-key "t" 'vterm)
     (evil-leader/set-key "T" 'terminal-here)
     (evil-leader/set-key "u" 'evil-jump-backward)
     (evil-leader/set-key "U" 'pop-global-mark)
-    (evil-leader/set-key "v" 'fff-toggle-visual-line-mode)
-    (evil-leader/set-key "x <tab>" 'fff-insert-tab)
+    ;; (evil-leader/set-key "v" 'fff-toggle-visual-line-mode)
+    ;; (evil-leader/set-key "x <tab>" 'fff-insert-tab)
     (evil-leader/set-key "x x" ctl-x-map)
     (evil-leader/set-key "x b" 'list-buffers)
     (evil-leader/set-key "x 0" 'delete-window)
@@ -643,7 +702,6 @@ in whole buffer.  With neither, delete comments on current line."
     (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
 
-    ;; (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
     (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
     (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
     (define-key evil-insert-state-map (kbd "C-y") 'yank)
@@ -663,14 +721,6 @@ in whole buffer.  With neither, delete comments on current line."
   :defer t
   :ensure t)
 
-(use-package evil-collection
-  :after evil
-  :ensure t
-  :config
-  (evil-collection-init)
-  (evil-collection-define-key 'normal 'dired-mode-map)
-  )
-
 (use-package evil-surround
   :ensure t
   :config
@@ -681,6 +731,8 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :config
   (setq elpy-shell-starting-directory 'current-directory) 
+  (define-key elpy-mode-map (kbd "C-c C-c") nil)
+  (define-key elpy-mode-map (kbd "C-c C-c") 'fff-run-python-here)
   :init
   (elpy-enable)
   )
@@ -915,5 +967,13 @@ in whole buffer.  With neither, delete comments on current line."
   )
 
 (use-package switch-window
+  :ensure t
+  )
+
+(use-package rainbow-mode
+  :ensure t
+  )
+
+(use-package vimrc-mode
   :ensure t
   )

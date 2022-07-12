@@ -2,6 +2,8 @@
     "security.workspace.trust.untrustedFiles": "open",
     "python.linting.flake8Enabled": true,
     "python.linting.enabled": true,
+    "files.hotExit":"off",
+    "window.restoreWindows": "none",
 
   "vim.normalModeKeyBindingsNonRecursive": [
     {
@@ -21,7 +23,6 @@
   "editor.minimap.enabled": false,
   "code-runner.saveAllFilesBeforeRun": true,
   "code-runner.clearPreviousOutput": true,
-
-
-
+  "sync.gist": "271c4ff3c9e61c28878454e1d673b1d8",
+  "window.zoomLevel": 1,
 }

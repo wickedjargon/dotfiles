@@ -26,7 +26,7 @@ git add .config/wget/
 git add .config/x11/
 git add .config/zathura/
 git add .config/zsh/
-git add .local/bin/
+git add .local/bin/ # update this to make it only the needed subdirs
 git add .local/share/bg.png
 git add .local/share/bg
 git add .local/share/weatherreport
