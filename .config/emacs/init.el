@@ -635,15 +635,15 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "f u" 'fff-access-home-dir)
     (evil-leader/set-key "h" 'fff-hydra-movement/evil-backward-paragraph)
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
+    (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
+    (evil-leader/set-key "J" 'fff-hydra-windsize/windsize-down)
+    (evil-leader/set-key "K" 'fff-hydra-windsize/windsize-up)
     (evil-leader/set-key "i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
     (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
     (evil-leader/set-key "l" 'fff-hydra-movement/evil-forward-paragraph)
-    (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
     ;; (evil-leader/set-key "l" 'lsp-command-map)
     (evil-leader/set-key "m" 'counsel-mark-ring)
-    ;; (evil-leader/set-key "o" 'find-file)
-    ;; (evil-leader/set-key "O" 'counsel-buffer-or-recentf)
     ;; (evil-leader/set-key "p" 'projectile-command-map)         ;; find a new prefix
     (evil-leader/set-key "p" 'fff-evil-paste-and-indent-after)
     (evil-leader/set-key "P" 'fff-evil-paste-and-indent-before)
@@ -732,7 +732,7 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   (setq elpy-shell-starting-directory 'current-directory) 
   (define-key elpy-mode-map (kbd "C-c C-c") nil)
-  (define-key elpy-mode-map (kbd "C-c C-c") 'fff-run-python-here)
+  (define-key elpy-mode-map (kbd "C-c C-c") 'fff-run-python)
   :init
   (elpy-enable)
   )
