@@ -15,6 +15,7 @@ alias fff_classical="/home/ff/d/shell/classical.sh"
 alias fff_jazz="/home/ff/d/shell/jazz.sh"
 
 alias em="emacsclient -c"
+alias sm="emacs -q -l /home/ff/d/scimax/init.el"
 alias g="tuxi"
 alias o="xdg-open"
 alias c="codium"

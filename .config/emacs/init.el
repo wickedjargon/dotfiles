@@ -4,10 +4,11 @@
 
 (package-initialize)
 
+
 (unless (assoc-default "melpa" package-archives)
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
 
-(setq package-list '(use-package markdown-mode))
+(setq package-list '(use-package markdown-mode gcmh))
 
 (unless package-archive-contents
   (package-refresh-contents))
@@ -15,13 +16,14 @@
   (unless (package-installed-p package)
     (package-install package)))
 
+(gcmh-mode 1) ;; reduce garbage collection interference
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; set up font:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (custom-set-faces
  '(default ((t (:family "Liberation Mono" :foundry "1ASC" :slant normal :weight normal :height 109 :width normal))))
- '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -309,29 +311,6 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (switch-to-buffer (other-buffer (current-buffer) 1)))
 
-(defun fff-modus-themes-toggle ()
-  (interactive)
-  (pcase (modus-themes--current-theme)
-    ('modus-operandi (progn (enable-theme 'modus-vivendi)
-                            (disable-theme 'modus-operandi)
-                            (custom-set-faces
-                             '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "white"))))
-                             '(font-lock-comment-face ((t (:background "gray15" :foreground "white"))))
-                             '(font-lock-doc-face ((t (:background "gray15" :foreground "white"))))
-                             )
-                            ))
-    ('modus-vivendi (progn (enable-theme 'modus-operandi)
-                           (disable-theme 'modus-vivendi)
-                           (custom-set-faces
-                            '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
-                            '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
-                            '(font-lock-comment-delimiter-face ((t (:background "gray70" :foreground "black"))))
-                            '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "black"))))
-                            '(font-lock-doc-face ((t (:background "gray80" :foreground "black"))))
-                            )
-                           ))
-    (_ (error "No Modus theme is loaded; evaluate `modus-themes-load-themes' first"))))
-
 (defun fff-set-scale-to-zero ()
   (interactive)
   (text-scale-set 0)
@@ -518,6 +497,7 @@ in whole buffer.  With neither, delete comments on current line."
   (switch-to-buffer  (get-buffer-create "*Python*") nil) 
   (end-of-buffer)
   (evil-append-line 1)
+  (evil-force-normal-state)
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -526,6 +506,11 @@ in whole buffer.  With neither, delete comments on current line."
 
 (require 'use-package)
 
+(use-package doom-modeline
+  :ensure t
+:custom ((doom-modeline-height 16))
+  :init (doom-modeline-mode 1))
+
 (use-package yasnippet-snippets 
   :ensure nil
   :init (add-to-list 'load-path (expand-file-name "~/.config/emacs/site-lisp/yasnippet-snippets/"))
@@ -533,7 +518,6 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   )
-
 
 (use-package evil-collection
   :after evil
@@ -545,29 +529,13 @@ in whole buffer.  With neither, delete comments on current line."
   (evil-collection-define-key 'normal 'dired-mode-map)
   )
 
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; use-package setup:
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; ;; use-package setup:
+;; ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (setq evil-undo-system 'undo-fu)
 (setq evil-want-integration t)
 (setq evil-want-keybinding nil)
-
-(use-package modus-themes
-  :ensure t
-  :init
-  (modus-themes-load-themes)
-  (fmakunbound 'modus-themes-toggle)
-  :config
-  (modus-themes-load-operandi)
-(custom-set-faces
- '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
- '(font-lock-comment-face ((t (:background "gray80" :foreground "black"))))
- '(font-lock-comment-delimiter-face ((t (:background "gray70" :foreground "black"))))
- '(font-lock-comment-delimiter-face ((t (:inherit font-lock-comment-face :foreground "black"))))
- '(font-lock-doc-face ((t (:background "gray80" :foreground "black"))))
- ))
 
 (use-package evil-leader
   :defer t
@@ -578,7 +546,7 @@ in whole buffer.  With neither, delete comments on current line."
   :config
   (progn
     ;; TODO: let's use some advise instead of over writing like this:
-    ;; or find out what is causing this. does this happen with evil+emacs base?
+    ;; or find out what is causing this. does this happen with base evil + base emacs?
     (defun comment-line (n)
       (interactive "p")
       (if (use-region-p)
@@ -606,6 +574,10 @@ in whole buffer.  With neither, delete comments on current line."
     (fset 'fff-C-x-C-e
           (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
 
+
+    (fset 'fff-C-c-C-c
+          (kmacro-lambda-form [?\C-c ?\C-c] 0 "%d"))
+
     (evil-leader/set-leader "<SPC>")
     (evil-leader/set-key "SPC" 'execute-extended-command)
     (evil-leader/set-key "<S-SPC>" 'execute-extended-command-for-buffer)
@@ -623,13 +595,14 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "b s" 'bookmark-set)
     (evil-leader/set-key "b l" 'bookmark-bmenu-list)
     (evil-leader/set-key "b w" 'bookmark-save)
+    (evil-leader/set-key "c" 'fff-C-c-C-c)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "D" 'elpy-doc)
     (evil-leader/set-key "e" 'fff-C-x-C-e)
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f c" 'fff-access-config)
     (evil-leader/set-key "f f" 'fff-access-sched)
-    ;; (evil-leader/set-key "f h" 'fff-access-hosts)
+    (evil-leader/set-key "f h" 'fff-access-hosts)
     (evil-leader/set-key "f o" 'fff-access-home-dir)
     (evil-leader/set-key "f p" 'fff-access-phonebook)
     (evil-leader/set-key "f u" 'fff-access-home-dir)
@@ -665,6 +638,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-leader/set-key "x 2" 'split-window-below)
     (evil-leader/set-key "x 3" 'split-window-right)
     (evil-leader/set-key "x o" 'other-window)
+    (evil-leader/set-key "o" 'other-window)
     (evil-leader/set-key "x f" 'find-file)
     ;; (evil-leader/set-key "x r" 'counsel-buffer-or-recentf)
     (evil-leader/set-key "x w" 'write-file)
@@ -733,8 +707,8 @@ in whole buffer.  With neither, delete comments on current line."
   (setq elpy-shell-starting-directory 'current-directory) 
   (define-key elpy-mode-map (kbd "C-c C-c") nil)
   (define-key elpy-mode-map (kbd "C-c C-c") 'fff-run-python)
-  :init
-  (elpy-enable)
+  :init (add-hook 'python-mode-hook #'elpy-enable)
+;; :init (with-eval-after-load 'python (elpy-enable))
   )
 
 (use-package expand-region
@@ -874,6 +848,8 @@ in whole buffer.  With neither, delete comments on current line."
   )
 
 (use-package cc-mode
+  :ensure nil
+  :defer t
   :config
   (define-key c-mode-map (kbd "C-c C-c") nil)
   (define-key c-mode-map (kbd "C-c C-c") 'fff-run-c)
@@ -919,6 +895,7 @@ in whole buffer.  With neither, delete comments on current line."
 
 (use-package projectile
   :ensure t
+  :defer t
   :init
   (projectile-mode +1)
   )
@@ -931,11 +908,12 @@ in whole buffer.  With neither, delete comments on current line."
 
 (use-package ob-go
   :ensure t
+  :defer t
   )
 
 (use-package org
-  :defer t
-  :after ob-go
+  ;; :defer t
+  ;; :after ob-go
   :init
   (setq org-confirm-babel-evaluate nil)
   (setq org-startup-with-inline-images t)
@@ -976,4 +954,15 @@ in whole buffer.  With neither, delete comments on current line."
 
 (use-package vimrc-mode
   :ensure t
+  )
+
+(use-package theme-changer
+  :ensure t
+  :init
+  (setq calendar-location-name "Toronto, Ontario")
+  (setq calendar-latitude 43.79)
+  (setq calendar-longitude -79.36)
+  :config
+  (require 'theme-changer)
+  (change-theme 'modus-vivendi 'modus-vivendi)
   )

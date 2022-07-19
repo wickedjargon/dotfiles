@@ -52,6 +52,8 @@ cat hosts >> /etc/hosts
 - remove youtube, facebook, reddit from suggestions:
     - set `browser.urlbar.suggest.topsites` to `false` in `about:config`
     
+## setup top bar auto-hide
+- copy userChrome.css to mozilla profile directory
 
 # setup ungoogled-chromium
 

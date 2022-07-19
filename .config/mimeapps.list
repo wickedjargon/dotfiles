@@ -26,7 +26,7 @@ application/x-extension-xht=firefox.desktop
 message/rfc822=userapp-Thunderbird-098E40.desktop
 application/x-ica=wfica.desktop;
 application/epub+zip=pdf.desktop
-x-scheme-handler/tg=userapp-Telegram Desktop-7358I1.desktop
+x-scheme-handler/tg=userapp-Telegram Desktop-H865O1.desktop
 x-scheme-handler/webcal=chromium.desktop
 
 [Added Associations]
@@ -44,6 +44,6 @@ x-scheme-handler/mailto=userapp-Thunderbird-098E40.desktop;
 message/rfc822=userapp-Thunderbird-098E40.desktop;
 application/epub+zip=org.pwmt.zathura-pdf-mupdf.desktop;
 application/x-bittorrent=transmission-gtk.desktop;
-x-scheme-handler/tg=userapp-Telegram Desktop-R94JB1.desktop;userapp-Telegram Desktop-7358I1.desktop;
+x-scheme-handler/tg=userapp-Telegram Desktop-R94JB1.desktop;userapp-Telegram Desktop-7358I1.desktop;userapp-Telegram Desktop-H865O1.desktop;
 application/x-ipynb+json=codium.desktop;
 audio/midi=mpv-usercreated-1.desktop;
