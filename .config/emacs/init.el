@@ -1,4 +1,4 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; starting our engines...
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -447,7 +447,7 @@ in whole buffer.  With neither, delete comments on current line."
     (evil-open-below 1)
     (insert expression)
     (setq text-beg (concat "print(\"" expression " -->\", "))
-    (setq text-end ") # ff-debug")
+    (setq text-end ")  # ff-debug")
     (evil-first-non-blank)
     (insert text-beg)
     (end-of-line)
@@ -458,7 +458,7 @@ in whole buffer.  With neither, delete comments on current line."
 
 (defun fff-delete-debug-lines ()
   (interactive)
-  (replace-regexp-in-region ".* # ff-debug$" "" (point-min) (point-max))
+  (replace-regexp-in-region ".*  # ff-debug$" "" (point-min) (point-max))
   )
 
 (defun fff-python-format ()
@@ -705,8 +705,8 @@ in whole buffer.  With neither, delete comments on current line."
   :ensure t
   :config
   (setq elpy-shell-starting-directory 'current-directory) 
-  (define-key elpy-mode-map (kbd "C-c C-c") nil)
-  (define-key elpy-mode-map (kbd "C-c C-c") 'fff-run-python)
+  ;; (define-key elpy-mode-map (kbd "C-c C-c") nil)
+  ;; (define-key elpy-mode-map (kbd "C-c C-c") 'fff-run-python)
   :init (add-hook 'python-mode-hook #'elpy-enable)
 ;; :init (with-eval-after-load 'python (elpy-enable))
   )
@@ -946,14 +946,17 @@ in whole buffer.  With neither, delete comments on current line."
 
 (use-package switch-window
   :ensure t
+  :defer t
   )
 
 (use-package rainbow-mode
   :ensure t
+  :defer t
   )
 
 (use-package vimrc-mode
   :ensure t
+  :defer t
   )
 
 (use-package theme-changer
@@ -966,3 +969,10 @@ in whole buffer.  With neither, delete comments on current line."
   (require 'theme-changer)
   (change-theme 'modus-vivendi 'modus-vivendi)
   )
+
+
+(use-package ivy-prescient
+  :ensure t
+  :defer t
+  :config
+  (ivy-prescient-mode))
