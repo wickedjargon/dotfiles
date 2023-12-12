@@ -133,10 +133,6 @@
 (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.cargo/bin")))
 (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.cargo/env")))
 
-;; don't show `active processes exist` warning:
-(defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
-  (cl-letf (((symbol-function #'process-list) (lambda ()))) ad-do-it))
-
 ;; prevent active process when closing a shell like vterm or eshell:
 (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
@@ -172,11 +168,6 @@
   (add-hook 'Info-mode-hook (lambda ()
 							  (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
 							  (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
-
-;; (use-package all-the-icons-nerd-fonts :ensure t :defer t
-;;   :init
-;;   (when (not (member "all-the-icons" (font-family-list)))
-;; 	(all-the-icons-install-fonts t)))
 
 (use-package doom-modeline :ensure t :defer t
   :config
@@ -273,6 +264,7 @@
     (evil-leader/set-key "s" 'fff-tabs/tab-next)
 
 	;; learn more about cursor undo position and put this under a hydra
+	(evil-leader/set-key "t" 'vterm)
 	(evil-leader/set-key "T" 'terminal-here)
     (evil-leader/set-key "u" 'universal-argument)
 
@@ -323,7 +315,9 @@
       (evil-define-key nil company-active-map (kbd "C-p") #'company-select-previous)))
   :config
   (progn
-
+	
+    (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
+    (define-key evil-visual-state-map (kbd "C-a") 'evil-first-non-blank)
     (setq evil-undo-system 'undo-fu)
     (setq evil-want-integration t)
     (setq evil-want-keybinding nil)
@@ -337,9 +331,9 @@
     (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
     ;; (define-key evil-visual-state-map (kbd "C-c l") 'up-list)
     ;; (define-key evil-visual-state-map (kbd "C-c h") 'fff-down-list-back)
-    (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-visual-state-map (kbd "C-a") 'evil-first-non-blank)
     
+    (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
+    (define-key evil-insert-state-map (kbd "C-a") 'evil-first-non-blank)
     (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
     (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
     (define-key evil-insert-state-map (kbd "C-y") 'yank)
@@ -352,9 +346,9 @@
     ;; (define-key evil-insert-state-map (kbd "C-c l") 'up-list)
     ;; (define-key evil-insert-state-map (kbd "C-c h") 'fff-down-list-back)
     (define-key evil-insert-state-map (kbd "C-/") 'comment-line)
-    (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-insert-state-map (kbd "C-a") 'evil-first-non-blank)
-
+	
+    (define-key evil-normal-state-map (kbd "C-e") 'move-end-of-line)
+    (define-key evil-normal-state-map (kbd "C-a") 'evil-first-non-blank)
     (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
     (define-key evil-normal-state-map (kbd "C-o") 'evil-jump-backward)
     (define-key evil-normal-state-map (kbd "M-o") 'evil-jump-forward)
@@ -375,8 +369,6 @@
     (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
     ;; (define-key evil-normal-state-map (kbd "C-c l") 'up-list)
     ;; (define-key evil-normal-state-map (kbd "C-c h") 'fff-down-list-back)
-    (define-key evil-normal-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-normal-state-map (kbd "C-a") 'evil-first-non-blank)
 
     (load (expand-file-name "fff-functions.el" user-emacs-directory))))
 
@@ -648,7 +640,7 @@
 (use-package embark :ensure t :defer t
   :bind
   (("C-c e" . embark-act)
-   ("C-h B" . embark-bindings))
+   ("C-h b" . embark-bindings))
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
   (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
@@ -683,7 +675,9 @@
   :config
   (pdf-tools-install :no-query))
 
-(use-package vterm :ensure t :defer t)
+(use-package vterm :ensure t :defer t
+  :config
+  (define-key vterm-mode-map (kbd "C-c c") 'vterm-clear))
 
 (use-package org  :ensure nil :defer t
   :init
