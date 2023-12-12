@@ -1,0 +1,18 @@
+(setq gc-cons-threshold most-positive-fixnum)
+(setq package-enable-at-startup nil)
+(setq load-prefer-newer noninteractive)
+(set-language-environment "UTF-8")
+(setq default-input-method nil)
+(setq native-comp-async-report-warnings-errors 'silent)
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+
+(defun fff-emacs-re-enable-frame-theme (_frame)
+  (when-let ((theme (car custom-enabled-themes)))
+    (enable-theme theme)))
+
+(setq mode-line-format nil)
+(set-face-attribute 'default nil :background "#000000" :foreground "#ffffff")
+(set-face-attribute 'mode-line nil :background "#000000" :foreground "#ffffff" :box 'unspecified)
+(add-hook 'after-make-frame-functions #'fff-emacs-re-enable-frame-theme)
