@@ -696,3 +696,14 @@ in whole buffer.  With neither, delete comments on current line."
   (set-face-attribute 'default nil :height fff-initial-font-height)
   (message "Font size reset"))
 
+(defun fff-split-and-follow-horizontally ()
+  (interactive)
+  (split-window-below)
+  (balance-windows)
+  (other-window 1))
+
+(defun fff-split-and-follow-vertically ()
+  (interactive)
+  (split-window-right)
+  (balance-windows)
+  (other-window 1))
