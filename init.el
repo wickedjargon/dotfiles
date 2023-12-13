@@ -153,9 +153,6 @@
 ;; prevent active process when closing a shell like vterm or eshell:
 (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
-;; I prefer a full screen new buffer, not a split screen:
-;; (setq display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)))
-
 ;; show startup time on launch
 (defun display-startup-echo-area-message ()
   (message "(emacs-init-time) -> %s" (emacs-init-time)))
@@ -244,9 +241,7 @@
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f B" 'fff-access-books)
     (evil-leader/set-key "f f" 'fff-access-sched)
-    ;; (evil-leader/set-key "f h" 'fff-access-home-dir)
     (evil-leader/set-key "f i" 'fff-switch-to-scratch-buffer)
-    ;; (evil-leader/set-key "f p" 'fff-access-phonebook)
     (evil-leader/set-key "f t" 'shell)
 
 	(evil-leader/set-key "h w" 'tab-bar-close-tab)
@@ -346,8 +341,6 @@
     (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
     (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
-    ;; (define-key evil-visual-state-map (kbd "C-c l") 'up-list)
-    ;; (define-key evil-visual-state-map (kbd "C-c h") 'fff-down-list-back)
     
     (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
     (define-key evil-insert-state-map (kbd "C-a") 'evil-first-non-blank)
@@ -360,8 +353,6 @@
     (define-key evil-insert-state-map (kbd "C-l") 'yas-expand)
     (define-key evil-insert-state-map (kbd "M-a") 'yas-insert-snippet)
     (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
-    ;; (define-key evil-insert-state-map (kbd "C-c l") 'up-list)
-    ;; (define-key evil-insert-state-map (kbd "C-c h") 'fff-down-list-back)
     (define-key evil-insert-state-map (kbd "C-/") 'comment-line)
 	
     (define-key evil-normal-state-map (kbd "C-e") 'move-end-of-line)
