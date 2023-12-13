@@ -78,7 +78,7 @@
 (global-unset-key (kbd "C-x C-c"))                      ;; I accidently hit this sometimes
 (global-set-key (kbd "C-c c")  'fff-clear-shell)
 (define-key global-map (kbd "C-c t") #'modus-themes-toggle)
-(global-set-key (kbd "C-x C-b") 'fff-buffer-list-switch)
+;; (global-set-key (kbd "C-x C-b") 'fff-buffer-list-switch)
 (global-set-key (kbd "C-x 3") 'fff-split-and-follow-vertically)
 (global-set-key (kbd "C-x 2") 'fff-split-and-follow-horizontally)
 
@@ -304,7 +304,7 @@
 
     (evil-leader/set-key "x w" 'write-file)
     (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
-    (evil-leader/set-key "x SPC b" 'fff-buffer-list-switch)
+    (evil-leader/set-key "x SPC b" 'list-buffers)
     (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
     (evil-leader/set-key "x x" 'fff-buffer-switch/body)))
 
