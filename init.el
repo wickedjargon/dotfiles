@@ -1,4 +1,6 @@
 ;; compatible with emacs version 28 and above
+;; TODO: set .emacs.d/elpa to read only
+;; TODO: replace string paths with expressions
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; starting our engines... ;;
