@@ -384,8 +384,6 @@
     (define-key evil-normal-state-map (kbd "o") 'fff-evil-open-below)
     (define-key evil-normal-state-map (kbd "O") 'fff-evil-open-above)
     (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
-    ;; (define-key evil-normal-state-map (kbd "C-c l") 'up-list)
-    ;; (define-key evil-normal-state-map (kbd "C-c h") 'fff-down-list-back)
 
     (load (expand-file-name "fff-functions.el" user-emacs-directory))))
 
