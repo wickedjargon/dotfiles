@@ -624,10 +624,6 @@
 (use-package rustic :ensure t :defer t)
 
 (use-package lsp-mode :ensure t :defer t
-  ;; :hook
-  ;; ((haskell-mode . lsp)
-  ;;  (go-mode . lsp)
-  ;;  (rust-mode . lsp))
   :config
   (setq lsp-auto-guess-root t)
   ;; ;; https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
