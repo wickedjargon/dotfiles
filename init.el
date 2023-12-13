@@ -49,24 +49,22 @@
   (add-hook 'dired-mode-hook #'auto-revert-mode)          ;; revert dired buffers, but not buffer list buffers
   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks 
   (add-hook 'emacs-lisp-mode-hook
-			(lambda ()
-			  (setq-local prettify-symbols-alist
-						  '(("lambda" . ?\λ)
-							("interactive" . ?\𝑖)
-							))))
+			(lambda () (setq-local prettify-symbols-alist '(("lambda" . ?\λ) ("interactive" . ?\𝑖)))))
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode))
 (add-hook 'comint-mode-hook (lambda ()
                               (define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
                               (define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
 
 
-(advice-add 'diff-buffer-with-file
-            :around
-            (lambda (orig-fun &rest args)
-              "Advice function to focus on the new window after running diff-buffer-with-file."
-              (let ((current-window (selected-window)))
-                (apply orig-fun args)
-                (select-window (next-window current-window)))))
+(defun fff-advice-for-window-focus (orig-fun &rest args)
+  "Advice function to focus on the new window after running the specified function."
+  (let ((current-window (selected-window)))
+    (apply orig-fun args)
+    (select-window (next-window current-window))))
+
+(advice-add 'diff-buffer-with-file :around #'fff-advice-for-window-focus)
+(advice-add 'vc-region-history :around #'fff-advice-for-window-focus)
+(advice-add 'list-buffers :around #'fff-advice-for-window-focus)
 
 (require-theme 'modus-themes)
 (load-theme 'modus-vivendi)
