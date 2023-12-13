@@ -30,7 +30,6 @@
 ;; but on first launch
 (toggle-frame-maximized)
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; use-package setup ;;
 ;;;;;;;;;;;;;;;;;;;;;;;
