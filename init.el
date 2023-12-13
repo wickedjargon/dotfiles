@@ -19,7 +19,15 @@
 
 (gcmh-mode +1) ;; reduce garbage collection interference.
 
+;; maximize screen on new frame:
+(add-hook 'after-make-frame-functions
+          (lambda (&optional frame)
+            (with-selected-frame frame
+              (toggle-frame-maximized))))
+
+;; but on first launch
 (toggle-frame-maximized)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; use-package setup ;;
