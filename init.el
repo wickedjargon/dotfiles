@@ -638,7 +638,7 @@
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
 (use-package embark :ensure t :defer t
-  :bind
+  :bind*
   (("C-c e" . embark-act)
    ("C-h b" . embark-bindings))
   :init
