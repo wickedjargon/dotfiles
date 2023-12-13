@@ -493,6 +493,8 @@
 
 (use-package vertico :defer t :ensure t
   :init
+  (setq enable-recursive-minibuffers t)
+  :config
   (vertico-mode +1)
   (define-key vertico-map (kbd "C-c d") 'vertico-exit-input))
 
