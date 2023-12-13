@@ -714,7 +714,7 @@
           (untracked . hide)
           (history . hide)
           (reflog . hide)
-          (diffbuff . show)
+          (diffbuf . show)
 		  ))
   )
 
