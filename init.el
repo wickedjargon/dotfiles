@@ -515,13 +515,15 @@
   (savehist-mode))
 
 (use-package projectile :defer t :ensure t
-  :bind
+  :bind*
   (("C-c k" . projectile-find-file))
   :init
   (setq projectile-project-root-files '("manage.py" ".git/" "go.mod"))
   (setq projectile-ignored-projects '("~/"))
   (projectile-mode +1)
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
+  (with-eval-after-load 'projectile
+  (define-key projectile-command-map (kbd "C-c p") nil)
+  (define-key projectile-command-map (kbd "C-c P") nil)))
 
 (use-package marginalia :defer t :ensure t
   :init
