@@ -699,10 +699,28 @@
 	 (ruby . t)
 	 (js . t))))
 
-(use-package magit :ensure t :defer t)
+(use-package magit :ensure t :defer t
+  :init
+  (setq magit-section-initial-visibility-alist
+		'((unstaged . hide)
+          (staged . hide)
+          (modified . hide)
+          (hunk . hide)
+          (file . hide)
+          (stash . hide)
+          (unpushed . hide)
+          (untracked . hide)
+          (history . hide)
+          (reflog . hide)
+		  ))
+  )
 
 (use-package git-timemachine :ensure t :defer t)
 
 (use-package clojure-mode :ensure t :defer t)
 
 (use-package cider :ensure t :defer t)
+
+(use-package consult :ensure t :defer t)
+
+(use-package embark-consult :ensure t :defer t)
