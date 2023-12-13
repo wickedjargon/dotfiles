@@ -713,6 +713,8 @@
 
 (use-package magit :ensure t :defer t)
 
+(use-package git-timemachine :ensure t :defer t)
+
 (use-package clojure-mode :ensure t :defer t)
 
 (use-package cider :ensure t :defer t)
