@@ -397,8 +397,10 @@
                                    (define-key sly-mrepl-mode-map (kbd "C-p") 'comint-previous-input)
                                    (define-key sly-mrepl-mode-map (kbd "C-n") 'comint-next-input)))
   (setq inferior-lisp-program "/usr/bin/sbcl")
+  :config
   (define-key lisp-mode-map (kbd "C-j") 'sly-eval-print-last-expression)
-  (define-key lisp-mode-map (kbd "C-<return>") 'sly-eval-print-last-expression))
+  (define-key lisp-mode-map (kbd "C-<return>") 'sly-eval-print-last-expression)
+  (evil-set-initial-state 'sly-mrepl-mode 'normal))
 
 (use-package terminal-here :defer t :ensure t
   :init
