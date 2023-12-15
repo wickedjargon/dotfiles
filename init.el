@@ -723,3 +723,5 @@
 (use-package consult :ensure t :defer t)
 
 (use-package embark-consult :ensure t :defer t)
+
+(use-package pyvenv :ensure t :defer t)
