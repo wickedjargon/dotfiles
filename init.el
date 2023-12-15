@@ -305,9 +305,6 @@
     (evil-leader/set-key "x p" 'fff-open-file-in-projects)
     (evil-leader/set-key "x r" 'crux-recentf-find-file)
     (evil-leader/set-key "x n" 'fff-open-file-in-notes)
-	
-    (evil-leader/set-key "x s" 'fff-open-file-in-snippets)
-
     (evil-leader/set-key "x w" 'write-file)
     (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
     (evil-leader/set-key "x SPC b" 'list-buffers)
