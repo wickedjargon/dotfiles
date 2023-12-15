@@ -462,7 +462,13 @@
 	  ("R" (shell-command "kill -TERM $(pidof dwm) && systemctl reboot") "Reboot" :exit t)
 	  ("r" (restart-emacs) "Restart Emacs" :exit t)
 	  ("S" (shell-command "kill -TERM $(pidof dwm) && systemctl poweroff") "Shutdown" :exit t)
-	  ("o" (shell-command "xset dpms force off") "Turn off screen")))))
+	  ("o" (shell-command "xset dpms force off") "Turn off screen"))))
+  
+    (pretty-hydra-define fff-magit (:foreign-keys warn :quit-key "q" :color blue)
+	("Magit"
+	 (("m" magit "magit" :exit t)
+	  ("<tab>" magit-section-hide-children "collapse children" :exit t)
+	  ))))
 
 (use-package company :defer t :ensure t
   :init
