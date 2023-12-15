@@ -705,14 +705,9 @@
 (use-package magit :ensure t :defer t
   :init
   (setq magit-section-initial-visibility-alist
-		'((modified . hide)
-		  (unstaged . hide)
-          (staged . hide)
-          (stash . hide)
-          (unpushed . hide)
+		'(([hunk file staged status] . hide)
 		  ([hunk file unstaged status] . hide)
-          (untracked . hide)))
-  )
+          )))
 
 (use-package git-timemachine :ensure t :defer t)
 
