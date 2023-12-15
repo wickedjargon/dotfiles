@@ -456,7 +456,7 @@
       ("f" flymake-show-diagnostics-buffer "flymake-show-diagnostics-buffer")
       ("r" fff-display-lsp-root "fff-display-lsp-root")
 	  )))
-  
+
   (pretty-hydra-define fff-shutdown (:foreign-keys warn :quit-key "q" :color blue)
 	("System Management"
 	 (("l" (shell-command "slock") "Lock screen" :exit t)
