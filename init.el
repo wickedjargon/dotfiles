@@ -1,6 +1,11 @@
 ;; compatible with emacs version 28 and above
-;; TODO: set .emacs.d/elpa to read only
+;; DONE: set .emacs.d/elpa to read only
 ;; TODO: replace string paths with expressions
+
+;; Hydras
+;; TODO: hydra for tab-bar-mode
+;; TODO: hydra for find-file
+;; TODO: completion (company, hippie, etc)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; starting our engines... ;;
