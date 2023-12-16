@@ -714,6 +714,7 @@
   :init
   (setq magit-section-initial-visibility-alist
 		'(([hunk file staged status] . hide)
+		  ([file unstaged status] . show)
 		  ([hunk file unstaged status] . hide)
           )))
 
