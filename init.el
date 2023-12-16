@@ -295,7 +295,7 @@
     (evil-leader/set-key "x 2" 'fff-split-and-follow-horizontally)
     (evil-leader/set-key "x 3" 'fff-split-and-follow-vertically)
     (evil-leader/set-key "x o" 'other-window)
-    (evil-leader/set-key "x k" 'fff-kill-this-buffer)
+    (evil-leader/set-key "x k" 'bury-buffer)
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
     (evil-leader/set-key "x d" 'make-directory)
     (evil-leader/set-key "x f" 'find-file)
