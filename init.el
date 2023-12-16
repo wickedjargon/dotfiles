@@ -42,11 +42,19 @@
 (use-package emacs
   :ensure nil
   :config
+  
   ;; remove underlines for errors and warnings
   (custom-set-faces
    '(flymake-error ((t (:inherit nil))))
    '(flymake-note ((t (:inherit nil))))
    '(flymake-warning ((t (:inherit nil)))))
+  
+  ;; set theme
+  (require-theme 'modus-themes)
+  (load-theme 'modus-vivendi)
+  (if (string= (system-name) "x1c")
+	  (set-face-attribute 'default nil :height 109)
+	(set-face-attribute 'default nil :height 95))
 
   ;; hooks
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
