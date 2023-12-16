@@ -55,125 +55,122 @@
   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks 
   (add-hook 'emacs-lisp-mode-hook
 			(lambda () (setq-local prettify-symbols-alist '(("lambda" . ?\λ) ("interactive" . ?\𝑖)))))
-  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode))
-(add-hook 'comint-mode-hook (lambda ()
-                              (define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
-                              (define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
-(add-hook 'find-file-hook (lambda ()
-							(when (and buffer-file-name
-									   (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
-							  (read-only-mode 1))))
 
-(defun fff-advice-for-window-focus (orig-fun &rest args)
-  "Advice function to focus on the new window after running the specified function."
-  (let ((current-window (selected-window)))
-    (apply orig-fun args)
-    (select-window (next-window current-window))))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+  (add-hook 'comint-mode-hook (lambda ()
+								(define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
+								(define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
+  (add-hook 'find-file-hook (lambda ()
+							  (when (and buffer-file-name
+										 (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
+								(read-only-mode 1))))
 
-(advice-add 'diff-buffer-with-file :around #'fff-advice-for-window-focus)
-(advice-add 'vc-region-history :around #'fff-advice-for-window-focus)
-(advice-add 'list-buffers :around #'fff-advice-for-window-focus)
+  ;;
+  (defun fff-advice-for-window-focus (orig-fun &rest args)
+	"Advice function to focus on the new window after running the specified function."
+	(let ((current-window (selected-window)))
+      (apply orig-fun args)
+      (select-window (next-window current-window))))
 
-(require-theme 'modus-themes)
-(load-theme 'modus-vivendi)
-
-:init
-;; key bindings
-(global-set-key (kbd "M-u") 'universal-argument)
-(global-set-key (kbd "C-x k") 'fff-kill-this-buffer)
-(global-unset-key (kbd "C-x C-c"))                      ;; I accidently hit this sometimes
-(global-set-key (kbd "C-c c")  'fff-clear-shell)
-(define-key global-map (kbd "C-c t") #'modus-themes-toggle)
-;; (global-set-key (kbd "C-x C-b") 'fff-buffer-list-switch)
-(global-set-key (kbd "C-x 3") 'fff-split-and-follow-vertically)
-(global-set-key (kbd "C-x 2") 'fff-split-and-follow-horizontally)
-
-(setq tab-bar-new-tab-to 'rightmost)
-(setq tab-bar-new-tab-choice 'empty-buffer)
-(tab-bar-mode +1)
-(global-set-key (kbd "C-c w") 'tab-bar-close-tab)
-(global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
-(global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
-
-(if (string= (system-name) "x1c")
-    (set-face-attribute 'default nil :height 109)
-  (set-face-attribute 'default nil :height 95))
+  (advice-add 'diff-buffer-with-file :around #'fff-advice-for-window-focus)
+  (advice-add 'vc-region-history :around #'fff-advice-for-window-focus)
+  (advice-add 'list-buffers :around #'fff-advice-for-window-focus)
 
 
-;; general settings
-(setq evil-undo-system 'undo-fu)
-(setq evil-want-integration t)
-(setq evil-want-keybinding nil)
-(tool-bar-mode -1)                                      ;; no tool bar
-(scroll-bar-mode -1)                                    ;; no scroll bar
-(setq inhibit-startup-message t)                        ;; no splash screen
-(setq use-short-answers t)                              ;; just type `y`, not `yes`
-(setq mode-require-final-newline nil)                   ;; don't add a newline at the bottom of the file
-(setq delete-old-versions t)
-(setq auto-save-file-name-transforms
-	  `((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
-(setq backup-directory-alist
-	  `(("." . ,(expand-file-name "backups/" user-emacs-directory))))
-(blink-cursor-mode -1)                                  ;; don't blink my cursor
-(global-auto-revert-mode +1)                            ;; auto revert files and buffers
-(global-goto-address-mode +1)                           ;; make links/urls clickable
-(delete-selection-mode +1)                              ;; delete selction when hitting backspace on region
-(set-default 'truncate-lines t)                         ;; don't wrap my text
-(setq custom-file (locate-user-emacs-file "custom.el")) ;; separate custom.el file
-(when (file-exists-p custom-file) (load custom-file))   ;; when it exists, load it
-(setq initial-scratch-message "")                       ;; no message on scratch buffer
-(setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
-(setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
-(setq dired-listing-switches                            ;; I prefer to have dired
-      "-aBhlh  --group-directories-first")              ;; group my directories and display size
-(setq disabled-command-function nil)                    ;; enable all disabled commands
-(setq ring-bell-function 'ignore)                       ;; don't ring my bell
-(setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
-;; (electric-pair-mode +1)
-;; (setq electric-pair-delete-adjacent-pairs nil)
-(global-eldoc-mode -1)
-(display-battery-mode +1)
-(setq display-time-day-and-date t)
-(display-time)
-(setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
-(global-prettify-symbols-mode +1)
-(setq help-window-select t)  ; Switch to help buffers automatically
+  :init
+  ;; key bindings
+  (global-set-key (kbd "M-u") 'universal-argument)
+  (global-set-key (kbd "C-x k") 'bury-buffer)
+  (global-unset-key (kbd "C-x C-c"))                      ;; I accidently hit this sometimes
+  (global-set-key (kbd "C-c c")  'fff-clear-shell)
+  (define-key global-map (kbd "C-c t") #'modus-themes-toggle)
+  (global-set-key (kbd "C-x 3") 'fff-split-and-follow-vertically)
+  (global-set-key (kbd "C-x 2") 'fff-split-and-follow-horizontally)
 
-;; haskell path
-(setq exec-path (append '("/home/ff/.ghcup/bin") exec-path))
-(setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.ghcup/bin")))
+  (global-set-key (kbd "C-<return>") 'fff-C-x-C-e)
 
-;; go path
-(setq exec-path (append '("/usr/local/go/bin") exec-path))
-(setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/usr/local/go/bin")))
-(setq exec-path (append '("/home/ff/go/bin") exec-path))
-(setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/go/bin")))
-(setenv "GOPATH" "/home/ff/go")
+  (setq tab-bar-new-tab-to 'rightmost)
+  (setq tab-bar-new-tab-choice 'empty-buffer)
+  (tab-bar-mode +1)
+  (global-set-key (kbd "C-c w") 'tab-bar-close-tab)
+  (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
+  (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
 
-;; rust path
-(setq exec-path (append '("/home/ff/.cargo/env") exec-path))
-(setq exec-path (append '("/home/ff/.cargo/bin") exec-path))
-(setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.cargo/bin")))
-(setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.cargo/env")))
 
-;; prevent active process when closing a shell like vterm or eshell:
-(setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
-;; show startup time on launch
-(defun display-startup-echo-area-message ()
-  (message "(emacs-init-time) -> %s" (emacs-init-time)))
+  ;; general settings
+  (setq evil-undo-system 'undo-fu)
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (tool-bar-mode -1)                                      ;; no tool bar
+  (scroll-bar-mode -1)                                    ;; no scroll bar
+  (setq inhibit-startup-message t)                        ;; no splash screen
+  (setq use-short-answers t)                              ;; just type `y`, not `yes`
+  (setq mode-require-final-newline nil)                   ;; don't add a newline at the bottom of the file
+  (setq delete-old-versions t)
+  (setq auto-save-file-name-transforms
+		`((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
+  (setq backup-directory-alist
+		`(("." . ,(expand-file-name "backups/" user-emacs-directory))))
+  (blink-cursor-mode -1)                                  ;; don't blink my cursor
+  (global-auto-revert-mode +1)                            ;; auto revert files and buffers
+  (global-goto-address-mode +1)                           ;; make links/urls clickable
+  (delete-selection-mode +1)                              ;; delete selction when hitting backspace on region
+  (set-default 'truncate-lines t)                         ;; don't wrap my text
+  (setq custom-file (locate-user-emacs-file "custom.el")) ;; separate custom.el file
+  (when (file-exists-p custom-file) (load custom-file))   ;; when it exists, load it
+  (setq initial-scratch-message "")                       ;; no message on scratch buffer
+  (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
+  (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
+  (setq dired-listing-switches                            ;; I prefer to have dired
+		"-aBhlh  --group-directories-first")              ;; group my directories and display size
+  (setq disabled-command-function nil)                    ;; enable all disabled commands
+  (setq ring-bell-function 'ignore)                       ;; don't ring my bell
+  (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
+  ;; (electric-pair-mode +1)
+  ;; (setq electric-pair-delete-adjacent-pairs nil)
+  (global-eldoc-mode -1)
+  (display-battery-mode +1)
+  (setq display-time-day-and-date t)
+  (display-time)
+  (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
+  (global-prettify-symbols-mode +1)
+  (setq help-window-select t)  ; Switch to help buffers automatically
 
-;; open .pl files in prolog-mode
-(autoload 'prolog-mode "prolog" "" t)
-(add-to-list 'auto-mode-alist '("\\.pl\\'" . prolog-mode))
+  ;; haskell path
+  (setq exec-path (append '("/home/ff/.ghcup/bin") exec-path))
+  (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.ghcup/bin")))
 
-(setq recentf-max-menu-items 25)
-(setq recentf-max-saved-items 25)
-(recentf-mode +1)
-:init
-;; Do not allow the cursor in the minibuffer prompt
-(setq minibuffer-prompt-properties
-      '(read-only t cursor-intangible t face minibuffer-prompt))
+  ;; go path
+  (setq exec-path (append '("/usr/local/go/bin") exec-path))
+  (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/usr/local/go/bin")))
+  (setq exec-path (append '("/home/ff/go/bin") exec-path))
+  (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/go/bin")))
+  (setenv "GOPATH" "/home/ff/go")
+
+  ;; rust path
+  (setq exec-path (append '("/home/ff/.cargo/env") exec-path))
+  (setq exec-path (append '("/home/ff/.cargo/bin") exec-path))
+  (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.cargo/bin")))
+  (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.cargo/env")))
+
+  ;; prevent active process when closing a shell like vterm or eshell:
+  (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
+
+  ;; show startup time on launch
+  (defun display-startup-echo-area-message ()
+	(message "(emacs-init-time) -> %s" (emacs-init-time)))
+
+  ;; open .pl files in prolog-mode
+  (autoload 'prolog-mode "prolog" "" t)
+  (add-to-list 'auto-mode-alist '("\\.pl\\'" . prolog-mode))
+
+  (setq recentf-max-menu-items 25)
+  (setq recentf-max-saved-items 25)
+  (recentf-mode +1)
+  ;; Do not allow the cursor in the minibuffer prompt
+  (setq minibuffer-prompt-properties
+		'(read-only t cursor-intangible t face minibuffer-prompt)))
 
 (use-package asm-mode :ensure nil :defer t
   :init
