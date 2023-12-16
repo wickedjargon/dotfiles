@@ -396,8 +396,21 @@
 
 (use-package expand-region :defer t :ensure t)
 
+(use-package lisp-mode :ensure nil
+  :init
+(set-default 'auto-mode-alist
+(append '(("\\.lisp$" . lisp-mode)
+("\\.lsp$" . lisp-mode)
+("\\.cl$" . lisp-mode))
+auto-mode-alist)))
+
 (use-package sly :defer t :ensure t
   :init
+  (set-default 'auto-mode-alist
+			 (append '(("\\.lisp$" . lisp-mode)
+					   ("\\.lsp$" . lisp-mode)
+					   ("\\.cl$" . lisp-mode))
+					 auto-mode-alist))
   (add-hook 'sly-mrepl-mode-hook (lambda ()
                                    (define-key sly-mrepl-mode-map (kbd "C-p") 'comint-previous-input)
                                    (define-key sly-mrepl-mode-map (kbd "C-n") 'comint-next-input)))
