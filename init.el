@@ -313,13 +313,13 @@
 
 (use-package evil :defer t :ensure t
   :init
-
   (setq evil-undo-system 'undo-fu)
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
   (setq evil-want-fine-undo t)
   (setq evil-search-wrap nil)
   (setq evil-kill-on-visual-paste nil)
+
   ;; hitting C-n and C-p doesn't work for the company-mode pop-up
   ;; after using C-h. The code below resolves this issue
   (with-eval-after-load 'evil
