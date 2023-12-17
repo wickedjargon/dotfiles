@@ -749,5 +749,3 @@ auto-mode-alist)))
 (use-package pyvenv :ensure t :defer t)
 
 (use-package keycast :ensure t :defer t)
-
-(setq keycast-mode-line-insert-after  'mode-line-buffer-identification)
