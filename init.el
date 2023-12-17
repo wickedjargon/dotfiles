@@ -43,11 +43,11 @@
   :ensure nil
   :config
 
-  ;; ;; remove underlines for errors and warnings
-  ;; (custom-set-faces
-  ;;  '(flymake-error ((t (:inherit nil))))
-  ;;  '(flymake-note ((t (:inherit nil))))
-  ;;  '(flymake-warning ((t (:inherit nil)))))
+  ;; remove underlines for errors and warnings
+  (custom-set-faces
+   '(flymake-error ((t (:inherit nil))))
+   '(flymake-note ((t (:inherit nil))))
+   '(flymake-warning ((t (:inherit nil)))))
   
   ;; set theme
   (require-theme 'modus-themes)
