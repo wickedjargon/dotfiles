@@ -574,11 +574,11 @@ in whole buffer.  With neither, delete comments on current line."
 (defun fff-diff-files ()
   "Compare two files using the `diff' command."
   (interactive)
-  (let ((file1 (read-file-name "Select file 1: "))
-        (file2 (read-file-name "Select file 2: ")))
-    (unless (and (file-readable-p file1) (file-readable-p file2))
+  (let ((file1 (read-file-name "Diff new file: "))
+        (file2 (read-file-name "Diff old file: ")))
+    (unless (and (file-readable-p file2) (file-readable-p file1))
       (error "One or both of the selected files are not readable"))
-    (diff file1 file2)))
+    (diff file2 file1)))
 
 ;; contrib to crux?
 (defun fff-diff-marked-files ()
