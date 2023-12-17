@@ -488,7 +488,20 @@ auto-mode-alist)))
 	("Magit"
 	 (("m" magit "magit" :exit t)
 	  ("<tab>" magit-section-hide-children "collapse children" :exit t)
-	  ))))
+	  )))
+
+	
+	(pretty-hydra-define fff-search (:foreign-keys warn :quit-key "q" :color blue)
+	  ("Search"
+	   (("1" isearch-forward        "isearch-forward" :exit t)
+		("2" query-replace          "query-replace" :exit t)
+		("3" isearch-forward-regexp "isearch-forward-regexp" :exit t)
+		("4" occur                  "occur" :exit t)
+		("5" iedit-mode             "iedit-mode" :exit t)
+		("6" find-tag               "find-tag" :exit t)
+		("7" rgrep                  "rgrep" :exit t)
+		("8" ibuffer                "ibuffer" :exit t)
+		("9" icomplete-mode         "icomplete-mode" :exit t)))))
 
 (use-package company :defer t :ensure t
   :init
