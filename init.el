@@ -493,7 +493,8 @@ auto-mode-alist)))
 (use-package company :defer t :ensure t
   :init
   (setq company-format-margin-function nil)
-  (setq company-idle-delay 0)
+  (setq company-idle-delay 0.2)
+  (setq company-tooltip-limit 2)
   (global-company-mode))
 
 (use-package restart-emacs :defer t :ensure t)
