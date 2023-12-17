@@ -5,6 +5,7 @@
 ;; Hydras
 ;; TODO: hydra for tab-bar-mode
 ;; TODO: hydra for find-file
+;; DONE: hydra for search
 ;; TODO: completion (company, hippie, etc)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -215,8 +216,9 @@
 
 (use-package annalist :ensure t)
 
-(use-package evil-collection :ensure nil
-  :load-path "~/.emacs.d/evil-collection"
+(use-package evil-collection
+  :ensure nil
+  :load-path (lambda () (expand-file-name "evil-collection" user-emacs-directory))
   :after (annalist evil)
   :config
   (require 'annalist)
