@@ -1,3 +1,6 @@
 [submodule "evil-collection"]
 	path = evil-collection
 	url = git@github.com:wickedjargon/evil-collection.git
+[submodule "sly-stepper"]
+	path = sly-stepper
+	url = https://github.com/joaotavora/sly-stepper.git
