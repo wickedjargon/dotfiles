@@ -747,6 +747,7 @@ auto-mode-alist)))
 	 (haskell . t)
 	 (lisp . t)
 	 (ruby . t)
+	 (C . t)
 	 (js . t))))
 
 (use-package magit :ensure t :defer t
