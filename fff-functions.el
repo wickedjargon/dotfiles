@@ -707,3 +707,11 @@ in whole buffer.  With neither, delete comments on current line."
   (split-window-right)
   (balance-windows)
   (other-window 1))
+
+(defun fff-flymake-python-init ()
+	(let* ((temp-file (flymake-init-create-temp-buffer-copy
+                       'flymake-create-temp-inplace))
+           (local-file (file-relative-name
+						temp-file
+						(file-name-directory buffer-file-name))))
+      (list "mypy" (list local-file))))
