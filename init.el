@@ -85,7 +85,6 @@
   (advice-add 'vc-region-history :around #'fff-advice-for-window-focus)
   (advice-add 'list-buffers :around #'fff-advice-for-window-focus)
 
-
   :init
   ;; key bindings
   (global-set-key (kbd "M-u") 'universal-argument)
@@ -104,8 +103,6 @@
   (global-set-key (kbd "C-c w") 'tab-bar-close-tab)
   (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
   (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
-
-
 
   ;; general settings
   (setq evil-undo-system 'undo-fu)
