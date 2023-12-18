@@ -736,6 +736,7 @@ auto-mode-alist)))
 
 (use-package org  :ensure nil :defer t
   :init
+  (setq org-babel-lisp-eval-fn "sly-eval")
   (setq org-confirm-babel-evaluate nil)
   (setq org-startup-with-inline-images t)
   (setq org-babel-lisp-eval-command "sbcl --script")
