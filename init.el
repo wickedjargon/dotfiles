@@ -505,8 +505,7 @@ auto-mode-alist)))
 		("5" iedit-mode             "iedit-mode" :exit t)
 		("6" find-tag               "find-tag" :exit t)
 		("7" rgrep                  "rgrep" :exit t)
-		("8" ibuffer                "ibuffer" :exit t)
-		("9" icomplete-mode         "icomplete-mode" :exit t)))))
+		("8" icomplete-mode         "icomplete-mode" :exit t)))))
 
 (use-package company :defer t :ensure t
   :init
