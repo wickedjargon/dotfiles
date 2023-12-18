@@ -637,31 +637,6 @@ in whole buffer.  With neither, delete comments on current line."
   (tab-new)
   (switch-to-buffer (generate-new-buffer "*scratch*")))
 
-(defun comment-line (n)
-      (interactive "p")
-      (if (use-region-p)
-          (comment-or-uncomment-region
-           (save-excursion
-             (goto-char (region-beginning))
-             (line-beginning-position))
-           (save-excursion
-             (goto-char (region-end))
-             ;; (line-end-position)
-             ))
-        (when (and (eq last-command 'comment-line-backward)
-                   (natnump n))
-          (setq n (- n)))
-        (let ((range
-               (list (line-beginning-position)
-                     (goto-char (line-end-position n)))))
-          (comment-or-uncomment-region
-           (apply #'min range)
-           (apply #'max range)))
-        (forward-line 1)
-        (back-to-indentation)
-        (unless (natnump n) (setq this-command 'comment-line-backward))))
-
-
 (defun fff-find-file-ssh ()
   "find file ssh"
   (interactive)
