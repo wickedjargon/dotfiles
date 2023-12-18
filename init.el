@@ -214,6 +214,7 @@
   :ensure t
   :init
   (add-hook 'prog-mode-hook #'yas-minor-mode)
+  (add-hook 'org-mode-hook #'yas-minor-mode)
   :config
   (add-to-list #'yas-snippet-dirs (expand-file-name "snippets/" user-emacs-directory))
   (yas-reload-all))
