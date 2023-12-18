@@ -178,6 +178,12 @@
   (setq minibuffer-prompt-properties
 		'(read-only t cursor-intangible t face minibuffer-prompt)))
 
+(use-package flymake :ensure nil
+  :config
+  (add-to-list 'flymake-allowed-file-name-masks
+               '("\\.py\\'" fff-flymake-python-init))
+  (add-hook 'python-mode-hook 'flymake-mode))
+
 (use-package asm-mode :ensure nil :defer t
   :init
   (setq asm-comment-char ?\#))
