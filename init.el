@@ -740,6 +740,7 @@ auto-mode-alist)))
   (setq org-confirm-babel-evaluate nil)
   (setq org-startup-with-inline-images t)
   (setq org-babel-lisp-eval-command "sbcl --script")
+  (setq org-edit-src-content-indentation 0)
   :config
   (org-babel-do-load-languages
    'org-babel-load-languages
