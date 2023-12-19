@@ -769,3 +769,7 @@ auto-mode-alist)))
 (use-package pyvenv :ensure t :defer t)
 
 (use-package keycast :ensure t :defer t)
+
+(use-package org-download :ensure t 
+  :config
+  (add-hook 'dired-mode-hook 'org-download-enable))
