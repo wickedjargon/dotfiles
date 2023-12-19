@@ -62,8 +62,6 @@
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
   (add-hook 'dired-mode-hook #'auto-revert-mode)          ;; revert dired buffers, but not buffer list buffers
   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks 
-  (add-hook 'emacs-lisp-mode-hook
-			(lambda () (setq-local prettify-symbols-alist '(("lambda" . ?\λ) ("interactive" . ?\𝑖)))))
 
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
   (add-hook 'comint-mode-hook (lambda ()
@@ -141,7 +139,6 @@
   (setq display-time-day-and-date t)
   (display-time)
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
-  (global-prettify-symbols-mode +1)
   (setq help-window-select t)  ; Switch to help buffers automatically
 
   ;; haskell path
