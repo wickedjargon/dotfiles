@@ -283,8 +283,8 @@
 	
     (evil-leader/set-key "o" 'other-window)
     (evil-leader/set-key "P" 'crux-open-with)
-    ;; (evil-leader/set-key "Q" 'kill-buffer-and-window)
-    (evil-leader/set-key "q" 'delete-window)
+    ;; (evil-leader/set-key "Q" 'fff-delete-window-and-bury-buffer)
+    (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
 
     (evil-leader/set-key "r" 'fff-evil-regex-search)
 	
