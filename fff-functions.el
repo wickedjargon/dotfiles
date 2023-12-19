@@ -8,12 +8,6 @@
   (list-buffers)
   (select-window (get-buffer-window "*Buffer List*" 0)))
 
-;; (defun fff-describe-mode ()
-;;   "Switch to buffer list and activate the window"
-;;   (interactive)
-;;   (describe-mode)
-;;   (select-window (get-buffer-window "*Help*" 0)))
-
 (defun fff-open-file-in-tmp ()
   "Prompt for a filename and open it in the /tmp/ directory."
   (interactive)
