@@ -684,3 +684,9 @@ in whole buffer.  With neither, delete comments on current line."
 						temp-file
 						(file-name-directory buffer-file-name))))
       (list "mypy" (list local-file))))
+
+(defun fff-delete-window-and-bury-buffer ()
+  "Delete the current window and bury the buffer."
+  (interactive)
+  (bury-buffer)
+  (delete-window))
