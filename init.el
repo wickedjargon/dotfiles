@@ -140,6 +140,7 @@
   (display-time)
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
+  (setq use-dialog-box nil)
 
   ;; haskell path
   (setq exec-path (append '("/home/ff/.ghcup/bin") exec-path))
