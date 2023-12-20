@@ -668,6 +668,7 @@ auto-mode-alist)))
 (use-package lsp-mode :ensure t :defer t
   :config
   (setq lsp-auto-guess-root t)
+  
   ;; ;; https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
   (setq lsp-enable-file-watchers nil) ; Disable file watchers for better performance
   (setq lsp-enable-symbol-highlighting nil) ; disable symbol highlighting
