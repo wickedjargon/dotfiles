@@ -635,7 +635,9 @@ auto-mode-alist)))
   (define-key racket-mode-map (kbd "C-<return>") 'racket-run)
   (define-key racket-mode-map (kbd "C-c C-c") 'racket-run))
 
-(use-package quickrun :ensure t :defer t)
+(use-package quickrun :ensure t :defer t
+  :config
+  (add-to-list 'quickrun--major-mode-alist '(rustic-mode . "rust")))
 
 (use-package winner :ensure t :defer t
   :init (winner-mode +1))
