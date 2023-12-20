@@ -774,3 +774,12 @@ auto-mode-alist)))
 (use-package org-download :ensure t 
   :config
   (add-hook 'dired-mode-hook 'org-download-enable))
+
+(use-package evil-org
+  :ensure t
+  :after org
+  :hook (org-mode . (lambda () evil-org-mode))
+  :config
+  (evil-org-set-key-theme '(navigation insert textobjects additional calendar))
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys))
