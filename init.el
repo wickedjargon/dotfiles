@@ -461,9 +461,13 @@ auto-mode-alist)))
 	("s" tab-next)
 	("S" tab-previous))
   
-  (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-	("h" evil-prev-buffer)
-	("l" evil-next-buffer)))
+  ;; (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
+  ;; 	("h" evil-prev-buffer)
+  ;; 	("l" evil-next-buffer)))
+
+  (defhydra fff-winner (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
+	("h" winner-undo)
+	("l" winner-redo)))
 
 (use-package pretty-hydra :ensure t :defer nil
   :config
