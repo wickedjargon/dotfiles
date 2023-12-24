@@ -319,7 +319,7 @@
     (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
     (evil-leader/set-key "x SPC b" 'list-buffers)
     (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
-    (evil-leader/set-key "x x" 'fff-buffer-switch/body)))
+    (evil-leader/set-key "x x" 'fff-winner/body)))
 
 (use-package evil :defer t :ensure t
   :init
