@@ -184,8 +184,9 @@
   (add-hook 'python-mode-hook 'flymake-mode))
 
 (use-package asm-mode :ensure nil :defer t
-  :init
-  (setq asm-comment-char ?\#))
+  ;; :init
+  ;; (setq asm-comment-char ?\#)
+  )
 
 (use-package hippie-expand :ensure nil :defer t
   :init
