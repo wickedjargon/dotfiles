@@ -477,7 +477,7 @@ auto-mode-alist)))
       ("f" lsp-format-buffer "lsp-format-buffer")
       ("i" imenu "imenu")
       ("f" flymake-show-diagnostics-buffer "flymake-show-diagnostics-buffer")
-      ("r" fff-display-lsp-root "fff-display-lsp-root")
+      ("R" fff-display-lsp-root "fff-display-lsp-root")
 	  )))
 
   (pretty-hydra-define fff-shutdown (:foreign-keys warn :quit-key "q" :color blue)
