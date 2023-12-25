@@ -330,8 +330,7 @@ in whole buffer.  With neither, delete comments on current line."
     (progn
       (centered-window-mode -1)
       (global-display-line-numbers-mode +1)
-      (message "centered window mode off")
-      )))
+      (message "centered window mode off"))))
 
 (defun fff-mark-gt-point-exchange ()
   (if (>  (mark) (point))
