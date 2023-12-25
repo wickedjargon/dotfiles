@@ -686,3 +686,10 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (bury-buffer)
   (delete-window))
+
+(defun fff-comment ()
+  "Comment region if active, otherwise comment the current line."
+  (interactive)
+  (if (use-region-p)
+      (comment-region (region-beginning) (region-end))
+    (comment-line 1)))
