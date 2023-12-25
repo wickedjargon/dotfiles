@@ -355,7 +355,7 @@
     (setq evil-kill-on-visual-paste nil)
     (evil-mode +1)
     (define-key evil-visual-state-map (kbd "<backpace>") 'delete-char)
-    (define-key evil-visual-state-map (kbd "C-/") 'comment-line)
+    (define-key evil-visual-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
     
