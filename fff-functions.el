@@ -687,8 +687,25 @@ in whole buffer.  With neither, delete comments on current line."
   (delete-window))
 
 (defun fff-comment ()
-  "Comment region if active, otherwise comment the current line."
+  "Comment region if active, otherwise uncomment if already commented, otherwise comment the current line."
   (interactive)
   (if (use-region-p)
-      (comment-region (region-beginning) (region-end))
-    (comment-line 1)))
+      (if (fff-region-commented-p)
+          (uncomment-region (region-beginning) (region-end))
+        (comment-region (region-beginning) (region-end)))
+    (if (fff-line-commented-p)
+        (uncomment-line 1)
+      (comment-line 1))))
+
+(defun fff-region-commented-p ()
+  "Return t if the region is already commented, nil otherwise."
+  (save-excursion
+    (goto-char (region-beginning))
+    (and (not (eobp))
+         (save-excursion (forward-char 1) (looking-at comment-start)))))
+
+(defun fff-line-commented-p ()
+  "Return t if the current line is already commented, nil otherwise."
+  (save-excursion
+    (beginning-of-line)
+    (looking-at comment-start)))
