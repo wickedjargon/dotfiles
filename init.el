@@ -51,12 +51,6 @@
    '(flymake-note ((t (:inherit nil))))
    '(flymake-warning ((t (:inherit nil)))))
   
-  ;; set theme
-  (require-theme 'modus-themes)
-  (load-theme 'modus-vivendi)
-  (if (string= (system-name) "x1c")
-	  (set-face-attribute 'default nil :height 109)
-	(set-face-attribute 'default nil :height 95))
 
   ;; hooks
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
@@ -90,7 +84,6 @@
   (global-set-key (kbd "C-x k") 'bury-buffer)
   (global-unset-key (kbd "C-x C-c"))                      ;; I accidently hit this sometimes
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
-  (define-key global-map (kbd "C-c t") #'modus-themes-toggle)
   (global-set-key (kbd "C-x 3") 'fff-split-and-follow-vertically)
   (global-set-key (kbd "C-x 2") 'fff-split-and-follow-horizontally)
 
@@ -176,6 +169,16 @@
   ;; Do not allow the cursor in the minibuffer prompt
   (setq minibuffer-prompt-properties
 		'(read-only t cursor-intangible t face minibuffer-prompt)))
+
+
+(use-package modus-themes :ensure t :defer nil
+  :config
+  (setq modus-themes-to-toggle '(modus-vivendi-tinted modus-operandi))
+  (if (string= (system-name) "x1c")
+	  (set-face-attribute 'default nil :height 109)
+	(set-face-attribute 'default nil :height 95))
+  (load-theme (car modus-themes-to-toggle) t)
+  :bind ("C-c t" . modus-themes-toggle))
 
 (use-package flymake :ensure nil
   :config
