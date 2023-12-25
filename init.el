@@ -381,7 +381,7 @@
     (define-key evil-normal-state-map (kbd "gP") 'fff-evil-paste-and-indent-before)
     (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
-    (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
+    (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-normal-state-map (kbd "C-c a") 'evil-numbers/inc-at-pt)
     (define-key evil-normal-state-map (kbd "C-c x") 'evil-numbers/dec-at-pt)
     (define-key evil-normal-state-map (kbd "C-c g a") 'evil-numbers/inc-at-pt-incremental)
