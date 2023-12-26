@@ -5,7 +5,6 @@
 
 ;; Hydras
 ;; TODO: hydra for tab-bar-mode
-;; TODO: hydra for find-file
 ;; DONE: hydra for search
 ;; TODO: completion (company, hippie, etc)
 
