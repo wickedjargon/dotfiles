@@ -693,19 +693,11 @@ in whole buffer.  With neither, delete comments on current line."
       (if (fff-region-commented-p)
           (uncomment-region (region-beginning) (region-end))
         (comment-region (region-beginning) (region-end)))
-    (if (fff-line-commented-p)
-        (uncomment-line 1)
-      (comment-line 1))))
+	(comment-line 1)))
 
 (defun fff-region-commented-p ()
   "Return t if the region is already commented, nil otherwise."
   (save-excursion
-    (goto-char (region-beginning))
-    (and (not (eobp))
-         (save-excursion (forward-char 1) (looking-at comment-start)))))
-
-(defun fff-line-commented-p ()
-  "Return t if the current line is already commented, nil otherwise."
-  (save-excursion
-    (beginning-of-line)
-    (looking-at comment-start)))
+    (goto-char (region-beginning))  ; Move point to the beginning of the region.
+    (and (not (eobp))  ; Check if the point is not at the end of the buffer.
+         (looking-at (regexp-quote comment-start)))))
