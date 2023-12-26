@@ -77,6 +77,7 @@
   (advice-add 'vc-region-history :around #'fff-advice-for-window-focus)
   (advice-add 'list-buffers :around #'fff-advice-for-window-focus)
   (advice-add 'rustic-cargo-run :around #'fff-advice-for-window-focus)
+  (advice-add 'flymake-show-buffer-diagnostics :around #'fff-advice-for-window-focus)
 
   :init
   ;; key bindings
