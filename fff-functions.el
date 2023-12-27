@@ -698,9 +698,9 @@ in whole buffer.  With neither, delete comments on current line."
 (defun fff-region-commented-p ()
   "Return t if the region is already commented, nil otherwise."
   (save-excursion
-    (goto-char (region-beginning))  ; Move point to the beginning of the region.
-    (and (not (eobp))  ; Check if the point is not at the end of the buffer.
-         (looking-at (regexp-quote comment-start)))))
+    (goto-char (region-beginning))
+    (and (not (eobp))
+         (looking-at (concat "\\s-*" (regexp-quote comment-start))))))
 
 (defun fff-indent-buffer ()
   "Indent the entire buffer."
