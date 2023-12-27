@@ -615,8 +615,7 @@
 (use-package hl-todo :ensure t :defer t
   :custom-face
   (hl-todo ((t (:inherit hl-todo :italic t))))
-  :hook ((prog-mode . hl-todo-mode)
-         (yaml-mode . hl-todo-mode)))
+  :hook ((prog-mode . hl-todo-mode)))
 
 (use-package saveplace :init (save-place-mode))
 
