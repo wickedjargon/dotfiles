@@ -172,7 +172,6 @@
   (setq minibuffer-prompt-properties
 		'(read-only t cursor-intangible t face minibuffer-prompt)))
 
-
 (use-package modus-themes :ensure t :defer nil
   :config
   (setq modus-themes-to-toggle '(modus-vivendi-tinted modus-operandi))
@@ -188,10 +187,7 @@
                '("\\.py\\'" fff-flymake-python-init))
   (add-hook 'python-mode-hook 'flymake-mode))
 
-(use-package asm-mode :ensure nil :defer t
-  ;; :init
-  ;; (setq asm-comment-char ?\#)
-  )
+(use-package asm-mode :ensure nil :defer t)
 
 (use-package hippie-expand :ensure nil :defer t
   :init
@@ -264,11 +260,7 @@
     (evil-leader/set-key "f B" 'fff-access-books)
     (evil-leader/set-key "f f" 'fff-access-sched)
     (evil-leader/set-key "f i" 'fff-switch-to-scratch-buffer)
-    (evil-leader/set-key "f t" 'shell)
-
-	(evil-leader/set-key "h w" 'tab-bar-close-tab)
-	(evil-leader/set-key "h n" 'fff-tab-bar-new-tab)
-	(evil-leader/set-key  "h r" 'tab-bar-rename-tab)
+    ;; (evil-leader/set-key "f t" 'shell)
 	
 	;; window size adjustment
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
@@ -282,15 +274,12 @@
 
     (evil-leader/set-key "p" 'fff-programming/body)
     (evil-leader/set-key "<DEL>" 'fff-shutdown/body)
-    (evil-leader/set-key "C-<backspace>" 'fff-delete-till-beginning)
 	
-	;; put under hydra
     (evil-leader/set-key "n" 'narrow-to-region)
     (evil-leader/set-key "N" 'widen)
 	
     (evil-leader/set-key "o" 'other-window)
     (evil-leader/set-key "P" 'crux-open-with)
-    ;; (evil-leader/set-key "Q" 'fff-delete-window-and-bury-buffer)
     (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
 
     (evil-leader/set-key "r" 'fff-evil-regex-search)
@@ -300,7 +289,7 @@
 	;; learn more about cursor undo position and put this under a hydra
 	(evil-leader/set-key "t" 'vterm)
 	(evil-leader/set-key "T" 'terminal-here)
-    (evil-leader/set-key "u" 'universal-argument)
+    ;; (evil-leader/set-key "u" 'universal-argument)
 
     (evil-leader/set-key "w" 'save-buffer)
 	
@@ -347,8 +336,6 @@
   :config
   (progn
 	
-    (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-visual-state-map (kbd "C-a") 'evil-first-non-blank)
     (setq evil-undo-system 'undo-fu)
     (setq evil-want-integration t)
     (setq evil-want-keybinding nil)
@@ -356,6 +343,9 @@
     (setq evil-search-wrap nil)
     (setq evil-kill-on-visual-paste nil)
     (evil-mode +1)
+	
+    (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
+    (define-key evil-visual-state-map (kbd "C-a") 'evil-first-non-blank)
     (define-key evil-visual-state-map (kbd "<backpace>") 'delete-char)
     (define-key evil-visual-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
@@ -369,7 +359,6 @@
     (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
     (define-key evil-insert-state-map (kbd "C-;") 'hippie-expand)
     (define-key evil-insert-state-map (kbd "C-'") 'company-complete)
-    (define-key evil-insert-state-map (kbd "C-l") 'yas-expand)
     (define-key evil-insert-state-map (kbd "M-a") 'yas-insert-snippet)
     (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
     (define-key evil-insert-state-map (kbd "C-/") 'fff-comment)
@@ -409,19 +398,19 @@
 
 (use-package lisp-mode :ensure nil
   :init
-(set-default 'auto-mode-alist
-(append '(("\\.lisp$" . lisp-mode)
-("\\.lsp$" . lisp-mode)
-("\\.cl$" . lisp-mode))
-auto-mode-alist)))
+  (set-default 'auto-mode-alist
+			   (append '(("\\.lisp$" . lisp-mode)
+						 ("\\.lsp$" . lisp-mode)
+						 ("\\.cl$" . lisp-mode))
+					   auto-mode-alist)))
 
 (use-package sly :defer t :ensure t
   :init
   (set-default 'auto-mode-alist
-			 (append '(("\\.lisp$" . lisp-mode)
-					   ("\\.lsp$" . lisp-mode)
-					   ("\\.cl$" . lisp-mode))
-					 auto-mode-alist))
+			   (append '(("\\.lisp$" . lisp-mode)
+						 ("\\.lsp$" . lisp-mode)
+						 ("\\.cl$" . lisp-mode))
+					   auto-mode-alist))
   (add-hook 'sly-mrepl-mode-hook (lambda ()
                                    (define-key sly-mrepl-mode-map (kbd "C-p") 'comint-previous-input)
                                    (define-key sly-mrepl-mode-map (kbd "C-n") 'comint-next-input)))
@@ -499,23 +488,23 @@ auto-mode-alist)))
 	  ("S" (shell-command "kill -TERM $(pidof dwm) && systemctl poweroff") "Shutdown" :exit t)
 	  ("o" (shell-command "xset dpms force off") "Turn off screen"))))
   
-    (pretty-hydra-define fff-magit (:foreign-keys warn :quit-key "q" :color blue)
+  (pretty-hydra-define fff-magit (:foreign-keys warn :quit-key "q" :color blue)
 	("Magit"
 	 (("m" magit "magit" :exit t)
 	  ("<tab>" magit-section-hide-children "collapse children" :exit t)
 	  )))
 
-	
-	(pretty-hydra-define fff-search (:foreign-keys warn :quit-key "q" :color blue)
-	  ("Search"
-	   (("1" isearch-forward        "isearch-forward" :exit t)
-		("2" query-replace          "query-replace" :exit t)
-		("3" isearch-forward-regexp "isearch-forward-regexp" :exit t)
-		("4" occur                  "occur" :exit t)
-		("5" iedit-mode             "iedit-mode" :exit t)
-		("6" find-tag               "find-tag" :exit t)
-		("7" rgrep                  "rgrep" :exit t)
-		("8" icomplete-mode         "icomplete-mode" :exit t)))))
+  
+  (pretty-hydra-define fff-search (:foreign-keys warn :quit-key "q" :color blue)
+	("Search"
+	 (("1" isearch-forward        "isearch-forward" :exit t)
+	  ("2" query-replace          "query-replace" :exit t)
+	  ("3" isearch-forward-regexp "isearch-forward-regexp" :exit t)
+	  ("4" occur                  "occur" :exit t)
+	  ("5" iedit-mode             "iedit-mode" :exit t)
+	  ("6" find-tag               "find-tag" :exit t)
+	  ("7" rgrep                  "rgrep" :exit t)
+	  ("8" icomplete-mode         "icomplete-mode" :exit t)))))
 
 (use-package company :defer t :ensure t
   :init
