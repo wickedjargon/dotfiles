@@ -95,6 +95,16 @@
   (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
   (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
 
+  ;; backup and auto save
+  (setq version-control t)
+  (setq vc-make-backup-files t)
+  (setq kept-new-versions 10)
+  (setq kept-old-versions 10)
+  (setq auto-save-file-name-transforms
+		`((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
+  (setq backup-directory-alist
+		`(("." . ,(expand-file-name "backups/" user-emacs-directory))))
+  
   (setq evil-undo-system 'undo-fu)
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
@@ -103,19 +113,6 @@
   (setq inhibit-startup-message t)                        ;; no splash screen
   (setq mode-require-final-newline nil)                   ;; don't add a newline at the bottom of the file
   (setq use-short-answers t)                              ;; just type `y`, not `yes`
-
-  ;; backup and auto save
-  (setq version-control t)
-  (setq vc-make-backup-files t)
-  (setq kept-new-versions 10)
-  (setq kept-old-versions 10)
-  (add-to-list 'backup-directory-alist
-             (tramp-file-name-regexp . nil))
-  (setq auto-save-file-name-transforms
-		`((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
-  (setq backup-directory-alist
-		`(("." . ,(expand-file-name "backups/" user-emacs-directory))))
-  
   (blink-cursor-mode -1)                                  ;; don't blink my cursor
   (global-auto-revert-mode +1)                            ;; auto revert files and buffers
   (global-goto-address-mode +1)                           ;; make links/urls clickable
