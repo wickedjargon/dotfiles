@@ -676,7 +676,7 @@ auto-mode-alist)))
   :config
   (setq lsp-auto-guess-root t)
   
-  ;; ;; https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
+  ;; https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
   (setq lsp-enable-file-watchers nil) ; Disable file watchers for better performance
   (setq lsp-enable-symbol-highlighting nil) ; disable symbol highlighting
   (setq lsp-headerline-breadcrumb-enable nil) ; Disable breadcrumbs in the headerline
