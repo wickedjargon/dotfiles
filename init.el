@@ -788,5 +788,12 @@
 
 (use-package v-mode
   :ensure t
-  :mode ("\\.v\\'" . v-mode)
-  )
+  :mode ("\\.v\\'" . v-mode))
+
+(use-package evil-visualstar :ensure t :defer nil
+  :config
+  (global-evil-visualstar-mode))
+
+(use-package evil-matchit :ensure t :defer nil
+  :config
+  (global-evil-matchit-mode +1))
