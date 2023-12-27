@@ -793,3 +793,8 @@ auto-mode-alist)))
   (evil-org-set-key-theme '(navigation insert textobjects additional calendar))
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys))
+
+(use-package v-mode
+  :ensure t
+  :mode ("\\.v\\'" . v-mode)
+  )
