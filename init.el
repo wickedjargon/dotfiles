@@ -50,7 +50,6 @@
    '(flymake-note ((t (:inherit nil))))
    '(flymake-warning ((t (:inherit nil)))))
   
-
   ;; hooks
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
@@ -65,13 +64,12 @@
 										 (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
 								(read-only-mode 1))))
 
-  ;;
+  ;; switch to new window
   (defun fff-advice-for-window-focus (orig-fun &rest args)
 	"Advice function to focus on the new window after running the specified function."
 	(let ((current-window (selected-window)))
       (apply orig-fun args)
       (select-window (next-window current-window))))
-
   (advice-add 'diff-buffer-with-file :around #'fff-advice-for-window-focus)
   (advice-add 'vc-region-history :around #'fff-advice-for-window-focus)
   (advice-add 'list-buffers :around #'fff-advice-for-window-focus)
@@ -89,6 +87,7 @@
 
   (global-set-key (kbd "C-<return>") 'fff-C-x-C-e)
 
+  ;; tab-bar mode
   (setq tab-bar-new-tab-to 'rightmost)
   (setq tab-bar-new-tab-choice 'empty-buffer)
   (tab-bar-mode +1)
