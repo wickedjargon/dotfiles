@@ -701,3 +701,9 @@ in whole buffer.  With neither, delete comments on current line."
     (goto-char (region-beginning))  ; Move point to the beginning of the region.
     (and (not (eobp))  ; Check if the point is not at the end of the buffer.
          (looking-at (regexp-quote comment-start)))))
+
+(defun fff-indent-buffer ()
+  "Indent the entire buffer."
+  (interactive)
+  (save-excursion
+    (indent-region (point-min) (point-max) nil)))
