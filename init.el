@@ -119,8 +119,7 @@
   (setq initial-scratch-message "")                       ;; no message on scratch buffer
   (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
-  (setq dired-listing-switches                            ;; I prefer to have dired
-		"-aBhlh  --group-directories-first")              ;; group my directories and display size
+  (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
