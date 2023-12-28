@@ -2,7 +2,6 @@
 ;; DONE: set .emacs.d/elpa to read only
 ;; TODO: replace string paths with expressions
 
-
 ;; Hydras
 ;; TODO: hydra for tab-bar-mode
 ;; DONE: hydra for search
