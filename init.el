@@ -299,6 +299,8 @@
     (evil-leader/set-key "x 1" 'delete-other-windows)
     (evil-leader/set-key "x 2" 'fff-split-and-follow-horizontally)
     (evil-leader/set-key "x 3" 'fff-split-and-follow-vertically)
+    (evil-leader/set-key "x 4 4" 'other-window-prefix)
+    (evil-leader/set-key "x 4 4" 'same-window-prefix)
     (evil-leader/set-key "x o" 'other-window)
     (evil-leader/set-key "x k" 'bury-buffer)
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
