@@ -766,7 +766,7 @@
 
 (use-package cider :ensure t :defer t
   :config
-  (define-key cider-mode-map (kbd "C-c c") #'cider-repl-clear-buffer))
+  (define-key cider-repl-mode-map (kbd "C-c c") #'cider-repl-clear-buffer))
 
 (use-package consult :ensure t :defer t)
 
