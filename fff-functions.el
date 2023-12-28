@@ -707,3 +707,24 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (save-excursion
     (indent-region (point-min) (point-max) nil)))
+
+(defun user-is-in-evil-normal-state ()
+ "Check if the user is in Evil's normal state."
+ (eq evil-state 'normal))
+
+(defun move-cursor-to-next-line ()
+ "Move the cursor to the beginning of the next line, creating a new line if necessary."
+ (goto-char (line-beginning-position 2))
+ (unless (= (point) (point-max))
+ (newline)))
+
+(defun fff-cider-pprint-eval-last-sexp-to-comment-in-evil-normal-state ()
+  (interactive)
+ "If the user is in Evil's normal state, move the cursor to the beginning of the next line, run `cider-pprint-eval-last-sexp-to-comment`, and then return the cursor to its original position."
+ (if (user-is-in-evil-normal-state)
+    (save-excursion
+      (save-restriction
+        (move-cursor-to-next-line)
+        (call-interactively 'cider-pprint-eval-last-sexp-to-comment)))
+  (call-interactively 'cider-pprint-eval-last-sexp-to-comment)))
+
