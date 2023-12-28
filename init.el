@@ -55,6 +55,7 @@
   (add-hook 'dired-mode-hook #'auto-revert-mode)          ;; revert dired buffers, but not buffer list buffers
   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks 
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+  
   (add-hook 'comint-mode-hook (lambda ()
 								(define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
 								(define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
