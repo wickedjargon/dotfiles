@@ -742,6 +742,7 @@
   (setq org-startup-with-inline-images t)
   (setq org-babel-lisp-eval-command "sbcl --script")
   (setq org-edit-src-content-indentation 0)
+  (setq org-startup-folded t)
   :config
   (org-babel-do-load-languages
    'org-babel-load-languages
