@@ -724,3 +724,11 @@ in whole buffer.  With neither, delete comments on current line."
  (interactive)
  (let ((new-buffer-name (generate-new-buffer-name "*scratch*")))
    (switch-to-buffer new-buffer-name)))
+
+(defun fff-open-new-vterm ()
+ "Open a new vterm buffer."
+ (interactive)
+ (let ((buf (generate-new-buffer "*vterm*")))
+   (with-current-buffer buf
+     (vterm-mode))
+   (switch-to-buffer buf)))
