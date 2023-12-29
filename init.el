@@ -128,14 +128,14 @@
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
-  ;; (electric-pair-mode +1)
-  ;; (setq electric-pair-delete-adjacent-pairs nil)
   (global-eldoc-mode -1)
   
   (unless (string= (system-name) "x1c")
-	(display-battery-mode +1))
-  (setq display-time-day-and-date t)
-  (display-time)
+	(progn
+	  (display-battery-mode +1)
+	  (setq display-time-day-and-date t)
+	  (display-time)))
+  
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
