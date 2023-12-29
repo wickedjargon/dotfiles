@@ -1,51 +1,13 @@
-(evil-leader/set-key "a" 'avy-goto-char)
 ;; b
-(evil-leader/set-key "c" 'quickrun)
-(evil-leader/set-key "d" 'delete-blank-lines)
-(evil-leader/set-key "e" 'fff-C-x-C-e)
-(evil-leader/set-key "f B" 'fff-access-books)
-(evil-leader/set-key "f I" 'fff-switch-to-new-scratch-buffer)
-(evil-leader/set-key "f b" 'fff-access-bookmarks)
-(evil-leader/set-key "f f" 'fff-access-sched)
-(evil-leader/set-key "f i" 'fff-switch-to-scratch-buffer)
 ;; g
 ;; h
 ;; i
 ;; j
-(evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
 ;; l
 ;; m
-(evil-leader/set-key "n" 'narrow-to-region)
-(evil-leader/set-key "o" 'other-window)
 ;; p
-(evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
-(evil-leader/set-key "r" 'fff-evil-regex-search)
 ;; s
-(evil-leader/set-key "t" 'vterm)
 ;; u
 ;; v
-(evil-leader/set-key "w" 'save-buffer)
-(evil-leader/set-key "x 0" 'delete-window)
-(evil-leader/set-key "x 1" 'delete-other-windows)
-(evil-leader/set-key "x 2" 'fff-split-and-follow-horizontally)
-(evil-leader/set-key "x 3" 'fff-split-and-follow-vertically)
-(evil-leader/set-key "x 4 4" 'other-window-prefix)
-(evil-leader/set-key "x 4 4" 'same-window-prefix)
-(evil-leader/set-key "x SPC b" 'list-buffers)
-(evil-leader/set-key "x b" 'switch-to-buffer)
-(evil-leader/set-key "x c" 'fff-access-config-dir)
-(evil-leader/set-key "x c" 'fff-access-config-dir)
-(evil-leader/set-key "x d" 'make-directory)
-(evil-leader/set-key "x f" 'find-file)
-(evil-leader/set-key "x h" 'fff-access-home-dir)
-(evil-leader/set-key "x k" 'bury-buffer)
-(evil-leader/set-key "x n" 'fff-open-file-in-notes)
-(evil-leader/set-key "x o" 'other-window)
-(evil-leader/set-key "x p" 'fff-open-file-in-projects)
-(evil-leader/set-key "x r" 'crux-recentf-find-file)
-(evil-leader/set-key "x t" 'fff-open-file-in-tmp)
-(evil-leader/set-key "x w" 'write-file)
-(evil-leader/set-key "x x" 'fff-winner/body)
-(evil-leader/set-key "x y" 'fff-open-file-in-snippets)
 ;; y
 ;; z
