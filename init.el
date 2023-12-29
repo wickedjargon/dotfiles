@@ -177,7 +177,7 @@
   :config
   (setq modus-themes-to-toggle '(modus-vivendi-tinted modus-operandi))
   (if (string= (system-name) "x1c")
-	  (set-face-attribute 'default nil :height 109)
+	  (set-face-attribute 'default nil :height 135)
 	(set-face-attribute 'default nil :height 95))
   (load-theme (car modus-themes-to-toggle) t)
   :bind ("C-c t" . modus-themes-toggle))
