@@ -98,6 +98,7 @@
   ;; backup and auto save
   (setq version-control t)
   (setq vc-make-backup-files t)
+  (setq delete-old-versions t)
   (setq kept-new-versions 10)
   (setq kept-old-versions 10)
   (setq auto-save-file-name-transforms
