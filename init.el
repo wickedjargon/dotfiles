@@ -287,8 +287,9 @@
     (evil-leader/set-key "N" 'widen)
 	
 	; terminal
-	(evil-leader/set-key "t" 'vterm)
-	(evil-leader/set-key "T" 'terminal-here)
+	(evil-leader/set-key "t t" 'vterm)
+	(evil-leader/set-key "t T" 'fff-open-new-vterm)
+	(evil-leader/set-key "t h" 'terminal-here)
 	
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'switch-to-buffer)
