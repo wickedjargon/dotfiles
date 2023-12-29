@@ -728,3 +728,7 @@ in whole buffer.  With neither, delete comments on current line."
         (call-interactively 'cider-pprint-eval-last-sexp-to-comment)))
   (call-interactively 'cider-pprint-eval-last-sexp-to-comment)))
 
+(defun fff-switch-to-new-scratch-buffer ()
+ (interactive)
+ (let ((new-buffer-name (generate-new-buffer-name "*scratch*")))
+   (switch-to-buffer new-buffer-name)))
