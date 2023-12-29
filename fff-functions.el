@@ -632,9 +632,6 @@ in whole buffer.  With neither, delete comments on current line."
   (let ((default-directory "/ssh:"))
     (call-interactively 'find-file)))
 
-(defvar fff-initial-font-height nil
-  "Variable to store the initial font height.")
-
 (add-hook 'after-init-hook
           (lambda ()
             "Capture the initial font height at startup."
@@ -654,11 +651,6 @@ in whole buffer.  With neither, delete comments on current line."
     (set-face-attribute 'default nil :height (- current-height 10))
     (message "Font size decreased")))
 
-(defun fff-reset-font-size ()
-  "Reset the font size to the initial value."
-  (interactive)
-  (set-face-attribute 'default nil :height fff-initial-font-height)
-  (message "Font size reset"))
 
 (defun fff-split-and-follow-horizontally ()
   (interactive)
