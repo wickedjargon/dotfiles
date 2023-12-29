@@ -268,10 +268,9 @@
     (evil-leader/set-key "a" 'avy-goto-char)
     (evil-leader/set-key "r" 'fff-evil-regex-search)
 
-    ;; f: shortcut to file or dired buffer prefix
+    ;; f: shortcut to file or dired buffer
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f B" 'fff-access-books)
-    (evil-leader/set-key "f f" 'fff-access-sched)
     (evil-leader/set-key "f i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "f I" 'fff-switch-to-new-scratch-buffer)
 	
