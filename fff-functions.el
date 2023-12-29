@@ -637,21 +637,6 @@ in whole buffer.  With neither, delete comments on current line."
             "Capture the initial font height at startup."
             (setq fff-initial-font-height (face-attribute 'default :height))))
 
-(defun fff-increase-font-size ()
-  "Increase the font size."
-  (interactive)
-  (let ((current-height (face-attribute 'default :height)))
-    (set-face-attribute 'default nil :height (+ current-height 10))
-    (message "Font size increased")))
-
-(defun fff-decrease-font-size ()
-  "Decrease the font size."
-  (interactive)
-  (let ((current-height (face-attribute 'default :height)))
-    (set-face-attribute 'default nil :height (- current-height 10))
-    (message "Font size decreased")))
-
-
 (defun fff-split-and-follow-horizontally ()
   (interactive)
   (split-window-below)
@@ -732,3 +717,17 @@ in whole buffer.  With neither, delete comments on current line."
    (with-current-buffer buf
      (vterm-mode))
    (switch-to-buffer buf)))
+
+(defun fff-increase-font-size ()
+  "Increase the font size."
+  (interactive)
+  (let ((current-height (face-attribute 'default :height)))
+    (set-face-attribute 'default nil :height (+ current-height 10))
+    (message "Font size increased")))
+
+(defun fff-decrease-font-size ()
+  "Decrease the font size."
+  (interactive)
+  (let ((current-height (face-attribute 'default :height)))
+    (set-face-attribute 'default nil :height (- current-height 10))
+    (message "Font size decreased")))
