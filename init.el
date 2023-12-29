@@ -300,25 +300,25 @@
     (evil-leader/set-key "x 4 4" 'same-window-prefix)
     (evil-leader/set-key "x o" 'other-window)
     (evil-leader/set-key "x k" 'bury-buffer)
-    (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
     (evil-leader/set-key "x d" 'make-directory)
     (evil-leader/set-key "x f" 'find-file)
-    (evil-leader/set-key "x `" 'fff-access-home-dir)
-    (evil-leader/set-key "x c" 'fff-access-config-dir)
-    (evil-leader/set-key "x c" 'fff-access-config-dir)
-    (evil-leader/set-key "x p" 'fff-open-file-in-projects)
     (evil-leader/set-key "x r" 'crux-recentf-find-file)
-    (evil-leader/set-key "x n" 'fff-open-file-in-notes)
     (evil-leader/set-key "x w" 'write-file)
-    (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
     (evil-leader/set-key "x SPC b" 'list-buffers)
     (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
-
+	
+	;; access dirs
+    (evil-leader/set-key "x c" 'fff-access-config-dir)
+    (evil-leader/set-key "x m" 'fff-access-home-dir)
+    (evil-leader/set-key "x n" 'fff-open-file-in-notes)
+    (evil-leader/set-key "x p" 'fff-open-file-in-projects)
+    (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
+    (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
+	
 	;; winner undo/redo
     (evil-leader/set-key "x h" 'fff-winner/winner-undo)
     (evil-leader/set-key "x l" 'fff-winner/winner-redo)
-	(evil-leader/set-key "x H" 'evil-switch-to-windows-last-buffer)
-	))
+	(evil-leader/set-key "x H" 'evil-switch-to-windows-last-buffer)))
 
 (use-package evil :defer t :ensure t
   :init
