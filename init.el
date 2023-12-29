@@ -131,7 +131,9 @@
   ;; (electric-pair-mode +1)
   ;; (setq electric-pair-delete-adjacent-pairs nil)
   (global-eldoc-mode -1)
-  (display-battery-mode +1)
+  
+  (unless (string= (system-name) "x1c")
+	(display-battery-mode +1))
   (setq display-time-day-and-date t)
   (display-time)
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
