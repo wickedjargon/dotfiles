@@ -303,7 +303,7 @@
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
     (evil-leader/set-key "x d" 'make-directory)
     (evil-leader/set-key "x f" 'find-file)
-    (evil-leader/set-key "x h" 'fff-access-home-dir)
+    (evil-leader/set-key "x `" 'fff-access-home-dir)
     (evil-leader/set-key "x c" 'fff-access-config-dir)
     (evil-leader/set-key "x c" 'fff-access-config-dir)
     (evil-leader/set-key "x p" 'fff-open-file-in-projects)
