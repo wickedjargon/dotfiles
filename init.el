@@ -59,6 +59,7 @@
   (add-hook 'comint-mode-hook (lambda ()
 								(define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
 								(define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
+  
   (add-hook 'find-file-hook (lambda ()
 							  (when (and buffer-file-name
 										 (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
