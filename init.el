@@ -76,15 +76,13 @@
   (advice-add 'rustic-cargo-run :around #'fff-advice-for-window-focus)
   (advice-add 'flymake-show-buffer-diagnostics :around #'fff-advice-for-window-focus)
 
-  :init
   ;; key bindings
   (global-set-key (kbd "M-u") 'universal-argument)
   (global-set-key (kbd "C-x k") 'bury-buffer)
-  (global-unset-key (kbd "C-x C-c"))                      ;; I accidently hit this sometimes
+  (global-unset-key (kbd "C-x C-c"))
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
   (global-set-key (kbd "C-x 3") 'fff-split-and-follow-vertically)
   (global-set-key (kbd "C-x 2") 'fff-split-and-follow-horizontally)
-
   (global-set-key (kbd "C-<return>") 'fff-C-x-C-e)
 
   ;; tab-bar mode
@@ -253,7 +251,7 @@
 	(evil-leader/set-key "e" 'fff-C-x-C-e)
 	(evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
 	(evil-leader/set-key "o" 'other-window)
-	(evil-leader/set-key "P" 'crux-open-with)
+	(evil-leader/set-key "p" 'crux-open-with)
 	(evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
 	(evil-leader/set-key "w" 'save-buffer)
 	
@@ -287,10 +285,17 @@
     (evil-leader/set-key "n" 'narrow-to-region)
     (evil-leader/set-key "N" 'widen)
 	
-	; terminal
+	;; terminal
 	(evil-leader/set-key "t t" 'vterm)
 	(evil-leader/set-key "t T" 'fff-open-new-vterm)
-	(evil-leader/set-key "t h" 'terminal-here)
+	(evil-leader/set-key "t p" 'terminal-here)
+
+	;; tabs
+	(evil-leader/set-key (kbd "t n") 'fff-tab-bar-new-tab)
+	(evil-leader/set-key (kbd "t w") 'tab-bar-close-tab)
+	(evil-leader/set-key (kbd "t r") 'tab-bar-rename-tab)
+	(evil-leader/set-key (kbd "t h") 'fff-tabs/tab-previous)
+	(evil-leader/set-key (kbd "t l") 'fff-tabs/tab-next)
 	
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'switch-to-buffer)
@@ -299,7 +304,7 @@
     (evil-leader/set-key "x 2" 'fff-split-and-follow-horizontally)
     (evil-leader/set-key "x 3" 'fff-split-and-follow-vertically)
     (evil-leader/set-key "x 4 4" 'other-window-prefix)
-    (evil-leader/set-key "x 4 4" 'same-window-prefix)
+    (evil-leader/set-key "x 4 1" 'same-window-prefix)
     (evil-leader/set-key "x o" 'other-window)
     (evil-leader/set-key "x k" 'bury-buffer)
     (evil-leader/set-key "x d" 'make-directory)
