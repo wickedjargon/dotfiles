@@ -240,27 +240,39 @@
           (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
 
     (evil-leader/set-leader "<SPC>")
+
+	;; single key
     (evil-leader/set-key "SPC" 'execute-extended-command)
-    (evil-leader/set-key "<tab>" nil)
     (evil-leader/set-key "<escape> <escape> <escape>" 'keyboard-escape-quit)
     (evil-leader/set-key ";" 'eval-expression)
+	(evil-leader/set-key "c" 'quickrun)
+	(evil-leader/set-key "d" 'delete-blank-lines)
+	(evil-leader/set-key "e" 'fff-C-x-C-e)
+	(evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
+	(evil-leader/set-key "o" 'other-window)
+	(evil-leader/set-key "P" 'crux-open-with)
+	(evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
+	(evil-leader/set-key "w" 'save-buffer)
+	
+	;; text scaling
+    (evil-leader/set-key "0" 'fff-set-scale-to-zero)
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
+	
+	; paragraph navigation
     (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
     (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
-    (evil-leader/set-key "0" 'fff-set-scale-to-zero)
+
+	;; search and replace
     (evil-leader/set-key "a" 'avy-goto-char)
-    (evil-leader/set-key "b" 'switch-to-buffer)
-    (evil-leader/set-key "c" 'quickrun)
-    (evil-leader/set-key "d" 'delete-blank-lines)
-    (evil-leader/set-key "e" 'fff-C-x-C-e)
+    (evil-leader/set-key "r" 'fff-evil-regex-search)
 
     ;; f: shortcut to file or dired buffer prefix
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f B" 'fff-access-books)
     (evil-leader/set-key "f f" 'fff-access-sched)
     (evil-leader/set-key "f i" 'fff-switch-to-scratch-buffer)
-    ;; (evil-leader/set-key "f t" 'shell)
+    (evil-leader/set-key "f I" 'fff-switch-to-new-scratch-buffer)
 	
 	;; window size adjustment
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
@@ -269,29 +281,13 @@
     (evil-leader/set-key "K" 'fff-hydra-windsize/windsize-up)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
 
-    (evil-leader/set-key "j" 'evil-switch-to-windows-last-buffer)
-    (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
-
-    (evil-leader/set-key "p" 'fff-programming/body)
-    (evil-leader/set-key "<DEL>" 'fff-shutdown/body)
-	
+	;; narrow
     (evil-leader/set-key "n" 'narrow-to-region)
     (evil-leader/set-key "N" 'widen)
 	
-    (evil-leader/set-key "o" 'other-window)
-    (evil-leader/set-key "P" 'crux-open-with)
-    (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
-
-    (evil-leader/set-key "r" 'fff-evil-regex-search)
-	
-    (evil-leader/set-key "s" 'fff-tabs/tab-next)
-
-	;; learn more about cursor undo position and put this under a hydra
+	; terminal
 	(evil-leader/set-key "t" 'vterm)
 	(evil-leader/set-key "T" 'terminal-here)
-    ;; (evil-leader/set-key "u" 'universal-argument)
-
-    (evil-leader/set-key "w" 'save-buffer)
 	
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'switch-to-buffer)
