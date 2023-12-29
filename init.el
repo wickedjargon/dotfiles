@@ -317,10 +317,11 @@
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
     (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
 	
-	;; winner undo/redo
+	;; winner undo/redo and previous buffer
     (evil-leader/set-key "x h" 'fff-winner/winner-undo)
     (evil-leader/set-key "x l" 'fff-winner/winner-redo)
-	(evil-leader/set-key "x H" 'evil-switch-to-windows-last-buffer)))
+	(evil-leader/set-key "x j" 'evil-switch-to-windows-last-buffer)
+	))
 
 (use-package evil :defer t :ensure t
   :init
