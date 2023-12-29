@@ -632,11 +632,6 @@ in whole buffer.  With neither, delete comments on current line."
   (let ((default-directory "/ssh:"))
     (call-interactively 'find-file)))
 
-(add-hook 'after-init-hook
-          (lambda ()
-            "Capture the initial font height at startup."
-            (setq fff-initial-font-height (face-attribute 'default :height))))
-
 (defun fff-split-and-follow-horizontally ()
   (interactive)
   (split-window-below)
