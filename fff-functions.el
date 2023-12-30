@@ -436,6 +436,14 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (dired (locate-dominating-file default-directory ".git")))
 
+(defun fff-go-to-git-root-dir-interactive ()
+ (interactive)
+ (let ((default-directory (locate-dominating-file default-directory ".git")))
+   (if default-directory
+       (call-interactively 'find-file)
+     (message "Not in a git repository"))))
+
+
 (defun fff-kill-entire-buffer-list ()
   (interactive)
   (dolist (cur (buffer-list))
