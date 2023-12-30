@@ -288,7 +288,7 @@
     (evil-leader/set-key "N" 'widen)
 	
 	;; terminal
-	(evil-leader/set-key "t t" 'vterm)
+	(evil-leader/set-key "t t" 'fff-switch-or-create-vterm)
 	(evil-leader/set-key "t T" 'fff-open-new-vterm)
 	(evil-leader/set-key "t p" 'terminal-here)
 
