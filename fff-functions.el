@@ -767,3 +767,11 @@ in whole buffer.  With neither, delete comments on current line."
   (let ((current-height (face-attribute 'default :height)))
     (set-face-attribute 'default nil :height (- current-height 10))
     (message "Font size decreased")))
+
+(defun fff-vterm-directory-sync ()
+ "Synchronize current working directory."
+ (interactive)
+ (when vterm--process
+   (let* ((pid (process-id vterm--process))
+          (dir (file-truename (format "/proc/%d/cwd/" pid))))
+     (setq default-directory dir))))
