@@ -134,11 +134,17 @@
   (kill-buffer (current-buffer)))
 
 
-(defun fff-save-and-kill-buffer ()
+(defun fff-save-and-bury-buffer ()
   "save and kill buffer"
   (interactive)
   (save-buffer)
-  (fff-kill-this-buffer))
+  (bury-buffer))
+
+(defun fff-revert-and-bury-buffer ()
+  "save and kill buffer"
+  (interactive)
+  (revert-buffer)
+  (bury-buffer))
 
 (defun fff-switch-to-scratch-buffer ()
   (interactive)
