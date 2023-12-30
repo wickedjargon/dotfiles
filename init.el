@@ -309,6 +309,7 @@
     (evil-leader/set-key "x 4 1" 'same-window-prefix)
     (evil-leader/set-key "x o" 'other-window)
     (evil-leader/set-key "x k" 'bury-buffer)
+    (evil-leader/set-key "x K" 'kill-buffer)
     (evil-leader/set-key "x d" 'make-directory)
     (evil-leader/set-key "x f" 'find-file)
     (evil-leader/set-key "x r" 'crux-recentf-find-file)
