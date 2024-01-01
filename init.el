@@ -239,6 +239,7 @@
   (global-evil-leader-mode)
   :config
   (progn
+	
     (fset 'fff-C-x-C-e
           (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
 
