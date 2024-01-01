@@ -249,7 +249,6 @@
     (evil-leader/set-key "SPC" 'execute-extended-command)
     (evil-leader/set-key "<escape> <escape> <escape>" 'keyboard-escape-quit)
     (evil-leader/set-key ";" 'eval-expression)
-	(evil-leader/set-key "c" 'quickrun)
 	(evil-leader/set-key "d" 'delete-blank-lines)
 	(evil-leader/set-key "e" 'fff-C-x-C-e)
 	(evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
@@ -271,13 +270,11 @@
 	;; search and replace
     (evil-leader/set-key "a" 'avy-goto-char)
     (evil-leader/set-key "r" 'fff-evil-regex-search)
-
-    ;; f: shortcut to file or dired buffer
-    (evil-leader/set-key "f b" 'fff-access-bookmarks)
-    (evil-leader/set-key "f B" 'fff-access-books)
-    (evil-leader/set-key "f i" 'fff-switch-to-scratch-buffer)
-    (evil-leader/set-key "f I" 'fff-switch-to-new-scratch-buffer)
 	
+	;; narrow
+    (evil-leader/set-key "n n" 'narrow-to-region)
+    (evil-leader/set-key "n N" 'widen)
+
 	;; window size adjustment
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
     (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
@@ -285,9 +282,11 @@
     (evil-leader/set-key "K" 'fff-hydra-windsize/windsize-up)
     (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
 
-	;; narrow
-    (evil-leader/set-key "n" 'narrow-to-region)
-    (evil-leader/set-key "N" 'widen)
+    ;; f: shortcut to file or dired buffer
+    (evil-leader/set-key "f b" 'fff-access-bookmarks)
+    (evil-leader/set-key "f B" 'fff-access-books)
+    (evil-leader/set-key "f i" 'fff-switch-to-scratch-buffer)
+    (evil-leader/set-key "f I" 'fff-switch-to-new-scratch-buffer)
 	
 	;; terminal
 	(evil-leader/set-key "t t" 'fff-switch-or-create-vterm)
@@ -313,7 +312,7 @@
     (evil-leader/set-key "x k" 'bury-buffer)
     (evil-leader/set-key "x K" 'kill-buffer)
     (evil-leader/set-key "x d" 'make-directory)
-    (evil-leader/set-key "x f" 'find-file)
+    (evil-leader/set-key "x f" 'fff-find-file)
     (evil-leader/set-key "x r" 'crux-recentf-find-file)
     (evil-leader/set-key "x w" 'write-file)
     (evil-leader/set-key "x SPC b" 'list-buffers)
@@ -331,6 +330,10 @@
     (evil-leader/set-key "x h" 'fff-winner/winner-undo)
     (evil-leader/set-key "x l" 'fff-winner/winner-redo)
 	(evil-leader/set-key "x j" 'evil-switch-to-windows-last-buffer)
+
+	;; run/debug bindings for projects
+	(evil-leader/set-key "c c r" 'rustic-cargo-run)
+	(evil-leader/set-key "c c c" 'quickrun)
 	))
 
 (use-package evil :defer t :ensure t
