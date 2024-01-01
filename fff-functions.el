@@ -775,3 +775,31 @@ in whole buffer.  With neither, delete comments on current line."
    (let* ((pid (process-id vterm--process))
           (dir (file-truename (format "/proc/%d/cwd/" pid))))
      (setq default-directory dir))))
+
+(defun fff-toggle-flymake-highlight ()
+ "Toggle the highlighting of errors and warnings in Flymake."
+ (interactive)
+ (if (eq (face-attribute 'flymake-error :underline nil) nil)
+     (progn
+       (set-face-attribute 'flymake-error nil :underline t)
+       (set-face-attribute 'flymake-note nil :underline t)
+       (set-face-attribute 'flymake-warning nil :underline t))
+   (progn
+     (set-face-attribute 'flymake-error nil :underline nil)
+     (set-face-attribute 'flymake-note nil :underline nil)
+     (set-face-attribute 'flymake-warning nil :underline nil))))
+
+(defun fff-quickrun-command ()
+  "Execute a quickrun command."
+  (interactive)
+  (let ((command (completing-read "Run quickrun command: " obarray 'commandp t "^quickrun-")))
+    (if (string= "" command)
+        (message "No command selected.")
+      (execute-extended-command (intern command)))))
+
+(defun fff-find-file ()
+ "Like find-file, but calls fff-vterm-directory-sync if the current buffer is a vterm buffer."
+ (interactive)
+ (when (eq major-mode 'vterm-mode)
+   (fff-vterm-directory-sync))
+ (call-interactively 'find-file))
