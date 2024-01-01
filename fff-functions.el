@@ -443,7 +443,6 @@ in whole buffer.  With neither, delete comments on current line."
        (call-interactively 'find-file)
      (message "Not in a git repository"))))
 
-
 (defun fff-kill-entire-buffer-list ()
   (interactive)
   (dolist (cur (buffer-list))
