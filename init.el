@@ -280,13 +280,14 @@
     (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
     (evil-leader/set-key "J" 'fff-hydra-windsize/windsize-down)
     (evil-leader/set-key "K" 'fff-hydra-windsize/windsize-up)
-    (evil-leader/set-key "I" 'fff-switch-to-scratch-buffer-text-mode)
 
     ;; f: shortcut to file or dired buffer
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f B" 'fff-access-books)
-    (evil-leader/set-key "f i" 'fff-switch-to-scratch-buffer)
-    (evil-leader/set-key "f I" 'fff-switch-to-new-scratch-buffer)
+
+	;; switch to scratch
+    (evil-leader/set-key "i i" 'fff-switch-to-scratch-buffer)
+    (evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
 	
 	;; terminal
 	(evil-leader/set-key "t t" 'fff-switch-or-create-vterm)
@@ -327,13 +328,13 @@
     (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
 	
 	;; winner undo/redo and previous buffer
-    (evil-leader/set-key "x h" 'fff-winner/winner-undo)
-    (evil-leader/set-key "x l" 'fff-winner/winner-redo)
-	(evil-leader/set-key "x j" 'evil-switch-to-windows-last-buffer)
+    (evil-leader/set-key "h h" 'fff-winner/winner-undo)
+    (evil-leader/set-key "l l" 'fff-winner/winner-redo)
+	(evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
 
 	;; run/debug bindings for projects
-	(evil-leader/set-key "c c r" 'rustic-cargo-run)
-	(evil-leader/set-key "c c c" 'quickrun)
+	(evil-leader/set-key "c r" 'rustic-cargo-run)
+	(evil-leader/set-key "c c" 'quickrun)
 	))
 
 (use-package evil :defer t :ensure t
