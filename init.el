@@ -383,7 +383,7 @@
     (define-key evil-insert-state-map (kbd "M-a") 'yas-insert-snippet)
     (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
     (define-key evil-insert-state-map (kbd "C-/") 'fff-comment)
-	
+    
     (define-key evil-normal-state-map (kbd "C-e") 'move-end-of-line)
     (define-key evil-normal-state-map (kbd "C-a") 'evil-first-non-blank)
     (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
