@@ -102,9 +102,9 @@
   (setq kept-new-versions 10)
   (setq kept-old-versions 10)
   (setq auto-save-file-name-transforms
-		`((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
+        `((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
   (setq backup-directory-alist
-		`(("." . ,(expand-file-name "backups/" user-emacs-directory))))
+        `(("." . ,(expand-file-name "backups/" user-emacs-directory))))
   
   (setq evil-undo-system 'undo-fu)
   (setq evil-want-integration t)
