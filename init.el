@@ -364,7 +364,7 @@
     (setq evil-search-wrap nil)
     (setq evil-kill-on-visual-paste nil)
     (evil-mode +1)
-	
+    
     (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
     (define-key evil-visual-state-map (kbd "C-a") 'evil-first-non-blank)
     (define-key evil-visual-state-map (kbd "<backpace>") 'delete-char)
