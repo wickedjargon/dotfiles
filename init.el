@@ -746,8 +746,8 @@
   :mode ("\\pdf\\'" . pdf-view-mode)
   :init
   (add-hook 'pdf-view-mode-hook (lambda ()
-								  (define-key pdf-view-mode-map (kbd "<tab>") 'pdf-outline)
-								  (pdf-view-themed-minor-mode)))
+                                  (define-key pdf-view-mode-map (kbd "<tab>") 'pdf-outline)
+                                  (pdf-view-themed-minor-mode)))
   :config
   (pdf-tools-install :no-query))
 
