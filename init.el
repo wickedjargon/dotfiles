@@ -767,18 +767,18 @@
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((python .t)
-	 (haskell . t)
-	 (lisp . t)
-	 (ruby . t)
-	 (C . t)
-	 (js . t))))
+     (haskell . t)
+     (lisp . t)
+     (ruby . t)
+     (C . t)
+     (js . t))))
 
 (use-package magit :ensure t :defer t
   :init
   (setq magit-section-initial-visibility-alist
-		'(([hunk file staged status] . hide)
-		  ([file unstaged status] . show)
-		  ([hunk file unstaged status] . hide)
+        '(([hunk file staged status] . hide)
+          ([file unstaged status] . show)
+          ([hunk file unstaged status] . hide)
           )))
 
 (use-package git-timemachine :ensure t :defer t)
