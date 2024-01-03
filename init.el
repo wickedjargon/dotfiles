@@ -821,3 +821,5 @@
 (use-package evil-matchit :ensure t :defer nil
   :config
   (global-evil-matchit-mode +1))
+
+(use-package zig-mode :ensure t :defer t)
