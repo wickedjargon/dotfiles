@@ -239,43 +239,44 @@
   (global-evil-leader-mode)
   :config
   (progn
-	
+    
     (fset 'fff-C-x-C-e
           (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
 
     (evil-leader/set-leader "<SPC>")
 
-	;; single key
+    ;; single key
     (evil-leader/set-key "SPC" 'execute-extended-command)
     (evil-leader/set-key "<escape> <escape> <escape>" 'keyboard-escape-quit)
+    (evil-leader/set-key "RET" 'crux-open-with)
     (evil-leader/set-key ";" 'eval-expression)
-	(evil-leader/set-key "d" 'delete-blank-lines)
-	(evil-leader/set-key "e" 'fff-C-x-C-e)
-	(evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
-	(evil-leader/set-key "o" 'other-window)
-	(evil-leader/set-key "p" 'fff-go-to-git-root-dir-interactive)
-	(evil-leader/set-key "P" 'fff-go-to-git-root-dir-interactive)
-	(evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
-	(evil-leader/set-key "w" 'save-buffer)
-	
-	;; text scaling
+    (evil-leader/set-key "d" 'delete-blank-lines)
+    (evil-leader/set-key "e" 'fff-C-x-C-e)
+    (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
+    (evil-leader/set-key "o" 'other-window)
+    (evil-leader/set-key "p" 'fff-go-to-git-root-dir-interactive)
+    (evil-leader/set-key "P" 'fff-go-to-git-root-dir-interactive)
+    (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
+    (evil-leader/set-key "w" 'save-buffer)
+    
+    ;; text scaling
     (evil-leader/set-key "0" 'fff-set-scale-to-zero)
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
-	
-	; paragraph navigation
+    
+    ; paragraph navigation
     (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
     (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
 
-	;; search and replace
+    ;; search and replace
     (evil-leader/set-key "a" 'avy-goto-char)
     (evil-leader/set-key "r" 'fff-evil-regex-search)
-	
-	;; narrow
+    
+    ;; narrow
     (evil-leader/set-key "n n" 'narrow-to-region)
     (evil-leader/set-key "n N" 'widen)
 
-	;; window size adjustment
+    ;; window size adjustment
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
     (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
     (evil-leader/set-key "J" 'fff-hydra-windsize/windsize-down)
