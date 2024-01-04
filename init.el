@@ -199,12 +199,12 @@
 (use-package Info :ensure nil :defer t
   :init
   (add-hook 'Info-mode-hook (lambda ()
-							  (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
-							  (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
+                              (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
+                              (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
 
 (use-package doom-modeline :ensure t :defer t
   :config
-  (setq doom-modeline-hud t) ;; indicates the position in the modeline
+  (setq doom-modeline-hud t)
   (setq doom-modeline-highlight-modified-buffer-name nil) 
   (setq doom-modeline-position-line-format '(""))
   (setq doom-modeline-buffer-encoding nil)
