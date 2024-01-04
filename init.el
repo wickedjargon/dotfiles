@@ -356,7 +356,7 @@
       (evil-define-key nil company-active-map (kbd "C-p") #'company-select-previous)))
   :config
   (progn
-	
+    
     (setq evil-undo-system 'undo-fu)
     (setq evil-want-integration t)
     (setq evil-want-keybinding nil)
