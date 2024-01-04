@@ -162,7 +162,7 @@
 
   ;; show startup time on launch
   (defun display-startup-echo-area-message ()
-	(message "(emacs-init-time) -> %s" (emacs-init-time)))
+    (message "(emacs-init-time) -> %s" (emacs-init-time)))
 
   ;; open .pl files in prolog-mode
   (autoload 'prolog-mode "prolog" "" t)
