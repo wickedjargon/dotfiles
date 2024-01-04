@@ -318,24 +318,22 @@
     (evil-leader/set-key "x w" 'write-file)
     (evil-leader/set-key "x SPC b" 'list-buffers)
     (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
-	
-	;; access dirs
+    
+    ;; access dirs
     (evil-leader/set-key "x c" 'fff-access-config-dir)
     (evil-leader/set-key "x m" 'fff-access-home-dir)
     (evil-leader/set-key "x n" 'fff-open-file-in-notes)
     (evil-leader/set-key "x p" 'fff-open-file-in-projects)
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
     (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
-	
-	;; winner undo/redo and previous buffer
+    
+    ;; winner undo/redo and previous buffer
     (evil-leader/set-key "h h" 'fff-winner/winner-undo)
-    (evil-leader/set-key "l l" 'fff-winner/winner-redo)
-	(evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
+    (evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
 
-	;; run/debug bindings for projects
-	(evil-leader/set-key "c r" 'rustic-cargo-run)
-	(evil-leader/set-key "c c" 'quickrun)
-	))
+    ;; run/debug bindings for projects
+    (evil-leader/set-key "c r" 'rustic-cargo-run)
+    (evil-leader/set-key "c c" 'quickrun)))
 
 (use-package evil :defer t :ensure t
   :init
