@@ -173,16 +173,33 @@
   (recentf-mode +1)
   ;; Do not allow the cursor in the minibuffer prompt
   (setq minibuffer-prompt-properties
-		'(read-only t cursor-intangible t face minibuffer-prompt)))
+        '(read-only t cursor-intangible t face minibuffer-prompt)))
 
 (use-package modus-themes :ensure t :defer nil
+  :bind ("C-c t" . modus-themes-toggle)
   :config
   (setq modus-themes-to-toggle '(modus-vivendi-tinted modus-operandi))
   (if (string= (system-name) "x1c")
-	  (set-face-attribute 'default nil :height 135)
-	(set-face-attribute 'default nil :height 95))
+      (set-face-attribute 'default nil :height 135)
+    (set-face-attribute 'default nil :height 95))
   (load-theme (car modus-themes-to-toggle) t)
-  :bind ("C-c t" . modus-themes-toggle))
+  (set-fontset-font t 'unicode "Noto Sans Symbols2" nil 'append)
+
+  ;; some unicode chars don't work.
+  ;; in order to determine the category related to the char:
+  ;;
+  ;; (aref char-script-table ?𑑉)
+  
+  ;; in order to determine a font that supports it:
+  ;;
+  ;; (find-font (font-spec :script (aref char-script-table ?𑑉)))
+  ;;
+  
+  ;; finally set the font like this:
+  (set-fontset-font t 'newa "Noto Sans Newa")
+  (set-fontset-font t 'mro "Noto Sans Mro"))
+
+  
 
 (use-package flymake :ensure nil
   :config
