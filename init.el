@@ -1,11 +1,7 @@
 ;; compatible with emacs version 28 and above
-;; DONE: set .emacs.d/elpa to read only
-;; TODO: replace string paths with expressions
 
-;; Hydras
-;; TODO: hydra for tab-bar-mode
-;; DONE: hydra for search
-;; TODO: completion (company, hippie, etc)
+;; TODO: replace string paths with expressions (relative config location)
+;; TODO: keybindings for completion (company, hippie, etc)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; starting our engines... ;;
