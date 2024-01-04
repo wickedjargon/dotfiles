@@ -421,18 +421,18 @@
 (use-package lisp-mode :ensure nil
   :init
   (set-default 'auto-mode-alist
-			   (append '(("\\.lisp$" . lisp-mode)
-						 ("\\.lsp$" . lisp-mode)
-						 ("\\.cl$" . lisp-mode))
-					   auto-mode-alist)))
+               (append '(("\\.lisp$" . lisp-mode)
+                         ("\\.lsp$" . lisp-mode)
+                         ("\\.cl$" . lisp-mode))
+                       auto-mode-alist)))
 
 (use-package sly :defer t :ensure t
   :init
   (set-default 'auto-mode-alist
-			   (append '(("\\.lisp$" . lisp-mode)
-						 ("\\.lsp$" . lisp-mode)
-						 ("\\.cl$" . lisp-mode))
-					   auto-mode-alist))
+               (append '(("\\.lisp$" . lisp-mode)
+                         ("\\.lsp$" . lisp-mode)
+                         ("\\.cl$" . lisp-mode))
+                       auto-mode-alist))
   (add-hook 'sly-mrepl-mode-hook (lambda ()
                                    (define-key sly-mrepl-mode-map (kbd "C-p") 'comint-previous-input)
                                    (define-key sly-mrepl-mode-map (kbd "C-n") 'comint-next-input)))
@@ -475,58 +475,58 @@
     ("]" evil-forward-paragraph))
   
   (defhydra fff-tabs (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-	("s" tab-next)
-	("S" tab-previous))
+    ("s" tab-next)
+    ("S" tab-previous))
   
   ;; (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-  ;; 	("h" evil-prev-buffer)
-  ;; 	("l" evil-next-buffer)))
+  ;;    ("h" evil-prev-buffer)
+  ;;    ("l" evil-next-buffer)))
 
   (defhydra fff-winner (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-	("h" winner-undo)
-	("l" winner-redo)))
+    ("h" winner-undo)
+    ("l" winner-redo)))
 
 (use-package pretty-hydra :ensure t :defer nil
   :config
 
   (pretty-hydra-define fff-programming (:foreign-keys warn :quit-key "q" :color blue)
-	("Programming"
+    ("Programming"
      (("l" lsp "lsp")
       ("r" lsp-rename "lsp-rename")
       ("d" lsp-describe-thing-at-point "lsp-describe-thing-at-point")
-	  ("D" sly-documentation "sly-documentation")
+      ("D" sly-documentation "sly-documentation")
       ("f" lsp-format-buffer "lsp-format-buffer")
       ("i" imenu "imenu")
       ("f" flymake-show-diagnostics-buffer "flymake-show-diagnostics-buffer")
       ("R" fff-display-lsp-root "fff-display-lsp-root")
-	  )))
+      )))
 
   (pretty-hydra-define fff-shutdown (:foreign-keys warn :quit-key "q" :color blue)
-	("System Management"
-	 (("l" (shell-command "slock") "Lock screen" :exit t)
-	  ("K" (shell-command "kill -TERM $(pidof dwm)") "Kill dwm" :exit t)
-	  ("R" (shell-command "kill -TERM $(pidof dwm) && systemctl reboot") "Reboot" :exit t)
-	  ("r" (restart-emacs) "Restart Emacs" :exit t)
-	  ("S" (shell-command "kill -TERM $(pidof dwm) && systemctl poweroff") "Shutdown" :exit t)
-	  ("o" (shell-command "xset dpms force off") "Turn off screen"))))
+    ("System Management"
+     (("l" (shell-command "slock") "Lock screen" :exit t)
+      ("K" (shell-command "kill -TERM $(pidof dwm)") "Kill dwm" :exit t)
+      ("R" (shell-command "kill -TERM $(pidof dwm) && systemctl reboot") "Reboot" :exit t)
+      ("r" (restart-emacs) "Restart Emacs" :exit t)
+      ("S" (shell-command "kill -TERM $(pidof dwm) && systemctl poweroff") "Shutdown" :exit t)
+      ("o" (shell-command "xset dpms force off") "Turn off screen"))))
   
   (pretty-hydra-define fff-magit (:foreign-keys warn :quit-key "q" :color blue)
-	("Magit"
-	 (("m" magit "magit" :exit t)
-	  ("<tab>" magit-section-hide-children "collapse children" :exit t)
-	  )))
+    ("Magit"
+     (("m" magit "magit" :exit t)
+      ("<tab>" magit-section-hide-children "collapse children" :exit t)
+      )))
 
   
   (pretty-hydra-define fff-search (:foreign-keys warn :quit-key "q" :color blue)
-	("Search"
-	 (("1" isearch-forward        "isearch-forward" :exit t)
-	  ("2" query-replace          "query-replace" :exit t)
-	  ("3" isearch-forward-regexp "isearch-forward-regexp" :exit t)
-	  ("4" occur                  "occur" :exit t)
-	  ("5" iedit-mode             "iedit-mode" :exit t)
-	  ("6" find-tag               "find-tag" :exit t)
-	  ("7" rgrep                  "rgrep" :exit t)
-	  ("8" icomplete-mode         "icomplete-mode" :exit t)))))
+    ("Search"
+     (("1" isearch-forward        "isearch-forward" :exit t)
+      ("2" query-replace          "query-replace" :exit t)
+      ("3" isearch-forward-regexp "isearch-forward-regexp" :exit t)
+      ("4" occur                  "occur" :exit t)
+      ("5" iedit-mode             "iedit-mode" :exit t)
+      ("6" find-tag               "find-tag" :exit t)
+      ("7" rgrep                  "rgrep" :exit t)
+      ("8" icomplete-mode         "icomplete-mode" :exit t)))))
 
 (use-package company :defer t :ensure t
   :init
