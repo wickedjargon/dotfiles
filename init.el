@@ -285,22 +285,28 @@
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f B" 'fff-access-books)
 
-	;; switch to scratch
+    ;; switch to scratch
     (evil-leader/set-key "i i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
-	
-	;; terminal
-	(evil-leader/set-key "t t" 'fff-switch-or-create-vterm)
-	(evil-leader/set-key "t T" 'fff-open-new-vterm)
-	(evil-leader/set-key "t p" 'terminal-here)
+    
+    ;; terminal
+    (evil-leader/set-key "t t" 'fff-switch-or-create-vterm)
+    (evil-leader/set-key "t T" 'fff-open-new-vterm)
+    (evil-leader/set-key "t p" 'terminal-here)
+    
+    ;; shell/terminal
+    (evil-leader/set-key "s s" 'fff-switch-or-create-vterm)
+    (evil-leader/set-key "s S" 'fff-open-new-vterm)
+    (evil-leader/set-key "s t" 'terminal-here)
+    
 
-	;; tabs
-	(evil-leader/set-key (kbd "t n") 'fff-tab-bar-new-tab)
-	(evil-leader/set-key (kbd "t w") 'tab-bar-close-tab)
-	(evil-leader/set-key (kbd "t r") 'tab-bar-rename-tab)
-	(evil-leader/set-key (kbd "t h") 'fff-tabs/tab-previous)
-	(evil-leader/set-key (kbd "t l") 'fff-tabs/tab-next)
-	
+    ;; tabs
+    (evil-leader/set-key (kbd "t n") 'fff-tab-bar-new-tab)
+    (evil-leader/set-key (kbd "t w") 'tab-bar-close-tab)
+    (evil-leader/set-key (kbd "t r") 'tab-bar-rename-tab)
+    (evil-leader/set-key (kbd "t h") 'fff-tabs/tab-previous)
+    (evil-leader/set-key (kbd "t l") 'fff-tabs/tab-next)
+    
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'switch-to-buffer)
     (evil-leader/set-key "x 0" 'delete-window)
