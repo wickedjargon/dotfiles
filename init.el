@@ -655,9 +655,10 @@
   (define-key racket-mode-map (kbd "C-<return>") 'racket-run)
   (define-key racket-mode-map (kbd "C-c C-c") 'racket-run))
 
-(use-package quickrun :ensure t :defer t
-  :config
-  (add-to-list 'quickrun--major-mode-alist '(rustic-mode . "rust")))
+(use-package quickrun
+  :ensure nil
+  :load-path (lambda () (expand-file-name "quickrun" user-emacs-directory))
+  )
 
 (use-package winner :ensure t :defer t
   :init (winner-mode +1))
