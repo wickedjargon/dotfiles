@@ -58,18 +58,18 @@
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
   
   (add-hook 'comint-mode-hook (lambda ()
-								(define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
-								(define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
+                                (define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
+                                (define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
   
   (add-hook 'find-file-hook (lambda ()
-							  (when (and buffer-file-name
-										 (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
-								(read-only-mode 1))))
+                              (when (and buffer-file-name
+                                         (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
+                                (read-only-mode 1))))
 
   ;; switch to new window
   (defun fff-advice-for-window-focus (orig-fun &rest args)
-	"Advice function to focus on the new window after running the specified function."
-	(let ((current-window (selected-window)))
+    "Advice function to focus on the new window after running the specified function."
+    (let ((current-window (selected-window)))
       (apply orig-fun args)
       (select-window (next-window current-window))))
   (advice-add 'diff-buffer-with-file :around #'fff-advice-for-window-focus)
