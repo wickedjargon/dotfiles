@@ -78,6 +78,7 @@
   (global-set-key (kbd "M-u") 'universal-argument)
   (global-set-key (kbd "C-x k") 'bury-buffer)
   (global-unset-key (kbd "C-x C-c"))
+  (global-unset-key (kbd "C-h h"))
   (define-key ctl-x-map (kbd "C-f") 'fff-find-file)
   (global-set-key (kbd "C-x C-f")  'fff-find-file)
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
