@@ -82,6 +82,8 @@
   (global-set-key (kbd "M-u") 'universal-argument)
   (global-set-key (kbd "C-x k") 'bury-buffer)
   (global-unset-key (kbd "C-x C-c"))
+  (define-key ctl-x-map (kbd "C-f") 'fff-find-file)
+  (global-set-key (kbd "C-x C-f")  'fff-find-file)
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
   (global-set-key (kbd "C-x 3") 'fff-split-and-follow-vertically)
   (global-set-key (kbd "C-x 2") 'fff-split-and-follow-horizontally)
