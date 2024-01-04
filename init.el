@@ -688,6 +688,8 @@
 (use-package lsp-mode :ensure t :defer t
   :config
   (setq lsp-auto-guess-root t)
+  (setq lsp-keymap-prefix "C-c l")
+  (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
   
   ;; https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
   (setq lsp-enable-file-watchers nil) ; Disable file watchers for better performance
