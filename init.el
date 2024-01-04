@@ -823,3 +823,6 @@
   (global-evil-matchit-mode +1))
 
 (use-package zig-mode :ensure t :defer t)
+
+(use-package all-the-icons :ensure t
+  :if (display-graphic-p))
