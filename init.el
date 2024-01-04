@@ -101,6 +101,7 @@
   (setq delete-old-versions t)
   (setq kept-new-versions 10)
   (setq kept-old-versions 10)
+  (setq auto-save-no-message nil)
   (setq auto-save-file-name-transforms
         `((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
   (setq backup-directory-alist
