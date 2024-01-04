@@ -581,17 +581,14 @@
   (setq projectile-ignored-projects '("~/"))
   (projectile-mode +1)
   (with-eval-after-load 'projectile
-	(define-key projectile-command-map (kbd "C-c p") nil)
-	(define-key projectile-command-map (kbd "C-c P") nil)))
+    (define-key projectile-command-map (kbd "C-c p") nil)
+    (define-key projectile-command-map (kbd "C-c P") nil)))
 
 (use-package marginalia :defer t :ensure t
   :init
   (marginalia-mode))
 
-(use-package emojify :defer t :ensure t
-  :init
-  (setq emojify-display-style 'unicode)
-  (setq emojify-emoji-styles '(unicode)))
+(use-package emojify :ensure t :defer t)
 
 (use-package dired :defer t :ensure nil
   :config
