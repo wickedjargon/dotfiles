@@ -341,6 +341,10 @@
 	(evil-leader/set-key "h h" 'fff-winner/winner-undo)
 	(evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
 
+	;; previous/next buffer
+	(evil-leader/set-key "x h" 'previous-buffer)
+	(evil-leader/set-key "x l" 'next-buffer)
+
 	;; run/debug bindings for projects
 	(evil-leader/set-key "c r" 'rustic-cargo-run)
 	(evil-leader/set-key "c c" 'quickrun)))
@@ -820,8 +824,7 @@
 
 (use-package v-mode
   :ensure t
-  :mode ("\\.v\\'" . v-mode)
-  )
+  :mode ("\\.v\\'" . v-mode))
 
 (use-package evil-visualstar :ensure t :defer nil
   :config
@@ -835,3 +838,11 @@
 
 (use-package all-the-icons :ensure t
   :if (display-graphic-p))
+
+(load-file (expand-file-name "fff-key-set-mode.el" user-emacs-directory))
+(fff-key-set-mode 1)
+
+;; expansion functions to learn:
+;; 1. Abbrev Mode: This is a simple tool that silently replaces one word with another, making it useful for auto-correction and fixing typos. It's bound to M-/ and C-M-/, and when you call M-/, it will expand your word at point to one of a number of different expansions sourced from either your current buffer, or all buffers. Its job is to help with repetitious data entry, or to jog your mind if you forgot the exact name of something 1.
+;; 2. Dynamic Completion Mode: This is a very old, but still useful, library that is included as part of Emacs. It provides dynamic completion, which is a powerful alternative to the standard completion mechanism in Emacs. More information about dynamic completion mode can be found in the file commentary 4.
+;; 3. dabbrev: This is another tool that you can use for text expansion. It expands strings from the same and other buffers inline. However, it's worth noting that some users have reported issues with dabbrev not observing capitalization, which might be a disadvantage if you write texts in languages that use capitalization 1, 4.

@@ -818,3 +818,9 @@ in whole buffer.  With neither, delete comments on current line."
  (when (eq major-mode 'vterm-mode)
    (fff-vterm-directory-sync))
  (call-interactively 'find-file))
+
+(defun fff-switch-to-last-buffer ()
+ (interactive)
+ (let ((last-buf (last-buffer)))
+   (when last-buf
+     (switch-to-buffer last-buf))))
