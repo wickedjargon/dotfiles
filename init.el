@@ -41,12 +41,12 @@
   :config
 
   ;; remove underlines for errors and warnings
-  
+
   (custom-set-faces
    '(flymake-error ((t (:inherit nil))))
    '(flymake-note ((t (:inherit nil))))
    '(flymake-warning ((t (:inherit nil)))))
-  
+
   ;; hooks
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
@@ -54,13 +54,13 @@
 							  (setq indent-tabs-mode t)
 							  (setq show-trailing-whitespace t)))
   (add-hook 'dired-mode-hook #'auto-revert-mode)		  ;; revert dired buffers, but not buffer list buffers
-  (add-hook 'prog-mode-hook #'hs-minor-mode)			  ;; let me toggle shrink and expansion of code blocks 
+  (add-hook 'prog-mode-hook #'hs-minor-mode)			  ;; let me toggle shrink and expansion of code blocks
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-  
+
   (add-hook 'comint-mode-hook (lambda ()
 								(define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
 								(define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
-  
+
   (add-hook 'find-file-hook (lambda ()
 							  (when (and buffer-file-name
 										 (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
@@ -134,13 +134,13 @@
   (setq sentence-end-double-space nil)					  ;; sentence ends with one space, not two
   (setq-default indent-tabs-mode nil)
   (global-eldoc-mode -1)
-  
+
   (unless (string= (system-name) "x1c")
 	(progn
 	  (display-battery-mode +1)
 	  (setq display-time-day-and-date t)
 	  (display-time)))
-  
+
   (setq frame-resize-pixelwise t)						  ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
@@ -210,7 +210,7 @@
 (use-package doom-modeline :ensure t :defer t
   :config
   (setq doom-modeline-hud t)
-  (setq doom-modeline-highlight-modified-buffer-name nil) 
+  (setq doom-modeline-highlight-modified-buffer-name nil)
   (setq doom-modeline-position-line-format '(""))
   (setq doom-modeline-buffer-encoding nil)
   (setq doom-modeline-percent-position '(""))
@@ -244,7 +244,7 @@
   (global-evil-leader-mode)
   :config
   (progn
-	
+
 	(fset 'fff-C-x-C-e
 		  (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
 
@@ -263,12 +263,12 @@
 	(evil-leader/set-key "P" 'fff-go-to-git-root-dir-interactive)
 	(evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
 	(evil-leader/set-key "w" 'save-buffer)
-	
+
 	;; text scaling
 	(evil-leader/set-key "0" 'fff-set-scale-to-zero)
 	(evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
 	(evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
-	
+
 	; paragraph navigation
 	(evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
 	(evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
@@ -276,7 +276,7 @@
 	;; search and replace
 	(evil-leader/set-key "a" 'avy-goto-char)
 	(evil-leader/set-key "r" 'fff-evil-regex-search)
-	
+
 	;; narrow
 	(evil-leader/set-key "n n" 'narrow-to-region)
 	(evil-leader/set-key "n N" 'widen)
@@ -294,17 +294,17 @@
 	;; switch to scratch
 	(evil-leader/set-key "i i" 'fff-switch-to-scratch-buffer)
 	(evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
-	
+
 	;; terminal
 	(evil-leader/set-key "t t" 'fff-switch-or-create-vterm)
 	(evil-leader/set-key "t T" 'fff-open-new-vterm)
 	(evil-leader/set-key "t p" 'terminal-here)
-	
+
 	;; shell/terminal
 	(evil-leader/set-key "s s" 'fff-switch-or-create-vterm)
 	(evil-leader/set-key "s S" 'fff-open-new-vterm)
 	(evil-leader/set-key "s t" 'terminal-here)
-	
+
 
 	;; tabs
 	(evil-leader/set-key (kbd "t n") 'fff-tab-bar-new-tab)
@@ -312,7 +312,7 @@
 	(evil-leader/set-key (kbd "t r") 'tab-bar-rename-tab)
 	(evil-leader/set-key (kbd "t h") 'fff-tabs/tab-previous)
 	(evil-leader/set-key (kbd "t l") 'fff-tabs/tab-next)
-	
+
 	;; x: C-x prefixes
 	(evil-leader/set-key "x b" 'switch-to-buffer)
 	(evil-leader/set-key "x 0" 'delete-window)
@@ -330,7 +330,7 @@
 	(evil-leader/set-key "x w" 'write-file)
 	(evil-leader/set-key "x SPC b" 'list-buffers)
 	(evil-leader/set-key "X C" 'save-buffers-kill-terminal)
-	
+
 	;; access dirs
 	(evil-leader/set-key "x c" 'fff-access-config-dir)
 	(evil-leader/set-key "x m" 'fff-access-home-dir)
@@ -338,7 +338,7 @@
 	(evil-leader/set-key "x p" 'fff-open-file-in-projects)
 	(evil-leader/set-key "x t" 'fff-open-file-in-tmp)
 	(evil-leader/set-key "x y" 'fff-open-file-in-snippets)
-	
+
 	;; winner undo/redo and previous buffer
 	(evil-leader/set-key "h h" 'fff-winner/winner-undo)
 	(evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
@@ -366,7 +366,7 @@
 	  (evil-define-key nil company-active-map (kbd "C-p") #'company-select-previous)))
   :config
   (progn
-	
+
 	(setq evil-undo-system 'undo-fu)
 	(setq evil-want-integration t)
 	(setq evil-want-keybinding nil)
@@ -374,14 +374,14 @@
 	(setq evil-search-wrap nil)
 	(setq evil-kill-on-visual-paste nil)
 	(evil-mode +1)
-	
+
 	(define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
 	(define-key evil-visual-state-map (kbd "C-a") 'evil-first-non-blank)
 	(define-key evil-visual-state-map (kbd "<backpace>") 'delete-char)
 	(define-key evil-visual-state-map (kbd "C-/") 'fff-comment)
 	(define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
 	(define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
-	
+
 	(define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
 	(define-key evil-insert-state-map (kbd "C-a") 'evil-first-non-blank)
 	(define-key evil-insert-state-map (kbd "C-w") 'kill-region)
@@ -393,7 +393,7 @@
 	(define-key evil-insert-state-map (kbd "M-a") 'yas-insert-snippet)
 	(define-key evil-insert-state-map (kbd "C-d") 'delete-char)
 	(define-key evil-insert-state-map (kbd "C-/") 'fff-comment)
-	
+
 	(define-key evil-normal-state-map (kbd "C-e") 'move-end-of-line)
 	(define-key evil-normal-state-map (kbd "C-a") 'evil-first-non-blank)
 	(define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
@@ -464,7 +464,7 @@
 
 (use-package hydra :defer t :ensure t :commands defhydra
   :config
-  
+
   (defhydra fff-hydra-windsize (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
 	("H" windsize-left nil)
 	("L" windsize-right nil)
@@ -483,11 +483,11 @@
   (defhydra fff-hydra-paragraph-movement (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
 	("[" evil-backward-paragraph)
 	("]" evil-forward-paragraph))
-  
+
   (defhydra fff-tabs (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
 	("s" tab-next)
 	("S" tab-previous))
-  
+
   ;; (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
   ;;	("h" evil-prev-buffer)
   ;;	("l" evil-next-buffer)))
@@ -519,14 +519,14 @@
 	  ("r" (restart-emacs) "Restart Emacs" :exit t)
 	  ("S" (shell-command "kill -TERM $(pidof dwm) && systemctl poweroff") "Shutdown" :exit t)
 	  ("o" (shell-command "xset dpms force off") "Turn off screen"))))
-  
+
   (pretty-hydra-define fff-magit (:foreign-keys warn :quit-key "q" :color blue)
 	("Magit"
 	 (("m" magit "magit" :exit t)
 	  ("<tab>" magit-section-hide-children "collapse children" :exit t)
 	  )))
 
-  
+
   (pretty-hydra-define fff-search (:foreign-keys warn :quit-key "q" :color blue)
 	("Search"
 	 (("1" isearch-forward		  "isearch-forward" :exit t)
@@ -698,7 +698,7 @@
   (setq lsp-auto-guess-root t)
   (setq lsp-keymap-prefix "C-c l")
   (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
-  
+
   ;; https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
   (setq lsp-enable-file-watchers nil) ; Disable file watchers for better performance
   (setq lsp-enable-symbol-highlighting nil) ; disable symbol highlighting
@@ -807,7 +807,7 @@
 
 (use-package keycast :ensure t :defer t)
 
-(use-package org-download :ensure t 
+(use-package org-download :ensure t
   :config
   (add-hook 'dired-mode-hook 'org-download-enable))
 
