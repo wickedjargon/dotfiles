@@ -259,8 +259,6 @@
 	(evil-leader/set-key "e" 'fff-C-x-C-e)
 	(evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
 	(evil-leader/set-key "o" 'other-window)
-	(evil-leader/set-key "p" 'fff-go-to-git-root-dir-interactive)
-	(evil-leader/set-key "P" 'fff-go-to-git-root-dir-interactive)
 	(evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
 	(evil-leader/set-key "w" 'save-buffer)
 
