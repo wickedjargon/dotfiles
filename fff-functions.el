@@ -147,13 +147,26 @@
   (bury-buffer))
 
 (defun fff-switch-to-scratch-buffer ()
-  (interactive)
-  (switch-to-buffer "*scratch*"))
-
-(defun fff-switch-to-scratch-buffer-text-mode ()
-  (interactive)
-  (switch-to-buffer "*scratch*")
-  (text-mode))
+ (interactive)
+ (let ((current-buffer-name (buffer-name))
+       max-number
+       max-buffer)
+   (if (or (string-match "\\*scratch\\*<\\([0-9]+\\)>" current-buffer-name)
+           (string= current-buffer-name "*scratch*"))
+       (evil-switch-to-windows-last-buffer)
+     (progn
+       (dolist (buf (buffer-list))
+         (when (string-match "\\*scratch\\*<\\([0-9]+\\)>" (buffer-name buf))
+           (let ((num (string-to-number (match-string 1 (buffer-name buf)))))
+             (unless max-number
+               (setq max-number num
+                    max-buffer buf))
+             (when (> num max-number)
+               (setq max-number num
+                    max-buffer buf)))))
+       (if max-buffer
+           (switch-to-buffer max-buffer)
+         (switch-to-buffer "*scratch*"))))))
 
 (defun fff-copy-file-path ()
   "Put the current file path on the clipboard"
@@ -224,8 +237,7 @@ lines starting with this one."
           (skip-syntax-backward " ")
           (setq cs (point))
           (comment-forward)
-          ;; (kill-region cs (if (bolp) (1- (point)) (point))) ; original
-          (delete-region cs (if (bolp) (1- (point)) (point)))  ; replace kill-region with delete-region
+          (delete-region cs (if (bolp) (1- (point)) (point)))
           (indent-according-to-mode))))
     (if arg (forward-line 1))))
 
@@ -681,11 +693,13 @@ in whole buffer.  With neither, delete comments on current line."
 	(comment-line 1)))
 
 (defun fff-region-commented-p ()
-  "Return t if the region is already commented, nil otherwise."
-  (save-excursion
-    (goto-char (region-beginning))
-    (and (not (eobp))
-         (looking-at (concat "\\s-*" (regexp-quote comment-start))))))
+ "Return t if the region is already commented, nil otherwise."
+ (save-excursion
+   (goto-char (region-beginning))
+   (while (and (not (eobp)) (looking-at "^[ \t]*$"))
+     (forward-line 1))
+   (and (not (eobp))
+        (looking-at (concat "\\s-*" (regexp-quote comment-start))))))
 
 (defun fff-region-commented-p ()
  "Return t if the entire region is commented, nil otherwise."
