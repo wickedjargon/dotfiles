@@ -134,6 +134,7 @@
   (setq sentence-end-double-space nil)					  ;; sentence ends with one space, not two
   (setq-default indent-tabs-mode nil)
   (global-eldoc-mode -1)
+  (repeat-mode +1)                                       ;; allows me to do C-x right-arrow, right-arrow, to switch to buffers
 
   (unless (string= (system-name) "x1c")
 	(progn
@@ -390,8 +391,7 @@
 	(define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
 	(define-key evil-insert-state-map (kbd "C-y") 'yank)
 	(define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
-	(define-key evil-insert-state-map (kbd "C-;") 'hippie-expand)
-	(define-key evil-insert-state-map (kbd "C-'") 'company-complete)
+	(define-key evil-insert-state-map (kbd "C-'") 'hippie-expand)
 	(define-key evil-insert-state-map (kbd "M-a") 'yas-insert-snippet)
 	(define-key evil-insert-state-map (kbd "C-d") 'delete-char)
 	(define-key evil-insert-state-map (kbd "C-/") 'fff-comment)
@@ -839,10 +839,22 @@
 (use-package all-the-icons :ensure t
   :if (display-graphic-p))
 
-(load-file (expand-file-name "fff-key-set-mode.el" user-emacs-directory))
-(fff-key-set-mode 1)
+;; (use-package fff-key-set-mode :ensure nil :defer nil
+;;   :load-path (lambda () (expand-file-name "fff-key-set-mode.el" user-emacs-directory))
+;;   :config
+;;   (fff-key-set-mode 1))
+
+(use-package fff-key-set-mode :ensure nil :defer nil
+  :config
+  (load-file (expand-file-name "fff-key-set-mode.el" user-emacs-directory))
+  (fff-key-set-mode +1))
+
+(use-package elgrep :ensure t :defer t)
 
 ;; expansion functions to learn:
 ;; 1. Abbrev Mode: This is a simple tool that silently replaces one word with another, making it useful for auto-correction and fixing typos. It's bound to M-/ and C-M-/, and when you call M-/, it will expand your word at point to one of a number of different expansions sourced from either your current buffer, or all buffers. Its job is to help with repetitious data entry, or to jog your mind if you forgot the exact name of something 1.
 ;; 2. Dynamic Completion Mode: This is a very old, but still useful, library that is included as part of Emacs. It provides dynamic completion, which is a powerful alternative to the standard completion mechanism in Emacs. More information about dynamic completion mode can be found in the file commentary 4.
 ;; 3. dabbrev: This is another tool that you can use for text expansion. It expands strings from the same and other buffers inline. However, it's worth noting that some users have reported issues with dabbrev not observing capitalization, which might be a disadvantage if you write texts in languages that use capitalization 1, 4.
+
+
+
