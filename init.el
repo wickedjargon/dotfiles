@@ -88,7 +88,6 @@
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
   (global-set-key (kbd "C-x 3") 'fff-split-and-follow-vertically)
   (global-set-key (kbd "C-x 2") 'fff-split-and-follow-horizontally)
-  (global-set-key (kbd "C-<return>") 'fff-C-x-C-e)
 
   ;; tab-bar mode
   (setq tab-bar-new-tab-to 'rightmost)
