@@ -348,7 +348,12 @@
 
     ;; run/debug bindings for projects
     (evil-leader/set-key "c r" 'rustic-cargo-run)
-    (evil-leader/set-key "c c" 'quickrun)))
+    (evil-leader/set-key "c c" 'quickrun)
+
+    ;; fff-bind
+    (evil-leader/set-key "b k p" 'fff-assign-key-to-position-leader)
+    (evil-leader/set-key "b k b" 'fff-assign-key-to-buffer-leader)
+    (evil-leader/set-key "b k d" 'fff-assign-key-to-dir-leader)))
 
 (use-package evil :defer t :ensure t
   :init
