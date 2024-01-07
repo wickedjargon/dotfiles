@@ -215,6 +215,7 @@
   (setq doom-modeline-buffer-encoding nil)
   (setq doom-modeline-percent-position '(""))
   (setq doom-modeline-modal nil)
+  (setq doom-modeline-env-enable-rust nil)
   :init
   (doom-modeline-mode +1))
 
@@ -342,8 +343,8 @@
     (evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
 
     ;; previous/next buffer
-    (evil-leader/set-key "x h" 'previous-buffer)
-    (evil-leader/set-key "x l" 'next-buffer)
+    (evil-leader/set-key "x h" 'fff-buffer-switch/previous-buffer)
+    (evil-leader/set-key "x l" 'fff-buffer-switch/next-buffer)
 
     ;; run/debug bindings for projects
     (evil-leader/set-key "c r" 'rustic-cargo-run)
@@ -486,8 +487,12 @@
     ("]" evil-forward-paragraph))
 
   (defhydra fff-tabs (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-    ("s" tab-next)
-    ("S" tab-previous))
+    ("l" tab-next)
+    ("h" tab-previous))
+
+  (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
+    ( "h" previous-buffer)
+    ( "l" next-buffer))
 
   ;; (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
   ;;    ("h" evil-prev-buffer)
