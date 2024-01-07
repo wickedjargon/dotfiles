@@ -854,4 +854,9 @@
 
 (use-package dtrt-indent :ensure t :defer nil
   :config
+  (setq dtrt-indent-min-offset 1)
+  (setq dtrt-indent-min-quality 55)
+  (setq dtrt-indent-min-relevant-lines 1)
+  (setq dtrt-indent-min-soft-tab-superiority 105)
+  (setq dtrt-indent-min-matching-indentations 1)
   (dtrt-indent-global-mode +1))
