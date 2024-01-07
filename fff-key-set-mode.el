@@ -55,3 +55,23 @@
      (interactive)
      (let ((default-directory ,directory))
        (call-interactively 'find-file))))))
+
+(defun fff-assign-key-to-position ()
+  "Assign a keybinding in `fff-key-set-mode-map' to jump to the current location in the current buffer."
+  (interactive)
+  (let* ((key (read-string "Enter the key to jump to the current location in this buffer: "))
+         (position (point-marker)))
+    (define-key fff-key-set-mode-map (kbd key)
+      `(lambda ()
+         (interactive)
+         (goto-char ,position)))))
+
+(defun fff-assign-key-to-position-leader ()
+  "Assign a keybinding in `evil-leader--default-map' to jump to the current location in the current buffer."
+  (interactive)
+  (let* ((key (read-string "Enter the leader key to jump to the current location in this buffer: "))
+         (position (point-marker)))
+    (evil-leader/set-key key
+      `(lambda ()
+         (interactive)
+         (goto-char ,position)))))
