@@ -114,7 +114,7 @@
   (tool-bar-mode -1)                                      ;; no tool bar
   (scroll-bar-mode -1)                                    ;; no scroll bar
   (setq inhibit-startup-message t)                        ;; no splash screen
-  (setq mode-require-final-newline nil)                   ;; don't add a newline at the bottom of the file
+  ;; (setq mode-require-final-newline nil)                   ;; don't add a newline at the bottom of the file
   (setq use-short-answers t)                              ;; just type `y`, not `yes`
   (blink-cursor-mode -1)                                  ;; don't blink my cursor
   (setq auto-revert-verbose nil)
