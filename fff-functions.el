@@ -695,24 +695,16 @@ in whole buffer.  With neither, delete comments on current line."
 (defun fff-region-commented-p ()
  "Return t if the region is already commented, nil otherwise."
  (save-excursion
-   (goto-char (region-beginning))
-   (while (and (not (eobp)) (looking-at "^[ \t]*$"))
-     (forward-line 1))
-   (and (not (eobp))
-        (looking-at (concat "\\s-*" (regexp-quote comment-start))))))
-
-(defun fff-region-commented-p ()
- "Return t if the entire region is commented, nil otherwise."
- (save-excursion
-  (let ((beg (region-beginning))
-        (end (region-end))
-        (all-commented t))
-    (goto-char beg)
-    (while (and (< (point) end) all-commented)
-      (setq all-commented (and (not (eolp))
-                              (looking-at (concat "\\s-*" (regexp-quote comment-start)))))
-      (forward-line 1))
-    all-commented)))
+   (let ((start (region-beginning))
+         (end (region-end))
+         (all-commented t))
+     (goto-char start)
+     (while (< (point) end)
+       (unless (looking-at "^[ \t]*$") ; Skip blank lines
+         (setq all-commented (and all-commented
+                                 (looking-at (concat "\\s-*" (regexp-quote comment-start))))))
+       (forward-line 1))
+     all-commented)))
 
 (defun fff-indent-buffer ()
   "Indent the entire buffer."
