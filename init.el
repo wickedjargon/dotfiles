@@ -860,3 +860,5 @@
   (setq dtrt-indent-min-soft-tab-superiority 105)
   (setq dtrt-indent-min-matching-indentations 1)
   (dtrt-indent-global-mode +1))
+
+(use-package evil-iedit-state :ensure t :defer t)
