@@ -1,7 +1,7 @@
 ;; compatible with emacs version 28 and above
 
 ;; TODO: replace string paths with expressions (relative config location)
-;; TODO: keybindings for completion (company, hippie, etc)
+;; TODO: get flimenu to flatten imenu
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; starting our engines... ;;
@@ -229,6 +229,13 @@
 
 (use-package annalist :ensure t)
 
+(use-package flimenu
+  :ensure nil
+  :load-path (lambda () (expand-file-name "flimenu" user-emacs-directory))
+  :config
+  (progn
+    (flimenu-global-mode)))
+
 (use-package evil-collection
   :ensure nil
   :load-path (lambda () (expand-file-name "evil-collection" user-emacs-directory))
@@ -292,6 +299,9 @@
     ;; switch to scratch
     (evil-leader/set-key "i i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
+
+    ;; imenu
+    (evil-leader/set-key "i m" 'imenu)
 
     ;; terminal
     (evil-leader/set-key "t t" 'fff-switch-or-create-vterm)
@@ -832,7 +842,12 @@
 
 (use-package v-mode
   :ensure t
-  :mode ("\\.v\\'" . v-mode))
+  :mode ("\\.v\\'" . v-mode)
+  :init
+  (add-hook 'v-mode-hook
+          (lambda () (add-to-list 'imenu-generic-expression ;;
+                                 '("comment header" "^////\\(.*\\)$" 1))
+            (imenu-add-to-menubar "Index"))))
 
 (use-package evil-visualstar :ensure t :defer nil
   :config
@@ -861,4 +876,6 @@
   (setq dtrt-indent-min-matching-indentations 1)
   (dtrt-indent-global-mode +1))
 
-(use-package evil-iedit-state :ensure t :defer t)
+(use-package evil-iedit-state :ensure t :defer t
+  :init
+  (global-set-key (kbd "C-;") 'iedit-mode))
