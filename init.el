@@ -286,6 +286,9 @@
     (evil-leader/set-key "n n" 'narrow-to-region)
     (evil-leader/set-key "n N" 'widen)
 
+    ;; magit
+    (evil-leader/set-key "m m" 'magit)
+
     ;; window size adjustment
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
     (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
