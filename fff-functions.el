@@ -816,3 +816,15 @@ in whole buffer.  With neither, delete comments on current line."
  (let ((last-buf (last-buffer)))
    (when last-buf
      (switch-to-buffer last-buf))))
+
+(defun fff-v-build-ctags ()
+  "Run ctags command from the project root directory and load TAGS file for V programming language."
+  (interactive)
+  (let ((project-root (locate-dominating-file default-directory "v.mod")))
+    (if project-root
+        (let ((default-directory project-root))
+          (shell-command
+           "ctags --langmap=v:.v --regex-v='/[ \t]*fn[ \t]+(.*)[ \t]+(.*)/\\2/f,function/' --regex-v='/[ \t]*struct[ \t]+([a-zA-Z0-9_]+)/\\1/s,struct/' --regex-v='/[ \t]*interface[ \t]+([a-zA-Z0-9_]+)/\\1/i,interface/' --regex-v='/[ \t]*type[ \t]+([a-zA-Z0-9_]+)/\\1/t,type/' --regex-v='/[ \t]*enum[ \t]+([a-zA-Z0-9_]+)/\\1/e,enum/' --regex-v='/[ \t]*module[ \t]+([a-zA-Z0-9_]+)/\\1/m,module/' -e -R . ~/.local/bin/v/vlib/")
+          (message "ctags command executed.")
+          (call-interactively 'v-load-tags))
+      (message "Not in a project root directory. No v.mod file found."))))
