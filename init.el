@@ -685,9 +685,7 @@
   (define-key racket-mode-map (kbd "C-<return>") 'racket-run)
   (define-key racket-mode-map (kbd "C-c C-c") 'racket-run))
 
-(use-package quickrun
-  :ensure nil
-  :load-path (lambda () (expand-file-name "quickrun" user-emacs-directory))
+(use-package quickrun :ensure t :defer t
   )
 
 (use-package winner :ensure t :defer t
