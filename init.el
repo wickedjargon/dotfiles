@@ -880,3 +880,7 @@
 (use-package evil-iedit-state :ensure t :defer t
   :init
   (global-set-key (kbd "C-;") 'iedit-mode))
+
+(use-package scala-mode :ensure t :defer t
+  :interpreter
+    ("scala" . scala-mode))
