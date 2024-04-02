@@ -736,6 +736,14 @@
   (add-hook 'haskell-mode-hook #'lsp)
   (add-hook 'haskell-literate-mode-hook #'lsp))
 
+(use-package lsp-metals
+  :ensure t
+  :custom
+  (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off"
+                            "-J-Dmetals.icons=unicode"))
+  (lsp-metals-enable-semantic-highlighting t)
+  :hook (scala-mode . lsp))
+
 (use-package dired-hide-dotfiles :ensure t :defer t)
 
 (use-package macrostep :ensure t :defer t)
