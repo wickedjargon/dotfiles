@@ -1,7 +1,6 @@
 ;; compatible with emacs version 28 and above
 
 ;; TODO: replace string paths with expressions (relative config location)
-;; TODO: get flimenu to flatten imenu
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; starting our engines... ;;
