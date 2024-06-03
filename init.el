@@ -40,7 +40,6 @@
   :config
 
   ;; remove underlines for errors and warnings
-
   (custom-set-faces
    '(flymake-error ((t (:inherit nil))))
    '(flymake-note ((t (:inherit nil))))
@@ -107,13 +106,15 @@
         `((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
   (setq backup-directory-alist
         `(("." . ,(expand-file-name "backups/" user-emacs-directory))))
+
+  ;; evil undo
   (setq evil-undo-system 'undo-fu)
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
+
   (tool-bar-mode -1)                                      ;; no tool bar
   (scroll-bar-mode -1)                                    ;; no scroll bar
   (setq inhibit-startup-message t)                        ;; no splash screen
-  ;; (setq mode-require-final-newline nil)                   ;; don't add a newline at the bottom of the file
   (setq use-short-answers t)                              ;; just type `y`, not `yes`
   (blink-cursor-mode -1)                                  ;; don't blink my cursor
   (setq auto-revert-verbose nil)
@@ -132,10 +133,10 @@
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
   (global-eldoc-mode -1)
   (repeat-mode +1)                                       ;; allows me to do C-x right-arrow, right-arrow, to switch to buffers
+  (display-battery-mode +1)
 
   (unless (string= (system-name) "x1c")
     (progn
-      (display-battery-mode +1)
       (setq display-time-day-and-date t)
       (display-time)))
 
@@ -228,12 +229,9 @@
 
 (use-package annalist :ensure t)
 
-(use-package flimenu
-  :ensure nil
-  :load-path (lambda () (expand-file-name "flimenu" user-emacs-directory))
+(use-package flimenu :ensure t
   :config
-  (progn
-    (flimenu-global-mode)))
+    (flimenu-global-mode))
 
 (use-package evil-collection
   :ensure nil
@@ -509,10 +507,6 @@
   (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
     ( "h" previous-buffer)
     ( "l" next-buffer))
-
-  ;; (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-  ;;    ("h" evil-prev-buffer)
-  ;;    ("l" evil-next-buffer)))
 
   (defhydra fff-winner (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
     ("h" winner-undo)
