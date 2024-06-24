@@ -313,7 +313,6 @@
     (evil-leader/set-key "s S" 'fff-open-new-vterm)
     (evil-leader/set-key "s t" 'terminal-here)
 
-
     ;; tabs
     (evil-leader/set-key (kbd "t n") 'fff-tab-bar-new-tab)
     (evil-leader/set-key (kbd "t w") 'tab-bar-close-tab)
@@ -678,8 +677,7 @@
   (define-key racket-mode-map (kbd "C-<return>") 'racket-run)
   (define-key racket-mode-map (kbd "C-c C-c") 'racket-run))
 
-(use-package quickrun :ensure t :defer t
-  )
+(use-package quickrun :ensure t :defer t)
 
 (use-package winner :ensure t :defer t
   :init (winner-mode +1))
@@ -810,8 +808,7 @@
   (setq magit-section-initial-visibility-alist
         '(([hunk file staged status] . hide)
           ([file unstaged status] . show)
-          ([hunk file unstaged status] . hide)
-          )))
+          ([hunk file unstaged status] . hide))))
 
 (use-package git-timemachine :ensure t :defer t)
 
