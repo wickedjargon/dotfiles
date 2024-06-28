@@ -1,0 +1,59 @@
+{
+    "v-analyzer.serverPath": "/home/ff/.config/v-analyzer/bin/v-analyzer",
+    "security.workspace.trust.untrustedFiles": "open",
+    "files.hotExit": "off",
+    "window.restoreWindows": "none",
+    "editor.minimap.enabled": false,
+    "code-runner.saveAllFilesBeforeRun": true,
+    "code-runner.clearPreviousOutput": true,
+    "explorer.confirmDelete": false,
+    "sync.forceUpload": true,
+    "workbench.startupEditor": "none",
+    "workbench.editor.showTabs": "single",
+    "emmet.triggerExpansionOnTab": true,
+    "zenMode.fullScreen": false,
+    "zenMode.centerLayout": false,
+    "zenMode.hideStatusBar": false,
+    "update.mode": "none",
+    // "python.formatting.autopep8Args": ["--max-line-length=240"],
+    "editor.occurrencesHighlight": "off",
+    "editor.selectionHighlight": false,
+    "git.ignoredRepositories": [
+      "/home/ff"
+    ],
+    "editor.parameterHints.enabled": false,
+    "editor.find.loop": false,
+    "[html]": {
+      "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    // "python.formatting.provider": "black",
+    "terminal.external.linuxExec": "xfce4-terminal",
+    "extensions.autoUpdate": true,
+    "[jsonc]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "files.autoSave": "afterDelay",
+    "editor.lineNumbers": "on",
+    "zenMode.hideLineNumbers": false,
+    "security.workspace.trust.enabled": false,
+    "vim.useSystemClipboard": true,
+      "terminal.integrated.enableMultiLinePasteWarning": false,
+      "editor.lightbulb.enabled": "off",
+      "[python]": {
+        "editor.formatOnType": true
+      },
+      "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      },
+      "editor.inlineSuggest.enabled": true,
+      "files.associations": {
+        "*.js": "javascriptreact",
+      },
+      "workbench.editor.empty.hint": "hidden",
+      "workbench.colorTheme": "GitHub Dark (Web Based)",
+      "haskell.manageHLS": "GHCup",
+    "haskell.serverEnvironment": {
+      "PATH": "${HOME}/.ghcup/bin:$PATH"
+    },
+    "window.zoomLevel": 1,
+  }  

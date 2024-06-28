@@ -1,0 +1,10 @@
+0000000000000000000000000000000000000000 18304d9d9e4243687a7bf915dc7e591a216873c6 Farzin <farzineff@gmail.com> 1702357087 -0500	clone: from github.com:wickedjargon/evil-collection.git
+18304d9d9e4243687a7bf915dc7e591a216873c6 18304d9d9e4243687a7bf915dc7e591a216873c6 Farzin <farzineff@gmail.com> 1702357111 -0500	checkout: moving from master to upstream-main
+18304d9d9e4243687a7bf915dc7e591a216873c6 18304d9d9e4243687a7bf915dc7e591a216873c6 Farzin <farzineff@gmail.com> 1702357145 -0500	checkout: moving from upstream-main to master
+18304d9d9e4243687a7bf915dc7e591a216873c6 18304d9d9e4243687a7bf915dc7e591a216873c6 Farzin <farzineff@gmail.com> 1702357176 -0500	checkout: moving from master to upstream-master
+18304d9d9e4243687a7bf915dc7e591a216873c6 18304d9d9e4243687a7bf915dc7e591a216873c6 Farzin <farzineff@gmail.com> 1702357185 -0500	checkout: moving from upstream-master to master
+18304d9d9e4243687a7bf915dc7e591a216873c6 7304a6d15bf0e440122f97e6951c49399c356b27 Farzin <farzineff@gmail.com> 1702357293 -0500	commit: changed nov and pdf keybindings
+7304a6d15bf0e440122f97e6951c49399c356b27 18304d9d9e4243687a7bf915dc7e591a216873c6 Farzin <farzineff@gmail.com> 1703492040 -0500	checkout: moving from master to upstream-master
+18304d9d9e4243687a7bf915dc7e591a216873c6 c30158a0df2e252f15cffcd61ceb0ad58a395096 Farzin <farzineff@gmail.com> 1703492080 -0500	pull origin upstream-master: Fast-forward
+c30158a0df2e252f15cffcd61ceb0ad58a395096 7304a6d15bf0e440122f97e6951c49399c356b27 Farzin <farzineff@gmail.com> 1703492119 -0500	checkout: moving from upstream-master to master
+7304a6d15bf0e440122f97e6951c49399c356b27 9b2725000b5d787d4267f6110955ff3936f9d75b Farzin <farzineff@gmail.com> 1703492295 -0500	merge upstream-master: Merge made by the 'ort' strategy.

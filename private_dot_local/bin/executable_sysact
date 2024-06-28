@@ -1,0 +1,11 @@
+#!/bin/sh
+
+case "$(printf " remap keys\n lock\n restart dwm\n kill X\n reboot\n poweroff" | dmenu -i -p 'Action: ')" in
+	' remap keys') remap ;;
+	' lock') slock ;;
+	' restart dwm') restartdwm ;;
+	' kill X') pkill X ;;
+	' reboot') systemctl reboot -i ;;
+	' poweroff') systemctl poweroff -i ;;
+	*) exit 1 ;;
+esac

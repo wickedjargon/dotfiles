@@ -1,0 +1,13 @@
+[Default Applications]
+application/pdf=org.pwmt.zathura-pdf-poppler.desktop;
+application/x-desktop=usr-usercreated-1.desktop;
+x-directory/normal=Thunar.desktop;
+inode/directory=Thunar.desktop;
+
+[Default Applications]
+x-directory/normal=Thunar.desktop;
+inode/directory=Thunar.desktop;
+application/epub+zip=calibre-ebook-viewer.desktop;
+text/html=chromium.desktop;
+x-scheme-handler/mailto=chromium.desktop
+x-scheme-handler/webcal=chromium.desktop

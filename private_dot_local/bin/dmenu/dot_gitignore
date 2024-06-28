@@ -1,0 +1,5 @@
+dmenu
+dmenu.o
+drw.o
+stest.o
+util.o

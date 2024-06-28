@@ -1,0 +1,49 @@
+#
+# ~/.bashrc
+#
+
+# If not running interactively, don't do anything
+[[ $- != *i* ]] && return
+
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+alias restartredshift='redshift -l 43.6:-79.3'
+alias z='zathura'
+alias em='emacs'
+alias emc='emacsclient -c -a ""'
+alias sbcl='rlwrap sbcl'
+alias lisp='rlwrap sbcl'
+alias mouse='xinput set-button-map "SINOWEALTH Game Mouse" 1 2 3 4 5 6 7 0 0'
+alias server='browser-sync start --server --watch=true'
+
+
+PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
+
+# auto complete with tab
+[ -r /usr/share/bash-completion/bash_completion ] && . /usr/share/bash-completion/bash_completion
+
+export BROWSER="chromium"
+export EDITOR="nvim"
+export SUDO_EDITOR="nvim"
+export TERM="st"
+export CARP_DIR="/home/ff/.local/bin/carp-v0.5.5-x86_64-linux"
+
+
+paths=(
+	"$HOME/.local/bin"
+	"/usr/local/go/bin"
+    "$HOME/.local/bin/statusbar"
+	"$HOME/.local/share/coursier/bin" # scala programming language
+	"$HOME/.config/v-analyzer/bin"
+	"$HOME/.local/bin/carp-v0.5.5-x86_64-linux/bin"
+)
+
+# set the path for ghcup (haskell related)
+[ -f "/home/ff/.ghcup/env" ] && source "/home/ff/.ghcup/env" # ghcup-env
+
+for apath in "${paths[@]}"; do
+	export PATH=$PATH:$apath
+done
+
+# load rust env variables
+. "$HOME/.cargo/env"

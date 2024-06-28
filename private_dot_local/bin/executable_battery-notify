@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+import os
+import sys
+import time
+
+BATTERY_PERCENTAGE_FIRST_WARNING = 25
+BATTERY_PERCENTAGE_SECOND_WARNING = 20
+MAIN_LOOP_INTERVALS = 10
+CRITICAL_LOOP_INTERVALS = 1
+BATTERY_PERCENTAGE_CRITICAL_SHUTDOWN = 10
+
+
+def get_battery_info():
+    with open('/sys/class/power_supply/BAT0/capacity', 'r') as file:
+        battery_percentage = int(file.read().strip())
+    with open('/sys/class/power_supply/BAT0/status', 'r') as file:
+        battery_status = file.read().strip()
+    return battery_percentage, battery_status
+
+
+def shutdown_checker():
+    while True:
+        battery_percentage, battery_status = get_battery_info()
+        if battery_status in ['Full', 'Charging', 'Not charging']:
+            os.system("notify-send 'Charger Plugged' 'Thank You.'")
+            return None
+        if battery_status == 'Discharging' and battery_percentage < BATTERY_PERCENTAGE_CRITICAL_SHUTDOWN:
+            os.system("systemctl poweroff -i")
+            sys.exit()
+        time.sleep(CRITICAL_LOOP_INTERVALS)
+    return None
+
+
+def main():
+    notify_user = True
+    while True:
+        battery_percentage, battery_status = get_battery_info()
+        if notify_user and battery_status == 'Discharging' and battery_percentage < BATTERY_PERCENTAGE_SECOND_WARNING:
+            os.system(f"notify-send 'Battery Low ({battery_percentage}%)' 'Plug in charger or system will shutdown'")
+            shutdown_checker()
+        elif notify_user and battery_status == 'Discharging' and battery_percentage < BATTERY_PERCENTAGE_FIRST_WARNING:
+            os.system(f"notify-send 'Battery Low ({battery_percentage}%)' 'Plug in charger.'")
+            notify_user = False
+        if not notify_user and battery_status in ['Full', 'Charging', 'Not charging']:
+            notify_user = True
+        time.sleep(MAIN_LOOP_INTERVALS)
+
+if __name__ == "__main__":
+    main()

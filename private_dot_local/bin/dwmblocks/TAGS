@@ -1,0 +1,33 @@
+
+dwmblocks.c,705
+#define LENGTH(7,115
+#define CMDLENGTH	8,175
+	char* icon;11,215
+	char* command;12,228
+	unsigned int interval;13,244
+	unsigned int signal;14,268
+} Block;15,290
+static Display *dpy;dpy34,730
+static int screen;35,751
+static Window root;36,770
+static char statusbar[statusbar37,790
+static char statusstr[statusstr38,846
+static int statusContinue 39,877
+void replace(42,950
+void remove_all(50,1086
+void getcmd(64,1326
+void getcmds(88,1841
+void getsigcmds(100,2095
+void setupsignals(111,2289
+int getstatus(138,2832
+void setroot(151,3137
+void pstdout(165,3428
+void statusloop(174,3588
+void sighandler(191,3782
+void buttonhandler(197,3861
+void termhandler(223,4490
+int main(229,4555
+
+config.h,74
+static const Block blocks[blocks2,107
+static char *delim delim31,1233
