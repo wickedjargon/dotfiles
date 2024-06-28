@@ -127,6 +127,8 @@
   (setq initial-scratch-message "")                       ;; no message on scratch buffer
   (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
+  (setq-default indent-tabs-mode t)
+  (defvaralias 'c-basic-offset 'tab-width)
   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
@@ -882,3 +884,4 @@
 (use-package scala-mode :ensure t :defer t
   :interpreter
     ("scala" . scala-mode))
+
