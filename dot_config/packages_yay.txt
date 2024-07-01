@@ -1,0 +1,4 @@
+zoom
+visual-studio-code-bin
+htop-vim
+nodejs-browser-sync
