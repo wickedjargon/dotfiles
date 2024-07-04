@@ -374,11 +374,6 @@ in whole buffer.  With neither, delete comments on current line."
       (goto-char (car bds))
       (insert function-name))))
 
-(defun fff-regions-content ()
-  "Return the selected region as a string."
-  (if (use-region-p)
-      (buffer-substring (region-beginning) (region-end))))
-
 (defun fff-print-debug-line-python ()
   (interactive)
   (save-excursion
@@ -395,6 +390,11 @@ in whole buffer.  With neither, delete comments on current line."
     (insert text-end)
     (evil-normal-state)))
 
+(defun fff-regions-content ()
+  "Return the selected region as a string."
+  (if (use-region-p)
+      (buffer-substring (region-beginning) (region-end))))
+
 (defun fff-print-debug-line-rust ()
   (interactive)
   (save-excursion
@@ -402,13 +402,7 @@ in whole buffer.  With neither, delete comments on current line."
     (if (and transient-mark-mode mark-active)
         (setq expression (fff-regions-content)))
     (evil-open-below 1)
-    (insert expression)
-    (setq text-beg (concat "println!(\"" expression " --> {:?}\", "))
-    (setq text-end ");  // ff-debug")
-    (evil-first-non-blank)
-    (insert text-beg)
-    (end-of-line)
-    (insert text-end)
+    (insert (concat "dbg!(" expression ");  // ff-debug"))
     (evil-normal-state)))
 
 (defun fff-delete-debug-lines-python ()
