@@ -127,8 +127,8 @@
   (setq initial-scratch-message "")                       ;; no message on scratch buffer
   (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
-  (setq-default indent-tabs-mode t)
-  (defvaralias 'c-basic-offset 'tab-width)
+  ;; (setq-default indent-tabs-mode t)
+  ;; (defvaralias 'c-basic-offset 'tab-width)
   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
@@ -719,8 +719,11 @@
   (setq lsp-headerline-breadcrumb-enable nil) ; Disable breadcrumbs in the headerline
   (setq lsp-completion-show-kind nil)
   (setq lsp-completion-show-detail nil)
+  (setq lsp-signature-auto-activate nil)
   (setq lsp-lens-enable nil)
-  (setq lsp-signature-auto-activate nil))
+  (lsp-inlay-hints-mode) ; the type hints next to arguments in func signature lines and variable definitions.
+  (setq lsp-inlay-hint-enable t)
+  (setq lsp-rust-analyzer-display-parameter-hints t))
 
 (use-package lsp-python-ms :ensure t :defer t)
 
@@ -885,3 +888,15 @@
   :interpreter
     ("scala" . scala-mode))
 
+;; Configure and enable Tree-sitter
+(use-package tree-sitter
+  :ensure t
+  :hook (rustic-mode . tree-sitter-mode)
+  :hook (rustic-mode . tree-sitter-hl-mode)
+  :config
+  ;; Initialize Tree-sitter globally after it's loaded
+  (add-hook 'after-init-hook #'global-tree-sitter-mode))
+
+(use-package tree-sitter-langs
+  :ensure t
+  :after tree-sitter)
