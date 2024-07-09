@@ -705,7 +705,13 @@
 
 (use-package rust-mode :ensure t :defer t)
 
-(use-package rustic :ensure t :defer t)
+(use-package rustic :ensure t :defer t
+  :config
+  ;; Enable inlay hints specifically for Rust
+  (add-hook 'rustic-mode-hook (lambda ()
+                                (lsp)
+                                (lsp-inlay-hints-mode)
+                                (setq lsp-rust-analyzer-display-parameter-hints t))))
 
 (use-package lsp-mode :ensure t :defer t
   :config
@@ -721,8 +727,8 @@
   (setq lsp-completion-show-detail nil)
   (setq lsp-signature-auto-activate nil)
   (setq lsp-lens-enable nil)
-  (lsp-inlay-hints-mode) ; the type hints next to arguments in func signature lines and variable definitions.
-  (setq lsp-inlay-hint-enable t)
+  ;; (lsp-inlay-hints-mode) ; the type hints next to arguments in func signature lines and variable definitions.
+  ;; (setq lsp-inlay-hint-enable t)
   (setq lsp-rust-analyzer-display-parameter-hints t))
 
 (use-package lsp-python-ms :ensure t :defer t)
@@ -888,13 +894,11 @@
   :interpreter
     ("scala" . scala-mode))
 
-;; Configure and enable Tree-sitter
 (use-package tree-sitter
   :ensure t
   :hook (rustic-mode . tree-sitter-mode)
   :hook (rustic-mode . tree-sitter-hl-mode)
   :config
-  ;; Initialize Tree-sitter globally after it's loaded
   (add-hook 'after-init-hook #'global-tree-sitter-mode))
 
 (use-package tree-sitter-langs
