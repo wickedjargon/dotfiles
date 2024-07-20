@@ -39,12 +39,6 @@
   :ensure nil
   :config
 
-  ;; remove underlines for errors and warnings
-  (custom-set-faces
-   '(flymake-error ((t (:inherit nil))))
-   '(flymake-note ((t (:inherit nil))))
-   '(flymake-warning ((t (:inherit nil)))))
-
   ;; hooks
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
