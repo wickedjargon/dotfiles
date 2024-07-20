@@ -820,3 +820,60 @@ in whole buffer.  With neither, delete comments on current line."
           (message "ctags command executed.")
           (call-interactively 'v-load-tags))
       (message "Not in a project root directory. No v.mod file found."))))
+
+(defun fff-start-server ()
+  "Start the BrowserSync server."
+  (interactive)
+  (let ((default-directory default-directory))
+    (async-shell-command "browser-sync start --server --files \"**/*\" & disown && xdg-open http://localhost:3000")))
+
+(defun fff-stop-server ()
+  "Stop the BrowserSync server."
+  (interactive)
+  ;; Killing the BrowserSync process
+  (async-shell-command "pkill -f 'browser-sync start --server'"))
+
+(defun fff-reload-server ()
+  "Reload the BrowserSync server."
+  (interactive)
+  ;; Reloading the BrowserSync server
+  (async-shell-command "browser-sync reload"))
+
+(defun fff-display-project-root ()
+  "Display the current Projectile project root."
+  (interactive)
+  (message "Projectile project root: %s" (projectile-project-root)))
+
+(defun fff-find-file-in-project-root ()
+  "Find a file within the current Projectile project root."
+  (interactive)
+  (let ((project-root (projectile-project-root)))
+    (if project-root
+        (let ((file (read-file-name "Find file: " project-root)))
+          (if (file-exists-p file)
+              (find-file file)
+            (message "File not found: %s" file)))
+      (message "Not in a Projectile project"))))
+
+
+(defun fff-find-packages ()
+  "Find all package names used with `use-package` in `init.el` and display them in a new buffer."
+  (interactive)
+  (let ((file "~/.emacs.d/init.el")
+        (package-regexp "\\(use-package\\s-+\\w+\\)")
+        (result '())
+        (buffer-name "*Packages List*"))
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (while (re-search-forward package-regexp nil t)
+        (let ((package-name (thing-at-point 'symbol)))
+          (when package-name
+            (add-to-list 'result package-name))))
+      (with-current-buffer (get-buffer-create buffer-name)
+        (erase-buffer)
+        (insert "Packages found:\n")
+        (dolist (pkg result)
+          (insert (format "%s\n" pkg)))
+        (goto-char (point-min)))
+      (pop-to-buffer (get-buffer-create buffer-name)))))
