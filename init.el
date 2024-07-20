@@ -12,7 +12,6 @@
 (unless (assoc-default "melpa" package-archives)
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
 
-
 (setq package-list '(use-package markdown-mode gcmh))
 
 (unless package-archive-contents
