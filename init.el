@@ -904,3 +904,19 @@
 (use-package tree-sitter-langs
   :ensure t
   :after tree-sitter)
+
+(use-package devdocs :ensure t)
+
+(use-package projectile-ripgrep :ensure t)
+
+(use-package dockerfile-mode :ensure t)
+
+(use-package json-mode :ensure t)
+
+(use-package deadgrep :ensure t)
+
+(use-package sly-quicklisp :ensure t)
+
+(use-package dante :ensure t)
+
+(use-package aggressive-indent :ensure t)
