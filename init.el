@@ -177,7 +177,6 @@
         '(read-only t cursor-intangible t face minibuffer-prompt)))
 
 (use-package modus-themes :ensure t :defer nil
-  :bind ("C-c t" . modus-themes-toggle)
   :config
   (setq modus-themes-to-toggle '(modus-vivendi-tinted modus-operandi))
   (if (string= (system-name) "x1c")
