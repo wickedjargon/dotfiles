@@ -708,13 +708,7 @@
 
 (use-package rust-mode :ensure t :defer t)
 
-(use-package rustic :ensure t :defer t
-  :config
-  ;; Enable inlay hints specifically for Rust
-  (add-hook 'rustic-mode-hook (lambda ()
-                                (lsp)
-                                (lsp-inlay-hints-mode)
-                                (setq lsp-rust-analyzer-display-parameter-hints t))))
+(use-package rustic :ensure t :defer t)
 
 (use-package lsp-mode :ensure t :defer t
   :config
