@@ -727,8 +727,8 @@
   (setq lsp-completion-show-detail nil)
   (setq lsp-signature-auto-activate nil)
   (setq lsp-lens-enable nil)
-  ;; (lsp-inlay-hints-mode) ; the type hints next to arguments in func signature lines and variable definitions.
-  ;; (setq lsp-inlay-hint-enable t)
+  (lsp-inlay-hints-mode) ; the type hints next to arguments in func signature lines and variable definitions.
+  (setq lsp-inlay-hint-enable t)
   (setq lsp-rust-analyzer-display-parameter-hints t))
 
 (use-package lsp-python-ms :ensure t :defer t)
