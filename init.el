@@ -59,6 +59,7 @@
                                 (define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
                                 (define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
 
+  ;; make elpa files read-only
   (add-hook 'find-file-hook (lambda ()
                               (when (and buffer-file-name
                                          (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
