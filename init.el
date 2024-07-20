@@ -298,6 +298,9 @@
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f B" 'fff-access-books)
 
+    ;; full screen
+    (evil-leader/set-key "f s" 'toggle-frame-fullscreen)
+
     ;; switch to scratch
     (evil-leader/set-key "i i" 'fff-switch-to-scratch-buffer)
     (evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
