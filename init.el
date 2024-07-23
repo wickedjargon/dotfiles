@@ -341,6 +341,8 @@
     (evil-leader/set-key "x m" 'fff-access-home-dir)
     (evil-leader/set-key "x n" 'fff-open-file-in-notes)
     (evil-leader/set-key "x p" 'fff-open-file-in-projects)
+    (evil-leader/set-key "x P" 'fff-find-file-in-project-root)
+    (evil-leader/set-key "p" 'fff-find-file-in-project-root)
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
     (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
 
