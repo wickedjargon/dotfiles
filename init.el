@@ -133,11 +133,6 @@
   (repeat-mode +1)                                       ;; allows me to do C-x right-arrow, right-arrow, to switch to buffers
   (display-battery-mode +1)
 
-  (unless (string= (system-name) "x1c")
-    (progn
-      (setq display-time-day-and-date t)
-      (display-time)))
-
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
@@ -212,6 +207,9 @@
   (setq doom-modeline-percent-position '(""))
   (setq doom-modeline-modal nil)
   (setq doom-modeline-env-enable-rust nil)
+  (setq display-time-default-load-average nil)
+  (setq display-time-day-and-date t)
+  (display-time)
   :init
   (doom-modeline-mode +1))
 
