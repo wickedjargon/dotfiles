@@ -70,6 +70,7 @@
   (advice-add 'list-buffers :around #'fff-advice-for-window-focus)
   (advice-add 'rustic-cargo-run :around #'fff-advice-for-window-focus)
   (advice-add 'flymake-show-buffer-diagnostics :around #'fff-advice-for-window-focus)
+  (advice-add 'devdocs-lookup :around #'fff-advice-for-window-focus)
 
   ;; key bindings
   (global-set-key (kbd "M-u") 'universal-argument)
