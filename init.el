@@ -32,7 +32,7 @@
 (toggle-frame-maximized)
 
 ;;;;;;;;;;;;;;;;;;;;;;;
-;; use-package setup ;;
+;; use package setup ;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package emacs
