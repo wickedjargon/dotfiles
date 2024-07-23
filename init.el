@@ -889,10 +889,9 @@
 
 (use-package tree-sitter
   :ensure t
-  :hook (rustic-mode . tree-sitter-mode)
-  :hook (rustic-mode . tree-sitter-hl-mode)
   :config
-  (add-hook 'after-init-hook #'global-tree-sitter-mode))
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
 (use-package tree-sitter-langs
   :ensure t
