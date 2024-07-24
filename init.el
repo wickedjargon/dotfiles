@@ -138,23 +138,6 @@
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
 
-  ;; haskell path
-  (setq exec-path (append '("/home/ff/.ghcup/bin") exec-path))
-  (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.ghcup/bin")))
-
-  ;; go path
-  (setq exec-path (append '("/usr/local/go/bin") exec-path))
-  (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/usr/local/go/bin")))
-  (setq exec-path (append '("/home/ff/go/bin") exec-path))
-  (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/go/bin")))
-  (setenv "GOPATH" "/home/ff/go")
-
-  ;; rust path
-  (setq exec-path (append '("/home/ff/.cargo/env") exec-path))
-  (setq exec-path (append '("/home/ff/.cargo/bin") exec-path))
-  (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.cargo/bin")))
-  (setenv "PATH" (concat (getenv "PATH") ":" (expand-file-name "/home/ff/.cargo/env")))
-
   ;; prevent active process when closing a shell like vterm or eshell:
   (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
