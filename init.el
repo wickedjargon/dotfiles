@@ -584,10 +584,13 @@
   (savehist-mode))
 
 (use-package projectile :defer t :ensure t
+  :config
+  (dolist (file '("manage.py" ".git/" "go.mod" "package.json" "Cargo.toml"))
+    (add-to-list 'projectile-project-root-files file))
   :bind*
   (("C-c k" . projectile-find-file))
   :init
-  (setq projectile-project-root-files '("manage.py" ".git/" "go.mod"))
+  ;; (setq projectile-project-root-files '("manage.py" ".git/" "go.mod"))
   (setq projectile-ignored-projects '("~/"))
   (projectile-mode +1)
   (with-eval-after-load 'projectile
