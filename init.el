@@ -899,3 +899,10 @@
 (use-package dante :ensure t)
 
 (use-package aggressive-indent :ensure t)
+
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (exec-path-from-shell-initialize))
+
+(use-package wgrep :ensure t :defer t)
