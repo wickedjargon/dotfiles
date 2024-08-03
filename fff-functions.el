@@ -877,3 +877,9 @@ in whole buffer.  With neither, delete comments on current line."
           (insert (format "%s\n" pkg)))
         (goto-char (point-min)))
       (pop-to-buffer (get-buffer-create buffer-name)))))
+
+(defun fff-connect-to-pi-tramp ()
+  "Connect to the SSH server with predefined settings."
+  (interactive)
+  (let ((default-directory "/ssh:pi@127.0.0.1#5022:"))
+    (find-file default-directory)))

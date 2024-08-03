@@ -158,7 +158,7 @@
 
 (use-package modus-themes :ensure t :defer nil
   :config
-  (setq modus-themes-to-toggle '(modus-vivendi-tinted modus-operandi))
+  (setq modus-themes-to-toggle '(modus-vivendi modus-operandi))
   (if (string= (system-name) "x1c")
       (set-face-attribute 'default nil :height 135)
     (set-face-attribute 'default nil :height 95))
@@ -327,6 +327,7 @@
     (evil-leader/set-key "x p" 'fff-open-file-in-projects)
     (evil-leader/set-key "x P" 'fff-find-file-in-project-root)
     (evil-leader/set-key "p" 'fff-find-file-in-project-root)
+    (evil-leader/set-key "x s" 'fff-find-file-ssh)
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
     (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
 
@@ -585,7 +586,7 @@
 
 (use-package projectile :defer t :ensure t
   :config
-  (dolist (file '("manage.py" ".git/" "go.mod" "package.json" "Cargo.toml"))
+  (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod" "package.json" "Cargo.toml"))
     (add-to-list 'projectile-project-root-files file))
   :bind*
   (("C-c k" . projectile-find-file))
