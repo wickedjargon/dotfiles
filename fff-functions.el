@@ -883,3 +883,21 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (let ((default-directory "/ssh:pi@127.0.0.1#5022:"))
     (find-file default-directory)))
+
+(defun fff-browser-sync-current-directory ()
+  "Run browser-sync to serve the current directory."
+  (interactive)
+  (let ((default-directory (file-name-directory (or buffer-file-name default-directory))))
+    (start-process-shell-command
+     "browser-sync"
+     "*browser-sync*"
+     "browser-sync start --server --files \"**/*\"")
+    (message "browser-sync started.")))
+
+(defun fff-browser-sync-stop ()
+  "Stop the running browser-sync process."
+  (interactive)
+  (let ((process (get-process "browser-sync")))
+    (when process
+      (delete-process process)
+      (message "browser-sync stopped."))))

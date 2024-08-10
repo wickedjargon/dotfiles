@@ -299,8 +299,9 @@
     (evil-leader/set-key (kbd "t n") 'fff-tab-bar-new-tab)
     (evil-leader/set-key (kbd "t w") 'tab-bar-close-tab)
     (evil-leader/set-key (kbd "t r") 'tab-bar-rename-tab)
-    (evil-leader/set-key (kbd "t h") 'fff-tabs/tab-previous)
-    (evil-leader/set-key (kbd "t l") 'fff-tabs/tab-next)
+    (evil-leader/set-key (kbd "h h") 'fff-tabs/tab-previous)
+    (evil-leader/set-key (kbd "l l") 'fff-tabs/tab-next)
+    (evil-leader/set-key (kbd "t k") 'tab-bar-select-tab-by-name)
 
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'switch-to-buffer)
@@ -325,14 +326,16 @@
     (evil-leader/set-key "x m" 'fff-access-home-dir)
     (evil-leader/set-key "x n" 'fff-open-file-in-notes)
     (evil-leader/set-key "x p" 'fff-open-file-in-projects)
-    (evil-leader/set-key "x P" 'fff-find-file-in-project-root)
     (evil-leader/set-key "p" 'fff-find-file-in-project-root)
     (evil-leader/set-key "x s" 'fff-find-file-ssh)
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
     (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
 
+    ;; project root
+    (evil-leader/set-key "h k" 'fff-find-file-in-project-root)
+
     ;; winner undo/redo and previous buffer
-    (evil-leader/set-key "h h" 'fff-winner/winner-undo)
+    (evil-leader/set-key "u u" 'fff-winner/winner-undo)
     (evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
 
     ;; previous/next buffer
@@ -493,8 +496,10 @@
     ( "l" next-buffer))
 
   (defhydra fff-winner (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-    ("h" winner-undo)
-    ("l" winner-redo)))
+    ("u" winner-undo)
+    ("U" winner-redo))
+
+  )
 
 (use-package pretty-hydra :ensure t :defer nil
   :config
@@ -586,7 +591,7 @@
 
 (use-package projectile :defer t :ensure t
   :config
-  (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod" "package.json" "Cargo.toml"))
+  (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod" "package.json" "Cargo.toml" "build.sh"))
     (add-to-list 'projectile-project-root-files file))
   :bind*
   (("C-c k" . projectile-find-file))
@@ -724,8 +729,7 @@
   :custom
   (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off"
                             "-J-Dmetals.icons=unicode"))
-  (lsp-metals-enable-semantic-highlighting t)
-  :hook (scala-mode . lsp))
+  (lsp-metals-enable-semantic-highlighting t))
 
 (use-package dired-hide-dotfiles :ensure t :defer t)
 
