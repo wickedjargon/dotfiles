@@ -867,3 +867,15 @@
   (exec-path-from-shell-initialize))
 
 (use-package wgrep :ensure t :defer t)
+
+(use-package gptel
+  :ensure t
+  :init
+  (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents "~/.chat_gpt_api_key") (buffer-string))))
+  :config
+  ;; Set up the OpenAI backend
+  (gptel-make-gpt4all "GPT4All"           ;Name of your choosing
+ :protocol "http"
+ :host "localhost:4891"                 ;Where it's running
+ :models '("mistral-7b-openorca.Q4_0.gguf")) ; Available models
+)
