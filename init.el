@@ -117,6 +117,7 @@
   (setq auto-revert-verbose nil)
   (global-auto-revert-mode +1)                            ;; auto revert files and buffers
   (global-goto-address-mode +1)                           ;; make links/urls clickable
+  (setq safe-local-variable-values '((checkdoc-minor-mode . t))) ;; make local variables safe
   (delete-selection-mode +1)                              ;; delete selction when hitting backspace on region
   (set-default 'truncate-lines t)                         ;; don't wrap my text
   (setq custom-file (locate-user-emacs-file "custom.el")) ;; separate custom.el file
