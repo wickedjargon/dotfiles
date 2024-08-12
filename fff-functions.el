@@ -901,3 +901,78 @@ in whole buffer.  With neither, delete comments on current line."
     (when process
       (delete-process process)
       (message "browser-sync stopped."))))
+
+(defun fff-menu-programming-functions ()
+  "Select and run a programming-related function."
+  (interactive)
+  (let* ((functions-list '(lsp
+                           lsp-rename
+                           lsp-describe-thing-at-point
+                           sly-documentation
+                           lsp-format-buffer
+                           imenu
+                           flymake-show-diagnostics-buffer
+                           fff-display-lsp-root))
+         (selected-function (completing-read "Select a function: " functions-list nil t)))
+    (when selected-function
+      (call-interactively (intern selected-function)))))
+
+(defun fff-menu-system-management-functions ()
+  "Select and run a system management-related function."
+  (interactive)
+  (let* ((functions-list '((lambda () (shell-command "slock")) "Lock screen"
+                           (lambda () (shell-command "kill -TERM $(pidof dwm)")) "Kill dwm"
+                           (lambda () (shell-command "kill -TERM $(pidof dwm) && systemctl reboot")) "Reboot"
+                           restart-emacs "Restart Emacs"
+                           (lambda () (shell-command "kill -TERM $(pidof dwm) && systemctl poweroff")) "Shutdown"
+                           (lambda () (shell-command "xset dpms force off")) "Turn off screen"))
+         (selected-function (completing-read "Select a system management function: " functions-list nil t)))
+    (when selected-function
+      (call-interactively (intern selected-function)))))
+
+(defun fff-menu-magit-functions ()
+  "Select and run a Magit-related function."
+  (interactive)
+  (let* ((functions-list '(magit
+                           magit-section-hide-children))
+         (selected-function (completing-read "Select a Magit function: " functions-list nil t)))
+    (when selected-function
+      (call-interactively (intern selected-function)))))
+
+(defun fff-menu-search-functions ()
+  "Select and run a search-related function."
+  (interactive)
+  (let* ((functions-list '(isearch-forward
+                           query-replace
+                           isearch-forward-regexp
+                           occur
+                           iedit-mode
+                           find-tag
+                           rgrep
+                           deadgrep))
+         (selected-function (completing-read "Select a search function: " functions-list nil t)))
+    (when selected-function
+      (call-interactively (intern selected-function)))))
+
+(defun fff-menu-main ()
+  "Select and run one of the fff-menu functions."
+  (interactive)
+  (let* ((menu-list '(("Programming" . fff-menu-programming-functions)
+                      ("System Management" . fff-menu-system-management-functions)
+                      ("Magit" . fff-menu-magit-functions)
+                      ("Search" . fff-menu-search-functions)))
+         (selected-menu (completing-read "Select a menu: " (mapcar 'car menu-list) nil t))
+         (menu-function (cdr (assoc selected-menu menu-list))))
+    (when menu-function
+      (call-interactively menu-function))))
+
+
+(defun fff-eww-play-with-mpv ()
+  (interactive)
+  (when (equal major-mode 'eww-mode)
+    (let ((url-list (eww-suggested-uris))
+          (url (if url-list (car url-list) nil)))
+      (if (and url (string-match "youtube\\.com" url))
+          (progn
+            (shell-command (concat "mpv " url)))
+        (message "Not a YouTube link or no URL found.")))))
