@@ -859,8 +859,6 @@
 
 (use-package sly-quicklisp :ensure t)
 
-(use-package dante :ensure t)
-
 (use-package aggressive-indent :ensure t)
 
 (use-package exec-path-from-shell
