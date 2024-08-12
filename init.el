@@ -502,49 +502,6 @@
 
   )
 
-(use-package pretty-hydra :ensure t :defer nil
-  :config
-
-  (pretty-hydra-define fff-programming (:foreign-keys warn :quit-key "q" :color blue)
-    ("Programming"
-     (("1" lsp "lsp")
-      ("2" lsp-rename "lsp-rename")
-      ("3" lsp-describe-thing-at-point "lsp-describe-thing-at-point")
-      ("4" sly-documentation "sly-documentation")
-      ("5" lsp-format-buffer "lsp-format-buffer")
-      ("6" imenu "imenu")
-      ("7" flymake-show-diagnostics-buffer "flymake-show-diagnostics-buffer")
-      ("8" fff-display-lsp-root "fff-display-lsp-root")
-      ("9" fff-display-lsp-root "fff-display-lsp-root")
-      )))
-
-  (pretty-hydra-define fff-shutdown (:foreign-keys warn :quit-key "q" :color blue)
-    ("System Management"
-     (("l" (shell-command "slock") "Lock screen" :exit t)
-      ("K" (shell-command "kill -TERM $(pidof dwm)") "Kill dwm" :exit t)
-      ("R" (shell-command "kill -TERM $(pidof dwm) && systemctl reboot") "Reboot" :exit t)
-      ("r" (restart-emacs) "Restart Emacs" :exit t)
-      ("S" (shell-command "kill -TERM $(pidof dwm) && systemctl poweroff") "Shutdown" :exit t)
-      ("o" (shell-command "xset dpms force off") "Turn off screen"))))
-
-  (pretty-hydra-define fff-magit (:foreign-keys warn :quit-key "q" :color blue)
-    ("Magit"
-     (("m" magit "magit" :exit t)
-      ("<tab>" magit-section-hide-children "collapse children" :exit t)
-      )))
-
-
-  (pretty-hydra-define fff-search (:foreign-keys warn :quit-key "q" :color blue)
-    ("Search"
-     (("1" isearch-forward        "isearch-forward" :exit t)
-      ("2" query-replace          "query-replace" :exit t)
-      ("3" isearch-forward-regexp "isearch-forward-regexp" :exit t)
-      ("4" occur                  "occur" :exit t)
-      ("5" iedit-mode             "iedit-mode" :exit t)
-      ("6" find-tag               "find-tag" :exit t)
-      ("7" rgrep                  "rgrep" :exit t)
-      ("8" icomplete-mode         "icomplete-mode" :exit t)))))
-
 (use-package company :defer t :ensure t
   :init
   (setq company-format-margin-function nil)
