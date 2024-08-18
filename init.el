@@ -1,7 +1,6 @@
 ;; compatible with emacs version 28 and above
 
 ;; TODO: replace string paths with expressions (relative config location)
-;; TODO: make hydra UIs clickable. I don't need shortcut keys for hydra options.
 ;; TODO: switch from evil-leader to general.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
