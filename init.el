@@ -312,6 +312,9 @@
     (evil-leader/set-key "t T" 'fff-open-new-vterm)
     (evil-leader/set-key "t p" 'terminal-here)
 
+    ;; chatgpt
+    (evil-leader/set-key "g g" 'fff-switch-or-create-gptel)
+
     ;; shell/terminal
     (evil-leader/set-key "s s" 'fff-switch-or-create-vterm)
     (evil-leader/set-key "s S" 'fff-open-new-vterm)
