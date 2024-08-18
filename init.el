@@ -59,6 +59,10 @@
                                          (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
                                 (read-only-mode 1))))
 
+  (add-hook 'kill-emacs-query-functions
+          (lambda ()
+            (yes-or-no-p "Are you sure you want to exit Emacs? ")))
+
   ;; switch to new window
   (defun fff-advice-for-window-focus (orig-fun &rest args)
     "Advice function to focus on the new window after running the specified function."
