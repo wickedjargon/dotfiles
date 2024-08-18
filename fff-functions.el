@@ -28,6 +28,12 @@
   (let ((default-directory (expand-file-name "snippets/" user-emacs-directory)))
     (call-interactively 'find-file)))
 
+(defun fff-open-file-in-root-dir ()
+  "Prompt for a filename and open it in the root directory."
+  (interactive)
+  (let ((default-directory "/"))
+    (call-interactively 'find-file)))
+
 (defun fff-access-home-dir ()
   "Prompt for a filename and open it in the snippets directory."
   (interactive)
