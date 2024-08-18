@@ -134,7 +134,6 @@
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
   (global-eldoc-mode -1)
-  (repeat-mode +1)                                       ;; allows me to do C-x right-arrow, right-arrow, to switch to buffers
   (display-battery-mode +1)
 
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
