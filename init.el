@@ -112,8 +112,7 @@
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
 
-  (tool-bar-mode -1)                                      ;; no tool bar
-  (scroll-bar-mode -1)                                    ;; no scroll bar
+  (setq custom-safe-themes t)                             ;; make all themes safe
   (setq inhibit-startup-message t)                        ;; no splash screen
   (setq use-short-answers t)                              ;; just type `y`, not `yes`
   (blink-cursor-mode -1)                                  ;; don't blink my cursor
