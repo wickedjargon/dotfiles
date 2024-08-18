@@ -158,13 +158,33 @@
   (setq minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt)))
 
-(use-package modus-themes :ensure t :defer nil
+;; (use-package modus-themes :ensure t :defer nil
+;;   :config
+;;   (setq modus-themes-to-toggle '(modus-vivendi modus-operandi))
+;;   (if (string= (system-name) "x1c")
+;;       (set-face-attribute 'default nil :height 135)
+;;     (set-face-attribute 'default nil :height 95))
+;;   (load-theme (car modus-themes-to-toggle) t))
+
+(use-package doom-themes
+  :ensure t
   :config
-  (setq modus-themes-to-toggle '(modus-vivendi modus-operandi))
-  (if (string= (system-name) "x1c")
-      (set-face-attribute 'default nil :height 135)
-    (set-face-attribute 'default nil :height 95))
-  (load-theme (car modus-themes-to-toggle) t))
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-one t)
+
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+  ;; Enable custom neotree theme (all-the-icons must be installed!)
+  (doom-themes-neotree-config)
+  ;; or for treemacs users
+  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+  (doom-themes-treemacs-config)
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config))
+
+(use-package ef-themes :ensure t :defer t)
 
 (use-package flymake :ensure nil
   :config
