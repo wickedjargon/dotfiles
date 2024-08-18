@@ -446,7 +446,6 @@
     (define-key evil-normal-state-map (kbd "O") 'fff-evil-open-above)
     (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)))
 
-    (load (expand-file-name "fff-functions.el" user-emacs-directory))))
 (use-package hide-comnt :defer nil :ensure nil
   :after evil
   :init
