@@ -758,6 +758,14 @@ in whole buffer.  With neither, delete comments on current line."
 			(switch-to-buffer newest-buffer))
 		(vterm)))))
 
+(defun fff-switch-or-create-gptel ()
+  "Switch to the ChatGPT buffer or switch to the last buffer if already in ChatGPT buffer."
+  (interactive)
+  (if (string-match "\\*ChatGPT\\*" (buffer-name))
+      (evil-switch-to-windows-last-buffer)
+        (progn
+          (gptel "*ChatGPT*")
+          (switch-to-buffer "*ChatGPT*"))))
 
 (defun fff-increase-font-size ()
   "Increase the font size."
