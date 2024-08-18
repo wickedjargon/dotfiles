@@ -863,10 +863,8 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (let ((project-root (projectile-project-root)))
     (if project-root
-        (let ((file (read-file-name "Find file: " project-root)))
-          (if (file-exists-p file)
-              (find-file file)
-            (message "File not found: %s" file)))
+        (let ((default-directory project-root))
+          (call-interactively 'find-file))
       (message "Not in a Projectile project"))))
 
 
