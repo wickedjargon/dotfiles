@@ -4,8 +4,8 @@
 (set-language-environment "UTF-8")
 (setq default-input-method nil)
 (setq native-comp-async-report-warnings-errors 'silent)
-(menu-bar-mode -1)
-(tool-bar-mode -1)
+;; (menu-bar-mode -1)
+;; (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
 (defun fff-emacs-re-enable-frame-theme (_frame)
