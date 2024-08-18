@@ -903,9 +903,8 @@
   :init
   (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents "~/.chat_gpt_api_key") (buffer-string))))
   :config
-  ;; Set up the OpenAI backend
-  (gptel-make-gpt4all "GPT4All"           ;Name of your choosing
- :protocol "http"
- :host "localhost:4891"                 ;Where it's running
- :models '("mistral-7b-openorca.Q4_0.gguf")) ; Available models
-)
+  (setq gptel-model "gpt-4o")
+  ;; (setq gptel-model "gpt-3.5-turbo")
+  )
+
+(use-package sml-mode :ensure t)
