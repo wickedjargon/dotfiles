@@ -447,6 +447,11 @@
     (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)))
 
     (load (expand-file-name "fff-functions.el" user-emacs-directory))))
+(use-package hide-comnt :defer nil :ensure nil
+  :after evil
+  :init
+  (load (expand-file-name "hide-comnt.el" user-emacs-directory))
+  (load (expand-file-name "fff-functions.el" user-emacs-directory)))
 
 (use-package undo-fu :defer t :ensure t)
 
