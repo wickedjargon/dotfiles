@@ -351,13 +351,15 @@
     (evil-leader/set-key "x m" 'fff-access-home-dir)
     (evil-leader/set-key "x n" 'fff-open-file-in-notes)
     (evil-leader/set-key "x p" 'fff-open-file-in-projects)
-    (evil-leader/set-key "p" 'fff-find-file-in-project-root)
+    (evil-leader/set-key "p p" 'fff-find-file-in-project-root)
     (evil-leader/set-key "x s" 'fff-find-file-ssh)
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
     (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
+    (evil-leader/set-key "x /" 'fff-open-file-in-root-dir)
 
     ;; project root
     (evil-leader/set-key "h k" 'fff-find-file-in-project-root)
+    (evil-leader/set-key "p r" 'fff-find-file-in-project-root)
 
     ;; winner undo/redo and previous buffer
     (evil-leader/set-key "u u" 'fff-winner/winner-undo)
