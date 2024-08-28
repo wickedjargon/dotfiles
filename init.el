@@ -39,6 +39,11 @@
   :ensure nil
   :config
 
+  ;; setting font height
+  (if (string= (system-name) "x1c")
+      (set-face-attribute 'default nil :height 135)
+    (set-face-attribute 'default nil :height 95))
+
   ;; hooks
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
@@ -72,7 +77,7 @@
   (advice-add 'diff-buffer-with-file :around #'fff-advice-for-window-focus)
   (advice-add 'vc-region-history :around #'fff-advice-for-window-focus)
   (advice-add 'list-buffers :around #'fff-advice-for-window-focus)
-  (advice-add 'rustic-cargo-run :around #'fff-advice-for-window-focus)
+  ;; (advice-add 'rustic-cargo-run :around #'fff-advice-for-window-focus)
   (advice-add 'flymake-show-buffer-diagnostics :around #'fff-advice-for-window-focus)
   (advice-add 'devdocs-lookup :around #'fff-advice-for-window-focus)
 
@@ -158,39 +163,23 @@
   (setq minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt)))
 
-;; (use-package modus-themes :ensure t :defer nil
-;;   :config
-;;   (setq modus-themes-to-toggle '(modus-vivendi modus-operandi))
-;;   (if (string= (system-name) "x1c")
-;;       (set-face-attribute 'default nil :height 135)
-;;     (set-face-attribute 'default nil :height 95))
-;;   (load-theme (car modus-themes-to-toggle) t))
+(use-package modus-themes :ensure t :defer nil)
 
 (use-package doom-themes
   :ensure t
   :config
-  ;; Global settings (defaults)
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
   (load-theme 'doom-one t)
+  (doom-themes-visual-bell-config))
 
-  ;; Enable flashing mode-line on errors
-  (doom-themes-visual-bell-config)
-  ;; Enable custom neotree theme (all-the-icons must be installed!)
-  (doom-themes-neotree-config)
-  ;; or for treemacs users
-  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
-  (doom-themes-treemacs-config)
-  ;; Corrects (and improves) org-mode's native fontification.
-  (doom-themes-org-config))
+;; (use-package almost-mono-themes :ensure t
+;;   :config
+;;   (load-theme 'almost-mono-black t)
+;;   ;; (load-theme 'almost-mono-gray t)
+;;   ;; (load-theme 'almost-mono-cream t)
+;;   ;; (load-theme 'almost-mono-white t)
+;;   )
 
 (use-package ef-themes :ensure t :defer t)
-
-(use-package flymake :ensure nil
-  :config
-  (add-to-list 'flymake-allowed-file-name-masks
-               '("\\.py\\'" fff-flymake-python-init))
-  (add-hook 'python-mode-hook 'flymake-mode))
 
 (use-package asm-mode :ensure nil :defer t)
 
@@ -370,7 +359,7 @@
     (evil-leader/set-key "x l" 'fff-buffer-switch/next-buffer)
 
     ;; run/debug bindings for projects
-    (evil-leader/set-key "c r" 'rustic-cargo-run)
+    ;; (evil-leader/set-key "c r" 'rustic-cargo-run)
     (evil-leader/set-key "c c" 'quickrun)
 
     ;; fff-bind
@@ -539,6 +528,11 @@
   (setq company-tooltip-limit 2)
   (global-company-mode))
 
+(use-package company-statistics
+  :ensure t
+  :after company
+  :hook (after-init . company-statistics-mode))
+
 (use-package restart-emacs :defer t :ensure t)
 
 (use-package windsize :defer t :ensure t)
@@ -685,10 +679,13 @@
 
 (use-package rust-mode :ensure t :defer t)
 
-(use-package rustic :ensure t :defer t)
+;; (use-package rustic :ensure t :defer t
+;;   :init
+;;   (add-hook 'rustic-mode-hook '(lambda () (flycheck-mode -1))))
 
 (use-package lsp-mode :ensure t :defer t
   :config
+  (setq lsp-diagnostics-provider :none)
   (setq lsp-auto-guess-root t)
   (setq lsp-keymap-prefix "C-c l")
   (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
@@ -701,16 +698,17 @@
   (setq lsp-completion-show-detail nil)
   (setq lsp-signature-auto-activate nil)
   (setq lsp-lens-enable nil)
-  (lsp-inlay-hints-mode) ; the type hints next to arguments in func signature lines and variable definitions.
-  (setq lsp-inlay-hint-enable t)
+  ;; (lsp-inlay-hints-mode) ; the type hints next to arguments in func signature lines and variable definitions.
+  ;; (setq lsp-inlay-hint-enable t)
   (setq lsp-rust-analyzer-display-parameter-hints t))
 
 (use-package lsp-python-ms :ensure t :defer t)
 
 (use-package lsp-haskell :ensure t :defer t
   :config
-  (add-hook 'haskell-mode-hook #'lsp)
-  (add-hook 'haskell-literate-mode-hook #'lsp))
+  ;; (add-hook 'haskell-mode-hook #'lsp)
+  ;; (add-hook 'haskell-literate-mode-hook #'lsp)
+  )
 
 (use-package lsp-metals
   :ensure t
@@ -908,3 +906,11 @@
   )
 
 (use-package sml-mode :ensure t)
+
+(use-package compiler-explorer :ensure t :defer t)
+
+(use-package beardbolt
+  :ensure nil
+  :load-path (lambda () (expand-file-name "beardbolt" user-emacs-directory)))
+
+
