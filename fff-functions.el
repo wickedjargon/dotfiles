@@ -292,7 +292,7 @@ in whole buffer.  With neither, delete comments on current line."
 
 (defun fff-clear-line ()
   "Deletes the current line"
-  (interactive) 
+  (interactive)
   (progn
     (delete-region
      (line-beginning-position)
