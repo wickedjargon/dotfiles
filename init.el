@@ -913,4 +913,6 @@
   :ensure nil
   :load-path (lambda () (expand-file-name "beardbolt" user-emacs-directory)))
 
-
+(use-package js2-mode
+  :ensure t
+  :interpreter "node")
