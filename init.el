@@ -1,8 +1,5 @@
 ;; compatible with emacs version 28 and above
 
-;; TODO: replace string paths with expressions (relative config location)
-;; TODO: switch from evil-leader to general.
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; starting our engines... ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -261,6 +258,9 @@
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
 
+    ;; shell ocmmand
+    (evil-leader/set-key "1" 'shell-command)
+
     ; paragraph navigation
     (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
     (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
@@ -334,6 +334,10 @@
     (evil-leader/set-key "x w" 'write-file)
     (evil-leader/set-key "x SPC b" 'list-buffers)
     (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
+
+    ;; these too please
+    (evil-leader/set-key "4 4" 'other-window-prefix)
+    (evil-leader/set-key "4 1" 'same-window-prefix)
 
     ;; access dirs
     (evil-leader/set-key "x c" 'fff-access-config-dir)
@@ -850,11 +854,6 @@
 
 (use-package dtrt-indent :ensure t :defer nil
   :config
-  (setq dtrt-indent-min-offset 1)
-  (setq dtrt-indent-min-quality 55)
-  (setq dtrt-indent-min-relevant-lines 1)
-  (setq dtrt-indent-min-soft-tab-superiority 105)
-  (setq dtrt-indent-min-matching-indentations 1)
   (dtrt-indent-global-mode +1))
 
 (use-package evil-iedit-state :ensure t :defer t

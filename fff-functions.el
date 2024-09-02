@@ -690,21 +690,21 @@ in whole buffer.  With neither, delete comments on current line."
       (if (fff-region-commented-p)
           (uncomment-region (region-beginning) (region-end))
         (comment-region (region-beginning) (region-end)))
-	(comment-line 1)))
+    (comment-line 1)))
 
 (defun fff-region-commented-p ()
- "Return t if the region is already commented, nil otherwise."
- (save-excursion
-   (let ((start (region-beginning))
-         (end (region-end))
-         (all-commented t))
-     (goto-char start)
-     (while (< (point) end)
-       (unless (looking-at "^[ \t]*$") ; Skip blank lines
-         (setq all-commented (and all-commented
-                                 (looking-at (concat "\\s-*" (regexp-quote comment-start))))))
-       (forward-line 1))
-     all-commented)))
+  "Return t if the region is already commented, nil otherwise."
+  (save-excursion
+    (let ((start (region-beginning))
+          (end (region-end))
+          (all-commented t))
+      (goto-char start)
+      (while (< (point) end)
+        (unless (looking-at "^[ \t]*$") ; Skip blank lines
+          (setq all-commented (and all-commented
+                                   (looking-at "^[ \t]*//")))) ; Adjust for C++ style comments
+        (forward-line 1))
+      all-commented)))
 
 (defun fff-indent-buffer ()
   "Indent the entire buffer."
@@ -871,7 +871,7 @@ in whole buffer.  With neither, delete comments on current line."
 (defun fff-find-packages ()
   "Find all package names used with `use-package` in `init.el` and display them in a new buffer."
   (interactive)
-  (let ((file "~/.emacs.d/init.el")
+  (let ((file (expand-file-name "./init.el" user-emacs-directory))
         (package-regexp "\\(use-package\\s-+\\w+\\)")
         (result '())
         (buffer-name "*Packages List*"))
