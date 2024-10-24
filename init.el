@@ -54,6 +54,9 @@
   (add-hook 'comint-mode-hook (lambda ()
                                 (define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
                                 (define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
+  (add-hook 'inferior-lisp-mode-hook (lambda ()
+                                       (define-key inferior-lisp-mode-map (kbd "C-p") 'comint-previous-input)
+                                       (define-key inferior-lisp-mode-map (kbd "C-n") 'comint-next-input)))
 
   ;; make elpa files read-only
   (add-hook 'find-file-hook (lambda ()
@@ -62,19 +65,18 @@
                                 (read-only-mode 1))))
 
   (add-hook 'kill-emacs-query-functions
-          (lambda ()
-            (yes-or-no-p "Are you sure you want to exit Emacs? ")))
+            (lambda ()
+              (yes-or-no-p "Are you sure you want to exit Emacs? ")))
 
   ;; switch to new window
   (defun fff-advice-for-window-focus (orig-fun &rest args)
     "Advice function to focus on the new window after running the specified function."
     (let ((current-window (selected-window)))
       (apply orig-fun args)
-      (select-window (next-window current-window))))
+      (select-window (next-w-indow current-window))))
   (advice-add 'diff-buffer-with-file :around #'fff-advice-for-window-focus)
   (advice-add 'vc-region-history :around #'fff-advice-for-window-focus)
   (advice-add 'list-buffers :around #'fff-advice-for-window-focus)
-  ;; (advice-add 'rustic-cargo-run :around #'fff-advice-for-window-focus)
   (advice-add 'flymake-show-buffer-diagnostics :around #'fff-advice-for-window-focus)
   (advice-add 'devdocs-lookup :around #'fff-advice-for-window-focus)
 
@@ -96,6 +98,8 @@
   (global-set-key (kbd "C-c w") 'tab-bar-close-tab)
   (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
   (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
+  (global-set-key (kbd "C-c h") 'tab-bar-switch-to-prev-tab)
+  (global-set-key (kbd "C-c l") 'tab-bar-switch-to-next-tab)
 
   ;; backup and auto save
   (setq version-control t)
@@ -129,15 +133,14 @@
   (setq initial-scratch-message "")                       ;; no message on scratch buffer
   (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
-  ;; (setq-default indent-tabs-mode t)
-  ;; (defvaralias 'c-basic-offset 'tab-width)
+  (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
+  (defvaralias 'c-basic-offset 'tab-width)                ;; Sync C mode indentation with tab width setting
   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
-  (global-eldoc-mode -1)
+  ;; (global-eldoc-mode -1)
   (display-battery-mode +1)
-
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
@@ -168,15 +171,9 @@
   (load-theme 'doom-one t)
   (doom-themes-visual-bell-config))
 
-;; (use-package almost-mono-themes :ensure t
-;;   :config
-;;   (load-theme 'almost-mono-black t)
-;;   ;; (load-theme 'almost-mono-gray t)
-;;   ;; (load-theme 'almost-mono-cream t)
-;;   ;; (load-theme 'almost-mono-white t)
-;;   )
-
 (use-package ef-themes :ensure t :defer t)
+
+(use-package zenburn-theme :ensure t :defer t)
 
 (use-package asm-mode :ensure nil :defer t)
 
@@ -218,7 +215,7 @@
 
 (use-package flimenu :ensure t
   :config
-    (flimenu-global-mode))
+  (flimenu-global-mode))
 
 (use-package evil-collection
   :ensure nil
@@ -261,7 +258,7 @@
     ;; shell ocmmand
     (evil-leader/set-key "1" 'shell-command)
 
-    ; paragraph navigation
+                                        ; paragraph navigation
     (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
     (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
 
@@ -363,7 +360,6 @@
     (evil-leader/set-key "x l" 'fff-buffer-switch/next-buffer)
 
     ;; run/debug bindings for projects
-    ;; (evil-leader/set-key "c r" 'rustic-cargo-run)
     (evil-leader/set-key "c c" 'quickrun)
 
     ;; fff-bind
@@ -443,7 +439,10 @@
   :after evil
   :init
   (load (expand-file-name "hide-comnt.el" user-emacs-directory))
-  (load (expand-file-name "fff-functions.el" user-emacs-directory)))
+  (load (expand-file-name "fff-functions.el" user-emacs-directory))
+  (load (expand-file-name "weather.el" user-emacs-directory))
+  )
+
 
 (use-package undo-fu :defer t :ensure t)
 
@@ -521,9 +520,7 @@
 
   (defhydra fff-winner (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
     ("u" winner-undo)
-    ("U" winner-redo))
-
-  )
+    ("U" winner-redo)))
 
 (use-package company :defer t :ensure t
   :init
@@ -577,12 +574,15 @@
 
 (use-package projectile :defer t :ensure t
   :config
-  (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod" "package.json" "Cargo.toml" "build.sh"))
+  (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod" "package.json" "Cargo.toml" "build.sh" "v.mod"
+                  "make.bat" "Makefile" "Dockerfile" ".editorconfig" ".gitignore" ".git" ".svn" ".hg" ".bzr"
+                  "Pipfile" "tox.ini" "requirements.txt" "pom.xml" "build.gradle" "Cargo.lock" "yarn.lock"
+                  "webpack.config.js" "Gemfile" ".ruby-version" "composer.json" ".env" "README.md" ".eslint.js"
+                  "tsconfig.json" ".babelrc" ".prettierrc" "CMakeLists.txt"))
     (add-to-list 'projectile-project-root-files file))
   :bind*
   (("C-c k" . projectile-find-file))
   :init
-  ;; (setq projectile-project-root-files '("manage.py" ".git/" "go.mod"))
   (setq projectile-ignored-projects '("~/"))
   (projectile-mode +1)
   (with-eval-after-load 'projectile
@@ -683,10 +683,6 @@
 
 (use-package rust-mode :ensure t :defer t)
 
-;; (use-package rustic :ensure t :defer t
-;;   :init
-;;   (add-hook 'rustic-mode-hook '(lambda () (flycheck-mode -1))))
-
 (use-package lsp-mode :ensure t :defer t
   :config
   (setq lsp-diagnostics-provider :none)
@@ -708,11 +704,9 @@
 
 (use-package lsp-python-ms :ensure t :defer t)
 
-(use-package lsp-haskell :ensure t :defer t
-  :config
-  ;; (add-hook 'haskell-mode-hook #'lsp)
-  ;; (add-hook 'haskell-literate-mode-hook #'lsp)
-  )
+(use-package lsp-haskell :ensure t :defer t)
+
+(use-package lsp-java :ensure t :defer t :after lsp)
 
 (use-package lsp-metals
   :ensure t
@@ -826,13 +820,14 @@
   (evil-org-agenda-set-keys))
 
 (use-package v-mode
-  :ensure t
+  :ensure nil
+  :load-path (lambda () (expand-file-name "v-mode" user-emacs-directory))
   :mode ("\\.v\\'" . v-mode)
   :init
   (add-hook 'v-mode-hook
-          (lambda () (add-to-list 'imenu-generic-expression ;;
-                                 '("comment header" "^////\\(.*\\)$" 1))
-            (imenu-add-to-menubar "Index"))))
+            (lambda () (add-to-list 'imenu-generic-expression
+                                    '("comment header" "^////\\(.*\\)$" 1))
+              (imenu-add-to-menubar "Index"))))
 
 (use-package evil-visualstar :ensure t :defer nil
   :config
@@ -862,7 +857,7 @@
 
 (use-package scala-mode :ensure t :defer t
   :interpreter
-    ("scala" . scala-mode))
+  ("scala" . scala-mode))
 
 (use-package tree-sitter
   :ensure t
@@ -900,9 +895,7 @@
   :init
   (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents "~/.chat_gpt_api_key") (buffer-string))))
   :config
-  (setq gptel-model "gpt-4o")
-  ;; (setq gptel-model "gpt-3.5-turbo")
-  )
+  (setq gptel-model "gpt-4o"))
 
 (use-package sml-mode :ensure t)
 
@@ -912,6 +905,15 @@
   :ensure nil
   :load-path (lambda () (expand-file-name "beardbolt" user-emacs-directory)))
 
-(use-package js2-mode
+(use-package clhs :ensure t :defer t)
+
+(use-package d-mode
   :ensure t
-  :interpreter "node")
+  :mode "\\.d\\'"
+  :hook (d-mode . lsp-deferred)
+  :config
+  (setq d-mode-indent-style 'k&r))
+
+(use-package svelte-mode :ensure t
+  :mode "\\.svelte\\'"
+  )

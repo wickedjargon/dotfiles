@@ -684,27 +684,16 @@ in whole buffer.  With neither, delete comments on current line."
   (delete-window))
 
 (defun fff-comment ()
-  "Comment region if active, otherwise uncomment if already commented, otherwise comment the current line."
+  "Comments or uncomments the region or the current line if there's no active region."
   (interactive)
-  (if (use-region-p)
-      (if (fff-region-commented-p)
-          (uncomment-region (region-beginning) (region-end))
-        (comment-region (region-beginning) (region-end)))
-    (comment-line 1)))
-
-(defun fff-region-commented-p ()
-  "Return t if the region is already commented, nil otherwise."
-  (save-excursion
-    (let ((start (region-beginning))
-          (end (region-end))
-          (all-commented t))
-      (goto-char start)
-      (while (< (point) end)
-        (unless (looking-at "^[ \t]*$") ; Skip blank lines
-          (setq all-commented (and all-commented
-                                   (looking-at "^[ \t]*//")))) ; Adjust for C++ style comments
-        (forward-line 1))
-      all-commented)))
+  (let (beg end)
+    (if (region-active-p)
+        (setq beg (region-beginning)
+              end (region-end))
+      (setq beg (line-beginning-position)
+            end (line-end-position)))
+    (comment-or-uncomment-region beg end)
+    (next-line)))
 
 (defun fff-indent-buffer ()
   "Indent the entire buffer."
@@ -988,3 +977,32 @@ in whole buffer.  With neither, delete comments on current line."
           (progn
             (shell-command (concat "mpv " url)))
         (message "Not a YouTube link or no URL found.")))))
+
+(defun fff-reexecute-last-shell-command ()
+  "Re-execute the last shell command executed with `shell-command`."
+  (interactive)
+  (let ((last-command (nth 0 shell-command-history)))
+    (if last-command
+        (shell-command last-command)
+      (message "No previous shell command found."))))
+
+(defun run-v ()
+  "Run an interactive REPL session for the V programming language."
+  (interactive)
+  (let ((buffer (get-buffer-create "*V-REPL*")))
+    (unless (comint-check-proc buffer)
+      (with-current-buffer buffer
+        (comint-mode)
+        (make-comint-in-buffer "V-REPL" buffer "v" nil "repl")))
+    (pop-to-buffer buffer)))
+
+(defun fff-open-in-browser()
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (browse-url (concat "file://" filename))))
+
+(defun fff-open-current-dir-in-vscode ()
+  "Open the current directory in Visual Studio Code."
+  (interactive)
+  (let ((current-dir default-directory))
+    (start-process "vscode" nil "code" current-dir)))
