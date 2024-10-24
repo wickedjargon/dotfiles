@@ -7,7 +7,10 @@
     (string-trim (buffer-string)))
   "Your OpenWeatherMap API key.")
 
-(defvar fff-location "Williams Lake,CA"
+(defvar fff-location
+  (with-temp-buffer
+    (insert-file-contents "~/.my_city")
+    (string-trim (buffer-string)))
   "Location for which to get the weather.")
 
 (defun fff-get-weather-url ()
