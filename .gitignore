@@ -88,3 +88,8 @@ tutorial/
 /speed-type/
 /devdocs/
 /.dap-breakpoints
+/compiler-explorer
+/company-statistics-cache.el
+/beardbolt/
+/beardbolt-sandbox/
+/.extension/
