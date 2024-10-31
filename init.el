@@ -45,7 +45,6 @@
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
   (add-hook 'prog-mode-hook (lambda ()
-                              (setq indent-tabs-mode t)
                               (setq show-trailing-whitespace t)))
   (add-hook 'dired-mode-hook #'auto-revert-mode)          ;; revert dired buffers, but not buffer list buffers
   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks
@@ -134,12 +133,12 @@
   (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
+  (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
   (defvaralias 'c-basic-offset 'tab-width)                ;; Sync C mode indentation with tab width setting
   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
-  ;; (global-eldoc-mode -1)
   (display-battery-mode +1)
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
@@ -301,18 +300,8 @@
     ;; chatgpt
     (evil-leader/set-key "g g" 'fff-switch-or-create-gptel)
 
-    ;; shell/terminal
-    (evil-leader/set-key "s s" 'fff-switch-or-create-vterm)
-    (evil-leader/set-key "s S" 'fff-open-new-vterm)
-    (evil-leader/set-key "s t" 'terminal-here)
-
-    ;; tabs
-    (evil-leader/set-key (kbd "t n") 'fff-tab-bar-new-tab)
-    (evil-leader/set-key (kbd "t w") 'tab-bar-close-tab)
-    (evil-leader/set-key (kbd "t r") 'tab-bar-rename-tab)
-    (evil-leader/set-key (kbd "h h") 'fff-tabs/tab-previous)
-    (evil-leader/set-key (kbd "l l") 'fff-tabs/tab-next)
-    (evil-leader/set-key (kbd "t k") 'tab-bar-select-tab-by-name)
+    ;; trailing white space
+    (evil-leader/set-key "t w" 'delete-trailing-whitespace)
 
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'switch-to-buffer)
@@ -698,7 +687,7 @@
   (setq lsp-completion-show-detail nil)
   (setq lsp-signature-auto-activate nil)
   (setq lsp-lens-enable nil)
-  ;; (lsp-inlay-hints-mode) ; the type hints next to arguments in func signature lines and variable definitions.
+  ;; (setq lsp-inlay-hints-mode t) ; the type hints next to arguments in func signature lines and variable definitions.
   ;; (setq lsp-inlay-hint-enable t)
   (setq lsp-rust-analyzer-display-parameter-hints t))
 
@@ -714,8 +703,6 @@
   (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off"
                             "-J-Dmetals.icons=unicode"))
   (lsp-metals-enable-semantic-highlighting t))
-
-(use-package dired-hide-dotfiles :ensure t :defer t)
 
 (use-package macrostep :ensure t :defer t)
 
@@ -895,7 +882,7 @@
   :init
   (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents "~/.chat_gpt_api_key") (buffer-string))))
   :config
-  (setq gptel-model "gpt-4o"))
+  (setq gptel-model 'gpt-4o))
 
 (use-package sml-mode :ensure t)
 
