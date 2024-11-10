@@ -673,8 +673,9 @@
 (use-package rust-mode :ensure t :defer t)
 
 (use-package lsp-mode :ensure t :defer t
+  :hook (rust-mode . lsp)
   :config
-  (setq lsp-diagnostics-provider :none)
+  (setq lsp-diagnostics-provider :flymake)
   (setq lsp-auto-guess-root t)
   (setq lsp-keymap-prefix "C-c l")
   (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
