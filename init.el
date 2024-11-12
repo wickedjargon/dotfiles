@@ -93,7 +93,7 @@
   ;; tab-bar mode
   (setq tab-bar-new-tab-to 'rightmost)
   (setq tab-bar-new-tab-choice 'empty-buffer)
-  (tab-bar-mode +1)
+  (setq tab-bar-mode -1)
   (global-set-key (kbd "C-c w") 'tab-bar-close-tab)
   (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
   (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
@@ -135,6 +135,7 @@
   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
   (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
   (defvaralias 'c-basic-offset 'tab-width)                ;; Sync C mode indentation with tab width setting
+  (setq electric-pair-mode t)                             ;; automatically insert matching paren as well as auto indent on new line
   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
@@ -171,6 +172,8 @@
   (doom-themes-visual-bell-config))
 
 (use-package ef-themes :ensure t :defer t)
+
+(use-package sublime-themes :ensure t :defer t)
 
 (use-package zenburn-theme :ensure t :defer t)
 
@@ -674,6 +677,7 @@
 
 (use-package lsp-mode :ensure t :defer t
   :hook (rust-mode . lsp)
+  :hook (svelte-mode . lsp)
   :config
   (setq lsp-diagnostics-provider :flymake)
   (setq lsp-auto-guess-root t)
@@ -905,3 +909,4 @@
 (use-package svelte-mode :ensure t
   :mode "\\.svelte\\'"
   )
+
