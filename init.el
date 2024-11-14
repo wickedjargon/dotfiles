@@ -91,9 +91,9 @@
   (global-set-key (kbd "C-x 2") 'fff-split-and-follow-horizontally)
 
   ;; tab-bar mode
+  (tab-bar-mode -1) ;; off by default
   (setq tab-bar-new-tab-to 'rightmost)
   (setq tab-bar-new-tab-choice 'empty-buffer)
-  (setq tab-bar-mode -1)
   (global-set-key (kbd "C-c w") 'tab-bar-close-tab)
   (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
   (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
@@ -135,7 +135,7 @@
   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
   (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
   (defvaralias 'c-basic-offset 'tab-width)                ;; Sync C mode indentation with tab width setting
-  (setq electric-pair-mode t)                             ;; automatically insert matching paren as well as auto indent on new line
+  (electric-pair-mode 1)                                  ;; automatically insert matching paren as well as auto indent on new line
   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
@@ -165,11 +165,7 @@
 
 (use-package modus-themes :ensure t :defer nil)
 
-(use-package doom-themes
-  :ensure t
-  :config
-  (load-theme 'doom-one t)
-  (doom-themes-visual-bell-config))
+(use-package doom-themes :ensure t)
 
 (use-package ef-themes :ensure t :defer t)
 
@@ -909,4 +905,3 @@
 (use-package svelte-mode :ensure t
   :mode "\\.svelte\\'"
   )
-
