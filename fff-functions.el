@@ -657,18 +657,6 @@ in whole buffer.  With neither, delete comments on current line."
   (let ((default-directory "/ssh:"))
     (call-interactively 'find-file)))
 
-(defun fff-split-and-follow-horizontally ()
-  (interactive)
-  (split-window-below)
-  (balance-windows)
-  (other-window 1))
-
-(defun fff-split-and-follow-vertically ()
-  (interactive)
-  (split-window-right)
-  (balance-windows)
-  (other-window 1))
-
 (defun fff-flymake-python-init ()
 	(let* ((temp-file (flymake-init-create-temp-buffer-copy
                        'flymake-create-temp-inplace))
