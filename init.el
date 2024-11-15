@@ -72,12 +72,19 @@
     "Advice function to focus on the new window after running the specified function."
     (let ((current-window (selected-window)))
       (apply orig-fun args)
-      (select-window (next-w-indow current-window))))
+      (select-window (next-window current-window))))
   (advice-add 'diff-buffer-with-file :around #'fff-advice-for-window-focus)
   (advice-add 'vc-region-history :around #'fff-advice-for-window-focus)
   (advice-add 'list-buffers :around #'fff-advice-for-window-focus)
   (advice-add 'flymake-show-buffer-diagnostics :around #'fff-advice-for-window-focus)
   (advice-add 'devdocs-lookup :around #'fff-advice-for-window-focus)
+  (advice-add 'compile :around #'fff-advice-for-window-focus)
+  (advice-add 'occur :around #'fff-advice-for-window-focus)
+  (advice-add 'grep :around #'fff-advice-for-window-focus)
+  (advice-add 'display-buffer :around #'fff-advice-for-window-focus)
+  (advice-add 'switch-to-buffer-other-window :around #'fff-advice-for-window-focus)
+  (advice-add 'split-window-below :around #'fff-advice-for-window-focus)
+  (advice-add 'split-window-right :around #'fff-advice-for-window-focus)
 
   ;; key bindings
   (global-set-key (kbd "M-u") 'universal-argument)
@@ -87,8 +94,6 @@
   (define-key ctl-x-map (kbd "C-f") 'fff-find-file)
   (global-set-key (kbd "C-x C-f")  'fff-find-file)
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
-  (global-set-key (kbd "C-x 3") 'fff-split-and-follow-vertically)
-  (global-set-key (kbd "C-x 2") 'fff-split-and-follow-horizontally)
 
   ;; tab-bar mode
   (tab-bar-mode -1) ;; off by default
@@ -306,8 +311,8 @@
     (evil-leader/set-key "x b" 'switch-to-buffer)
     (evil-leader/set-key "x 0" 'delete-window)
     (evil-leader/set-key "x 1" 'delete-other-windows)
-    (evil-leader/set-key "x 2" 'fff-split-and-follow-horizontally)
-    (evil-leader/set-key "x 3" 'fff-split-and-follow-vertically)
+    (evil-leader/set-key "x 2" 'split-window-below)
+    (evil-leader/set-key "x 3" 'split-window-right)
     (evil-leader/set-key "x 4 4" 'other-window-prefix)
     (evil-leader/set-key "x 4 1" 'same-window-prefix)
     (evil-leader/set-key "x o" 'other-window)
@@ -384,14 +389,12 @@
     (evil-mode +1)
 
     (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-visual-state-map (kbd "C-a") 'evil-first-non-blank)
     (define-key evil-visual-state-map (kbd "<backpace>") 'delete-char)
     (define-key evil-visual-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
 
     (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-insert-state-map (kbd "C-a") 'evil-first-non-blank)
     (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
     (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
     (define-key evil-insert-state-map (kbd "C-y") 'yank)
@@ -402,7 +405,6 @@
     (define-key evil-insert-state-map (kbd "C-/") 'fff-comment)
 
     (define-key evil-normal-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-normal-state-map (kbd "C-a") 'evil-first-non-blank)
     (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
     (define-key evil-normal-state-map (kbd "C-o") 'evil-jump-backward)
     (define-key evil-normal-state-map (kbd "M-o") 'evil-jump-forward)
@@ -674,6 +676,7 @@
 (use-package lsp-mode :ensure t :defer t
   :hook (rust-mode . lsp)
   :hook (svelte-mode . lsp)
+  :hook (c-mode . lsp)
   :config
   (setq lsp-diagnostics-provider :flymake)
   (setq lsp-auto-guess-root t)
