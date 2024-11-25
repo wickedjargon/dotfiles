@@ -955,7 +955,6 @@ in whole buffer.  With neither, delete comments on current line."
     (when menu-function
       (call-interactively menu-function))))
 
-
 (defun fff-eww-play-with-mpv ()
   (interactive)
   (when (equal major-mode 'eww-mode)

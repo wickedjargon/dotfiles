@@ -677,6 +677,7 @@
   :hook (rust-mode . lsp)
   :hook (svelte-mode . lsp)
   :hook (c-mode . lsp)
+  :hook (c++-mode . lsp)
   :config
   (setq lsp-diagnostics-provider :flymake)
   (setq lsp-auto-guess-root t)
@@ -905,6 +906,4 @@
   :config
   (setq d-mode-indent-style 'k&r))
 
-(use-package svelte-mode :ensure t
-  :mode "\\.svelte\\'"
-  )
+(use-package svelte-mode :ensure t :mode "\\.svelte\\'")
