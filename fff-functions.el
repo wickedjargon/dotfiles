@@ -938,7 +938,9 @@ in whole buffer.  With neither, delete comments on current line."
                            iedit-mode
                            find-tag
                            rgrep
-                           deadgrep))
+                           deadgrep
+                           swiper
+                           ))
          (selected-function (completing-read "Select a search function: " functions-list nil t)))
     (when selected-function
       (call-interactively (intern selected-function)))))
@@ -995,8 +997,11 @@ in whole buffer.  With neither, delete comments on current line."
     (start-process "vscode" nil "code" current-dir)))
 
 (defun fff-filter-lines-with-regex (regex)
-  "Filter lines in the current buffer to show only those matching REGEX."
+  "Filter lines in the current buffer to show only those matching REGEX,
+but only if the buffer is read-only."
   (interactive "sEnter regex to filter lines: ")
-  (let ((inhibit-read-only t))
-    (goto-char (point-min))
-    (delete-non-matching-lines regex)))
+  (if buffer-read-only
+      (let ((inhibit-read-only t))
+        (goto-char (point-min))
+        (delete-non-matching-lines regex))
+    (message "This command only works in read-only buffers.")))
