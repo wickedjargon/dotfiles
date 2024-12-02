@@ -993,3 +993,10 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (let ((current-dir default-directory))
     (start-process "vscode" nil "code" current-dir)))
+
+(defun fff-filter-lines-with-regex (regex)
+  "Filter lines in the current buffer to show only those matching REGEX."
+  (interactive "sEnter regex to filter lines: ")
+  (let ((inhibit-read-only t))
+    (goto-char (point-min))
+    (delete-non-matching-lines regex)))
