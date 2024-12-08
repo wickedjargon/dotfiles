@@ -816,7 +816,7 @@ in whole buffer.  With neither, delete comments on current line."
   "Start the BrowserSync server."
   (interactive)
   (let ((default-directory default-directory))
-    (async-shell-command "browser-sync start --server --files \"**/*\" & disown && xdg-open http://localhost:3000")))
+    (async-shell-command "browser-sync start --watch --server --files \"**/*\" & disown && xdg-open http://localhost:3000")))
 
 (defun fff-stop-server ()
   "Stop the BrowserSync server."
