@@ -285,6 +285,7 @@
     ;; f: shortcut to file or dired buffer
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f B" 'fff-access-books)
+    (evil-leader/set-key "f h" 'fff-access-hosts)
 
     ;; full screen
     (evil-leader/set-key "f s" 'toggle-frame-fullscreen)
@@ -678,6 +679,9 @@
   :hook (svelte-mode . lsp)
   :hook (c-mode . lsp)
   :hook (c++-mode . lsp)
+  :hook (typescript-mode . lsp)
+  :hook (javascript-mode . lsp)
+  :hook (python-mode . lsp)
   :config
   (setq lsp-diagnostics-provider :flymake)
   (setq lsp-auto-guess-root t)
