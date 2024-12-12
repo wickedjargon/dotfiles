@@ -326,10 +326,6 @@
     (evil-leader/set-key "x SPC b" 'list-buffers)
     (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
 
-    ;; these too please
-    (evil-leader/set-key "4 4" 'other-window-prefix)
-    (evil-leader/set-key "4 1" 'same-window-prefix)
-
     ;; access dirs
     (evil-leader/set-key "x c" 'fff-access-config-dir)
     (evil-leader/set-key "x m" 'fff-access-home-dir)
