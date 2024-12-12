@@ -10,28 +10,28 @@
       (message "fff-key-set-mode enabled")
     (message "fff-key-set-mode disabled")))
 
-(defun fff-assign-key-to-buffer ()
- "Assign a keybinding in `fff-key-set-mode-map' to switch to the current buffer."
- (interactive)
- (let ((key (read-string "Enter the key to switch to current buffer: "))
-     (buffer (current-buffer)))
- (define-key fff-key-set-mode-map key
-  `(lambda ()
-     (interactive)
-     (if (eq (current-buffer) ,buffer)
-         (evil-switch-to-windows-last-buffer)
-       (switch-to-buffer ,buffer))))))
+;; (defun fff-assign-key-to-buffer ()
+;;  "Assign a keybinding in `fff-key-set-mode-map' to switch to the current buffer."
+;;  (interactive)
+;;  (let ((key (read-string "Enter the key to switch to current buffer: "))
+;;      (buffer (current-buffer)))
+;;  (define-key fff-key-set-mode-map key
+;;   `(lambda ()
+;;      (interactive)
+;;      (if (eq (current-buffer) ,buffer)
+;;          (evil-switch-to-windows-last-buffer)
+;;        (switch-to-buffer ,buffer))))))
 
-(defun fff-assign-key-to-dir ()
- "Assign a keybinding in `fff-key-set-mode-map' to open a file in the current directory."
- (interactive)
- (let ((key (read-string "Enter the key to open a file in current directory: "))
-     (directory default-directory))
- (define-key fff-key-set-mode-map key
-  `(lambda ()
-     (interactive)
-     (let ((default-directory ,directory))
-       (call-interactively 'find-file))))))
+;; (defun fff-assign-key-to-dir ()
+;;  "Assign a keybinding in `fff-key-set-mode-map' to open a file in the current directory."
+;;  (interactive)
+;;  (let ((key (read-string "Enter the key to open a file in current directory: "))
+;;      (directory default-directory))
+;;  (define-key fff-key-set-mode-map key
+;;   `(lambda ()
+;;      (interactive)
+;;      (let ((default-directory ,directory))
+;;        (call-interactively 'find-file))))))
 
 (defun fff-assign-key-to-buffer-leader ()
  "Assign a keybinding in `evil-leader--default-map' to switch to the current buffer."
@@ -56,13 +56,13 @@
      (let ((default-directory ,directory))
        (call-interactively 'find-file))))))
 
-(defun fff-assign-key-to-position ()
-  "Assign a keybinding in `fff-key-set-mode-map' to jump to the current location in the current buffer."
-  (interactive)
-  (let* ((key (read-string "Enter the key to jump to the current location in this buffer: "))
-         (position (point-marker)))
-    (define-key fff-key-set-mode-map (kbd key)
-      `(lambda ()
-         (interactive)
-         (goto-char ,position)))))
+;; (defun fff-assign-key-to-position ()
+;;   "Assign a keybinding in `fff-key-set-mode-map' to jump to the current location in the current buffer."
+;;   (interactive)
+;;   (let* ((key (read-string "Enter the key to jump to the current location in this buffer: "))
+;;          (position (point-marker)))
+;;     (define-key fff-key-set-mode-map (kbd key)
+;;       `(lambda ()
+;;          (interactive)
+;;          (goto-char ,position)))))
 
