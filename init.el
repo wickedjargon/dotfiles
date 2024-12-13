@@ -168,9 +168,11 @@
   (setq minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt)))
 
-(use-package modus-themes :ensure t :defer nil)
+(use-package modus-themes :ensure t
+  :config
+  (load-theme 'modus-vivendi))
 
-(use-package doom-themes :ensure t)
+(use-package doom-themes :ensure t :defer t)
 
 (use-package ef-themes :ensure t :defer t)
 
@@ -671,13 +673,22 @@
 (use-package rust-mode :ensure t :defer t)
 
 (use-package lsp-mode :ensure t :defer t
-  :hook (rust-mode . lsp)
-  :hook (svelte-mode . lsp)
-  :hook (c-mode . lsp)
-  :hook (c++-mode . lsp)
-  :hook (typescript-mode . lsp)
-  :hook (javascript-mode . lsp)
-  :hook (python-mode . lsp)
+  ;; preferred LSPs:
+  ;; - javascript/typescript: jsts-ls
+  ;; - python:  pylsp
+  ;; - html:
+  ;; - css:
+  :hook (rust-mode . lsp-deferred)
+  :hook (svelte-mode . lsp-deferred)
+  :hook (c-mode . lsp-deferred)
+  :hook (c++-mode . lsp-deferred)
+  :hook (typescript-mode . lsp-deferred)
+  :hook (javascript-mode . lsp-deferred)
+  :hook (python-mode . lsp-deferred)
+  :hook (d-mode . lsp-deferred)
+  ;; to do, find a way to conditionally install
+  ;; an lsp using:
+  ;; (lsp-install-server nil 'jsts-ls)
   :config
   (setq lsp-diagnostics-provider :flymake)
   (setq lsp-auto-guess-root t)
@@ -902,7 +913,6 @@
 (use-package d-mode
   :ensure t
   :mode "\\.d\\'"
-  :hook (d-mode . lsp-deferred)
   :config
   (setq d-mode-indent-style 'k&r))
 
