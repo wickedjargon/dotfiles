@@ -1005,3 +1005,8 @@ but only if the buffer is read-only."
         (goto-char (point-min))
         (delete-non-matching-lines regex))
     (message "This command only works in read-only buffers.")))
+
+(defun fff-show-current-line-number ()
+  "Display the current line number in the echo area."
+  (interactive)
+  (message "Current line number: %d" (line-number-at-pos)))
