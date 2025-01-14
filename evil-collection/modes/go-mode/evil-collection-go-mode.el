@@ -37,8 +37,8 @@
 (defun evil-collection-go-mode-setup ()
   "Set up `evil' bindings for `go-mode'."
   (evil-collection-define-key 'normal 'go-mode-map
-    "gd" 'godef-jump
-    "K" 'godef-describe)
+    "gd" 'lsp-find-definition
+    "K" 'lsp-describe-thing-at-point)
   (evil-collection-define-key 'normal 'godoc-mode-map
     "q" 'quit-window
     "g?" 'describe-mode))
