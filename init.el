@@ -67,25 +67,6 @@
             (lambda ()
               (yes-or-no-p "Are you sure you want to exit Emacs? ")))
 
-  ;; switch to new window
-  (defun fff-advice-for-window-focus (orig-fun &rest args)
-    "Advice function to focus on the new window after running the specified function."
-    (let ((current-window (selected-window)))
-      (apply orig-fun args)
-      (select-window (next-window current-window))))
-  (advice-add 'diff-buffer-with-file :around #'fff-advice-for-window-focus)
-  (advice-add 'vc-region-history :around #'fff-advice-for-window-focus)
-  (advice-add 'list-buffers :around #'fff-advice-for-window-focus)
-  (advice-add 'flymake-show-buffer-diagnostics :around #'fff-advice-for-window-focus)
-  (advice-add 'devdocs-lookup :around #'fff-advice-for-window-focus)
-  (advice-add 'compile :around #'fff-advice-for-window-focus)
-  (advice-add 'occur :around #'fff-advice-for-window-focus)
-  (advice-add 'grep :around #'fff-advice-for-window-focus)
-  (advice-add 'display-buffer :around #'fff-advice-for-window-focus)
-  (advice-add 'switch-to-buffer-other-window :around #'fff-advice-for-window-focus)
-  (advice-add 'split-window-below :around #'fff-advice-for-window-focus)
-  (advice-add 'split-window-right :around #'fff-advice-for-window-focus)
-
   ;; key bindings
   (global-set-key (kbd "M-u") 'universal-argument)
   (global-set-key (kbd "C-x k") 'bury-buffer)
@@ -139,7 +120,6 @@
   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
   (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
-  (defvaralias 'c-basic-offset 'tab-width)                ;; Sync C mode indentation with tab width setting
   (electric-pair-mode 1)                                  ;; automatically insert matching paren as well as auto indent on new line
   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
   (setq disabled-command-function nil)                    ;; enable all disabled commands
@@ -336,7 +316,6 @@
     (evil-leader/set-key "p p" 'fff-find-file-in-project-root)
     (evil-leader/set-key "x s" 'fff-find-file-ssh)
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
-    (evil-leader/set-key "x y" 'fff-open-file-in-snippets)
     (evil-leader/set-key "x /" 'fff-open-file-in-root-dir)
 
     ;; project root
@@ -675,7 +654,7 @@
 (use-package lsp-mode :ensure t :defer t
   ;; preferred LSPs:
   ;; - javascript/typescript: jsts-ls
-  ;; - python:  pylsp
+  ;; - python:  pylsp, python-pyflakes
   ;; - html:
   ;; - css:
   :hook (rust-mode . lsp-deferred)
@@ -686,6 +665,7 @@
   :hook (javascript-mode . lsp-deferred)
   :hook (python-mode . lsp-deferred)
   :hook (d-mode . lsp-deferred)
+  :hook (go-mode . lsp-deferred)
   ;; to do, find a way to conditionally install
   ;; an lsp using:
   ;; (lsp-install-server nil 'jsts-ls)
