@@ -408,9 +408,7 @@
   :init
   (load (expand-file-name "hide-comnt.el" user-emacs-directory))
   (load (expand-file-name "fff-functions.el" user-emacs-directory))
-  (load (expand-file-name "weather.el" user-emacs-directory))
-  )
-
+  (load (expand-file-name "weather.el" user-emacs-directory)))
 
 (use-package undo-fu :defer t :ensure t)
 
