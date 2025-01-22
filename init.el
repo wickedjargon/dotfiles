@@ -920,21 +920,6 @@
 
 (use-package svelte-mode :ensure t :mode "\\.svelte\\'")
 
-;; (defun my-remove-trailing-whitespace-on-blank-line ()
-;;   "Remove trailing whitespace on the current line if it's blank and point is moving off it."
-;;   (when (and (looking-at-p "^\\s-*$")
-;;              (not (eq (point) (line-end-position))))
-;;     (delete-horizontal-space)))
-
-;; (defun my-setup-remove-trailing-whitespace ()
-;;   "Setup the removal of trailing whitespace on blank lines."
-;;   (add-hook 'post-command-hook
-;;             #'my-remove-trailing-whitespace-on-blank-line
-;;             nil t))
-
-;; (add-hook 'prog-mode-hook #'my-setup-remove-trailing-whitespace)
-
-
 (use-package dtrt-indent :ensure nil :defer nil
   :load-path (lambda () (expand-file-name "dtrt-indent" user-emacs-directory))
   :config
