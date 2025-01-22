@@ -250,10 +250,10 @@
           (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
 
     (evil-leader/set-leader "<SPC>")
+    (evil-leader/set-key "<escape> <escape> <escape>" 'keyboard-escape-quit)
 
     ;; single key
     (evil-leader/set-key "SPC" 'execute-extended-command)
-    (evil-leader/set-key "<escape> <escape> <escape>" 'keyboard-escape-quit)
     (evil-leader/set-key "RET" 'crux-open-with)
     (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "d" 'delete-blank-lines)
