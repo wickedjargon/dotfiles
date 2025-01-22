@@ -545,7 +545,7 @@
 (use-package markdown-mode :defer t :ensure nil
   :mode ("README\\.md\\'" . gfm-mode)
   :init (setq markdown-command "multimarkdown")
-  (add-hook 'markdown-mode-hook #'visual-line-mode))
+  (add-hook 'markdown-mode-hook (lambda () visual-line-mode +1)))
 
 (use-package mw-thesaurus :defer t :ensure t)
 
@@ -879,7 +879,9 @@
   :ensure t
   :after tree-sitter)
 
-(use-package devdocs :ensure t)
+(use-package devdocs :ensure t
+  :init
+  (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
 
 (use-package projectile-ripgrep :ensure t)
 
