@@ -205,17 +205,6 @@
   (interactive)
   (insert "    "))
 
-(defun fff-toggle-visual-line-mode ()
-  (interactive)
-  (if (not visual-line-mode)
-      (progn
-        (visual-line-mode +1)
-        (message "visual line mode on"))
-    (progn
-      (visual-line-mode -1)
-      (message "visual line mode off")
-      )))
-
 (defun fff-send-to-clipboard (x)
   (with-temp-buffer
     (insert x)
