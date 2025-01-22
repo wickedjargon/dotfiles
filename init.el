@@ -856,10 +856,6 @@
   (load-file (expand-file-name "fff-key-set-mode.el" user-emacs-directory))
   (fff-key-set-mode 1))
 
-(use-package dtrt-indent :ensure t :defer nil
-  :config
-  (dtrt-indent-global-mode +1))
-
 (use-package evil-iedit-state :ensure t :defer t
   :init
   (global-set-key (kbd "C-;") 'iedit-mode))
@@ -939,3 +935,7 @@
 ;; (add-hook 'prog-mode-hook #'my-setup-remove-trailing-whitespace)
 
 
+(use-package dtrt-indent :ensure nil :defer nil
+  :load-path (lambda () (expand-file-name "dtrt-indent" user-emacs-directory))
+  :config
+  (dtrt-indent-global-mode +1))
