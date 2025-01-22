@@ -935,6 +935,7 @@ merged with offset %s (%.2f%% deviation, limit %.2f%%)"
               (cons :rejected rejected)
               (cons :confidence confidence))))))
 
+;;;###autoload
 (defun dtrt-indent-try-set-offset ()
   (interactive)
   "Try adjusting the current buffer's indentation offset."
