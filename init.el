@@ -930,4 +930,5 @@
 (use-package dtrt-indent :ensure nil :defer nil
   :load-path (lambda () (expand-file-name "dtrt-indent" user-emacs-directory))
   :config
+  (require 'dtrt-indent)
   (dtrt-indent-global-mode +1))
