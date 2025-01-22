@@ -1,0 +1,13 @@
+diff -u --label /home/ff/.emacs.d/dtrt-indent/dtrt-indent.el --label \#\<buffer\ dtrt-indent.el\> /home/ff/.emacs.d/dtrt-indent/dtrt-indent.el /tmp/buffer-content-py9sbE
+--- /home/ff/.emacs.d/dtrt-indent/dtrt-indent.el
++++ #<buffer dtrt-indent.el>
+@@ -936,6 +936,7 @@
+               (cons :confidence confidence))))))
+ 
+ (defun dtrt-indent-try-set-offset ()
++  (interactive)
+   "Try adjusting the current buffer's indentation offset."
+   (let ((language-and-variable (cdr (dtrt-indent--search-hook-mapping major-mode))))
+     (when language-and-variable
+
+Diff finished.  Tue Jan 21 20:58:15 2025
