@@ -284,6 +284,9 @@
     ;; magit
     (evil-leader/set-key "m m" 'magit)
 
+    ;; visual line mode
+    (evil-leader/set-key "v v" 'visual-line-mode)
+
     ;; window size adjustment
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
     (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
