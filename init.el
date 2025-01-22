@@ -79,9 +79,7 @@
   (defun fff-setup-remove-trailing-whitespace ()
     "Setup the removal of trailing whitespace on blank lines."
     (setq fff-last-line (line-number-at-pos))
-    (add-hook 'post-command-hook
-              #'fff-remove-trailing-whitespace-on-blank-line
-              nil t))
+    (add-hook 'post-command-hook #'fff-remove-trailing-whitespace-on-blank-line nil t))
 
   (add-hook 'prog-mode-hook #'fff-setup-remove-trailing-whitespace)
 
