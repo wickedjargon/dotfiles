@@ -57,32 +57,6 @@
                                        (define-key inferior-lisp-mode-map (kbd "C-p") 'comint-previous-input)
                                        (define-key inferior-lisp-mode-map (kbd "C-n") 'comint-next-input)))
 
-  ;; electric-indent-mode will indent on new lines, but if you leave them blank, trailing white space
-  ;; will be left behind. this automatically removes white space on blank lines.
-  (defvar-local fff-last-line nil
-    "Keeps track of the last line position to detect line changes.")
-
-  (defun fff-remove-trailing-whitespace-on-blank-line ()
-    "Remove trailing whitespace from the last line if it's blank."
-    (let ((current-line (line-number-at-pos)))
-      (when (and fff-last-line
-                 (not (eq fff-last-line current-line)))
-        ;; Move to the last line's position for cleanup
-        (save-excursion
-          (goto-char (point-min))
-          (forward-line (1- fff-last-line))
-          (when (looking-at-p "^\\s-*$")
-            (delete-horizontal-space))))
-      ;; Update the last line tracker
-      (setq fff-last-line current-line)))
-
-  (defun fff-setup-remove-trailing-whitespace ()
-    "Setup the removal of trailing whitespace on blank lines."
-    (setq fff-last-line (line-number-at-pos))
-    (add-hook 'post-command-hook #'fff-remove-trailing-whitespace-on-blank-line nil t))
-
-  (add-hook 'prog-mode-hook #'fff-setup-remove-trailing-whitespace)
-
   ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
   (dolist (fn '(lsp-format-buffer
                 lsp-format-region
