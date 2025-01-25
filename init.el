@@ -323,7 +323,7 @@
     (evil-leader/set-key "x o" 'other-window)
     (evil-leader/set-key "x k" 'bury-buffer)
     (evil-leader/set-key "x K" 'kill-buffer)
-    (evil-leader/set-key "x d" 'make-directory)
+    (evil-leader/set-key "x D" 'make-directory)
     (evil-leader/set-key "x f" 'fff-find-file)
     (evil-leader/set-key "x r" 'crux-recentf-find-file)
     (evil-leader/set-key "x w" 'write-file)
