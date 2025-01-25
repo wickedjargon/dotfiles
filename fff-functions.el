@@ -999,3 +999,13 @@ but only if the buffer is read-only."
   "Display the current line number in the echo area."
   (interactive)
   (message "Current line number: %d" (line-number-at-pos)))
+
+(defun fff-delete-trailing-whitespace-in-dir (dir)
+  "Delete trailing whitespace in all files in the specified directory."
+  (interactive "DDirectory: ")
+  (let ((files (directory-files-recursively dir ".*\\.\\(el\\|c\\|h\\)$"))) ;; Adjusted to exclude .txt
+    (dolist (file files)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (delete-trailing-whitespace)
+        (write-region (point-min) (point-max) file)))))
