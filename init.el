@@ -925,3 +925,9 @@
   :config
   (require 'dtrt-indent)
   (dtrt-indent-global-mode +1))
+(use-package elfeed
+  :ensure t
+  :config
+  (setq elfeed-feeds
+        '(("https://www.youtube.com/feeds/videos.xml?channel_id=UCrqM0Ym_NbK1fqeQG2VIohg"
+           youtube))))
