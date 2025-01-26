@@ -75,6 +75,7 @@
   (define-key ctl-x-map (kbd "C-f") 'fff-find-file)
   (global-set-key (kbd "C-x C-f")  'fff-find-file)
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
+  (global-set-key (kbd "C-<backspace>") 'kill-whole-line)
 
   ;; tab-bar mode
   (tab-bar-mode -1) ;; off by default
@@ -928,5 +929,20 @@
   :ensure t
   :config
   (setq elfeed-feeds
-        '(("https://www.youtube.com/feeds/videos.xml?channel_id=UCrqM0Ym_NbK1fqeQG2VIohg"
-           youtube))))
+        '("https://www.youtube.com/feeds/videos.xml?channel_id=UCrqM0Ym_NbK1fqeQG2VIohg"   ;; Tsoding Daily
+          "https://protesilaos.com/codelog.xml"                                            ;; prot code blogs
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UC2eYFnH61tmytImy1mTYvhA"   ;; Luke Smith yt
+          "https://lukesmith.xyz/index.xml"                                                ;; Luke Smith site
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UC6biysICWOJ-C3P4Tyeggzg"   ;; Low level programming
+          )))
+
+
+(use-package eww :ensure nil
+  :config
+  (setq eww-search-prefix "https://wiby.me/?q="))
+
+
+(use-package text-mode :ensure nil
+  :mode ("\\.s\\'" . text-mode)
+  ("\\.asm\\'" . text-mode)
+  :hook (text-mode . display-line-numbers-mode))

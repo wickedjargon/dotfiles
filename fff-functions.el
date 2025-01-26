@@ -995,6 +995,12 @@ but only if the buffer is read-only."
         (delete-non-matching-lines regex))
     (message "This command only works in read-only buffers.")))
 
+
+(defun fff-filter-lines-with-regex-undo (regex)
+  "just revert the buffer"
+  ("interactive")
+  (revert-buffer))
+
 (defun fff-show-current-line-number ()
   "Display the current line number in the echo area."
   (interactive)
@@ -1009,3 +1015,23 @@ but only if the buffer is read-only."
         (insert-file-contents file)
         (delete-trailing-whitespace)
         (write-region (point-min) (point-max) file)))))
+
+
+
+(defun fff-play-url-at-point-with-mpv ()
+  "Play the URL at point with mpv if it's a valid URL."
+  (interactive)
+  (require 'thingatpt)
+  (let ((url (thing-at-point 'url t)))
+    (if url
+        (progn
+          (message "Playing URL: %s" url)
+          (shell-command (format "mpv '%s' &" url)))
+      (message "No valid URL at point."))))
+
+
+(defun fff-speak-text (text)
+  "Send TEXT to the local web server to be spoken."
+  (interactive "sEnter text to speak: ")
+  (browse-url (concat "http://localhost:8000/speak.html?text="
+                      (url-encode-url text))))
