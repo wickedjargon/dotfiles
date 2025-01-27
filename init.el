@@ -882,7 +882,9 @@
   :init
   (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents "~/.chat_gpt_api_key") (buffer-string))))
   :config
-  (setq gptel-model 'gpt-4o))
+  (setq gptel-model 'gpt-4o)
+  (setq gptel--system-message "Please respond briefly unless requests otherwise. when asked a question that only requires a single word, name, number, etc, provide only that word, name, number, etc."))
+
 
 (use-package sml-mode :ensure t)
 
@@ -902,28 +904,20 @@
 
 (use-package svelte-mode :ensure t :mode "\\.svelte\\'")
 
-(use-package dtrt-indent :ensure nil :defer nil
-  :load-path (lambda () (expand-file-name "dtrt-indent" user-emacs-directory))
-  :config
-  (require 'dtrt-indent)
-  (dtrt-indent-global-mode +1)
-  ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
-  (dolist (fn '(lsp-format-buffer
-                lsp-format-region
-                lsp-format-buffer
-                indent-region
-                fff-indent-buffer
-                indent-line
-                indent-according-to-mode
-                newline-and-indent
-                indent-for-tab-command
-                tab-to-tab-stop
-                reindent-then-newline-and-indent
-                c-indent-line-or-region
-                tabify
-                untabify))
-    (advice-add fn :after (lambda (&rest _args)
-                            (dtrt-indent-try-set-offset)))))
+;; (use-package dtrt-indent :ensure nil :defer nil
+;;   :load-path (lambda () (expand-file-name "dtrt-indent" user-emacs-directory))
+;;   :config
+;;   (require 'dtrt-indent)
+;;   (dtrt-indent-global-mode +1)
+;;   ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
+;;   (dolist (fn '(lsp-format-buffer
+;;                 lsp-format-region
+;;                 indent-region
+;;                 tabify
+;;                 untabify))
+;;     (advice-add fn :after (lambda (&rest _args)
+;;                             (when (called-interactively-p 'any)
+;;                               (dtrt-indent-try-set-offset))))))
 
 (use-package elfeed
   :ensure t
@@ -940,7 +934,6 @@
 (use-package eww :ensure nil
   :config
   (setq eww-search-prefix "https://wiby.me/?q="))
-
 
 (use-package text-mode :ensure nil
   :mode ("\\.s\\'" . text-mode)
