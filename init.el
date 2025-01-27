@@ -1,23 +1,7 @@
-;; compatible with emacs version 28 and above
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; starting our engines... ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(package-initialize)
-
-(unless (assoc-default "melpa" package-archives)
-  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
-
-(setq package-list '(use-package markdown-mode gcmh))
-
-(unless package-archive-contents
-  (package-refresh-contents))
-(dolist (package package-list)
-  (unless (package-installed-p package)
-    (package-install package)))
-
-(gcmh-mode +1) ;; reduce garbage collection interference.
+;; the next two blocks are required as sometimes I get an emacs frame that is smaller
+;; then the boarders of my window on dwm for some reason:
 
 ;; Maximize screen on new frame:
 (add-hook 'after-make-frame-functions
@@ -28,9 +12,25 @@
 ;; Maximize the initial frame
 (set-frame-parameter nil 'fullscreen 'maximized)
 
-;;;;;;;;;;;;;;;;;;;;;;;
-;; use package setup ;;
-;;;;;;;;;;;;;;;;;;;;;;;
+
+;; switching to straight.el as feel it'll be a better way to manage forked packages
+
+;; bootstrap straight.el
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
 (use-package emacs
   :ensure nil
@@ -149,19 +149,172 @@
   (setq minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt)))
 
+
+;; compatible with emacs version 28 and above
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; starting our engines... ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (package-initialize)
+
+;; (unless (assoc-default "melpa" package-archives)
+;;   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
+
+;; (setq package-list '(use-package markdown-mode gcmh))
+
+;; (unless package-archive-contents
+;;   (package-refresh-contents))
+;; (dolist (package package-list)
+;;   (unless (package-installed-p package)
+;;     (package-install package)))
+
+;; (gcmh-mode +1) ;; reduce garbage collection interference.
+
+;; ;; Maximize screen on new frame:
+;; (add-hook 'after-make-frame-functions
+;;           (lambda (&optional frame)
+;;             (when frame
+;;               (set-frame-parameter frame 'fullscreen 'maximized))))
+
+;; ;; Maximize the initial frame
+;; (set-frame-parameter nil 'fullscreen 'maximized)
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; use package setup ;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (use-package emacs
+;;   :ensure nil
+;;   :config
+
+;;   ;; setting font height
+;;   (if (string= (system-name) "x1c")
+;;       (set-face-attribute 'default nil :height 135)
+;;     (set-face-attribute 'default nil :height 95))
+
+;;   ;; hooks
+;;   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
+;;   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+;;   (add-hook 'prog-mode-hook (lambda ()
+;;                               (setq show-trailing-whitespace t)))
+;;   (add-hook 'dired-mode-hook #'auto-revert-mode)          ;; revert dired buffers, but not buffer list buffers
+;;   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks
+;;   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+
+;;   (add-hook 'comint-mode-hook (lambda ()
+;;                                 (define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
+;;                                 (define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
+;;   (add-hook 'inferior-lisp-mode-hook (lambda ()
+;;                                        (define-key inferior-lisp-mode-map (kbd "C-p") 'comint-previous-input)
+;;                                        (define-key inferior-lisp-mode-map (kbd "C-n") 'comint-next-input)))
+
+;;   ;; make elpa files read-only
+;;   (add-hook 'find-file-hook (lambda ()
+;;                               (when (and buffer-file-name
+;;                                          (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
+;;                                 (read-only-mode 1))))
+
+;;   (add-hook 'kill-emacs-query-functions
+;;             (lambda ()
+;;               (yes-or-no-p "Are you sure you want to exit Emacs? ")))
+
+;;   ;; key bindings
+;;   (global-set-key (kbd "M-u") 'universal-argument)
+;;   (global-set-key (kbd "C-x k") 'bury-buffer)
+;;   (global-unset-key (kbd "C-x C-c"))
+;;   (global-unset-key (kbd "C-h h"))
+;;   (define-key ctl-x-map (kbd "C-f") 'fff-find-file)
+;;   (global-set-key (kbd "C-x C-f")  'fff-find-file)
+;;   (global-set-key (kbd "C-c c")  'fff-clear-shell)
+;;   (global-set-key (kbd "C-<backspace>") 'kill-whole-line)
+
+;;   ;; tab-bar mode
+;;   (tab-bar-mode -1) ;; off by default
+;;   (setq tab-bar-new-tab-to 'rightmost)
+;;   (setq tab-bar-new-tab-choice 'empty-buffer)
+;;   (global-set-key (kbd "C-c w") 'tab-bar-close-tab)
+;;   (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
+;;   (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
+;;   (global-set-key (kbd "C-c h") 'tab-bar-switch-to-prev-tab)
+;;   (global-set-key (kbd "C-c l") 'tab-bar-switch-to-next-tab)
+
+;;   ;; backup and auto save
+;;   (setq version-control t)
+;;   (setq vc-make-backup-files t)
+;;   (setq delete-old-versions t)
+;;   (setq kept-new-versions 10)
+;;   (setq kept-old-versions 10)
+;;   (setq auto-save-no-message nil)
+;;   (setq auto-save-file-name-transforms
+;;         `((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
+;;   (setq backup-directory-alist
+;;         `(("." . ,(expand-file-name "backups/" user-emacs-directory))))
+
+;;   ;; evil undo
+;;   (setq evil-undo-system 'undo-fu)
+;;   (setq evil-want-integration t)
+;;   (setq evil-want-keybinding nil)
+
+;;   (setq custom-safe-themes t)                             ;; make all themes safe
+;;   (setq inhibit-startup-message t)                        ;; no splash screen
+;;   (setq use-short-answers t)                              ;; just type `y`, not `yes`
+;;   (blink-cursor-mode -1)                                  ;; don't blink my cursor
+;;   (setq auto-revert-verbose nil)
+;;   (global-auto-revert-mode +1)                            ;; auto revert files and buffers
+;;   (global-goto-address-mode +1)                           ;; make links/urls clickable
+;;   (setq safe-local-variable-values '((checkdoc-minor-mode . t))) ;; make local variables safe
+;;   (delete-selection-mode +1)                              ;; delete selction when hitting backspace on region
+;;   (set-default 'truncate-lines t)                         ;; don't wrap my text
+;;   (setq custom-file (locate-user-emacs-file "custom.el")) ;; separate custom.el file
+;;   (when (file-exists-p custom-file) (load custom-file))   ;; when it exists, load it
+;;   (setq initial-scratch-message "")                       ;; no message on scratch buffer
+;;   (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
+;;   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
+;;   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
+;;   (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
+;;   (electric-pair-mode 1)                                  ;; automatically insert matching paren as well as auto indent on new line
+;;   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
+;;   (setq disabled-command-function nil)                    ;; enable all disabled commands
+;;   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
+;;   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
+;;   (display-battery-mode +1)
+;;   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
+;;   (setq help-window-select t)  ; Switch to help buffers automatically
+;;   (setq use-dialog-box nil)
+
+;;   ;; prevent active process when closing a shell like vterm or eshell:
+;;   (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
+
+;;   ;; show startup time on launch
+;;   (defun display-startup-echo-area-message ()
+;;     (message "(emacs-init-time) -> %s" (emacs-init-time)))
+
+;;   ;; open .pl files in prolog-mode
+;;   (autoload 'prolog-mode "prolog" "" t)
+;;   (add-to-list 'auto-mode-alist '("\\.pl\\'" . prolog-mode))
+
+;;   (setq recentf-max-menu-items 25)
+;;   (setq recentf-max-saved-items 25)
+;;   (recentf-mode +1)
+;;   ;; Do not allow the cursor in the minibuffer prompt
+;;   (setq minibuffer-prompt-properties
+;;         '(read-only t cursor-intangible t face minibuffer-prompt)))
+
 (use-package modus-themes :ensure t
+  :straight t
   :config
   (load-theme 'modus-vivendi))
 
-(use-package doom-themes :ensure t :defer t)
+(use-package  doom-themes :straight t :ensure t :defer t)
 
-(use-package ef-themes :ensure t :defer t)
+(use-package ef-themes :straight t :ensure t :defer t)
 
-(use-package sublime-themes :ensure t :defer t)
+(use-package sublime-themes :straight t :ensure t :defer t)
 
-(use-package zenburn-theme :ensure t :defer t)
+(use-package zenburn-theme :straight t :ensure t :defer t)
 
-(use-package asm-mode :ensure nil :defer t)
+(use-package asm-mode :straight t :ensure nil :defer t)
 
 (use-package hippie-expand :ensure nil :defer t
   :init
@@ -174,6 +327,7 @@
                               (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
 
 (use-package doom-modeline :ensure t :defer t
+  :straight t
   :config
   (setq doom-modeline-hud t)
   (setq doom-modeline-highlight-modified-buffer-name nil)
@@ -189,6 +343,7 @@
   (doom-modeline-mode +1))
 
 (use-package yasnippet
+  :straight t
   :ensure t
   :init
   (add-hook 'prog-mode-hook #'yas-minor-mode)
@@ -197,21 +352,41 @@
   (add-to-list #'yas-snippet-dirs (expand-file-name "snippets/" user-emacs-directory))
   (yas-reload-all))
 
-(use-package annalist :ensure t)
+;; (use-package annalist :ensure t)
 
 (use-package flimenu :ensure t
+  :straight t
   :config
   (flimenu-global-mode))
 
+
+;; initial config:
+;; (use-package evil-collection
+;;   :ensure nil
+;;   :load-path (lambda () (expand-file-name "evil-collection" user-emacs-directory))
+;;   :after (annalist evil)
+;;   :config
+;;   (require 'annalist)
+;;   (evil-collection-init))
+
+;; config using github fork:
+;; (use-package evil-collection
+;;   :straight (:type git :host nil :repo "evil-collection" :local-repo "evil-collection")
+;;   :after (annalist evil)
+;;   :config
+;;   (require 'annalist)
+;;   (evil-collection-init))
+
+
+;; for now let's do this:
 (use-package evil-collection
-  :ensure nil
-  :load-path (lambda () (expand-file-name "evil-collection" user-emacs-directory))
-  :after (annalist evil)
+  :straight t
+  :after evil
   :config
-  (require 'annalist)
   (evil-collection-init))
 
 (use-package evil-leader :defer t
+  :straight t
   :commands (evil-leader-mode)
   :ensure t
   :init
@@ -346,7 +521,8 @@
     (evil-leader/set-key "b k b" 'fff-assign-key-to-buffer-leader)
     (evil-leader/set-key "b k d" 'fff-assign-key-to-dir-leader)))
 
-(use-package evil :defer t :ensure t
+(use-package evil :defer nil :ensure t
+  :straight t
   :init
   (setq evil-undo-system 'undo-fu)
   (setq evil-want-integration t)
@@ -418,15 +594,16 @@
   (load (expand-file-name "fff-functions.el" user-emacs-directory))
   (load (expand-file-name "weather.el" user-emacs-directory)))
 
-(use-package undo-fu :defer t :ensure t)
+(use-package undo-fu :straight t :defer t :ensure t)
 
 (use-package evil-surround :ensure t
+  :straight t
   :config
   (global-evil-surround-mode +1))
 
-(use-package evil-numbers :defer t :ensure t)
+(use-package evil-numbers :straight t :defer t :ensure t)
 
-(use-package expand-region :defer t :ensure t)
+(use-package expand-region :straight t :defer t :ensure t)
 
 (use-package lisp-mode :ensure nil
   :init
@@ -436,7 +613,7 @@
                          ("\\.cl$" . lisp-mode))
                        auto-mode-alist)))
 
-(use-package sly :defer t :ensure t
+(use-package sly :straight t :defer t :ensure t
   :init
   (set-default 'auto-mode-alist
                (append '(("\\.lisp$" . lisp-mode)
@@ -452,17 +629,17 @@
   (define-key lisp-mode-map (kbd "C-<return>") 'sly-eval-print-last-expression)
   (evil-set-initial-state 'sly-mrepl-mode 'normal))
 
-(use-package terminal-here :defer t :ensure t
+(use-package terminal-here :straight t :defer t :ensure t
   :init
   (setq terminal-here-linux-terminal-command 'st))
 
-(use-package so-long :defer t :ensure t
-  :init
-  (global-so-long-mode +1))
+;; (use-package so-long :defer t :ensure t
+;;   :init
+;;   (global-so-long-mode +1))
 
-(use-package lorem-ipsum :defer t :ensure t)
+(use-package lorem-ipsum :straight t :defer t :ensure t)
 
-(use-package hydra :defer t :ensure t :commands defhydra
+(use-package hydra :straight t :defer t :ensure t :commands defhydra
   :config
 
   (defhydra fff-hydra-windsize (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
@@ -496,7 +673,7 @@
     ("u" winner-undo)
     ("U" winner-redo)))
 
-(use-package company :defer t :ensure t
+(use-package company :straight t :defer t :ensure t
   :init
   (setq company-format-margin-function nil)
   (setq company-idle-delay 0.2)
@@ -504,49 +681,50 @@
   (global-company-mode))
 
 (use-package company-statistics
+  :straight t
   :ensure t
   :after company
   :hook (after-init . company-statistics-mode))
 
-(use-package restart-emacs :defer t :ensure t)
+(use-package restart-emacs :straight t :defer t :ensure t)
 
-(use-package windsize :defer t :ensure t)
+(use-package windsize :straight t :defer t :ensure t)
 
-(use-package crux :defer t :ensure t)
+(use-package crux :straight t :defer t :ensure t)
 
-(use-package emmet-mode :defer t :ensure t
+(use-package emmet-mode :straight t :defer t :ensure t
   :init (add-hook 'sgml-mode-hook 'emmet-mode))
 
-(use-package markdown-mode :defer t :ensure nil
+(use-package markdown-mode :straight t :defer t :ensure nil
   :mode ("README\\.md\\'" . gfm-mode)
   :init (setq markdown-command "multimarkdown")
   (add-hook 'markdown-mode-hook (lambda () (visual-line-mode +1))))
 
-(use-package mw-thesaurus :defer t :ensure t)
+(use-package mw-thesaurus :straight t :defer t :ensure t)
 
-(use-package sicp :defer t :ensure t)
+(use-package sicp :straight t :defer t :ensure t)
 
-(use-package gh-md :ensure t :defer t)
+(use-package gh-md :straight t :ensure t :defer t)
 
-(use-package go-mode :ensure t :defer t)
+(use-package go-mode :straight t :ensure t :defer t)
 
-(use-package vertico :defer t :ensure t
+(use-package vertico :straight t :defer t :ensure t
   :init
   (setq enable-recursive-minibuffers t)
   :config
   (vertico-mode +1)
   (define-key vertico-map (kbd "C-c d") 'vertico-exit-input))
 
-(use-package vertico-prescient :ensure t
+(use-package vertico-prescient :straight t :ensure t
   :config
   (setq prescient-filter-method  '(literal regexp initialism))
   (vertico-prescient-mode +1))
 
-(use-package savehist
-  :init
-  (savehist-mode))
+;; (use-package :straight t savehist
+;;   :init
+;;   (savehist-mode))
 
-(use-package projectile :defer t :ensure t
+(use-package projectile :straight t :defer t :ensure t
   :config
   (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod" "package.json" "Cargo.toml" "build.sh" "v.mod"
                   "make.bat" "Makefile" "Dockerfile" ".editorconfig" ".gitignore" ".git" ".svn" ".hg" ".bzr"
@@ -563,11 +741,11 @@
     (define-key projectile-command-map (kbd "C-c p") nil)
     (define-key projectile-command-map (kbd "C-c P") nil)))
 
-(use-package marginalia :defer t :ensure t
+(use-package marginalia :straight t :defer t :ensure t
   :init
   (marginalia-mode))
 
-(use-package emojify :ensure t :defer t)
+(use-package emojify :straight t :ensure t :defer t)
 
 (use-package dired :defer t :ensure nil
   :config
@@ -575,77 +753,77 @@
             (lambda ()
               (dired-hide-details-mode))))
 
-(use-package switch-window :ensure t :defer t)
+(use-package switch-window :straight t :ensure t :defer t)
 
-(use-package rainbow-mode :ensure t :defer t)
+(use-package rainbow-mode :straight t :ensure t :defer t)
 
-(use-package vimrc-mode :ensure t :defer t)
+(use-package vimrc-mode :straight t :ensure t :defer t)
 
-(use-package org-bullets :ensure t :defer t
+(use-package org-bullets :straight t :ensure t :defer t
   :init
   (require 'org-bullets)
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-(use-package emmet-mode :ensure t :defer t
+(use-package emmet-mode :straight t :ensure t :defer t
   :init
   (require 'emmet-mode)
   (add-hook 'html-mode-hook (lambda () (emmet-mode 1))))
 
-(use-package auto-package-update :ensure t :defer t
-  :config
-  (setq auto-package-update-delete-old-versions t
-        auto-package-update-interval 30)
-  (auto-package-update-maybe))
+;; (use-package auto-package-update :ensure t :defer t
+;;   :config
+;;   (setq auto-package-update-delete-old-versions t
+;;         auto-package-update-interval 30)
+;;   (auto-package-update-maybe))
 
-(use-package smex :ensure t)
+(use-package smex :straight t :ensure t)
 
-(use-package git-gutter :ensure t
+(use-package git-gutter :straight t :ensure t
   :hook (prog-mode . git-gutter-mode)
   :config
   (setq git-gutter:update-interval 0.02))
 
-(use-package git-gutter-fringe :ensure t
+(use-package git-gutter-fringe :straight t :ensure t
   :config
   (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
   (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 
-(use-package hl-todo :ensure t :defer t
+(use-package hl-todo :straight t :ensure t :defer t
   :custom-face
   (hl-todo ((t (:inherit hl-todo :italic t))))
   :hook ((prog-mode . hl-todo-mode)))
 
-(use-package saveplace :init (save-place-mode))
+(use-package saveplace :straight t :init (save-place-mode))
 
-(use-package racket-mode :ensure t :defer t
-  :mode "\\.rkt\\'"
-  :config
-  (require 'racket-xp)
-  (add-hook 'racket-mode-hook #'racket-xp-mode)
-  (add-hook 'racket-mode-hook #'prettify-symbols-mode)
-  (defun setup-racket-eldoc ()
-    (eldoc-mode +1)
-    (setq eldoc-documentation-function #'racket-xp-eldoc-function))
-  (add-hook 'racket-mode-hook #'setup-racket-eldoc)
-  (define-key racket-mode-map (kbd "C-j") 'racket-run)
-  (define-key racket-mode-map (kbd "C-<return>") 'racket-run)
-  (define-key racket-mode-map (kbd "C-c C-c") 'racket-run))
+;; (use-package racket-mode :ensure t :defer t
+;;   :mode "\\.rkt\\'"
+;;   :config
+;;   (require 'racket-xp)
+;;   (add-hook 'racket-mode-hook #'racket-xp-mode)
+;;   (add-hook 'racket-mode-hook #'prettify-symbols-mode)
+;;   (defun setup-racket-eldoc ()
+;;     (eldoc-mode +1)
+;;     (setq eldoc-documentation-function #'racket-xp-eldoc-function))
+;;   (add-hook 'racket-mode-hook #'setup-racket-eldoc)
+;;   (define-key racket-mode-map (kbd "C-j") 'racket-run)
+;;   (define-key racket-mode-map (kbd "C-<return>") 'racket-run)
+;;   (define-key racket-mode-map (kbd "C-c C-c") 'racket-run))
 
-(use-package quickrun :ensure t :defer t)
+(use-package quickrun :straight t :ensure t :defer t)
 
-(use-package winner :ensure t :defer t
+(use-package winner :straight t :ensure t :defer t
   :init (winner-mode +1))
 
-(use-package haskell-mode :ensure t :defer t)
+(use-package haskell-mode :straight t :ensure t :defer t)
 
-(use-package helpful :ensure t :defer t
+(use-package helpful :straight t :ensure t :defer t
   :bind
   ([remap describe-key] . helpful-key)
   ([remap describe-command] . helpful-command)
   ([remap describe-variable] . helpful-variable)
   ([remap describe-function] . helpful-callable))
 
-(use-package volatile-highlights :ensure t :defer t
+(use-package volatile-highlights :straight t :ensure t :defer t
   :init
   (volatile-highlights-mode t)
   :config
@@ -653,11 +831,11 @@
                         'evil-paste-pop 'evil-move)
   (vhl/install-extension 'evil))
 
-(use-package typescript-mode :ensure t :defer t)
+(use-package typescript-mode :straight t :ensure t :defer t)
 
-(use-package rust-mode :ensure t :defer t)
+(use-package rust-mode :straight t :ensure t :defer t)
 
-(use-package lsp-mode :ensure t :defer t
+(use-package lsp-mode :straight t :ensure t :defer t
   ;; preferred LSPs:
   ;; - javascript/typescript: jsts-ls
   ;; - python:  pylsp, python-pyflakes
@@ -693,26 +871,27 @@
   ;; (setq lsp-inlay-hint-enable t)
   (setq lsp-rust-analyzer-display-parameter-hints t))
 
-(use-package lsp-python-ms :ensure t :defer t)
+(use-package lsp-python-ms :straight t :ensure t :defer t)
 
-(use-package lsp-haskell :ensure t :defer t)
+(use-package lsp-haskell :straight t :ensure t :defer t)
 
-(use-package lsp-java :ensure t :defer t :after lsp)
+;; (use-package lsp-java :ensure t :defer t :after lsp)
 
 (use-package lsp-metals
+  :straight t
   :ensure t
   :custom
   (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off"
                             "-J-Dmetals.icons=unicode"))
   (lsp-metals-enable-semantic-highlighting t))
 
-(use-package macrostep :ensure t :defer t)
+(use-package macrostep :straight t :ensure t :defer t)
 
-(use-package nov :ensure t :defer t
+(use-package nov :straight t :ensure t :defer t
   :init
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
-(use-package embark :ensure t :defer t
+(use-package embark :straight t :ensure t :defer t
   :bind*
   (("C-c e" . embark-act)
    ("C-h b" . embark-bindings))
@@ -725,9 +904,9 @@
                  nil
                  (window-parameters (mode-line-format . none)))))
 
-(use-package diminish :ensure t :defer t)
+(use-package diminish :straight t :ensure t :defer t)
 
-(use-package emms :ensure t :defer t
+(use-package emms :straight t :ensure t :defer t
   :diminish emms-mode-line
   :config
   (setq emms-mode-line-format "")
@@ -737,11 +916,11 @@
   (emms-all)
   (emms-default-players))
 
-(use-package circe :ensure t :defer t)
+(use-package circe :straight t :ensure t :defer t)
 
-(use-package avy :ensure t :defer t)
+(use-package avy :straight t :ensure t :defer t)
 
-(use-package pdf-tools :ensure t  :defer t
+(use-package pdf-tools :straight t :ensure t  :defer t
   :mode ("\\pdf\\'" . pdf-view-mode)
   :init
   (add-hook 'pdf-view-mode-hook (lambda ()
@@ -750,11 +929,11 @@
   :config
   (pdf-tools-install :no-query))
 
-(use-package vterm :ensure t :defer t
+(use-package vterm :straight t :ensure t :defer t
   :config
   (define-key vterm-mode-map (kbd "C-c c") 'vterm-clear))
 
-(use-package org  :ensure nil :defer t
+(use-package org :ensure nil :defer t
   :init
   (setq org-babel-lisp-eval-fn "sly-eval")
   (setq org-confirm-babel-evaluate nil)
@@ -772,34 +951,35 @@
      (C . t)
      (js . t))))
 
-(use-package magit :ensure t :defer t
+(use-package magit :straight t :ensure t :defer t
   :init
   (setq magit-section-initial-visibility-alist
         '(([hunk file staged status] . hide)
           ([file unstaged status] . show)
           ([hunk file unstaged status] . hide))))
 
-(use-package git-timemachine :ensure t :defer t)
+(use-package git-timemachine :straight t :ensure t :defer t)
 
-(use-package clojure-mode :ensure t :defer t)
+(use-package clojure-mode :straight t :ensure t :defer t)
 
-(use-package cider :ensure t :defer t
+(use-package cider :straight t :ensure t :defer t
   :config
   (define-key cider-repl-mode-map (kbd "C-c c") #'cider-repl-clear-buffer))
 
-(use-package consult :ensure t :defer t)
+(use-package consult :straight t :ensure t :defer t)
 
-(use-package embark-consult :ensure t :defer t)
+(use-package embark-consult :straight t :ensure t :defer t)
 
-(use-package pyvenv :ensure t :defer t)
+(use-package pyvenv :straight t :ensure t :defer t)
 
-(use-package keycast :ensure t :defer t)
+(use-package keycast :straight t :ensure t :defer t)
 
-(use-package org-download :ensure t
+(use-package org-download :straight t :ensure t
   :config
   (add-hook 'dired-mode-hook 'org-download-enable))
 
 (use-package evil-org
+  :straight t
   :ensure t
   :after org
   :hook (org-mode . (lambda () evil-org-mode))
@@ -808,76 +988,81 @@
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys))
 
-(use-package v-mode
-  :ensure nil
-  :load-path (lambda () (expand-file-name "v-mode" user-emacs-directory))
-  :mode ("\\.v\\'" . v-mode)
-  :init
-  (add-hook 'v-mode-hook
-            (lambda () (add-to-list 'imenu-generic-expression
-                                    '("comment header" "^////\\(.*\\)$" 1))
-              (imenu-add-to-menubar "Index"))))
+;; (use-package v-mode
+;;   :ensure nil
+;;   :load-path (lambda () (expand-file-name "v-mode" user-emacs-directory))
+;;   :mode ("\\.v\\'" . v-mode)
+;;   :init
+;;   (add-hook 'v-mode-hook
+;;             (lambda () (add-to-list 'imenu-generic-expression
+;;                                     '("comment header" "^////\\(.*\\)$" 1))
+;;               (imenu-add-to-menubar "Index"))))
 
-(use-package evil-visualstar :ensure t :defer nil
+(use-package evil-visualstar :straight t :ensure t :defer nil
+  :straight t
   :config
   (global-evil-visualstar-mode))
 
-(use-package evil-matchit :ensure t :defer nil
+(use-package evil-matchit :straight t :ensure t :defer nil
+  :straight t
   :config
   (global-evil-matchit-mode +1))
 
-(use-package zig-mode :ensure t :defer t)
+(use-package zig-mode :straight t :ensure t :defer t)
 
-(use-package all-the-icons :ensure t
+(use-package all-the-icons :straight t :ensure t
   :if (display-graphic-p))
 
-(use-package fff-key-set-mode :ensure nil :defer nil
-  :config
-  (load-file (expand-file-name "fff-key-set-mode.el" user-emacs-directory))
-  (fff-key-set-mode 1))
+;; (use-package fff-key-set-mode :ensure nil :defer nil
+;;   :config
+;;   (load-file (expand-file-name "fff-key-set-mode.el" user-emacs-directory))
+;;   (fff-key-set-mode 1))
 
-(use-package evil-iedit-state :ensure t :defer t
+(use-package evil-iedit-state :straight t :ensure t :defer t
   :init
   (global-set-key (kbd "C-;") 'iedit-mode))
 
-(use-package scala-mode :ensure t :defer t
+(use-package scala-mode :straight t :ensure t :defer t
   :interpreter
   ("scala" . scala-mode))
 
-(use-package tree-sitter
-  :ensure t
-  :config
-  (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+;; (use-package tree-sitter
+;;   :ensure t
+;;   :config
+;;   (global-tree-sitter-mode)
+;;   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
-(use-package tree-sitter-langs
-  :ensure t
-  :after tree-sitter)
+;; (use-package tree-sitter-langs
+;;   :ensure t
+;;   :after tree-sitter)
 
 (use-package devdocs :ensure t
+  :straight t
   :init
   (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
 
-(use-package projectile-ripgrep :ensure t)
+(use-package projectile-ripgrep :straight t :ensure t)
 
-(use-package dockerfile-mode :ensure t)
+(use-package dockerfile-mode :straight t :ensure t)
 
-(use-package json-mode :ensure t)
+(use-package json-mode :straight t :ensure t)
 
-(use-package deadgrep :ensure t)
+(use-package deadgrep :straight t :ensure t)
 
-(use-package sly-quicklisp :ensure t)
+(use-package sly-quicklisp :straight t :ensure t)
 
-(use-package aggressive-indent :ensure t)
+(use-package aggressive-indent :straight t :ensure t)
 
 (use-package exec-path-from-shell
+  :straight t
   :ensure t
   :config
   (exec-path-from-shell-initialize))
 
-(use-package wgrep :ensure t :defer t)
+(use-package wgrep :straight t :ensure t :defer t)
 
 (use-package gptel
+  :straight t
   :ensure t
   :init
   (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents "~/.chat_gpt_api_key") (buffer-string))))
@@ -886,40 +1071,41 @@
   (setq gptel--system-message "Please respond briefly unless requests otherwise. when asked a question that only requires a single word, name, number, etc, provide only that word, name, number, etc."))
 
 
-(use-package sml-mode :ensure t)
+(use-package sml-mode :straight t :ensure t)
 
-(use-package compiler-explorer :ensure t :defer t)
+(use-package compiler-explorer :straight t :ensure t :defer t)
 
-(use-package beardbolt
-  :ensure nil
-  :load-path (lambda () (expand-file-name "beardbolt" user-emacs-directory)))
+;; (use-package beardbolt
+;;   :ensure nil
+;;   :load-path (lambda () (expand-file-name "beardbolt" user-emacs-directory)))
 
-(use-package clhs :ensure t :defer t)
+(use-package clhs :straight t :ensure t :defer t)
 
 (use-package d-mode
+  :straight t
   :ensure t
   :mode "\\.d\\'"
   :config
   (setq d-mode-indent-style 'k&r))
 
-(use-package svelte-mode :ensure t :mode "\\.svelte\\'")
+(use-package svelte-mode :straight t :ensure t :mode "\\.svelte\\'")
 
-;; (use-package dtrt-indent :ensure nil :defer nil
-;;   :load-path (lambda () (expand-file-name "dtrt-indent" user-emacs-directory))
-;;   :config
-;;   (require 'dtrt-indent)
-;;   (dtrt-indent-global-mode +1)
-;;   ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
-;;   (dolist (fn '(lsp-format-buffer
-;;                 lsp-format-region
-;;                 indent-region
-;;                 tabify
-;;                 untabify))
-;;     (advice-add fn :after (lambda (&rest _args)
-;;                             (when (called-interactively-p 'any)
-;;                               (dtrt-indent-try-set-offset))))))
+(use-package dtrt-indent :straight t :ensure t :defer nil
+  :config
+  (require 'dtrt-indent)
+  (dtrt-indent-global-mode +1)
+  ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
+  (dolist (fn '(lsp-format-buffer
+                lsp-format-region
+                indent-region
+                tabify
+                untabify))
+    (advice-add fn :after (lambda (&rest _args)
+                            (when (called-interactively-p 'any)
+                              (dtrt-indent-try-set-offset))))))
 
 (use-package elfeed
+  :straight t
   :ensure t
   :config
   (setq elfeed-feeds
