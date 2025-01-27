@@ -243,7 +243,7 @@
     ;; shell ocmmand
     (evil-leader/set-key "1" 'shell-command)
 
-                                        ; paragraph navigation
+    ; paragraph navigation
     (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
     (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
 
