@@ -859,7 +859,6 @@
   (setq gptel-model 'gpt-4o)
   (setq gptel--system-message "Please respond briefly unless requests otherwise. when asked a question that only requires a single word, name, number, etc, provide only that word, name, number, etc."))
 
-
 (use-package sml-mode :straight t :ensure t)
 
 (use-package compiler-explorer :straight t :ensure t :defer t)
@@ -900,7 +899,6 @@
           "https://lukesmith.xyz/index.xml"                                                ;; Luke Smith site
           "https://www.youtube.com/feeds/videos.xml?channel_id=UC6biysICWOJ-C3P4Tyeggzg"   ;; Low level programming
           )))
-
 
 (use-package eww :ensure nil
   :config
