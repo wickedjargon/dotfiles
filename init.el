@@ -1,5 +1,3 @@
-
-
 ;; the next two blocks are required as sometimes I get an emacs frame that is smaller
 ;; then the boarders of my window on dwm for some reason:
 
@@ -149,158 +147,6 @@
   (setq minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt)))
 
-
-;; compatible with emacs version 28 and above
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; starting our engines... ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (package-initialize)
-
-;; (unless (assoc-default "melpa" package-archives)
-;;   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
-
-;; (setq package-list '(use-package markdown-mode gcmh))
-
-;; (unless package-archive-contents
-;;   (package-refresh-contents))
-;; (dolist (package package-list)
-;;   (unless (package-installed-p package)
-;;     (package-install package)))
-
-;; (gcmh-mode +1) ;; reduce garbage collection interference.
-
-;; ;; Maximize screen on new frame:
-;; (add-hook 'after-make-frame-functions
-;;           (lambda (&optional frame)
-;;             (when frame
-;;               (set-frame-parameter frame 'fullscreen 'maximized))))
-
-;; ;; Maximize the initial frame
-;; (set-frame-parameter nil 'fullscreen 'maximized)
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; use package setup ;;
-;; ;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (use-package emacs
-;;   :ensure nil
-;;   :config
-
-;;   ;; setting font height
-;;   (if (string= (system-name) "x1c")
-;;       (set-face-attribute 'default nil :height 135)
-;;     (set-face-attribute 'default nil :height 95))
-
-;;   ;; hooks
-;;   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
-;;   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
-;;   (add-hook 'prog-mode-hook (lambda ()
-;;                               (setq show-trailing-whitespace t)))
-;;   (add-hook 'dired-mode-hook #'auto-revert-mode)          ;; revert dired buffers, but not buffer list buffers
-;;   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks
-;;   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-
-;;   (add-hook 'comint-mode-hook (lambda ()
-;;                                 (define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
-;;                                 (define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
-;;   (add-hook 'inferior-lisp-mode-hook (lambda ()
-;;                                        (define-key inferior-lisp-mode-map (kbd "C-p") 'comint-previous-input)
-;;                                        (define-key inferior-lisp-mode-map (kbd "C-n") 'comint-next-input)))
-
-;;   ;; make elpa files read-only
-;;   (add-hook 'find-file-hook (lambda ()
-;;                               (when (and buffer-file-name
-;;                                          (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
-;;                                 (read-only-mode 1))))
-
-;;   (add-hook 'kill-emacs-query-functions
-;;             (lambda ()
-;;               (yes-or-no-p "Are you sure you want to exit Emacs? ")))
-
-;;   ;; key bindings
-;;   (global-set-key (kbd "M-u") 'universal-argument)
-;;   (global-set-key (kbd "C-x k") 'bury-buffer)
-;;   (global-unset-key (kbd "C-x C-c"))
-;;   (global-unset-key (kbd "C-h h"))
-;;   (define-key ctl-x-map (kbd "C-f") 'fff-find-file)
-;;   (global-set-key (kbd "C-x C-f")  'fff-find-file)
-;;   (global-set-key (kbd "C-c c")  'fff-clear-shell)
-;;   (global-set-key (kbd "C-<backspace>") 'kill-whole-line)
-
-;;   ;; tab-bar mode
-;;   (tab-bar-mode -1) ;; off by default
-;;   (setq tab-bar-new-tab-to 'rightmost)
-;;   (setq tab-bar-new-tab-choice 'empty-buffer)
-;;   (global-set-key (kbd "C-c w") 'tab-bar-close-tab)
-;;   (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
-;;   (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
-;;   (global-set-key (kbd "C-c h") 'tab-bar-switch-to-prev-tab)
-;;   (global-set-key (kbd "C-c l") 'tab-bar-switch-to-next-tab)
-
-;;   ;; backup and auto save
-;;   (setq version-control t)
-;;   (setq vc-make-backup-files t)
-;;   (setq delete-old-versions t)
-;;   (setq kept-new-versions 10)
-;;   (setq kept-old-versions 10)
-;;   (setq auto-save-no-message nil)
-;;   (setq auto-save-file-name-transforms
-;;         `((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
-;;   (setq backup-directory-alist
-;;         `(("." . ,(expand-file-name "backups/" user-emacs-directory))))
-
-;;   ;; evil undo
-;;   (setq evil-undo-system 'undo-fu)
-;;   (setq evil-want-integration t)
-;;   (setq evil-want-keybinding nil)
-
-;;   (setq custom-safe-themes t)                             ;; make all themes safe
-;;   (setq inhibit-startup-message t)                        ;; no splash screen
-;;   (setq use-short-answers t)                              ;; just type `y`, not `yes`
-;;   (blink-cursor-mode -1)                                  ;; don't blink my cursor
-;;   (setq auto-revert-verbose nil)
-;;   (global-auto-revert-mode +1)                            ;; auto revert files and buffers
-;;   (global-goto-address-mode +1)                           ;; make links/urls clickable
-;;   (setq safe-local-variable-values '((checkdoc-minor-mode . t))) ;; make local variables safe
-;;   (delete-selection-mode +1)                              ;; delete selction when hitting backspace on region
-;;   (set-default 'truncate-lines t)                         ;; don't wrap my text
-;;   (setq custom-file (locate-user-emacs-file "custom.el")) ;; separate custom.el file
-;;   (when (file-exists-p custom-file) (load custom-file))   ;; when it exists, load it
-;;   (setq initial-scratch-message "")                       ;; no message on scratch buffer
-;;   (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
-;;   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
-;;   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
-;;   (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
-;;   (electric-pair-mode 1)                                  ;; automatically insert matching paren as well as auto indent on new line
-;;   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
-;;   (setq disabled-command-function nil)                    ;; enable all disabled commands
-;;   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
-;;   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
-;;   (display-battery-mode +1)
-;;   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
-;;   (setq help-window-select t)  ; Switch to help buffers automatically
-;;   (setq use-dialog-box nil)
-
-;;   ;; prevent active process when closing a shell like vterm or eshell:
-;;   (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
-
-;;   ;; show startup time on launch
-;;   (defun display-startup-echo-area-message ()
-;;     (message "(emacs-init-time) -> %s" (emacs-init-time)))
-
-;;   ;; open .pl files in prolog-mode
-;;   (autoload 'prolog-mode "prolog" "" t)
-;;   (add-to-list 'auto-mode-alist '("\\.pl\\'" . prolog-mode))
-
-;;   (setq recentf-max-menu-items 25)
-;;   (setq recentf-max-saved-items 25)
-;;   (recentf-mode +1)
-;;   ;; Do not allow the cursor in the minibuffer prompt
-;;   (setq minibuffer-prompt-properties
-;;         '(read-only t cursor-intangible t face minibuffer-prompt)))
-
 (use-package modus-themes :ensure t
   :straight t
   :config
@@ -352,33 +198,11 @@
   (add-to-list #'yas-snippet-dirs (expand-file-name "snippets/" user-emacs-directory))
   (yas-reload-all))
 
-;; (use-package annalist :ensure t)
-
 (use-package flimenu :ensure t
   :straight t
   :config
   (flimenu-global-mode))
 
-
-;; initial config:
-;; (use-package evil-collection
-;;   :ensure nil
-;;   :load-path (lambda () (expand-file-name "evil-collection" user-emacs-directory))
-;;   :after (annalist evil)
-;;   :config
-;;   (require 'annalist)
-;;   (evil-collection-init))
-
-;; config using github fork:
-;; (use-package evil-collection
-;;   :straight (:type git :host nil :repo "evil-collection" :local-repo "evil-collection")
-;;   :after (annalist evil)
-;;   :config
-;;   (require 'annalist)
-;;   (evil-collection-init))
-
-
-;; for now let's do this:
 (use-package evil-collection
   :straight t
   :after evil
@@ -720,9 +544,9 @@
   (setq prescient-filter-method  '(literal regexp initialism))
   (vertico-prescient-mode +1))
 
-;; (use-package :straight t savehist
-;;   :init
-;;   (savehist-mode))
+(use-package  savehist :straight t
+  :init
+  (savehist-mode))
 
 (use-package projectile :straight t :defer t :ensure t
   :config
@@ -769,12 +593,6 @@
   (require 'emmet-mode)
   (add-hook 'html-mode-hook (lambda () (emmet-mode 1))))
 
-;; (use-package auto-package-update :ensure t :defer t
-;;   :config
-;;   (setq auto-package-update-delete-old-versions t
-;;         auto-package-update-interval 30)
-;;   (auto-package-update-maybe))
-
 (use-package smex :straight t :ensure t)
 
 (use-package git-gutter :straight t :ensure t
@@ -794,20 +612,6 @@
   :hook ((prog-mode . hl-todo-mode)))
 
 (use-package saveplace :straight t :init (save-place-mode))
-
-;; (use-package racket-mode :ensure t :defer t
-;;   :mode "\\.rkt\\'"
-;;   :config
-;;   (require 'racket-xp)
-;;   (add-hook 'racket-mode-hook #'racket-xp-mode)
-;;   (add-hook 'racket-mode-hook #'prettify-symbols-mode)
-;;   (defun setup-racket-eldoc ()
-;;     (eldoc-mode +1)
-;;     (setq eldoc-documentation-function #'racket-xp-eldoc-function))
-;;   (add-hook 'racket-mode-hook #'setup-racket-eldoc)
-;;   (define-key racket-mode-map (kbd "C-j") 'racket-run)
-;;   (define-key racket-mode-map (kbd "C-<return>") 'racket-run)
-;;   (define-key racket-mode-map (kbd "C-c C-c") 'racket-run))
 
 (use-package quickrun :straight t :ensure t :defer t)
 
@@ -874,8 +678,6 @@
 (use-package lsp-python-ms :straight t :ensure t :defer t)
 
 (use-package lsp-haskell :straight t :ensure t :defer t)
-
-;; (use-package lsp-java :ensure t :defer t :after lsp)
 
 (use-package lsp-metals
   :straight t
@@ -988,16 +790,6 @@
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys))
 
-;; (use-package v-mode
-;;   :ensure nil
-;;   :load-path (lambda () (expand-file-name "v-mode" user-emacs-directory))
-;;   :mode ("\\.v\\'" . v-mode)
-;;   :init
-;;   (add-hook 'v-mode-hook
-;;             (lambda () (add-to-list 'imenu-generic-expression
-;;                                     '("comment header" "^////\\(.*\\)$" 1))
-;;               (imenu-add-to-menubar "Index"))))
-
 (use-package evil-visualstar :straight t :ensure t :defer nil
   :straight t
   :config
@@ -1013,11 +805,6 @@
 (use-package all-the-icons :straight t :ensure t
   :if (display-graphic-p))
 
-;; (use-package fff-key-set-mode :ensure nil :defer nil
-;;   :config
-;;   (load-file (expand-file-name "fff-key-set-mode.el" user-emacs-directory))
-;;   (fff-key-set-mode 1))
-
 (use-package evil-iedit-state :straight t :ensure t :defer t
   :init
   (global-set-key (kbd "C-;") 'iedit-mode))
@@ -1026,15 +813,17 @@
   :interpreter
   ("scala" . scala-mode))
 
-;; (use-package tree-sitter
-;;   :ensure t
-;;   :config
-;;   (global-tree-sitter-mode)
-;;   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+(use-package tree-sitter
+  :straight t
+  :ensure t
+  :config
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
-;; (use-package tree-sitter-langs
-;;   :ensure t
-;;   :after tree-sitter)
+(use-package tree-sitter-langs
+  :straight t
+  :ensure t
+  :after tree-sitter)
 
 (use-package devdocs :ensure t
   :straight t
@@ -1074,10 +863,6 @@
 (use-package sml-mode :straight t :ensure t)
 
 (use-package compiler-explorer :straight t :ensure t :defer t)
-
-;; (use-package beardbolt
-;;   :ensure nil
-;;   :load-path (lambda () (expand-file-name "beardbolt" user-emacs-directory)))
 
 (use-package clhs :straight t :ensure t :defer t)
 
