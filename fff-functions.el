@@ -1035,3 +1035,8 @@ but only if the buffer is read-only."
   (interactive "sEnter text to speak: ")
   (browse-url (concat "http://localhost:8000/speak.html?text="
                       (url-encode-url text))))
+
+(defun fff-indent-region ()
+  "Call `indent-region` interactively."
+  (interactive)
+  (call-interactively 'indent-region))
