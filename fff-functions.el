@@ -1040,3 +1040,18 @@ but only if the buffer is read-only."
   "Call `indent-region` interactively."
   (interactive)
   (call-interactively 'indent-region))
+
+(defun fff-open-file-in-mpv ()
+  "Open the file at point in dired using mpv."
+  (interactive)
+  (let ((file (dired-get-file-for-visit)))
+    (start-process "mpv-process" nil "mpv" file)))
+
+(defun fff-save-close-reopen-file ()
+  "Save the current file, close it, and then reopen it."
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (when filename
+      (save-buffer)
+      (kill-buffer)
+      (find-file filename))))
