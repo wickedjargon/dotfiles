@@ -852,7 +852,9 @@
   :straight t
   :ensure t
   :config
-  (exec-path-from-shell-initialize))
+  ;; only initialize this package when on unix-like system:
+  (when (memq window-system '(mac ns x))
+  (exec-path-from-shell-initialize)))
 
 (use-package wgrep :straight t :ensure t :defer t)
 
@@ -860,11 +862,15 @@
   :straight t
   :ensure t
   :init
+  (when (file-exists-p "~/.chat_gpt_api_key")
+    (setq gptel-api-key
+          (string-trim
+           (with-temp-buffer
+             (insert-file-contents "~/.chat_gpt_api_key")
+             (buffer-string)))))
   (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents "~/.chat_gpt_api_key") (buffer-string))))
   :config
-  (setq gptel-model 'gpt-4o)
-  ;; (setq gptel--system-message "Please respond briefly unless requests otherwise. when asked a question that only requires a single word, name, number, etc, provide only that word, name, number, etc.")
-  )
+  (setq gptel-model 'gpt-4o))
 
 (use-package sml-mode :straight t :ensure t)
 
