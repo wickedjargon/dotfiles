@@ -777,11 +777,12 @@ in whole buffer.  With neither, delete comments on current line."
       (execute-extended-command (intern command)))))
 
 (defun fff-find-file ()
- "Like find-file, but calls fff-vterm-directory-sync if the current buffer is a vterm buffer."
- (interactive)
- (when (eq major-mode 'vterm-mode)
-   (fff-vterm-directory-sync))
- (call-interactively 'find-file))
+  "Like find-file, but calls fff-vterm-directory-sync if the current buffer is a vterm buffer, unless using TRAMP."
+  (interactive)
+  (if (and (eq major-mode 'vterm-mode)
+           (not (tramp-tramp-file-p default-directory)))
+      (fff-vterm-directory-sync)
+    (call-interactively 'find-file)))
 
 (defun fff-buffer-switch-pop ()
  (interactive)
@@ -928,7 +929,6 @@ in whole buffer.  With neither, delete comments on current line."
                            find-tag
                            rgrep
                            deadgrep
-                           swiper
                            ))
          (selected-function (completing-read "Select a search function: " functions-list nil t)))
     (when selected-function
@@ -995,7 +995,6 @@ but only if the buffer is read-only."
         (delete-non-matching-lines regex))
     (message "This command only works in read-only buffers.")))
 
-
 (defun fff-filter-lines-with-regex-undo (regex)
   "just revert the buffer"
   ("interactive")
@@ -1016,8 +1015,6 @@ but only if the buffer is read-only."
         (delete-trailing-whitespace)
         (write-region (point-min) (point-max) file)))))
 
-
-
 (defun fff-play-url-at-point-with-mpv ()
   "Play the URL at point with mpv if it's a valid URL."
   (interactive)
@@ -1028,13 +1025,6 @@ but only if the buffer is read-only."
           (message "Playing URL: %s" url)
           (shell-command (format "mpv '%s' &" url)))
       (message "No valid URL at point."))))
-
-
-(defun fff-speak-text (text)
-  "Send TEXT to the local web server to be spoken."
-  (interactive "sEnter text to speak: ")
-  (browse-url (concat "http://localhost:8000/speak.html?text="
-                      (url-encode-url text))))
 
 (defun fff-indent-region ()
   "Call `indent-region` interactively."
