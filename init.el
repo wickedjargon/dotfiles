@@ -128,6 +128,7 @@
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
+  ;; (global-font-lock-mode -1)
 
   ;; prevent active process when closing a shell like vterm or eshell:
   (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
@@ -147,6 +148,7 @@
   (setq minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt)))
 
+;; themes
 (use-package modus-themes :ensure t
   :straight t
   :config
@@ -159,6 +161,8 @@
 (use-package sublime-themes :straight t :ensure t :defer t)
 
 (use-package zenburn-theme :straight t :ensure t :defer t)
+
+(use-package standard-themes :straight t :ensure t)
 
 (use-package asm-mode :straight t :ensure nil :defer t)
 
@@ -294,7 +298,7 @@
     (evil-leader/set-key "t w" 'delete-trailing-whitespace)
 
     ;; x: C-x prefixes
-    (evil-leader/set-key "x b" 'switch-to-buffer)
+    (evil-leader/set-key "x b" 'consult-buffer)
     (evil-leader/set-key "x 0" 'delete-window)
     (evil-leader/set-key "x 1" 'delete-other-windows)
     (evil-leader/set-key "x 2" 'split-window-below)
@@ -416,7 +420,8 @@
   :init
   (load (expand-file-name "hide-comnt.el" user-emacs-directory))
   (load (expand-file-name "fff-functions.el" user-emacs-directory))
-  (load (expand-file-name "weather.el" user-emacs-directory)))
+  (load (expand-file-name "weather.el" user-emacs-directory))
+  (load (expand-file-name "asm-mode.el") user-emacs-directory))
 
 (use-package undo-fu :straight t :defer t :ensure t)
 
@@ -521,7 +526,8 @@
 
 (use-package markdown-mode :straight t :defer t :ensure nil
   :mode ("README\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "multimarkdown")
+  :init
+  (setq markdown-command "multimarkdown")
   (add-hook 'markdown-mode-hook (lambda () (visual-line-mode +1))))
 
 (use-package mw-thesaurus :straight t :defer t :ensure t)
@@ -583,10 +589,10 @@
 
 (use-package vimrc-mode :straight t :ensure t :defer t)
 
-(use-package org-bullets :straight t :ensure t :defer t
-  :init
-  (require 'org-bullets)
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+;; (use-package org-bullets :straight t :ensure t :defer t
+;;   :init
+;;   (require 'org-bullets)
+;;   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 (use-package emmet-mode :straight t :ensure t :defer t
   :init
@@ -647,8 +653,8 @@
   ;; - css:
   :hook (rust-mode . lsp-deferred)
   :hook (svelte-mode . lsp-deferred)
-  :hook (c-mode . lsp-deferred)
-  :hook (c++-mode . lsp-deferred)
+  ;; :hook (c-mode . lsp-deferred)
+  ;; :hook (c++-mode . lsp-deferred)
   :hook (typescript-mode . lsp-deferred)
   :hook (javascript-mode . lsp-deferred)
   :hook (python-mode . lsp-deferred)
@@ -857,7 +863,8 @@
   (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents "~/.chat_gpt_api_key") (buffer-string))))
   :config
   (setq gptel-model 'gpt-4o)
-  (setq gptel--system-message "Please respond briefly unless requests otherwise. when asked a question that only requires a single word, name, number, etc, provide only that word, name, number, etc."))
+  ;; (setq gptel--system-message "Please respond briefly unless requests otherwise. when asked a question that only requires a single word, name, number, etc, provide only that word, name, number, etc.")
+  )
 
 (use-package sml-mode :straight t :ensure t)
 
@@ -905,6 +912,29 @@
   (setq eww-search-prefix "https://wiby.me/?q="))
 
 (use-package text-mode :ensure nil
-  :mode ("\\.s\\'" . text-mode)
-  ("\\.asm\\'" . text-mode)
   :hook (text-mode . display-line-numbers-mode))
+
+(use-package asm-mode :ensure nil
+  :mode ("\\.s\\'" . asm-mode)
+  ("\\.asm\\'" . asm-mode)
+  :config
+  ;; remove indentation
+  (defun asm-indent-line ()
+    "Auto-indent the current line."
+    (interactive)
+    (indent-line-to 0))
+  (defun asm-calculate-indentation () 0)
+  (defun asm-colon ()
+    "Insert a colon without triggering indentation."
+    (interactive)
+    (let ((labelp nil))
+      (save-excursion
+        (skip-syntax-backward "w_")
+        (skip-syntax-backward " ")
+        (setq labelp (bolp)))
+      (call-interactively 'self-insert-command)
+      (when labelp
+        (delete-horizontal-space)))))
+
+(use-package tmr :straight t :ensure t)
+
