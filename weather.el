@@ -2,15 +2,19 @@
 (require 'json)
 
 (defvar fff-openweathermap-api-key
-  (with-temp-buffer
-    (insert-file-contents "~/.openweathermap_api_key")
-    (string-trim (buffer-string)))
+  (if (file-exists-p "~/.openweathermap_api_key")
+      (with-temp-buffer
+        (insert-file-contents "~/.openweathermap_api_key")
+        (string-trim (buffer-string)))
+    nil)
   "Your OpenWeatherMap API key.")
 
 (defvar fff-location
-  (with-temp-buffer
-    (insert-file-contents "~/.my_city")
-    (string-trim (buffer-string)))
+  (if (file-exists-p "~/.my_city")
+      (with-temp-buffer
+        (insert-file-contents "~/.my_city")
+        (string-trim (buffer-string)))
+    nil)
   "Location for which to get the weather.")
 
 (defun fff-get-weather-url ()
