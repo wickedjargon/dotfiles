@@ -781,7 +781,9 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (if (and (eq major-mode 'vterm-mode)
            (not (tramp-tramp-file-p default-directory)))
-      (fff-vterm-directory-sync)
+      (progn
+       (fff-vterm-directory-sync)
+       (call-interactively 'find-file))
     (call-interactively 'find-file)))
 
 (defun fff-buffer-switch-pop ()
