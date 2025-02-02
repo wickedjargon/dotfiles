@@ -898,18 +898,21 @@ in whole buffer.  With neither, delete comments on current line."
     (when selected-function
       (call-interactively (intern selected-function)))))
 
-(defun fff-menu-system-management-functions ()
+(defun fff-menu-system-management-functions--improved ()
   "Select and run a system management-related function."
   (interactive)
-  (let* ((functions-list '((lambda () (shell-command "slock")) "Lock screen"
-                           (lambda () (shell-command "kill -TERM $(pidof dwm)")) "Kill dwm"
-                           (lambda () (shell-command "kill -TERM $(pidof dwm) && systemctl reboot")) "Reboot"
-                           restart-emacs "Restart Emacs"
-                           (lambda () (shell-command "kill -TERM $(pidof dwm) && systemctl poweroff")) "Shutdown"
-                           (lambda () (shell-command "xset dpms force off")) "Turn off screen"))
-         (selected-function (completing-read "Select a system management function: " functions-list nil t)))
+  (let* ((functions-list '(("Lock screen" . (lambda () (shell-command "slock")))
+                           ("Kill dwm" . (lambda () (shell-command "kill -TERM $(pidof dwm)")))
+                           ("Reboot" . (lambda () (shell-command "kill -TERM $(pidof dwm) && systemctl reboot")))
+                           ("Restart Emacs" . restart-emacs)
+                           ("Shutdown" . (lambda () (shell-command "kill -TERM $(pidof dwm) && systemctl poweroff")))
+                           ("Turn off screen" . (lambda () (shell-command "xset dpms force off")))))
+         (selected-function (completing-read "Select a system management function: "
+                                             (mapcar 'car functions-list)
+                                             nil t)))
     (when selected-function
-      (call-interactively (intern selected-function)))))
+      (call-interactively (cdr (assoc selected-function functions-list))))))
+
 
 (defun fff-menu-magit-functions ()
   "Select and run a Magit-related function."
