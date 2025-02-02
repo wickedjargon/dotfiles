@@ -1050,3 +1050,23 @@ but only if the buffer is read-only."
       (save-buffer)
       (kill-buffer)
       (find-file filename))))
+
+(defun open-straight-package-readme (package-name)
+  "Open the README file of a straight package in read-only mode.
+Prompt for PACKAGE-NAME."
+  (interactive "sEnter package name: ")
+  (let* ((possible-files '("README.md" "README" "README.txt"))
+         (repo-path (expand-file-name
+                     (format "straight/repos/%s/" package-name)
+                     straight-base-dir))
+         (readme-path (seq-some
+                       (lambda (file)
+                         (let ((full-path (expand-file-name file repo-path)))
+                           (when (file-exists-p full-path)
+                             full-path)))
+                       possible-files)))
+    (if readme-path
+        (let ((buffer (find-file-read-only readme-path)))
+          (message "Opened %s in read-only mode." readme-path)
+          buffer)
+      (message "No README file found for package: %s" package-name))))
