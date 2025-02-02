@@ -1051,7 +1051,7 @@ but only if the buffer is read-only."
       (kill-buffer)
       (find-file filename))))
 
-(defun open-straight-package-readme (package-name)
+(defun fff-open-straight-package-readme (package-name)
   "Open the README file of a straight package in read-only mode.
 Prompt for PACKAGE-NAME."
   (interactive "sEnter package name: ")
