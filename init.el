@@ -911,6 +911,8 @@
           "https://www.youtube.com/feeds/videos.xml?channel_id=UC2eYFnH61tmytImy1mTYvhA"   ;; Luke Smith yt
           "https://lukesmith.xyz/index.xml"                                                ;; Luke Smith site
           "https://www.youtube.com/feeds/videos.xml?channel_id=UC6biysICWOJ-C3P4Tyeggzg"   ;; Low level programming
+          "https://bergsoe.net/rss.xml" ;; Fatty's blog
+          "https://lyte.dev/blog/index.xml" ;; Daniel's blog
           )))
 
 (use-package eww :ensure nil
