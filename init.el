@@ -507,7 +507,14 @@
   (setq company-format-margin-function nil)
   (setq company-idle-delay 0.2)
   (setq company-tooltip-limit 2)
-  (global-company-mode))
+  (global-company-mode)
+  :config
+  (add-hook 'c-mode-common-hook
+            (lambda ()
+              (when (file-remote-p default-directory)
+                ;; Remove company-clang for remote files
+                (setq-local company-backends
+                            (remove 'company-clang company-backends))))))
 
 (use-package company-statistics
   :straight t
@@ -651,15 +658,16 @@
   ;; - python:  pylsp, python-pyflakes
   ;; - html:
   ;; - css:
-  :hook (rust-mode . lsp-deferred)
-  :hook (svelte-mode . lsp-deferred)
+  ;; hooks:
+  ;; :hook (rust-mode . lsp-deferred)
+  ;; :hook (svelte-mode . lsp-deferred)
   ;; :hook (c-mode . lsp-deferred)
   ;; :hook (c++-mode . lsp-deferred)
-  :hook (typescript-mode . lsp-deferred)
-  :hook (javascript-mode . lsp-deferred)
-  :hook (python-mode . lsp-deferred)
-  :hook (d-mode . lsp-deferred)
-  :hook (go-mode . lsp-deferred)
+  ;; :hook (typescript-mode . lsp-deferred)
+  ;; :hook (javascript-mode . lsp-deferred)
+  ;; :hook (python-mode . lsp-deferred)
+  ;; :hook (d-mode . lsp-deferred)
+  ;; :hook (go-mode . lsp-deferred)
   ;; to do, find a way to conditionally install
   ;; an lsp using:
   ;; (lsp-install-server nil 'jsts-ls)

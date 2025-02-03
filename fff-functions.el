@@ -1000,6 +1000,15 @@ but only if the buffer is read-only."
         (delete-non-matching-lines regex))
     (message "This command only works in read-only buffers.")))
 
+(defun fff-filter-lines-with-regex-writable (regex)
+  "Filter lines in the current buffer to show only those matching REGEX,
+but only if the buffer is read-only."
+  (interactive "sEnter regex to filter lines: ")
+  (let ((inhibit-read-only t))
+    (goto-char (point-min))
+    (delete-non-matching-lines regex))
+  (message "This command only works in read-only buffers."))
+
 (defun fff-filter-lines-with-regex-undo (regex)
   "just revert the buffer"
   ("interactive")
@@ -1053,12 +1062,15 @@ but only if the buffer is read-only."
 
 (defun fff-open-straight-package-readme (package-name)
   "Open the README file of a straight package in read-only mode.
-Prompt for PACKAGE-NAME."
-  (interactive "sEnter package name: ")
+Prompt for PACKAGE-NAME with completion."
+  (interactive
+   (let* ((repos-dir (expand-file-name "straight/repos/" straight-base-dir))
+          (package-names (if (file-directory-p repos-dir)
+                             (directory-files repos-dir nil "^[^.]+")
+                           (error "Repositories directory not found: %s" repos-dir))))
+     (list (completing-read "Enter package name: " package-names nil t))))
   (let* ((possible-files '("README.md" "README" "README.txt"))
-         (repo-path (expand-file-name
-                     (format "straight/repos/%s/" package-name)
-                     straight-base-dir))
+         (repo-path (expand-file-name package-name (expand-file-name "straight/repos/" straight-base-dir)))
          (readme-path (seq-some
                        (lambda (file)
                          (let ((full-path (expand-file-name file repo-path)))
@@ -1070,3 +1082,37 @@ Prompt for PACKAGE-NAME."
           (message "Opened %s in read-only mode." readme-path)
           buffer)
       (message "No README file found for package: %s" package-name))))
+
+(defun fff-set-tmr-timer-for-time (time-string)
+  "Set a TMR timer for the specified TIME-STRING.
+TIME-STRING should be in the format \"hh:mm am/pm\"."
+  (interactive "sEnter time (e.g., 4:30 pm): ")
+  (let* ((current-time (current-time))
+         ;; Split the time from the period (am/pm).
+         (components (split-string time-string " "))
+         (time-part (car components))
+         (meridiem (downcase (cadr components)))
+         (parsed-time (parse-time-string time-part))
+         (hour (nth 2 parsed-time))
+
+         ;; Convert 12-hour format to 24-hour format if needed.
+         (hour (if (and (equal meridiem "pm") (< hour 12))
+                   (+ 12 hour)
+                 (if (and (equal meridiem "am") (= hour 12))
+                     0
+                   hour)))
+         (now (decode-time current-time))
+         (target-time (encode-time (nth 0 parsed-time)  ; seconds
+                                   (nth 1 parsed-time)  ; minutes
+                                   hour                 ; adjusted hour
+                                   (nth 3 now)          ; current day
+                                   (nth 4 now)          ; current month
+                                   (nth 5 now)          ; current year
+                                   (nth 8 now))))       ; current timezone
+    ;; Adjust if the target time is already passed for today.
+    (when (time-less-p target-time current-time)
+      (setq target-time (time-add target-time (days-to-time 1))))
+    (let ((seconds-until-target (float-time (time-subtract target-time current-time))))
+      (if (> seconds-until-target 0)
+          (tmr (number-to-string (/ seconds-until-target 60)))
+        (error "The specified time is invalid")))))
