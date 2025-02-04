@@ -299,6 +299,7 @@
 
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'consult-buffer)
+    (evil-leader/set-key "x B" 'consult-projectile-switch-to-buffer)
     (evil-leader/set-key "x 0" 'delete-window)
     (evil-leader/set-key "x 1" 'delete-other-windows)
     (evil-leader/set-key "x 2" 'split-window-below)
@@ -310,9 +311,11 @@
     (evil-leader/set-key "x K" 'kill-buffer)
     (evil-leader/set-key "x D" 'make-directory)
     (evil-leader/set-key "x f" 'fff-find-file)
+    (evil-leader/set-key "x F" 'fff-find-file-in-project-root)
     (evil-leader/set-key "x r" 'crux-recentf-find-file)
     (evil-leader/set-key "x w" 'write-file)
-    (evil-leader/set-key "x SPC b" 'list-buffers)
+    (evil-leader/set-key "x SPC b" 'ibuffer)
+    (evil-leader/set-key "x SPC B" 'projectile-ibuffer)
     (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
 
     ;; shortcut
@@ -462,9 +465,10 @@
   :init
   (setq terminal-here-linux-terminal-command 'st))
 
-;; (use-package so-long :defer t :ensure t
-;;   :init
-;;   (global-so-long-mode +1))
+(use-package so-long :defer t :ensure t
+  :straight t
+  :init
+  (global-so-long-mode +1))
 
 (use-package lorem-ipsum :straight t :defer t :ensure t)
 
@@ -567,7 +571,7 @@
                   "make.bat" "Makefile" "Dockerfile" ".editorconfig" ".gitignore" ".git" ".svn" ".hg" ".bzr"
                   "Pipfile" "tox.ini" "requirements.txt" "pom.xml" "build.gradle" "Cargo.lock" "yarn.lock"
                   "webpack.config.js" "Gemfile" ".ruby-version" "composer.json" ".env" "README.md" ".eslint.js"
-                  "tsconfig.json" ".babelrc" ".prettierrc" "CMakeLists.txt"))
+                  "tsconfig.json" ".babelrc" ".prettierrc" "CMakeLists.txt" ".project"))
     (add-to-list 'projectile-project-root-files file))
   :bind*
   (("C-c k" . projectile-find-file))
@@ -577,6 +581,8 @@
   (with-eval-after-load 'projectile
     (define-key projectile-command-map (kbd "C-c p") nil)
     (define-key projectile-command-map (kbd "C-c P") nil)))
+
+(use-package consult-projectile :straight t :ensure t)
 
 (use-package marginalia :straight t :defer t :ensure t
   :init

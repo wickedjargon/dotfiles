@@ -1066,17 +1066,21 @@ Prompt for PACKAGE-NAME with completion."
   (interactive
    (let* ((repos-dir (expand-file-name "straight/repos/" straight-base-dir))
           (package-names (if (file-directory-p repos-dir)
-                             (directory-files repos-dir nil "^[^.]+")
+                             (cl-remove-if-not
+                              (lambda (dir)
+                                (seq-some
+                                 (lambda (file)
+                                   (string-match-p "^README\\(?:\\..*\\)?$" file))
+                                 (directory-files (expand-file-name dir repos-dir) nil "^[^.]+")))
+                              (directory-files repos-dir nil "^[^.]+"))
                            (error "Repositories directory not found: %s" repos-dir))))
      (list (completing-read "Enter package name: " package-names nil t))))
-  (let* ((possible-files '("README.md" "README" "README.txt"))
-         (repo-path (expand-file-name package-name (expand-file-name "straight/repos/" straight-base-dir)))
+  (let* ((repo-path (expand-file-name package-name (expand-file-name "straight/repos/" straight-base-dir)))
          (readme-path (seq-some
                        (lambda (file)
-                         (let ((full-path (expand-file-name file repo-path)))
-                           (when (file-exists-p full-path)
-                             full-path)))
-                       possible-files)))
+                         (when (string-match-p "^README\\(?:\\..*\\)?$" file)
+                           (expand-file-name file repo-path)))
+                       (directory-files repo-path))))
     (if readme-path
         (let ((buffer (find-file-read-only readme-path)))
           (message "Opened %s in read-only mode." readme-path)
@@ -1116,3 +1120,21 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
       (if (> seconds-until-target 0)
           (tmr (number-to-string (/ seconds-until-target 60)))
         (error "The specified time is invalid")))))
+
+(defun fff-maldev-academy-open-modules ()
+  "Open a dired buffer with MalDev Academy modules sorted numerically, excluding directories."
+  (require 'seq)
+  (interactive)
+  (let* ((modules-dir "~/d/books/MalDev-Academy-2024/MalDev-Academy/MalDev Modules/")
+         (files (directory-files-and-attributes modules-dir nil "^[0-9]+\\..*"))
+         ;; Filter out directories
+         (file-names (mapcar #'car (seq-filter (lambda (file-attr)
+                                                 (not (eq t (nth 1 file-attr))))
+                                               files))))
+    ;; Sort the files based on the numerical prefix
+    (setq file-names (sort file-names
+                           (lambda (a b)
+                             (< (string-to-number (car (split-string a "\\.")))
+                                (string-to-number (car (split-string b "\\.")))))))
+    ;; Open dired with sorted files
+    (dired (cons modules-dir file-names))))
