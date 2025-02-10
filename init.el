@@ -1,3 +1,7 @@
+;; what I want to do later:
+;; - projectile / projectile / consult-projectile doesn't work in a way I want it to
+;; - I want `C-x f' to be the
+
 ;; the next two blocks are required as sometimes I get an emacs frame that is smaller
 ;; then the boarders of my window on dwm for some reason:
 
@@ -33,6 +37,9 @@
 (use-package emacs
   :ensure nil
   :config
+
+  ;; for youtube change it to this:
+  ;; (set-face-attribute 'default nil :height 150)
 
   ;; setting font height
   (if (string= (system-name) "x1c")
@@ -129,6 +136,9 @@
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
   ;; (global-font-lock-mode -1)
+  (setq safe-local-variable-values
+        '((checkdoc-package-keywords-flag)
+          (checkdoc-minor-mode . t)))
 
   ;; prevent active process when closing a shell like vterm or eshell:
   (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
@@ -163,8 +173,6 @@
 (use-package zenburn-theme :straight t :ensure t :defer t)
 
 (use-package standard-themes :straight t :ensure t)
-
-(use-package asm-mode :straight t :ensure nil :defer t)
 
 (use-package hippie-expand :ensure nil :defer t
   :init
@@ -247,7 +255,7 @@
     ;; shell ocmmand
     (evil-leader/set-key "1" 'shell-command)
 
-    ; paragraph navigation
+                                        ; paragraph navigation
     (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
     (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
 
@@ -294,12 +302,9 @@
     ;; chatgpt
     (evil-leader/set-key "g g" 'fff-switch-or-create-gptel)
 
-    ;; trailing white space
-    (evil-leader/set-key "t w" 'delete-trailing-whitespace)
-
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'consult-buffer)
-    (evil-leader/set-key "x B" 'consult-projectile-switch-to-buffer)
+    (evil-leader/set-key "x B" 'projectile-switch-to-buffer)
     (evil-leader/set-key "x 0" 'delete-window)
     (evil-leader/set-key "x 1" 'delete-other-windows)
     (evil-leader/set-key "x 2" 'split-window-below)
@@ -343,6 +348,8 @@
     ;; previous/next buffer
     (evil-leader/set-key "x h" 'fff-buffer-switch/previous-buffer)
     (evil-leader/set-key "x l" 'fff-buffer-switch/next-buffer)
+    (evil-leader/set-key "h h" 'fff-buffer-switch/previous-buffer)
+    (evil-leader/set-key "l l" 'fff-buffer-switch/next-buffer)
 
     ;; run/debug bindings for projects
     (evil-leader/set-key "c c" 'quickrun)
@@ -418,6 +425,10 @@
     (define-key evil-normal-state-map (kbd "O") 'fff-evil-open-above)
     (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)))
 
+(use-package evil-better-visual-line :ensure t :straight t
+  :config
+  (evil-better-visual-line-on))
+
 (use-package hide-comnt :defer nil :ensure nil
   :after evil
   :init
@@ -425,6 +436,12 @@
   (load (expand-file-name "fff-functions.el" user-emacs-directory))
   (load (expand-file-name "weather.el" user-emacs-directory))
   (load (expand-file-name "asm-mode.el") user-emacs-directory))
+
+(use-package ocen-mode
+  :straight nil ; not to install from a package repository
+  :load-path (lambda () (expand-file-name "ocen-mode" user-emacs-directory))
+  :mode "\\.oc\\'"
+  )
 
 (use-package undo-fu :straight t :defer t :ensure t)
 
@@ -617,7 +634,12 @@
 (use-package git-gutter :straight t :ensure t
   :hook (prog-mode . git-gutter-mode)
   :config
-  (setq git-gutter:update-interval 0.02))
+  (setq git-gutter:update-interval 0.02)
+  (add-hook 'find-file-hook
+            (lambda ()
+              (when (and (fboundp 'tramp-tramp-file-p)
+                         (tramp-tramp-file-p (or buffer-file-name "")))
+                (git-gutter-mode -1)))))
 
 (use-package git-gutter-fringe :straight t :ensure t
   :config
@@ -868,7 +890,7 @@
   :config
   ;; only initialize this package when on unix-like system:
   (when (memq window-system '(mac ns x))
-  (exec-path-from-shell-initialize)))
+    (exec-path-from-shell-initialize)))
 
 (use-package wgrep :straight t :ensure t :defer t)
 
@@ -920,13 +942,15 @@
   :ensure t
   :config
   (setq elfeed-feeds
-        '("https://www.youtube.com/feeds/videos.xml?channel_id=UCrqM0Ym_NbK1fqeQG2VIohg"   ;; Tsoding Daily
-          "https://protesilaos.com/codelog.xml"                                            ;; prot code blogs
-          "https://www.youtube.com/feeds/videos.xml?channel_id=UC2eYFnH61tmytImy1mTYvhA"   ;; Luke Smith yt
-          "https://lukesmith.xyz/index.xml"                                                ;; Luke Smith site
-          "https://www.youtube.com/feeds/videos.xml?channel_id=UC6biysICWOJ-C3P4Tyeggzg"   ;; Low level programming
-          "https://bergsoe.net/rss.xml" ;; Fatty's blog
-          "https://lyte.dev/blog/index.xml" ;; Daniel's blog
+        '("https://www.youtube.com/feeds/videos.xml?channel_id=UCrqM0Ym_NbK1fqeQG2VIohg" ;; Tsoding Daily
+          "https://protesilaos.com/codelog.xml"                                          ;; prot code blogs
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UC2eYFnH61tmytImy1mTYvhA" ;; Luke Smith yt
+          "https://lukesmith.xyz/index.xml"                                              ;; Luke Smith site
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UC6biysICWOJ-C3P4Tyeggzg" ;; Low level programming
+          "https://bergsoe.net/rss.xml"                                                  ;; Fatty's blog
+          "https://lyte.dev/blog/index.xml"                                              ;; Daniel's blog
+          "https://planet.emacslife.com/atom.xml"                                        ;; emacslife
+          "https://sachachua.com/blog/feed/index.xml"                                    ;; sacha chua
           )))
 
 (use-package eww :ensure nil
@@ -959,4 +983,22 @@
         (delete-horizontal-space)))))
 
 (use-package tmr :straight t :ensure t)
+
+(use-package ibuffer  :ensure nil
+  :config
+  (setq ibuffer-formats
+        '((mark modified read-only " "
+                (name 35 35 :left :elide) ; change: 35s were originally 18s
+                " "
+                (size 9 -1 :right)
+                " "
+                (mode 16 16 :left :elide)
+                " " filename-and-process)
+          (mark " "
+                (name 16 -1)
+                " " filename))))
+
+(use-package v-mode :straight t :ensure t)
+
+
 
