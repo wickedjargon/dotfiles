@@ -1138,3 +1138,53 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
                                 (string-to-number (car (split-string b "\\.")))))))
     ;; Open dired with sorted files
     (dired (cons modules-dir file-names))))
+
+(defun fff-projectile-ibuffer-for-current-project ()
+  "Open an IBuffer window showing all buffers in the current project."
+  (interactive)
+  (let ((project-root (projectile-project-root)))
+    (if project-root
+        (projectile-ibuffer-by-project project-root)
+      (message "Not in a projectile project."))))
+
+(defun fff-swap-left-and-right-windows ()
+  "Swap the buffers between the left and right windows."
+  (interactive)
+  (let ((window1 (selected-window))
+        (window2 (next-window)))
+    (unless (eq window2 window1)
+      (let ((buffer1 (window-buffer window1))
+            (start1 (window-start window1))
+            (point1 (window-point window1))
+            (buffer2 (window-buffer window2))
+            (start2 (window-start window2))
+            (point2 (window-point window2)))
+        ;; Swap the buffers
+        (set-window-buffer window1 buffer2)
+        (set-window-buffer window2 buffer1)
+        ;; Restore the window start and point positions
+        (set-window-start window1 start2)
+        (set-window-point window1 point2)
+        (set-window-start window2 start1)
+        (set-window-point window2 point1)))))
+
+(defun fff-find-file-in-parent-projects-directory ()
+  "Open `find-file` in a parent directory whose name includes 'projects'."
+  (interactive)
+  (let ((current-dir (expand-file-name default-directory))
+        (parent-found nil))
+    (while (and (not parent-found)
+                (not (string= current-dir "/")))
+      (setq current-dir (file-name-directory (directory-file-name current-dir)))
+      (when (string-match-p "projects" (file-name-nondirectory (directory-file-name current-dir)))
+        (setq parent-found t)))
+    (if parent-found
+        (let ((default-directory current-dir))
+          (call-interactively 'find-file))
+      (message "No parent directory containing 'projects' found."))))
+
+
+(defun fff-insert-current-date ()
+  "Insert the current date in the format YYYY-MM-DD."
+  (interactive)
+  (insert (format-time-string "%Y-%m-%d")))
