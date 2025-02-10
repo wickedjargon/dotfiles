@@ -292,7 +292,7 @@
     (evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
 
     ;; imenu
-    (evil-leader/set-key "i m" 'imenu)
+    (evil-leader/set-key "i m" 'consult-imenu)
 
     ;; terminal
     (evil-leader/set-key "t t" 'fff-switch-or-create-vterm)
@@ -703,6 +703,8 @@
   (setq lsp-diagnostics-provider :flymake)
   (setq lsp-auto-guess-root t)
   (setq lsp-keymap-prefix "C-c l")
+  ;; apparently copilot is an lsp now and is listed for every major mode as a possible lsp. no thanks.
+  (setq lsp-copilot-enabled nil)
   (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
 
   ;; https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
