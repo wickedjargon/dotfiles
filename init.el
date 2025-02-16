@@ -44,7 +44,7 @@
   ;; setting font height
   (if (string= (system-name) "x1c")
       (set-face-attribute 'default nil :height 135)
-    (set-face-attribute 'default nil :height 95))
+    (set-face-attribute 'default nil :height 135))
 
   ;; hooks
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
@@ -135,6 +135,8 @@
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
+  (setq fill-column 100)
+  (setq suggest-key-bindings nil)                         ;; don't display key bindings suggestions when I run M-x commands
   ;; (global-font-lock-mode -1)
   (setq safe-local-variable-values
         '((checkdoc-package-keywords-flag)
@@ -159,10 +161,31 @@
         '(read-only t cursor-intangible t face minibuffer-prompt)))
 
 ;; themes
-(use-package modus-themes :ensure t
+;; (use-package modus-themes :ensure t
+;;   :straight t
+;;   :config
+;; (if (daemonp)
+;;     ;; If running as a client (daemon mode), load modus-vivendi
+;;     (add-hook 'after-make-frame-functions
+;;               (lambda (frame)
+;;                 (with-selected-frame frame
+;;                   (load-theme 'modus-vivendi t))))
+;;   ;; Otherwise, running Emacs normally, load modus-vivendi-tinted
+;;   (load-theme 'modus-vivendi-tinted t)))
+
+
+(use-package modus-themes
+  :ensure t
   :straight t
   :config
-  (load-theme 'modus-vivendi))
+  (if (daemonp)
+      ;; If running as a client (daemon mode), load modus-vivendi
+      (add-hook 'after-make-frame-functions
+                (lambda (frame)
+                  (with-selected-frame frame
+                    (load-theme 'modus-vivendi t))))
+    ;; Otherwise, running Emacs normally, load modus-vivendi-tinted
+    (load-theme 'modus-vivendi-tinted t)))
 
 (use-package  doom-themes :straight t :ensure t :defer t)
 
@@ -230,9 +253,6 @@
   :config
   (progn
 
-    (fset 'fff-C-x-C-e
-          (kmacro-lambda-form [?\C-x ?\C-e] 0 "%d"))
-
     (evil-leader/set-leader "<SPC>")
     (evil-leader/set-key "<escape> <escape> <escape>" 'keyboard-escape-quit)
 
@@ -241,7 +261,6 @@
     (evil-leader/set-key "RET" 'crux-open-with)
     (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "d" 'delete-blank-lines)
-    (evil-leader/set-key "e" 'fff-C-x-C-e)
     (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
     (evil-leader/set-key "o" 'other-window)
     (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
@@ -304,7 +323,7 @@
 
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'consult-buffer)
-    (evil-leader/set-key "x B" 'projectile-switch-to-buffer)
+    (evil-leader/set-key "x B" 'consult-projectile-switch-to-buffer)
     (evil-leader/set-key "x 0" 'delete-window)
     (evil-leader/set-key "x 1" 'delete-other-windows)
     (evil-leader/set-key "x 2" 'split-window-below)
@@ -345,14 +364,17 @@
     (evil-leader/set-key "u u" 'fff-winner/winner-undo)
     (evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
 
-    ;; previous/next buffer
-    (evil-leader/set-key "x h" 'fff-buffer-switch/previous-buffer)
-    (evil-leader/set-key "x l" 'fff-buffer-switch/next-buffer)
-    (evil-leader/set-key "h h" 'fff-buffer-switch/previous-buffer)
-    (evil-leader/set-key "l l" 'fff-buffer-switch/next-buffer)
+    ;; ;; previous/next buffer
+    ;; (evil-leader/set-key "x h" 'fff-buffer-switch/previous-buffer)
+    ;; (evil-leader/set-key "x l" 'fff-buffer-switch/next-buffer)
+    ;; (evil-leader/set-key "h h" 'fff-buffer-switch/previous-buffer)
+    ;; (evil-leader/set-key "l l" 'fff-buffer-switch/next-buffer)
+
+    ;; tooltip hover
+    (evil-leader/set-key "h h" 'fff-display-tooltip-at-point)
 
     ;; run/debug bindings for projects
-    (evil-leader/set-key "c c" 'quickrun)
+    (evil-leader/set-key "c c" 'compile)
 
     ;; fff-bind
     (evil-leader/set-key "b k p" 'fff-assign-key-to-position-leader)
@@ -362,6 +384,7 @@
 (use-package evil :defer nil :ensure t
   :straight t
   :init
+  (setq evil-insert-state-message nil)
   (setq evil-undo-system 'undo-fu)
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
@@ -423,13 +446,14 @@
     (define-key evil-normal-state-map (kbd "ZQ") 'fff-revert-and-bury-buffer)
     (define-key evil-normal-state-map (kbd "o") 'fff-evil-open-below)
     (define-key evil-normal-state-map (kbd "O") 'fff-evil-open-above)
-    (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)))
+    (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
+    (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)))
 
 (use-package evil-better-visual-line :ensure t :straight t
   :config
   (evil-better-visual-line-on))
 
-(use-package hide-comnt :defer nil :ensure nil
+(use-package fff-lisp :defer nil :ensure nil
   :after evil
   :init
   (load (expand-file-name "hide-comnt.el" user-emacs-directory))
@@ -441,7 +465,17 @@
   :straight nil ; not to install from a package repository
   :load-path (lambda () (expand-file-name "ocen-mode" user-emacs-directory))
   :mode "\\.oc\\'"
-  )
+  :config
+  (require 'lsp-mode)
+  (with-eval-after-load 'lsp-mode
+    (add-to-list 'lsp-language-id-configuration '("\\.oc\\'" . "ocen"))
+    (add-to-list 'lsp-language-id-configuration '(oc-mode . "ocen")))
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-stdio-connection
+                     (lambda () '("node" "/home/ff/.local/src/ocen-vscode/out/server/src/server.js" "--stdio")))
+    :major-modes '(ocen-mode)  ;; Ensure you associate this with ocen-mode
+    :server-id 'ocen-language-server)))
 
 (use-package undo-fu :straight t :defer t :ensure t)
 
@@ -552,11 +586,11 @@
 (use-package emmet-mode :straight t :defer t :ensure t
   :init (add-hook 'sgml-mode-hook 'emmet-mode))
 
-(use-package markdown-mode :straight t :defer t :ensure nil
-  :mode ("README\\.md\\'" . gfm-mode)
-  :init
-  (setq markdown-command "multimarkdown")
-  (add-hook 'markdown-mode-hook (lambda () (visual-line-mode +1))))
+;; (use-package markdown-mode :straight t :defer t :ensure nil
+;;   :mode ("README\\.md\\'" . gfm-mode)
+;;   :init
+;;   (setq markdown-command "multimarkdown")
+;;   (add-hook 'markdown-mode-hook (lambda () (visual-line-mode +1))))
 
 (use-package mw-thesaurus :straight t :defer t :ensure t)
 
@@ -639,7 +673,8 @@
             (lambda ()
               (when (and (fboundp 'tramp-tramp-file-p)
                          (tramp-tramp-file-p (or buffer-file-name "")))
-                (git-gutter-mode -1)))))
+                (git-gutter-mode -1))))
+  )
 
 (use-package git-gutter-fringe :straight t :ensure t
   :config
@@ -653,8 +688,6 @@
   :hook ((prog-mode . hl-todo-mode)))
 
 (use-package saveplace :straight t :init (save-place-mode))
-
-(use-package quickrun :straight t :ensure t :defer t)
 
 (use-package winner :straight t :ensure t :defer t
   :init (winner-mode +1))
@@ -687,10 +720,11 @@
   ;; - html:
   ;; - css:
   ;; hooks:
-  ;; :hook (rust-mode . lsp-deferred)
+  :hook (ocen-mode . lsp-deferred)
+  :hook (rust-mode . lsp-deferred)
   ;; :hook (svelte-mode . lsp-deferred)
-  ;; :hook (c-mode . lsp-deferred)
-  ;; :hook (c++-mode . lsp-deferred)
+  :hook (c-mode . lsp-deferred)
+  :hook (c++-mode . lsp-deferred)
   ;; :hook (typescript-mode . lsp-deferred)
   ;; :hook (javascript-mode . lsp-deferred)
   ;; :hook (python-mode . lsp-deferred)
@@ -882,8 +916,6 @@
 
 (use-package deadgrep :straight t :ensure t)
 
-(use-package sly-quicklisp :straight t :ensure t)
-
 (use-package aggressive-indent :straight t :ensure t)
 
 (use-package exec-path-from-shell
@@ -909,6 +941,39 @@
   (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents "~/.chat_gpt_api_key") (buffer-string))))
   :config
   (setq gptel-model 'gpt-4o))
+
+;; (use-package gptel
+;;   :straight t
+;;   :ensure t
+;;   :init
+;; ;; (setq gptel-model   'llama3.1-8b
+;; ;;       gptel-backend
+;; ;;       (gptel-make-openai "Cerebras"
+;; ;;         :host "api.cerebras.ai"
+;; ;;         :endpoint "/v1"
+;; ;;         :stream t
+;; ;;         :key "csk-dhc4xt396mrh6ph246f28yf4d386e63f5hfckntmd3fnthvw"
+;; ;;         :models '(llama3.1-70b
+;; ;;                   llama3.1-8b)))
+
+;; ;; (setq gptel-model   'llama3-70b-8192
+;; (setq gptel-model   'deepseek-r1-distill-llama-70b
+;;       gptel-backend
+;;       (gptel-make-openai "Groq"
+;;         :host "api.groq.com"
+;;         :endpoint "/openai/v1/chat/completions"
+;;         :stream t
+;;         :key "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"
+;;         ;; :models '(llama-3.1-70b-versatile
+;;         :models '(deepseek-r1-distill-llama-70b
+;;                   llama-3.1-70b-versatile
+;;                   llama-3.1-8b-instant
+;;                   llama3-70b-8192
+;;                   llama3-8b-8192
+;;                   mixtral-8x7b-32768
+;;                   gemma-7b-it))))
+
+
 
 (use-package sml-mode :straight t :ensure t)
 
@@ -984,7 +1049,7 @@
       (when labelp
         (delete-horizontal-space)))))
 
-(use-package tmr :straight t :ensure t)
+(use-package tmr :straight t :ensure t :defer t)
 
 (use-package ibuffer  :ensure nil
   :config
@@ -1000,7 +1065,73 @@
                 (name 16 -1)
                 " " filename))))
 
-(use-package v-mode :straight t :ensure t)
+(use-package v-mode :straight t :ensure t :defer t)
 
+(use-package markdown-mode
+  :ensure nil
+  :hook (markdown-mode . visual-line-mode))
 
+(use-package sly-macrostep
+  :defer t
+  :straight t
+  :config
+  (add-to-list 'sly-contribs 'sly-macrostep 'append))
 
+(use-package read-aloud
+  :defer t
+  :ensure t
+  :straight t
+  :config
+  (cl-defun read-aloud--current-word()
+    "Pronounce a word under the pointer. If under there is rubbish,
+ask user for an additional input."
+    (let* ((cw (read-aloud--u-current-word))
+           (word (nth 2 cw)))
+
+      (unless (and word (string-match "[[:alnum:]]" word))
+        ;; maybe we should share the hist list w/ `wordnut-completion-hist`?
+        (setq word (read-string "read aloud: " word 'read-aloud-word-hist)) )
+
+      (read-aloud--overlay-make (nth 0 cw) (nth 1 cw))
+      (read-aloud--string (replace-regexp-in-string "\\." "," word) "word")
+      ))
+
+  (cl-defun read-aloud-this()
+    "Pronounce either the selection or a word under the pointer."
+    (interactive)
+
+    (when read-aloud--c-locked
+      (read-aloud-stop)
+      (cl-return-from read-aloud-selection))
+
+    (if (use-region-p)
+        (let ((text (buffer-substring-no-properties (region-beginning) (region-end))))
+          (read-aloud--string (replace-regexp-in-string "\\." "," text) "selection"))
+      (read-aloud--current-word))))
+
+(use-package graphviz-dot-mode
+  :defer t
+  :straight t
+  :ensure t
+  :config
+  (setq graphviz-dot-indent-width 4))
+
+;; always open urls in a new window, use chromium always.
+(use-package browse-url
+  :ensure nil
+  :init
+  (setq browse-url-chromium-program "chromium")
+  (defun browse-url-chromium-new-window (url &optional _new-window)
+    "Open URL in a new Chromium window."
+    (interactive (browse-url-interactive-arg "URL: "))
+    (start-process (concat "chromium " url) nil
+                   browse-url-chromium-program "--new-window" url))
+  (setq browse-url-browser-function 'browse-url-chromium-new-window))
+
+(use-package hyperspec
+  :straight t
+  :ensure t)
+
+(use-package ytdl
+  :straight t
+  :ensure t)
