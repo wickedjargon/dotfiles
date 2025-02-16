@@ -56,9 +56,9 @@
   (interactive)
   (cond
    ((string-equal system-type "windows-nt") ; Windows
-    (shell-command (concat "chromium file://" buffer-file-name)))
+    (shell-command (concat "chromium --new-window file://" buffer-file-name)))
    ((string-equal system-type "gnu/linux")
-    (shell-command (concat "chromium file://" buffer-file-name)))
+    (shell-command (concat "chromium --new-window file://" buffer-file-name)))
    ((string-equal system-type "darwin") ; Mac
     (shell-command (concat "open -a Firefox.app file://" buffer-file-name)))))
 
@@ -889,11 +889,24 @@ in whole buffer.  With neither, delete comments on current line."
   (let* ((functions-list '(lsp
                            lsp-rename
                            lsp-describe-thing-at-point
-                           sly-documentation
                            lsp-format-buffer
+                           lsp-find-references
                            imenu
+                           compile
                            flymake-show-diagnostics-buffer
-                           fff-display-lsp-root))
+                           ))
+         (selected-function (completing-read "Select a function: " functions-list nil t)))
+    (when selected-function
+      (call-interactively (intern selected-function)))))
+
+
+(defun fff-menu-entertainment ()
+  "Select and run a programming-related function."
+  (interactive)
+  (let* ((functions-list '(emms
+                           ytdl-download
+                           elfeed
+                           ))
          (selected-function (completing-read "Select a function: " functions-list nil t)))
     (when selected-function
       (call-interactively (intern selected-function)))))
@@ -1188,3 +1201,68 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   "Insert the current date in the format YYYY-MM-DD."
   (interactive)
   (insert (format-time-string "%Y-%m-%d")))
+
+
+(defun fff-display-tooltip-at-point ()
+  "Display information about the symbol at point using posframe."
+  (interactive)
+  (let ((help-xref-following t)
+        (thing (thing-at-point 'symbol t)))
+    (when thing
+      (let ((tooltip-text (or (get-text-property (point) 'help-echo)
+                              (help-at-pt-kbd-string)
+                              (fff-help-sym-short-doc thing)
+                              (fff-help-function-arglist thing))))
+        (when tooltip-text
+          (fff-display-centered-tooltip tooltip-text))))))
+
+(defun fff-display-centered-tooltip (text)
+  "Display TEXT horizontally centered in the window using posframe."
+  (unless (facep 'fff-tooltip-face)
+    (defface fff-tooltip-face
+      '((t :inherit default :height 1.5))  ; Adjust the :height value to change the font size
+      "Face for tooltip text in posframe."))
+  (posframe-show
+    "*fff-centered-tooltip*"
+    :string (propertize text 'face 'fff-tooltip-face)
+    :position (point)
+    :poshandler (lambda (info)
+                  (cons (/ (- (plist-get info :parent-frame-width)
+                              (plist-get info :posframe-width))
+                          2)
+                        0))
+    :timeout 10))
+
+(defun fff-help-sym-short-doc (sym)
+  "Return short documentation for symbol SYM."
+  (when (and sym (symbolp sym))
+    (or (and (boundp sym) (documentation-property sym 'variable-documentation))
+        (and (fboundp sym) (documentation sym 'function-documentation)))))
+
+(defun fff-help-function-arglist (sym)
+  "Return function argument list for symbol SYM."
+  (when (and (symbolp sym) (fboundp sym))
+    (when-let ((args (help-function-arglist sym t)))
+      (format "%s is a function: %s" sym (prin1-to-string args)))))
+
+(defun fff-open-straight-repo (repo-name)
+  "Open the directory of REPO-NAME in the straight/repos directory."
+  (interactive
+   (list
+    (completing-read "Repository name: "
+                     (directory-files
+                      (expand-file-name "straight/repos/" straight-base-dir)
+                      nil "^[^.]"))))
+  (let ((repo-path (expand-file-name repo-name
+                                     (expand-file-name "straight/repos/" straight-base-dir))))
+    (if (file-directory-p repo-path)
+        (dired repo-path)
+      (message "Repository not found: %s" repo-name))))
+
+(defun fff-dired-open-with-command ()
+  "Prompt for a command and run it with the current file in Dired."
+  (interactive)
+  (let* ((file (dired-get-file-for-visit))
+         (command (read-string "Enter command: "))
+         (full-command (concat command " " (shell-quote-argument file))))
+    (start-process-shell-command "dired-open-with-command" nil full-command)))

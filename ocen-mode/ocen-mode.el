@@ -41,7 +41,9 @@
 (defconst ocen-keywords
   '("let" "const" "def" "if" "else" "match"
     "for" "while" "namespace" "import" "enum"
-    "struct" "union" "return" "yield")
+    "struct" "union" "yield" "as" "and" "or"
+    "not" "main" "extern" "false" "true" "atomic"
+    "then" "in")
   "Ocen language keywords.")
 
 (defconst ocen-builtin-types
@@ -81,8 +83,7 @@
 
   ;; Set up Imenu
   (setq-local imenu-generic-expression
-              '(("Section" "^\\s-*// Section: \\(.*\\)" 1)
-                ("Enum" "^enum \\([A-Za-z0-9_]+\\)" 1)
+              '(("Enum" "^enum \\([A-Za-z0-9_]+\\)" 1)
                 ("Struct" "^struct \\([A-Za-z0-9_]+\\)" 1)
                 ("Union" "^union \\([A-Za-z0-9_]+\\)" 1)
                 ("Function" "^def \\([A-Za-z0-9_:]+\\)" 1)))
@@ -90,6 +91,9 @@
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.oc\\'" . ocen-mode))
+
+
+
 
 (provide 'ocen-mode)
 
