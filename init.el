@@ -1,6 +1,6 @@
 ;; what I want to do later:
-;; - projectile / projectile / consult-projectile doesn't work in a way I want it to
-;; - I want `C-x f' to be the
+;; TODO: fix buffer switching workflow / projectile / projectile / look at other tools
+;; TODO: is there a way to get hyperlinks to files and urls working in vterm similar to a compilation buffer?
 
 ;; the next two blocks are required as sometimes I get an emacs frame that is smaller
 ;; then the boarders of my window on dwm for some reason:
@@ -61,6 +61,7 @@
   (add-hook 'inferior-lisp-mode-hook (lambda ()
                                        (define-key inferior-lisp-mode-map (kbd "C-p") 'comint-previous-input)
                                        (define-key inferior-lisp-mode-map (kbd "C-n") 'comint-next-input)))
+  (add-hook 'prog-mode-hook 'visual-line-mode)
 
   ;; make elpa files read-only
   (add-hook 'find-file-hook (lambda ()
@@ -142,6 +143,10 @@
         '((checkdoc-package-keywords-flag)
           (checkdoc-minor-mode . t)))
 
+  ;; launch new buffers in current window
+  (setq display-buffer-alist
+      '((".*" . (display-buffer-same-window))))
+
   ;; prevent active process when closing a shell like vterm or eshell:
   (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
@@ -158,21 +163,16 @@
   (recentf-mode +1)
   ;; Do not allow the cursor in the minibuffer prompt
   (setq minibuffer-prompt-properties
-        '(read-only t cursor-intangible t face minibuffer-prompt)))
-
-;; themes
-;; (use-package modus-themes :ensure t
-;;   :straight t
-;;   :config
-;; (if (daemonp)
-;;     ;; If running as a client (daemon mode), load modus-vivendi
-;;     (add-hook 'after-make-frame-functions
-;;               (lambda (frame)
-;;                 (with-selected-frame frame
-;;                   (load-theme 'modus-vivendi t))))
-;;   ;; Otherwise, running Emacs normally, load modus-vivendi-tinted
-;;   (load-theme 'modus-vivendi-tinted t)))
-
+        '(read-only t cursor-intangible t face minibuffer-prompt))
+  ;; all the builtin themes suck except for modus themes. remove all of them except modus themes.
+  (advice-add 'custom-available-themes :filter-return
+            (lambda (themes)
+              (seq-remove (lambda (theme)
+                            (member theme '(adwaita deeper-blue dichromacy leuven-dark
+                                             leuven light-blue manoj-dark misterioso
+                                             tango-dark tango tsdh-dark tsdh-light
+                                             wheatgrass whiteboard wombat)))
+                          themes))))
 
 (use-package modus-themes
   :ensure t
@@ -274,12 +274,18 @@
     ;; shell ocmmand
     (evil-leader/set-key "1" 'shell-command)
 
-                                        ; paragraph navigation
+    ; paragraph navigation
     (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
     (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
+    
+    ;; window size adjustment
+    (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
+    (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
+    (evil-leader/set-key "J" 'fff-hydra-windsize/windsize-down)
+    (evil-leader/set-key "K" 'fff-hydra-windsize/windsize-up)
 
     ;; search and replace
-    (evil-leader/set-key "a" 'avy-goto-char)
+    (evil-leader/set-key "a a" 'avy-goto-char)
     (evil-leader/set-key "r" 'fff-evil-regex-search)
 
     ;; narrow
@@ -292,11 +298,6 @@
     ;; visual line mode
     (evil-leader/set-key "v v" 'visual-line-mode)
 
-    ;; window size adjustment
-    (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
-    (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
-    (evil-leader/set-key "J" 'fff-hydra-windsize/windsize-down)
-    (evil-leader/set-key "K" 'fff-hydra-windsize/windsize-up)
 
     ;; f: shortcut to file or dired buffer
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
@@ -323,7 +324,7 @@
 
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'consult-buffer)
-    (evil-leader/set-key "x B" 'consult-projectile-switch-to-buffer)
+    (evil-leader/set-key "x B" 'projectile-switch-to-buffer)
     (evil-leader/set-key "x 0" 'delete-window)
     (evil-leader/set-key "x 1" 'delete-other-windows)
     (evil-leader/set-key "x 2" 'split-window-below)
@@ -351,7 +352,6 @@
     (evil-leader/set-key "x m" 'fff-access-home-dir)
     (evil-leader/set-key "x n" 'fff-open-file-in-notes)
     (evil-leader/set-key "x p" 'fff-open-file-in-projects)
-    (evil-leader/set-key "p p" 'fff-find-file-in-project-root)
     (evil-leader/set-key "x s" 'fff-find-file-ssh)
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
     (evil-leader/set-key "x /" 'fff-open-file-in-root-dir)
@@ -364,22 +364,11 @@
     (evil-leader/set-key "u u" 'fff-winner/winner-undo)
     (evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
 
-    ;; ;; previous/next buffer
-    ;; (evil-leader/set-key "x h" 'fff-buffer-switch/previous-buffer)
-    ;; (evil-leader/set-key "x l" 'fff-buffer-switch/next-buffer)
-    ;; (evil-leader/set-key "h h" 'fff-buffer-switch/previous-buffer)
-    ;; (evil-leader/set-key "l l" 'fff-buffer-switch/next-buffer)
-
     ;; tooltip hover
     (evil-leader/set-key "h h" 'fff-display-tooltip-at-point)
 
     ;; run/debug bindings for projects
-    (evil-leader/set-key "c c" 'compile)
-
-    ;; fff-bind
-    (evil-leader/set-key "b k p" 'fff-assign-key-to-position-leader)
-    (evil-leader/set-key "b k b" 'fff-assign-key-to-buffer-leader)
-    (evil-leader/set-key "b k d" 'fff-assign-key-to-dir-leader)))
+    (evil-leader/set-key "c c" 'compile)))
 
 (use-package evil :defer nil :ensure t
   :straight t
@@ -447,6 +436,8 @@
     (define-key evil-normal-state-map (kbd "o") 'fff-evil-open-below)
     (define-key evil-normal-state-map (kbd "O") 'fff-evil-open-above)
     (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
+    (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
+    (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
     (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)))
 
 (use-package evil-better-visual-line :ensure t :straight t
@@ -605,7 +596,8 @@
   (setq enable-recursive-minibuffers t)
   :config
   (vertico-mode +1)
-  (define-key vertico-map (kbd "C-c d") 'vertico-exit-input))
+  (define-key vertico-map (kbd "C-c d") 'vertico-exit-input)
+  (define-key vertico-map (kbd "C-<backspace>") 'vertico-directory-delete-word))
 
 (use-package vertico-prescient :straight t :ensure t
   :config
@@ -1135,3 +1127,7 @@ ask user for an additional input."
 (use-package ytdl
   :straight t
   :ensure t)
+
+(use-package compile
+  :ensure nil
+  :hook (compilation-filter . ansi-color-compilation-filter))
