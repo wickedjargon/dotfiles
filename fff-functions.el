@@ -1266,3 +1266,27 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
          (command (read-string "Enter command: "))
          (full-command (concat command " " (shell-quote-argument file))))
     (start-process-shell-command "dired-open-with-command" nil full-command)))
+
+(defun ff-consult-projectile-open-project ()
+  "Select an open Projectile project using Consult."
+  (interactive)
+  (require 'consult)
+  (require 'projectile)
+  (let ((source
+         `(:name     "Open Projectile Projects"
+           :narrow   ?p
+           :category project
+           :items    ,(lambda ()
+                        (delete-dups
+                         (mapcar #'projectile-project-root
+                                 (delq nil
+                                       (mapcar (lambda (buf)
+                                                 (when-let ((proj (projectile-project-p (buffer-file-name buf))))
+                                                   proj))
+                                               (buffer-list))))))
+           :action   ,(lambda (project)
+                        (projectile-switch-project-by-name project)))))
+    (consult--multi (list source)
+                    :prompt "Switch to open project: "
+                    :sort nil
+                    :history 'consult--project-history)))
