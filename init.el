@@ -465,6 +465,7 @@
    (make-lsp-client
     :new-connection (lsp-stdio-connection
                      (lambda () '("node" "/home/ff/.local/src/ocen-vscode/out/server/src/server.js" "--stdio")))
+                     ;; (lambda () '("ocen" "lsp-server")))
     :major-modes '(ocen-mode)  ;; Ensure you associate this with ocen-mode
     :server-id 'ocen-language-server)))
 
@@ -1131,3 +1132,19 @@ ask user for an additional input."
 (use-package compile
   :ensure nil
   :hook (compilation-filter . ansi-color-compilation-filter))
+
+
+;; (use-package evil-mc
+;;   :straight t
+;;   :ensure t
+;;   :after evil
+;;   :config
+;;   (global-evil-mc-mode 1))
+
+
+(use-package evil-mc
+  :straight t
+  :ensure t
+  :after evil
+  :config
+  (global-evil-mc-mode 1))
