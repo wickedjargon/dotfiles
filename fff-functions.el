@@ -1290,3 +1290,18 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
                     :prompt "Switch to open project: "
                     :sort nil
                     :history 'consult--project-history)))
+
+(defun fff-vertico-display-candidates-in-buffer ()
+  "Display the current Vertico candidates in a dedicated buffer and switch focus to it."
+  (interactive)
+  (when (and (bound-and-true-p vertico--candidates) (active-minibuffer-window))
+    (let ((buffer (get-buffer-create "*Vertico Candidates*"))
+          ;; Vertico sometimes keeps the candidates in a different structure;
+          ;; hence we should ensure we're working with a list.
+          (candidates (or vertico--candidates (completion-all-sorted-completions))))
+      (with-current-buffer buffer
+        (erase-buffer)
+        (dolist (cand candidates)
+          (insert (format "%s\n" cand))))
+      ;; Display and switch to the buffer, then deactivate the minibuffer.
+      (select-window (display-buffer buffer)))))
