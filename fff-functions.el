@@ -836,7 +836,6 @@ in whole buffer.  With neither, delete comments on current line."
           (call-interactively 'find-file))
       (message "Not in a Projectile project"))))
 
-
 (defun fff-find-packages ()
   "Find all package names used with `use-package` in `init.el` and display them in a new buffer."
   (interactive)
@@ -1267,7 +1266,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
          (full-command (concat command " " (shell-quote-argument file))))
     (start-process-shell-command "dired-open-with-command" nil full-command)))
 
-(defun ff-consult-projectile-open-project ()
+(defun fff-consult-projectile-open-project ()
   "Select an open Projectile project using Consult."
   (interactive)
   (require 'consult)
@@ -1305,3 +1304,55 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
           (insert (format "%s\n" cand))))
       ;; Display and switch to the buffer, then deactivate the minibuffer.
       (select-window (display-buffer buffer)))))
+
+(defun fff-ibuffer-filter-menu-functions ()
+  "Select and run an ibuffer filter-related function."
+  (interactive)
+  (let* ((functions-list '(ibuffer-filter-disable
+                           ibuffer-exchange-filters
+                           ibuffer-filter-by-mode
+                           ibuffer-filter-chosen-by-completion
+                           ibuffer-negate-filter
+                           ibuffer-and-filter
+                           ibuffer-filter-by-starred-name
+                           ibuffer-filter-by-file-extension
+                           ibuffer-filter-by-size-lt
+                           ibuffer-filter-by-size-gt
+                           ibuffer-decompose-filter-group
+                           ibuffer-filter-by-process
+                           ibuffer-filter-by-directory
+                           ibuffer-filter-by-derived-mode
+                           ibuffer-pop-filter-group
+                           ibuffer-switch-to-saved-filter-groups
+                           ibuffer-save-filter-groups
+                           ibuffer-delete-saved-filter-groups
+                           ibuffer-clear-filter-groups
+                           ibuffer-add-saved-filters
+                           ibuffer-filter-by-basename
+                           ibuffer-filter-by-content
+                           ibuffer-decompose-filter
+                           ibuffer-filter-by-predicate
+                           ibuffer-filter-by-filename
+                           ibuffer-filters-to-filter-group
+                           ibuffer-filter-by-modified
+                           ibuffer-filter-by-used-mode
+                           ibuffer-filter-by-name
+                           ibuffer-or-filter
+                           ibuffer-pop-filter
+                           ibuffer-switch-to-saved-filters
+                           ibuffer-save-filters
+                           ibuffer-filter-by-visiting-file
+                           ibuffer-delete-saved-filters
+                           ibuffer-or-filter
+                           ibuffer-pop-filter-group
+                           ibuffer-pop-filter))
+         (selected-function (completing-read "Select an ibuffer filter function: " functions-list nil t)))
+    (when selected-function
+      (call-interactively (intern selected-function)))))
+
+(defun fff-project-switch-to-buffer ()
+  "Switch to a project buffer only if in a project."
+  (interactive)
+  (if (project-current)
+      (project-switch-to-buffer (project--read-project-buffer))
+    (message "Not in a project!")))

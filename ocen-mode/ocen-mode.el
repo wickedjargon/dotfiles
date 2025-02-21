@@ -80,13 +80,12 @@
 
   ;; Set up syntax highlighting
   (setq-local font-lock-defaults '((ocen-font-lock-keywords)))
-
   ;; Set up Imenu
   (setq-local imenu-generic-expression
               '(("Enum" "^enum \\([A-Za-z0-9_]+\\)" 1)
                 ("Struct" "^struct \\([A-Za-z0-9_]+\\)" 1)
                 ("Union" "^union \\([A-Za-z0-9_]+\\)" 1)
-                ("Function" "^def \\([A-Za-z0-9_:]+\\)" 1)))
+                ("Function" "^def \\([ A-Za-z0-9_:]+\\)" 1)))
   (imenu-add-to-menubar "Index"))
 
 ;;;###autoload
