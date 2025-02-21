@@ -1,9 +1,7 @@
-;; what I want to do later:
-;; TODO: fix buffer switching workflow / projectile / projectile / look at other tools
-;; TODO: is there a way to get hyperlinks to files and urls working in vterm similar to a compilation buffer?
-
-;; the next two blocks are required as sometimes I get an emacs frame that is smaller
-;; then the boarders of my window on dwm for some reason:
+;; consiering the following transitions:
+;; - projectile -> project
+;; - lsp-mode -> eglot
+;; - company -> corju + orderless + dabbrev
 
 ;; Maximize screen on new frame:
 (add-hook 'after-make-frame-functions
@@ -13,7 +11,6 @@
 
 ;; Maximize the initial frame
 (set-frame-parameter nil 'fullscreen 'maximized)
-
 
 ;; switching to straight.el as feel it'll be a better way to manage forked packages
 
@@ -63,35 +60,39 @@
                                        (define-key inferior-lisp-mode-map (kbd "C-n") 'comint-next-input)))
   (add-hook 'prog-mode-hook 'visual-line-mode)
 
-  ;; make elpa files read-only
+  ;; make elpa and straight files read-only
   (add-hook 'find-file-hook (lambda ()
-                              (when (and buffer-file-name
-                                         (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name))
-                                (read-only-mode 1))))
+  (when (and buffer-file-name
+             (or (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name)
+                 (string-prefix-p (expand-file-name "straight" straight-base-dir) buffer-file-name)))
+    (read-only-mode 1))))
 
   (add-hook 'kill-emacs-query-functions
             (lambda ()
               (yes-or-no-p "Are you sure you want to exit Emacs? ")))
 
   ;; key bindings
-  (global-set-key (kbd "M-u") 'universal-argument)
-  (global-set-key (kbd "C-x k") 'bury-buffer)
   (global-unset-key (kbd "C-x C-c"))
   (global-unset-key (kbd "C-h h"))
-  (define-key ctl-x-map (kbd "C-f") 'fff-find-file)
-  (global-set-key (kbd "C-x C-f")  'fff-find-file)
+  (global-unset-key (kbd "C-h ?"))                            ;; better to use embark-bindings
+  (global-unset-key (kbd "M-ESC ESC"))                        ;; because of my OS remaping of ESC, the typical evil remaping for this doesn't work
+  (global-set-key (kbd "M-ESC M-ESC") 'keyboard-escape-quit)  ;; I have to remap to this instad
+  (global-set-key (kbd "M-u") 'universal-argument)            ;; C-u is bound to evil-scroll-up
+  (global-set-key (kbd "C-x k") 'bury-buffer)                 ;; kill buffers doesn't save memory
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
   (global-set-key (kbd "C-<backspace>") 'kill-whole-line)
+  (global-set-key [remap find-file] 'fff-find-file)          ;; updates the current directory when in vterm
+  (global-set-key [remap list-buffers] 'ibuffer)             ;; ibuffer is superior
 
-  ;; tab-bar mode
-  (tab-bar-mode -1) ;; off by default
-  (setq tab-bar-new-tab-to 'rightmost)
-  (setq tab-bar-new-tab-choice 'empty-buffer)
-  (global-set-key (kbd "C-c w") 'tab-bar-close-tab)
-  (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
-  (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
-  (global-set-key (kbd "C-c h") 'tab-bar-switch-to-prev-tab)
-  (global-set-key (kbd "C-c l") 'tab-bar-switch-to-next-tab)
+  ;; ;; tab-bar mode
+  ;; (tab-bar-mode -1) ;; off by default
+  ;; (setq tab-bar-new-tab-to 'rightmost)
+  ;; (setq tab-bar-new-tab-choice 'empty-buffer)
+  ;; (global-set-key (kbd "C-c w") 'tab-bar-close-tab)
+  ;; (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
+  ;; (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
+  ;; (global-set-key (kbd "C-c h") 'tab-bar-switch-to-prev-tab)
+  ;; (global-set-key (kbd "C-c l") 'tab-bar-switch-to-next-tab)
 
   ;; backup and auto save
   (setq version-control t)
@@ -138,10 +139,10 @@
   (setq use-dialog-box nil)
   (setq fill-column 100)
   (setq suggest-key-bindings nil)                         ;; don't display key bindings suggestions when I run M-x commands
-  ;; (global-font-lock-mode -1)
   (setq safe-local-variable-values
         '((checkdoc-package-keywords-flag)
-          (checkdoc-minor-mode . t)))
+          (checkdoc-minor-mode . t)))                      ;; don't prompt me about unsafe local variables
+  (setq vc-follow-symlinks t)                              ;; stop prompting me about whether I want to follow symlinks
 
   ;; launch new buffers in current window
   (setq display-buffer-alist
@@ -259,7 +260,6 @@
     ;; single key
     (evil-leader/set-key "SPC" 'execute-extended-command)
     (evil-leader/set-key "RET" 'crux-open-with)
-    (evil-leader/set-key ";" 'eval-expression)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
     (evil-leader/set-key "o" 'other-window)
@@ -271,8 +271,10 @@
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
 
-    ;; shell ocmmand
-    (evil-leader/set-key "1" 'shell-command)
+    ;; shell, compile, eval
+    (evil-leader/set-key "x x" 'shell-command)
+    (evil-leader/set-key "c c" 'compile)
+    (evil-leader/set-key "v v" 'eval-expression)
 
     ; paragraph navigation
     (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
@@ -294,10 +296,6 @@
 
     ;; magit
     (evil-leader/set-key "m m" 'magit)
-
-    ;; visual line mode
-    (evil-leader/set-key "v v" 'visual-line-mode)
-
 
     ;; f: shortcut to file or dired buffer
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
@@ -324,7 +322,7 @@
 
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'consult-buffer)
-    (evil-leader/set-key "x B" 'projectile-switch-to-buffer)
+    (evil-leader/set-key "x B" 'fff-project-switch-to-buffer)
     (evil-leader/set-key "x 0" 'delete-window)
     (evil-leader/set-key "x 1" 'delete-other-windows)
     (evil-leader/set-key "x 2" 'split-window-below)
@@ -365,10 +363,7 @@
     (evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
 
     ;; tooltip hover
-    (evil-leader/set-key "h h" 'fff-display-tooltip-at-point)
-
-    ;; run/debug bindings for projects
-    (evil-leader/set-key "c c" 'compile)))
+    (evil-leader/set-key "h h" 'fff-display-tooltip-at-point)))
 
 (use-package evil :defer nil :ensure t
   :straight t
@@ -456,6 +451,9 @@
   :straight nil ; not to install from a package repository
   :load-path (lambda () (expand-file-name "ocen-mode" user-emacs-directory))
   :mode "\\.oc\\'"
+  :init
+  (with-eval-after-load 'lsp-mode              ;; can't use typical use-package hook as
+    (add-hook 'ocen-mode-hook #'lsp-deferred)) ;; ocen-mode is not registered with lsp-mode
   :config
   (require 'lsp-mode)
   (with-eval-after-load 'lsp-mode
@@ -552,7 +550,8 @@
 (use-package company :straight t :defer t :ensure t
   :init
   (setq company-format-margin-function nil)
-  (setq company-idle-delay 0.2)
+  ;; (setq company-idle-delay 0.2)
+  (setq company-idle-delay nil)
   (setq company-tooltip-limit 2)
   (global-company-mode)
   :config
@@ -617,10 +616,13 @@
                   "webpack.config.js" "Gemfile" ".ruby-version" "composer.json" ".env" "README.md" ".eslint.js"
                   "tsconfig.json" ".babelrc" ".prettierrc" "CMakeLists.txt" ".project"))
     (add-to-list 'projectile-project-root-files file))
-  :bind*
-  (("C-c k" . projectile-find-file))
   :init
   (setq projectile-ignored-projects '("~/"))
+  (defun fff-ignore-home-directory (dir)
+    "Ignore the home directory as a project root."
+    (let ((home (expand-file-name "~/")))
+      (string= (expand-file-name dir) home)))
+  (setq projectile-ignored-project-function #'fff-ignore-home-directory)
   (projectile-mode +1)
   (with-eval-after-load 'projectile
     (define-key projectile-command-map (kbd "C-c p") nil)
@@ -713,11 +715,11 @@
   ;; - html:
   ;; - css:
   ;; hooks:
-  :hook (ocen-mode . lsp-deferred)
   :hook (rust-mode . lsp-deferred)
   ;; :hook (svelte-mode . lsp-deferred)
   :hook (c-mode . lsp-deferred)
   :hook (c++-mode . lsp-deferred)
+  :hook (csharp-mode . lsp-deferred)
   ;; :hook (typescript-mode . lsp-deferred)
   ;; :hook (javascript-mode . lsp-deferred)
   ;; :hook (python-mode . lsp-deferred)
@@ -726,14 +728,13 @@
   ;; to do, find a way to conditionally install
   ;; an lsp using:
   ;; (lsp-install-server nil 'jsts-ls)
-  :config
+  :init
+  (setq read-process-output-max (* 1024 1024))
   (setq lsp-diagnostics-provider :flymake)
   (setq lsp-auto-guess-root t)
   (setq lsp-keymap-prefix "C-c l")
-  ;; apparently copilot is an lsp now and is listed for every major mode as a possible lsp. no thanks.
+  ;; I use the copilot.el package, so I don't need this
   (setq lsp-copilot-enabled nil)
-  (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
-
   ;; https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
   (setq lsp-enable-file-watchers nil) ; Disable file watchers for better performance
   (setq lsp-enable-symbol-highlighting nil) ; disable symbol highlighting
@@ -838,7 +839,9 @@
   :config
   (define-key cider-repl-mode-map (kbd "C-c c") #'cider-repl-clear-buffer))
 
-(use-package consult :straight t :ensure t :defer t)
+(use-package consult :straight t :ensure t :defer t
+  :init
+  (global-set-key [remap imenu] 'consult-imenu))
 
 (use-package embark-consult :straight t :ensure t :defer t)
 
@@ -1132,18 +1135,62 @@ ask user for an additional input."
   :ensure nil
   :hook (compilation-filter . ansi-color-compilation-filter))
 
-
-;; (use-package evil-mc
-;;   :straight t
-;;   :ensure t
-;;   :after evil
-;;   :config
-;;   (global-evil-mc-mode 1))
-
-
 (use-package evil-mc
   :straight t
   :ensure t
   :after evil
   :config
   (global-evil-mc-mode 1))
+
+(use-package copilot
+  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+  :defer t
+  :ensure t
+  :init
+  (add-hook 'prog-mode-hook 'copilot-mode)
+  :config
+  (add-to-list 'warning-suppress-types '(copilot))
+  (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+  (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
+  (define-key copilot-completion-map (kbd "C-<tab>") 'copilot-accept-completion-by-word)
+  (define-key copilot-completion-map (kbd "C-TAB") 'copilot-accept-completion-by-word)
+  (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
+
+(use-package copilot-chat
+  :straight (:host github :repo "chep/copilot-chat.el" :files ("*.el"))
+  :after (request org markdown-mode))
+
+
+(use-package csharp-mode :ensure nil
+  :hook (csharp-mode . (lambda ()
+                         (setq imenu-create-index-function
+                               (lambda ()
+                                 (let ((imenu-generic-expression
+                                        '(("Variables" "^\\s-*[a-zA-Z0-9._ ]* \\([a-zA-Z0-9_]*\\)\\( = \\sw*\\|\\s-*\\);$" 1)
+                                          ("Functions" "^\\s-*[^/]* \\([a-zA-Z0-9_]+\\)(.*)\\(\\s-*.*\n\\|\\ *\\)\\s-*{" 1)
+                                          ("Classes" "^\\s-*\\(.*\\)class +\\([a-zA-Z0-9_]+\\)" 2)
+                                          ("Namespaces" "^namespace +\\([a-z0-9_]*\\)" 1))))
+                                   (imenu--generic-function imenu-generic-expression)))))))
+
+
+(use-package tab-bar
+  :ensure nil
+  :init
+  (tab-bar-mode -1) ;; Off by default
+  :custom
+  (tab-bar-new-tab-to 'rightmost)
+  (tab-bar-new-tab-choice 'empty-buffer)
+  :bind
+  (("C-c w" . my-tab-bar-close-tab)
+   ("C-c n" . fff-tab-bar-new-tab)
+   ("C-c r" . tab-bar-rename-tab)
+   ("C-c h" . tab-bar-switch-to-prev-tab)
+   ("C-c l" . tab-bar-switch-to-next-tab))
+
+  :config
+  (defun my-tab-bar-close-tab ()
+    "Close the current tab. Disable tab-bar-mode if there's only one left."
+    (interactive)
+    (tab-bar-close-tab)
+    (when (= (length (tab-bar-tabs)) 1)
+      (tab-bar-mode -1))))
