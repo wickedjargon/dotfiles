@@ -84,16 +84,6 @@
   (global-set-key [remap find-file] 'fff-find-file)          ;; updates the current directory when in vterm
   (global-set-key [remap list-buffers] 'ibuffer)             ;; ibuffer is superior
 
-  ;; ;; tab-bar mode
-  ;; (tab-bar-mode -1) ;; off by default
-  ;; (setq tab-bar-new-tab-to 'rightmost)
-  ;; (setq tab-bar-new-tab-choice 'empty-buffer)
-  ;; (global-set-key (kbd "C-c w") 'tab-bar-close-tab)
-  ;; (global-set-key (kbd "C-c n") 'fff-tab-bar-new-tab)
-  ;; (global-set-key (kbd "C-c r") 'tab-bar-rename-tab)
-  ;; (global-set-key (kbd "C-c h") 'tab-bar-switch-to-prev-tab)
-  ;; (global-set-key (kbd "C-c l") 'tab-bar-switch-to-next-tab)
-
   ;; backup and auto save
   (setq version-control t)
   (setq vc-make-backup-files t)
