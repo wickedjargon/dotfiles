@@ -442,10 +442,10 @@
 (use-package fff-lisp :defer nil :ensure nil
   :after evil
   :init
-  (load (expand-file-name "hide-comnt.el" user-emacs-directory))
-  (load (expand-file-name "fff-functions.el" user-emacs-directory))
-  (load (expand-file-name "weather.el" user-emacs-directory))
-  (load (expand-file-name "asm-mode.el") user-emacs-directory))
+  (load (expand-file-name "fff-lisp/hide-comnt.el" user-emacs-directory))
+  (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory))
+  (load (expand-file-name "fff-lisp/weather.el" user-emacs-directory))
+  (load (expand-file-name "fff-lisp/asm-mode.el") user-emacs-directory))
 
 (use-package ocen-mode
   :straight nil ; not to install from a package repository
