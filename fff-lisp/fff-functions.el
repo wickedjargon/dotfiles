@@ -553,8 +553,7 @@ in whole buffer.  With neither, delete comments on current line."
         (beginning-of-line)
         (haskell-indentation-newline-and-indent)
         (next-line -1)
-        (evil-insert-state 1)
-        )
+        (evil-insert-state 1))
     (evil-open-above 1)))
 
 (defun fff-toggle-theme ()
