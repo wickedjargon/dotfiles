@@ -433,13 +433,11 @@
   :after evil
   :init
   (load (expand-file-name "fff-lisp/hide-comnt.el" user-emacs-directory))
-  (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory))
-  (load (expand-file-name "fff-lisp/weather.el" user-emacs-directory))
-  (load (expand-file-name "fff-lisp/asm-mode.el") user-emacs-directory))
+  (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory)))
 
 (use-package ocen-mode
   :straight nil ; not to install from a package repository
-  :load-path (lambda () (expand-file-name "ocen-mode" user-emacs-directory))
+  :load-path (lambda () (expand-file-name "fff-lisp/ocen-mode" user-emacs-directory))
   :mode "\\.oc\\'"
   :init
   (with-eval-after-load 'lsp-mode              ;; can't use typical use-package hook as
