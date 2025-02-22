@@ -962,16 +962,6 @@ in whole buffer.  With neither, delete comments on current line."
     (when menu-function
       (call-interactively menu-function))))
 
-(defun fff-eww-play-with-mpv ()
-  (interactive)
-  (when (equal major-mode 'eww-mode)
-    (let ((url-list (eww-suggested-uris))
-          (url (if url-list (car url-list) nil)))
-      (if (and url (string-match "youtube\\.com" url))
-          (progn
-            (shell-command (concat "mpv " url)))
-        (message "Not a YouTube link or no URL found.")))))
-
 (defun fff-reexecute-last-shell-command ()
   "Re-execute the last shell command executed with `shell-command`."
   (interactive)
