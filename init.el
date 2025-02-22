@@ -462,8 +462,7 @@
    (make-lsp-client
     :new-connection (lsp-stdio-connection
                      (lambda () '("node" "/home/ff/.local/src/ocen-vscode/out/server/src/server.js" "--stdio")))
-                     ;; (lambda () '("ocen" "lsp-server")))
-    :major-modes '(ocen-mode)  ;; Ensure you associate this with ocen-mode
+    :major-modes '(ocen-mode)
     :server-id 'ocen-language-server)))
 
 (use-package undo-fu :straight t :defer t :ensure t)
