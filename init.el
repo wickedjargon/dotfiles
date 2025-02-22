@@ -429,6 +429,17 @@
   :config
   (evil-better-visual-line-on))
 
+(use-package yt-dlp-mode
+  :ensure nil
+  :init
+  (add-to-list 'load-path (expand-file-name "fff-lisp" user-emacs-directory))
+  (load (expand-file-name "fff-lisp/yt-dlp-mode.el" user-emacs-directory))
+  (with-eval-after-load 'yt-dlp-mode
+    (define-key yt-dlp-mode-map (kbd "C-c RET") 'yt-dlp-play-current-entry)
+    (define-key goto-address-highlight-keymap (kbd "C-c RET") 'yt-dlp-play-current-entry)
+    (define-key yt-dlp-mode-map (kbd "<mouse-2>") 'yt-dlp-play-current-entry)
+    (define-key goto-address-highlight-keymap (kbd "<mouse-2>") 'yt-dlp-play-current-entry)))
+
 (use-package fff-lisp :defer nil :ensure nil
   :after evil
   :init
