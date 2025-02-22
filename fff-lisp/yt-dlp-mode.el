@@ -35,7 +35,7 @@
       (read-only-mode 0)
       (erase-buffer)
       (tabulated-list-mode)
-      (setq tabulated-list-format [("Title" 400 t)
+      (setq tabulated-list-format [("Title" 100 t)
                                    ("URL" 30 t)])
       (setq tabulated-list-entries nil)
       (yt-dlp-mode 1))  ;; Enable the custom minor mode
