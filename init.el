@@ -263,6 +263,7 @@
 
     ;; shell, compile, eval
     (evil-leader/set-key "x x" 'shell-command)
+    (evil-leader/set-key "x X" 'async-shell-command)
     (evil-leader/set-key "c c" 'compile)
     (evil-leader/set-key "v v" 'eval-expression)
 
@@ -385,12 +386,14 @@
     (setq evil-kill-on-visual-paste nil)
     (evil-mode +1)
 
+    (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
     (define-key evil-visual-state-map (kbd "<backpace>") 'delete-char)
     (define-key evil-visual-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
 
+    (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
     (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
     (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
@@ -401,6 +404,7 @@
     (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
     (define-key evil-insert-state-map (kbd "C-/") 'fff-comment)
 
+    (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-normal-state-map (kbd "C-e") 'move-end-of-line)
     (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
     (define-key evil-normal-state-map (kbd "C-o") 'evil-jump-backward)
@@ -552,6 +556,8 @@
   (setq company-idle-delay nil)
   (setq company-tooltip-limit 2)
   (global-company-mode)
+  :bind (:map company-mode-map
+              ("C-." . company-complete))
   :config
   (add-hook 'c-mode-common-hook
             (lambda ()
@@ -937,42 +943,7 @@
   :config
   (setq gptel-model 'gpt-4o))
 
-;; (use-package gptel
-;;   :straight t
-;;   :ensure t
-;;   :init
-;; ;; (setq gptel-model   'llama3.1-8b
-;; ;;       gptel-backend
-;; ;;       (gptel-make-openai "Cerebras"
-;; ;;         :host "api.cerebras.ai"
-;; ;;         :endpoint "/v1"
-;; ;;         :stream t
-;; ;;         :key "csk-dhc4xt396mrh6ph246f28yf4d386e63f5hfckntmd3fnthvw"
-;; ;;         :models '(llama3.1-70b
-;; ;;                   llama3.1-8b)))
-
-;; ;; (setq gptel-model   'llama3-70b-8192
-;; (setq gptel-model   'deepseek-r1-distill-llama-70b
-;;       gptel-backend
-;;       (gptel-make-openai "Groq"
-;;         :host "api.groq.com"
-;;         :endpoint "/openai/v1/chat/completions"
-;;         :stream t
-;;         :key "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"
-;;         ;; :models '(llama-3.1-70b-versatile
-;;         :models '(deepseek-r1-distill-llama-70b
-;;                   llama-3.1-70b-versatile
-;;                   llama-3.1-8b-instant
-;;                   llama3-70b-8192
-;;                   llama3-8b-8192
-;;                   mixtral-8x7b-32768
-;;                   gemma-7b-it))))
-
-
-
 (use-package sml-mode :straight t :ensure t)
-
-(use-package compiler-explorer :straight t :ensure t :defer t)
 
 (use-package clhs :straight t :ensure t :defer t)
 
@@ -1002,7 +973,7 @@
 (use-package elfeed
   :straight t
   :ensure t
-  :config
+  :init
   (setq elfeed-feeds
         '("https://www.youtube.com/feeds/videos.xml?channel_id=UCrqM0Ym_NbK1fqeQG2VIohg" ;; Tsoding Daily
           "https://protesilaos.com/codelog.xml"                                          ;; prot code blogs
@@ -1133,7 +1104,21 @@ ask user for an additional input."
 
 (use-package compile
   :ensure nil
-  :hook (compilation-filter . ansi-color-compilation-filter))
+  :hook (compilation-filter . ansi-color-compilation-filter)
+  :hook (c-mode . (lambda ()
+                    (set (make-local-variable 'compile-command)
+                         (format "gcc %s -o %s && ./%s"
+                                 (file-name-nondirectory buffer-file-name)
+                                 (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+  :hook (rust-mode . (lambda ()
+                       (set (make-local-variable 'compile-command)
+                            "cargo run")))
+  :hook (python-mode . (lambda ()
+                         (set (make-local-variable 'compile-command)
+                              (format "python %s" (file-name-nondirectory buffer-file-name)))))
+  :hook (ocen-mode . (lambda ()
+                         (set (make-local-variable 'compile-command)
+                              (format "ocen %s -d -r" (file-name-nondirectory buffer-file-name))))))
 
 (use-package evil-mc
   :straight t
@@ -1161,7 +1146,6 @@ ask user for an additional input."
   :straight (:host github :repo "chep/copilot-chat.el" :files ("*.el"))
   :after (request org markdown-mode))
 
-
 (use-package csharp-mode :ensure nil
   :hook (csharp-mode . (lambda ()
                          (setq imenu-create-index-function
@@ -1172,7 +1156,6 @@ ask user for an additional input."
                                           ("Classes" "^\\s-*\\(.*\\)class +\\([a-zA-Z0-9_]+\\)" 2)
                                           ("Namespaces" "^namespace +\\([a-z0-9_]*\\)" 1))))
                                    (imenu--generic-function imenu-generic-expression)))))))
-
 
 (use-package tab-bar
   :ensure nil
@@ -1209,6 +1192,7 @@ ask user for an additional input."
             ("Set Variables" "^\\s-*(setq\\s-+(?\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
             ("Use Package" "^\\s-*(use-package\\s-+'?\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
             ("Advice" "^\\s-*(defadvice\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Add Advice" "^\\s-*(advice-add\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
             ("Faces" "^\\s-*(defface\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
             ("Derived Modes" "^\\s-*(define-derived-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
             ("Minor Modes" "^\\s-*(define-minor-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
@@ -1218,4 +1202,3 @@ ask user for an additional input."
             ("Autoloads" "^\\s-*(autoload\\s-+'\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)))
     (imenu-add-menubar-index))
   :hook (emacs-lisp-mode . my-emacs-lisp-mode-setup))
-
