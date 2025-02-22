@@ -266,10 +266,10 @@
     (evil-leader/set-key "c c" 'compile)
     (evil-leader/set-key "v v" 'eval-expression)
 
-    ; paragraph navigation
+    ;; paragraph navigation
     (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
     (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
-    
+
     ;; window size adjustment
     (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
     (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
