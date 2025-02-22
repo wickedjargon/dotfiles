@@ -136,7 +136,7 @@
 
   ;; launch new buffers in current window
   (setq display-buffer-alist
-      '((".*" . (display-buffer-same-window))))
+        '((".*" . (display-buffer-same-window))))
 
   ;; prevent active process when closing a shell like vterm or eshell:
   (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
