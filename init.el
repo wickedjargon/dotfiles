@@ -735,6 +735,8 @@
   ;; (setq lsp-inlay-hint-enable t)
   (setq lsp-rust-analyzer-display-parameter-hints t))
 
+(use-package lsp-ui :straight t :ensure t :defer t)
+
 (use-package lsp-python-ms :straight t :ensure t :defer t)
 
 (use-package lsp-haskell :straight t :ensure t :defer t)
