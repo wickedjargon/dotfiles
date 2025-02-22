@@ -62,10 +62,10 @@
 
   ;; make elpa and straight files read-only
   (add-hook 'find-file-hook (lambda ()
-  (when (and buffer-file-name
-             (or (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name)
-                 (string-prefix-p (expand-file-name "straight" straight-base-dir) buffer-file-name)))
-    (read-only-mode 1))))
+                              (when (and buffer-file-name
+                                         (or (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name)
+                                             (string-prefix-p (expand-file-name "straight" straight-base-dir) buffer-file-name)))
+                                (read-only-mode 1))))
 
   (add-hook 'kill-emacs-query-functions
             (lambda ()
