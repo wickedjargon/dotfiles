@@ -1138,11 +1138,12 @@ ask user for an additional input."
   (add-hook 'prog-mode-hook 'copilot-mode)
   :config
   (add-to-list 'warning-suppress-types '(copilot))
-  (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
-  (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
-  (define-key copilot-completion-map (kbd "C-<tab>") 'copilot-accept-completion-by-word)
-  (define-key copilot-completion-map (kbd "C-TAB") 'copilot-accept-completion-by-word)
-  (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
+  :bind
+  (:map copilot-completion-map
+        ("<tab>" . copilot-accept-completion)
+        ("TAB" . copilot-accept-completion)
+        ("C-<tab>" . copilot-accept-completion-by-word)
+        ("C-TAB" . copilot-accept-completion-by-word)))
 
 (use-package copilot-chat
   :straight (:host github :repo "chep/copilot-chat.el" :files ("*.el"))
