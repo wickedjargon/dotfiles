@@ -157,13 +157,13 @@
         '(read-only t cursor-intangible t face minibuffer-prompt))
   ;; all the builtin themes suck except for modus themes. remove all of them except modus themes.
   (advice-add 'custom-available-themes :filter-return
-            (lambda (themes)
-              (seq-remove (lambda (theme)
-                            (member theme '(adwaita deeper-blue dichromacy leuven-dark
-                                             leuven light-blue manoj-dark misterioso
-                                             tango-dark tango tsdh-dark tsdh-light
-                                             wheatgrass whiteboard wombat)))
-                          themes))))
+              (lambda (themes)
+                (seq-remove (lambda (theme)
+                              (member theme '(adwaita deeper-blue dichromacy leuven-dark
+                                                      leuven light-blue manoj-dark misterioso
+                                                      tango-dark tango tsdh-dark tsdh-light
+                                                      wheatgrass whiteboard wombat)))
+                            themes))))
 
 (use-package modus-themes
   :ensure t
