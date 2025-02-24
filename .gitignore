@@ -93,3 +93,10 @@ tutorial/
 /beardbolt-sandbox/
 /.extension/
 /notes.md
+/.chat_gpt_api_key
+/openweathermap_api_key
+/.my_city
+/.api_key_cerebras
+/.openweathermap_api_key
+/.secrets
+/.secrets/*
