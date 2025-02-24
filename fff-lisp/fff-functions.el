@@ -726,11 +726,33 @@ in whole buffer.  With neither, delete comments on current line."
 (defun fff-switch-or-create-gptel ()
   "Switch to the ChatGPT buffer or switch to the last buffer if already in ChatGPT buffer."
   (interactive)
-  (if (string-match "\\*ChatGPT\\*" (buffer-name))
-      (evil-switch-to-windows-last-buffer)
-        (progn
-          (gptel "*ChatGPT*")
-          (switch-to-buffer "*ChatGPT*"))))
+  (let ((current-buffer-name (buffer-name))
+        max-number
+        max-buffer)
+    (if (string-match "\\*ChatGPT\\*" current-buffer-name)
+        (evil-switch-to-windows-last-buffer)
+      (progn
+        (dolist (buf (buffer-list))
+          (when (string-match "\\*ChatGPT\\*<\\([0-9]+\\)>" (buffer-name buf))
+            (let ((num (string-to-number (match-string 1 (buffer-name buf)))))
+              (unless max-number
+                (setq max-number num
+                      max-buffer buf))
+              (when (> num max-number)
+                (setq max-number num
+                      max-buffer buf)))))
+        (if max-buffer
+            (switch-to-buffer max-buffer)
+          (progn
+            (gptel "*ChatGPT*")
+            (switch-to-buffer "*ChatGPT*")))))))
+
+(defun fff-switch-to-new-gptel-buffer ()
+  "Create and switch to a new ChatGPT buffer."
+  (interactive)
+  (let ((new-buffer-name (generate-new-buffer-name "*ChatGPT*")))
+    (gptel new-buffer-name)
+    (switch-to-buffer new-buffer-name)))
 
 (defun fff-increase-font-size ()
   "Increase the font size."
@@ -1344,4 +1366,11 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   (interactive)
   (if (project-current)
       (project-switch-to-buffer (project--read-project-buffer))
-    (message "Not in a project!")))
+    (message "Not in a project")))
+
+(defun fff-project-ibuffer ()
+  "Open an IBuffer window showing all buffers in the current project."
+  (interactive)
+  (if-let ((project (project-current)))
+      (projectile-ibuffer-by-project (project-root project))
+    (message "Not in a project")))

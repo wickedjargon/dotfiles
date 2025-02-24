@@ -3,6 +3,10 @@
 ;; - lsp-mode -> eglot
 ;; - company -> corju + orderless + dabbrev
 
+;; explore these packages:
+;; auctex, org
+;; writing studio (https://leanpub.com/emacswritingstudio)
+
 ;; Maximize screen on new frame:
 (add-hook 'after-make-frame-functions
           (lambda (&optional frame)
@@ -67,16 +71,23 @@
                                              (string-prefix-p (expand-file-name "straight" straight-base-dir) buffer-file-name)))
                                 (read-only-mode 1))))
 
+  ;; confirm exit
   (add-hook 'kill-emacs-query-functions
             (lambda ()
               (yes-or-no-p "Are you sure you want to exit Emacs? ")))
 
+  ;; remove ^M from mixed line endings
+  (add-hook 'after-change-major-mode-hook
+            (lambda ()
+              (setq buffer-display-table (make-display-table))
+              (aset buffer-display-table ?\^M [])))
+
   ;; key bindings
   (global-unset-key (kbd "C-x C-c"))
-  (global-unset-key (kbd "C-h h"))
-  (global-unset-key (kbd "C-h ?"))                            ;; better to use embark-bindings
+  (global-unset-key (kbd "C-h h"))                            ;; I press this by accident sometimes
+  (global-unset-key (kbd "C-h ?"))                            ;; unsetting this prevents help-for-help in favor of embark-bindings for `C-h ?'
   (global-unset-key (kbd "M-ESC ESC"))                        ;; because of my OS remaping of ESC, the typical evil remaping for this doesn't work
-  (global-set-key (kbd "M-ESC M-ESC") 'keyboard-escape-quit)  ;; I have to remap to this instad
+  (global-set-key (kbd "M-ESC M-ESC") 'keyboard-escape-quit)  ;; I have to remap to this instead
   (global-set-key (kbd "M-u") 'universal-argument)            ;; C-u is bound to evil-scroll-up
   (global-set-key (kbd "C-x k") 'bury-buffer)                 ;; kill buffers doesn't save memory
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
@@ -302,6 +313,7 @@
 
     ;; imenu
     (evil-leader/set-key "i m" 'consult-imenu)
+    (evil-leader/set-key "i M" 'lsp-ui-imenu)
 
     ;; terminal
     (evil-leader/set-key "t t" 'fff-switch-or-create-vterm)
@@ -310,6 +322,7 @@
 
     ;; chatgpt
     (evil-leader/set-key "g g" 'fff-switch-or-create-gptel)
+    (evil-leader/set-key "g G" 'fff-switch-to-new-gptel-buffer)
 
     ;; x: C-x prefixes
     (evil-leader/set-key "x b" 'consult-buffer)
@@ -329,7 +342,7 @@
     (evil-leader/set-key "x r" 'crux-recentf-find-file)
     (evil-leader/set-key "x w" 'write-file)
     (evil-leader/set-key "x SPC b" 'ibuffer)
-    (evil-leader/set-key "x SPC B" 'projectile-ibuffer)
+    (evil-leader/set-key "x SPC B" 'fff-project-ibuffer)
     (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
 
     ;; shortcut
@@ -557,7 +570,7 @@
   (setq company-tooltip-limit 2)
   (global-company-mode)
   :bind (:map company-mode-map
-              ("C-." . company-complete))
+              ("C-l" . company-complete))
   :config
   (add-hook 'c-mode-common-hook
             (lambda ()
@@ -712,7 +725,7 @@
 
 (use-package rust-mode :straight t :ensure t :defer t)
 
-(use-package lsp-mode :straight t :ensure t :defer t
+(use-package lsp-mode :straight t :ensure t
   ;; preferred LSPs:
   ;; - javascript/typescript: jsts-ls
   ;; - python:  pylsp, python-pyflakes
@@ -722,6 +735,7 @@
   :hook (rust-mode . lsp-deferred)
   ;; :hook (svelte-mode . lsp-deferred)
   :hook (c-mode . lsp-deferred)
+  :hook (cc-mode . lsp-deferred)
   :hook (c++-mode . lsp-deferred)
   :hook (csharp-mode . lsp-deferred)
   ;; :hook (typescript-mode . lsp-deferred)
@@ -751,7 +765,9 @@
   ;; (setq lsp-inlay-hint-enable t)
   (setq lsp-rust-analyzer-display-parameter-hints t))
 
-(use-package lsp-ui :straight t :ensure t :defer t)
+(use-package lsp-ui :straight t :ensure t :defer t
+  :init
+  (lsp-ui-mode +1))
 
 (use-package lsp-python-ms :straight t :ensure t :defer t)
 
@@ -933,13 +949,7 @@
   :straight t
   :ensure t
   :init
-  (when (file-exists-p "~/.chat_gpt_api_key")
-    (setq gptel-api-key
-          (string-trim
-           (with-temp-buffer
-             (insert-file-contents "~/.chat_gpt_api_key")
-             (buffer-string)))))
-  (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents "~/.chat_gpt_api_key") (buffer-string))))
+  (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents (expand-file-name ".secrets/chat_gpt_api_key" user-emacs-directory)) (buffer-string))))
   :config
   (setq gptel-model 'gpt-4o))
 
@@ -984,6 +994,8 @@
           "https://lyte.dev/blog/index.xml"                                              ;; Daniel's blog
           "https://planet.emacslife.com/atom.xml"                                        ;; emacslife
           "https://sachachua.com/blog/feed/index.xml"                                    ;; sacha chua
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UC1tV5SjRyejRGeHAaMGYSsQ" ;; Joshua Blais YT
+          "https://joshblais.com/index.xml"                                              ;; Joshua Blais blog
           )))
 
 (use-package eww :ensure nil
@@ -1098,10 +1110,6 @@ ask user for an additional input."
   :straight t
   :ensure t)
 
-(use-package ytdl
-  :straight t
-  :ensure t)
-
 (use-package compile
   :ensure nil
   :hook (compilation-filter . ansi-color-compilation-filter)
@@ -1118,7 +1126,13 @@ ask user for an additional input."
                               (format "python %s" (file-name-nondirectory buffer-file-name)))))
   :hook (ocen-mode . (lambda ()
                          (set (make-local-variable 'compile-command)
-                              (format "ocen %s -d -r" (file-name-nondirectory buffer-file-name))))))
+                              (format "ocen %s -d -r" (file-name-nondirectory buffer-file-name)))))
+  :hook (csharp-mode . (lambda ()
+                         (set (make-local-variable 'compile-command)
+                              (format "dotnet run" (file-name-nondirectory buffer-file-name)))))
+  :hook (shell-script-mode . (lambda ()
+                         (set (make-local-variable 'compile-command)
+                              (format "source %s" (file-name-nondirectory buffer-file-name))))))
 
 (use-package evil-mc
   :straight t
