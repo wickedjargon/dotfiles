@@ -91,7 +91,6 @@
   (global-set-key (kbd "M-u") 'universal-argument)            ;; C-u is bound to evil-scroll-up
   (global-set-key (kbd "C-x k") 'bury-buffer)                 ;; kill buffers doesn't save memory
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
-  (global-set-key (kbd "C-<backspace>") 'kill-whole-line)
   (global-set-key [remap find-file] 'fff-find-file)          ;; updates the current directory when in vterm
   (global-set-key [remap list-buffers] 'ibuffer)             ;; ibuffer is superior
 
@@ -406,6 +405,7 @@
     (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
 
+    (define-key evil-insert-state-map (kbd "C-<backspace>") 'fff-delete-till-beginning-of-line)
     (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
     (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
@@ -417,7 +417,8 @@
     (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
     (define-key evil-insert-state-map (kbd "C-/") 'fff-comment)
 
-    (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
+    (define-key evil-normal-state-map (kbd "C-<backspace>") 'fff-delete-till-beginning-of-line)
+    (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-normal-state-map (kbd "C-e") 'move-end-of-line)
     (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
     (define-key evil-normal-state-map (kbd "C-o") 'evil-jump-backward)
