@@ -118,7 +118,6 @@
   (interactive)
   (find-file (expand-file-name "init.el" user-emacs-directory)))
 
-
 (defun fff-access-pass()
   (interactive)
   (find-file "~/d/p"))
@@ -126,7 +125,6 @@
 (defun fff-access-sched ()
   (interactive)
   (find-file "~/d/notes/personal-notes.md"))
-
 
 (defun fff-access-functions-file ()
   (interactive)
@@ -156,7 +154,6 @@
   "Kill the current buffer without asking."
   (interactive)
   (kill-buffer (current-buffer)))
-
 
 (defun fff-save-and-bury-buffer ()
   "save and kill buffer"
@@ -732,7 +729,6 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (vterm (generate-new-buffer-name "*vterm*")))
 
-
 (defun fff-switch-or-create-vterm ()
   (interactive)
   (if (eq major-mode 'vterm-mode)
@@ -944,7 +940,6 @@ in whole buffer.  With neither, delete comments on current line."
     (when selected-function
       (call-interactively (intern selected-function)))))
 
-
 (defun fff-menu-entertainment ()
   "Select and run a programming-related function."
   (interactive)
@@ -970,7 +965,6 @@ in whole buffer.  With neither, delete comments on current line."
                                              nil t)))
     (when selected-function
       (call-interactively (cdr (assoc selected-function functions-list))))))
-
 
 (defun fff-menu-magit-functions ()
   "Select and run a Magit-related function."
@@ -1231,12 +1225,10 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
           (call-interactively 'find-file))
       (message "No parent directory containing 'projects' found."))))
 
-
 (defun fff-insert-current-date ()
   "Insert the current date in the format YYYY-MM-DD."
   (interactive)
   (insert (format-time-string "%Y-%m-%d")))
-
 
 (defun fff-display-tooltip-at-point ()
   "Display information about the symbol at point using posframe."
