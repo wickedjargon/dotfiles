@@ -780,6 +780,15 @@
                             "-J-Dmetals.icons=unicode"))
   (lsp-metals-enable-semantic-highlighting t))
 
+(use-package lsp-tailwindcss
+  :straight t
+  :ensure t
+  :defer t
+  :config
+  (add-to-list 'lsp-language-id-configuration '(".*\\.erb$" . "html")) ;; Associate ERB files with HTML.
+  :init
+  (setq lsp-tailwindcss-add-on-mode t))
+
 (use-package macrostep :straight t :ensure t :defer t)
 
 (use-package nov :straight t :ensure t :defer t
@@ -918,6 +927,16 @@
   :straight t
   :ensure t
   :after tree-sitter)
+
+(use-package treesit-auto
+  :straight t
+  :ensure t
+  :after emacs
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode t))
 
 (use-package devdocs :ensure t
   :straight t
@@ -1217,3 +1236,64 @@ ask user for an additional input."
             ("Autoloads" "^\\s-*(autoload\\s-+'\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)))
     (imenu-add-menubar-index))
   :hook (emacs-lisp-mode . my-emacs-lisp-mode-setup))
+
+(use-package pulsar
+  :straight t
+  :defer t
+  :ensure t
+  :hook
+  (after-init . pulsar-global-mode)
+  :config
+  (setq pulsar-pulse t)
+  (setq pulsar-delay 0.025)
+  (setq pulsar-iterations 10)
+  (setq pulsar-face 'evil-ex-lazy-highlight)
+
+  (add-to-list 'pulsar-pulse-functions 'evil-scroll-down)
+  (add-to-list 'pulsar-pulse-functions 'evil-scroll-up)
+  (add-to-list 'pulsar-pulse-functions 'flymake-goto-next-error)
+  (add-to-list 'pulsar-pulse-functions 'flymake-goto-prev-error)
+  (add-to-list 'pulsar-pulse-functions 'evil-yank)
+  (add-to-list 'pulsar-pulse-functions 'evil-yank-line)
+  (add-to-list 'pulsar-pulse-functions 'evil-delete)
+  (add-to-list 'pulsar-pulse-functions 'evil-delete-line)
+  (add-to-list 'pulsar-pulse-functions 'evil-jump-item))
+
+
+(use-package rainbow-delimiters
+  :straight t
+  :defer t
+  :ensure t
+  :hook
+  (prog-mode . rainbow-delimiters-mode))
+
+(use-package xclip
+  :straight t
+  :ensure t
+  :defer t
+  :hook
+  (after-init . xclip-mode))     ;; Enable xclip mode after initialization.
+
+(use-package flymake
+  :ensure nil          ;; This is built-in, no need to fetch it.
+  :defer t
+  :hook (prog-mode . flymake-mode)
+  :custom
+  (flymake-margin-indicators-string
+   '((error "!»" compilation-error) (warning "»" compilation-warning)
+	 (note "»" compilation-info))))
+
+
+(use-package eldoc
+  :ensure nil          ;; This is built-in, no need to fetch it.
+  :init
+  (global-eldoc-mode)) 
+
+(use-package erc
+  :defer t ;; Load ERC when needed rather than at startup. (Load it with `M-x erc RET')
+  :custom
+  (erc-join-buffer 'window)                                        ;; Open a new window for joining channels.
+  (erc-hide-list '("JOIN" "PART" "QUIT"))                          ;; Hide messages for joins, parts, and quits to reduce clutter.
+  (erc-timestamp-format "[%H:%M]")                                 ;; Format for timestamps in messages.
+  (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs"))));; Automatically join the #emacs channel on Libera.Chat.
+
