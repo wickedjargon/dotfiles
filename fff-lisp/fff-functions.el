@@ -71,6 +71,24 @@
   (interactive)
   (flush-lines "^\s*$" (point-min) (point-max)))
 
+(defun fff-remove-extra-blank-lines ()
+  "Remove extra blank lines, keeping a single blank line between blocks of code."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "\n\\{3,\\}" nil t)
+      (replace-match "\n\n"))
+
+    ;; Remove any leading blank lines at the start of the buffer
+    (goto-char (point-min))
+    (when (looking-at-p "\n+")
+      (replace-match ""))
+
+    ;; Remove any trailing blank lines at the end of the buffer
+    (goto-char (point-max))
+    (skip-chars-backward "\n")
+    (delete-region (point) (point-max))))
+
 (defun fff-remove-newlines ()
   (interactive)
   (save-restriction
@@ -287,6 +305,13 @@ in whole buffer.  With neither, delete comments on current line."
      (line-beginning-position)
      (line-end-position))
     (evil-delete-backward-char-and-join)))
+
+(defun fff-delete-till-beginning-of-line ()
+  "Delete from the current point to the beginning of the line."
+  (interactive)
+  (let ((start (point)))
+    (beginning-of-line)
+    (delete-region (point) start)))
 
 (defun fff-switch-to-previous-buffer ()
   (interactive)

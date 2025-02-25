@@ -143,6 +143,8 @@
         '((checkdoc-package-keywords-flag)
           (checkdoc-minor-mode . t)))                      ;; don't prompt me about unsafe local variables
   (setq vc-follow-symlinks t)                              ;; stop prompting me about whether I want to follow symlinks
+  (pixel-scroll-precision-mode t)                          ;; better for scrolling
+  (setq pixel-scroll-precision-use-momentum nil)           ;; but no momentum please
 
   ;; launch new buffers in current window
   (setq display-buffer-alist
@@ -154,10 +156,6 @@
   ;; show startup time on launch
   (defun display-startup-echo-area-message ()
     (message "(emacs-init-time) -> %s" (emacs-init-time)))
-
-  ;; open .pl files in prolog-mode
-  (autoload 'prolog-mode "prolog" "" t)
-  (add-to-list 'auto-mode-alist '("\\.pl\\'" . prolog-mode))
 
   (setq recentf-max-menu-items 25)
   (setq recentf-max-saved-items 25)
@@ -629,7 +627,7 @@
 (use-package projectile :straight t :defer t :ensure t
   :config
   (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod" "package.json" "Cargo.toml" "build.sh" "v.mod"
-                  "make.bat" "Makefile" "Dockerfile" ".editorconfig" ".gitignore" ".git" ".svn" ".hg" ".bzr"
+                  "make.bat" "Makefile" "Dockerfile" ".editorconfig" ".gitignore" ".svn" ".hg" ".bzr"
                   "Pipfile" "tox.ini" "requirements.txt" "pom.xml" "build.gradle" "Cargo.lock" "yarn.lock"
                   "webpack.config.js" "Gemfile" ".ruby-version" "composer.json" ".env" "README.md" ".eslint.js"
                   "tsconfig.json" ".babelrc" ".prettierrc" "CMakeLists.txt" ".project"))
@@ -1148,11 +1146,13 @@ ask user for an additional input."
   :ensure t
   :init
   (add-hook 'prog-mode-hook 'copilot-mode)
+  (setq copilot-idle-delay nil)
   :config
   (add-to-list 'warning-suppress-types '(copilot))
   :bind
   (:map copilot-completion-map
         ("<tab>" . copilot-accept-completion)
+        ("C-k" . copilot-complete)
         ("TAB" . copilot-accept-completion)
         ("C-<tab>" . copilot-accept-completion-by-word)
         ("C-TAB" . copilot-accept-completion-by-word)))
