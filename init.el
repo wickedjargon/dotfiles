@@ -129,7 +129,6 @@
   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
   (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
   (electric-pair-mode 1)                                  ;; automatically insert matching paren as well as auto indent on new line
-  (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
@@ -653,6 +652,9 @@
 (use-package emojify :straight t :ensure t :defer t)
 
 (use-package dired :defer t :ensure nil
+  :custom
+  (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
+  (dired-kill-when-opening-new-dired-buffer t)               ;; Close the previous buffer when opening a new `dired' instance.
   :config
   (add-hook 'dired-mode-hook
             (lambda ()
@@ -818,8 +820,6 @@
   :init
   (emms-all)
   (emms-default-players))
-
-(use-package circe :straight t :ensure t :defer t)
 
 (use-package avy :straight t :ensure t :defer t)
 
@@ -1237,18 +1237,13 @@ ask user for an additional input."
     (imenu-add-menubar-index))
   :hook (emacs-lisp-mode . my-emacs-lisp-mode-setup))
 
-(use-package pulsar
-  :straight t
-  :defer t
-  :ensure t
-  :hook
-  (after-init . pulsar-global-mode)
+(use-package pulsar :straight t :defer t :ensure t
+  :hook (after-init . pulsar-global-mode)
   :config
   (setq pulsar-pulse t)
   (setq pulsar-delay 0.025)
   (setq pulsar-iterations 10)
   (setq pulsar-face 'evil-ex-lazy-highlight)
-
   (add-to-list 'pulsar-pulse-functions 'evil-scroll-down)
   (add-to-list 'pulsar-pulse-functions 'evil-scroll-up)
   (add-to-list 'pulsar-pulse-functions 'flymake-goto-next-error)
@@ -1259,13 +1254,8 @@ ask user for an additional input."
   (add-to-list 'pulsar-pulse-functions 'evil-delete-line)
   (add-to-list 'pulsar-pulse-functions 'evil-jump-item))
 
-
-(use-package rainbow-delimiters
-  :straight t
-  :defer t
-  :ensure t
-  :hook
-  (prog-mode . rainbow-delimiters-mode))
+(use-package rainbow-delimiters :straight t :defer t :ensure t
+  :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package xclip
   :straight t
@@ -1277,23 +1267,16 @@ ask user for an additional input."
 (use-package flymake
   :ensure nil          ;; This is built-in, no need to fetch it.
   :defer t
-  :hook (prog-mode . flymake-mode)
-  :custom
-  (flymake-margin-indicators-string
-   '((error "!»" compilation-error) (warning "»" compilation-warning)
-	 (note "»" compilation-info))))
-
+  :hook (prog-mode . flymake-mode))
 
 (use-package eldoc
   :ensure nil          ;; This is built-in, no need to fetch it.
   :init
-  (global-eldoc-mode)) 
+  (global-eldoc-mode))
 
-(use-package erc
-  :defer t ;; Load ERC when needed rather than at startup. (Load it with `M-x erc RET')
+(use-package erc :ensure nil :defer t
   :custom
   (erc-join-buffer 'window)                                        ;; Open a new window for joining channels.
   (erc-hide-list '("JOIN" "PART" "QUIT"))                          ;; Hide messages for joins, parts, and quits to reduce clutter.
   (erc-timestamp-format "[%H:%M]")                                 ;; Format for timestamps in messages.
   (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs"))));; Automatically join the #emacs channel on Libera.Chat.
-
