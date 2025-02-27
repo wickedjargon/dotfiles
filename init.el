@@ -43,9 +43,7 @@
   ;; (set-face-attribute 'default nil :height 150)
 
   ;; setting font height
-  (if (string= (system-name) "x1c")
-      (set-face-attribute 'default nil :height 135)
-    (set-face-attribute 'default nil :height 135))
+  (set-face-attribute 'default nil :height 135)
 
   ;; hooks
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
@@ -82,9 +80,16 @@
               (setq buffer-display-table (make-display-table))
               (aset buffer-display-table ?\^M [])))
 
+  ;; kill the scratch buffer
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (when (get-buffer "*scratch*")
+                (kill-buffer "*scratch*"))))
+
   ;; key bindings
   (global-unset-key (kbd "C-x C-c"))
   (global-unset-key (kbd "C-h h"))                            ;; I press this by accident sometimes
+  (global-unset-key (kbd "C-h C-a"))                          ;; I don't use about emacs page
   (global-unset-key (kbd "C-h ?"))                            ;; unsetting this prevents help-for-help in favor of embark-bindings for `C-h ?'
   (global-unset-key (kbd "M-ESC ESC"))                        ;; because of my OS remaping of ESC, the typical evil remaping for this doesn't work
   (global-set-key (kbd "M-ESC M-ESC") 'keyboard-escape-quit)  ;; I have to remap to this instead
@@ -170,7 +175,12 @@
                                                       leuven light-blue manoj-dark misterioso
                                                       tango-dark tango tsdh-dark tsdh-light
                                                       wheatgrass whiteboard wombat)))
-                            themes))))
+                            themes)))
+
+  ;; load my own config
+  (with-eval-after-load 'evil
+    (load (expand-file-name "fff-lisp/hide-comnt.el" user-emacs-directory))
+    (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory))))
 
 (use-package modus-themes
   :ensure t
@@ -375,6 +385,7 @@
   (setq evil-want-fine-undo t)
   (setq evil-search-wrap nil)
   (setq evil-kill-on-visual-paste nil)
+  (setq evil-leader/in-all-states t)  ;; Make the leader key available in all states.
 
   ;; hitting C-n and C-p doesn't work for the company-mode pop-up
   ;; after using C-h. The code below resolves this issue
@@ -454,12 +465,6 @@
     (define-key goto-address-highlight-keymap (kbd "C-c RET") 'yt-dlp-play-current-entry)
     (define-key yt-dlp-mode-map (kbd "<mouse-2>") 'yt-dlp-play-current-entry)
     (define-key goto-address-highlight-keymap (kbd "<mouse-2>") 'yt-dlp-play-current-entry)))
-
-(use-package fff-lisp :defer nil :ensure nil
-  :after evil
-  :init
-  (load (expand-file-name "fff-lisp/hide-comnt.el" user-emacs-directory))
-  (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory)))
 
 (use-package ocen-mode
   :straight nil ; not to install from a package repository
@@ -564,11 +569,9 @@
   :init
   (setq company-format-margin-function nil)
   ;; (setq company-idle-delay 0.2)
-  (setq company-idle-delay nil)
+  (setq company-idle-delay 0)
   (setq company-tooltip-limit 2)
   (global-company-mode)
-  :bind (:map company-mode-map
-              ("C-l" . company-complete))
   :config
   (add-hook 'c-mode-common-hook
             (lambda ()
@@ -591,12 +594,6 @@
 
 (use-package emmet-mode :straight t :defer t :ensure t
   :init (add-hook 'sgml-mode-hook 'emmet-mode))
-
-;; (use-package markdown-mode :straight t :defer t :ensure nil
-;;   :mode ("README\\.md\\'" . gfm-mode)
-;;   :init
-;;   (setq markdown-command "multimarkdown")
-;;   (add-hook 'markdown-mode-hook (lambda () (visual-line-mode +1))))
 
 (use-package mw-thesaurus :straight t :defer t :ensure t)
 
@@ -686,8 +683,7 @@
             (lambda ()
               (when (and (fboundp 'tramp-tramp-file-p)
                          (tramp-tramp-file-p (or buffer-file-name "")))
-                (git-gutter-mode -1))))
-  )
+                (git-gutter-mode -1)))))
 
 (use-package git-gutter-fringe :straight t :ensure t
   :config
@@ -1063,10 +1059,6 @@
 
 (use-package v-mode :straight t :ensure t :defer t)
 
-(use-package markdown-mode
-  :ensure nil
-  :hook (markdown-mode . visual-line-mode))
-
 (use-package sly-macrostep
   :defer t
   :straight t
@@ -1150,7 +1142,13 @@ ask user for an additional input."
                               (format "dotnet run" (file-name-nondirectory buffer-file-name)))))
   :hook (shell-script-mode . (lambda ()
                          (set (make-local-variable 'compile-command)
-                              (format "source %s" (file-name-nondirectory buffer-file-name))))))
+                              (format "source %s" (file-name-nondirectory buffer-file-name)))))
+  :hook (lisp-mode . (lambda ()
+                       (set (make-local-variable 'compile-command)
+                            (format "sbcl --script %s" (file-name-nondirectory buffer-file-name)))))
+  :hook (rust-mode . (lambda ()
+                       (set (make-local-variable 'compile-command)
+                            (format "cargo run")))))
 
 (use-package evil-mc
   :straight t
@@ -1175,10 +1173,6 @@ ask user for an additional input."
         ("TAB" . copilot-accept-completion)
         ("C-<tab>" . copilot-accept-completion-by-word)
         ("C-TAB" . copilot-accept-completion-by-word)))
-
-(use-package copilot-chat
-  :straight (:host github :repo "chep/copilot-chat.el" :files ("*.el"))
-  :after (request org markdown-mode))
 
 (use-package csharp-mode :ensure nil
   :hook (csharp-mode . (lambda ()
@@ -1257,26 +1251,31 @@ ask user for an additional input."
 (use-package rainbow-delimiters :straight t :defer t :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
 
+;; allow copy/paste when in terminal
 (use-package xclip
   :straight t
   :ensure t
   :defer t
   :hook
-  (after-init . xclip-mode))     ;; Enable xclip mode after initialization.
+  (after-init . xclip-mode))
 
 (use-package flymake
-  :ensure nil          ;; This is built-in, no need to fetch it.
+  :ensure nil
   :defer t
   :hook (prog-mode . flymake-mode))
 
 (use-package eldoc
-  :ensure nil          ;; This is built-in, no need to fetch it.
+  :ensure nil
   :init
   (global-eldoc-mode))
 
 (use-package erc :ensure nil :defer t
   :custom
-  (erc-join-buffer 'window)                                        ;; Open a new window for joining channels.
-  (erc-hide-list '("JOIN" "PART" "QUIT"))                          ;; Hide messages for joins, parts, and quits to reduce clutter.
-  (erc-timestamp-format "[%H:%M]")                                 ;; Format for timestamps in messages.
-  (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs"))));; Automatically join the #emacs channel on Libera.Chat.
+  (erc-join-buffer 'window)                                         ;; Open a new window for joining channels.
+  (erc-hide-list '("JOIN" "PART" "QUIT"))                           ;; Hide messages for joins, parts, and quits to reduce clutter.
+  (erc-timestamp-format "[%H:%M]")                                  ;; Format for timestamps in messages.
+  (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs")))) ;; Automatically join the #emacs channel on Libera.Chat.
+
+(use-package markdown-mode
+  :ensure nil
+  :hook (markdown-mode . visual-line-mode))
