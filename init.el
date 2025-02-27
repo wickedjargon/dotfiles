@@ -1,8 +1,3 @@
-;; consiering the following transitions:
-;; - projectile -> project
-;; - lsp-mode -> eglot
-;; - company -> corju + orderless + dabbrev
-
 ;; explore these packages:
 ;; auctex, org
 ;; writing studio (https://leanpub.com/emacswritingstudio)
@@ -149,6 +144,7 @@
   (setq vc-follow-symlinks t)                              ;; stop prompting me about whether I want to follow symlinks
   (pixel-scroll-precision-mode t)                          ;; better for scrolling
   (setq pixel-scroll-precision-use-momentum nil)           ;; but no momentum please
+  (setq warning-minimum-level :emergency)                  ;; Set the minimum level of warnings to display.
 
   ;; launch new buffers in current window
   (setq display-buffer-alist
@@ -720,8 +716,6 @@
 
 (use-package typescript-mode :straight t :ensure t :defer t)
 
-(use-package rust-mode :straight t :ensure t :defer t)
-
 (use-package lsp-mode :straight t :ensure t
   ;; preferred LSPs:
   ;; - javascript/typescript: jsts-ls
@@ -730,8 +724,10 @@
   ;; - css:
   ;; hooks:
   :hook (rust-mode . lsp-deferred)
+  :hook (rust-ts-mode . lsp-deferred)
   ;; :hook (svelte-mode . lsp-deferred)
   :hook (c-mode . lsp-deferred)
+  :hook (c-ts-mode . lsp-deferred)
   :hook (cc-mode . lsp-deferred)
   :hook (c++-mode . lsp-deferred)
   :hook (csharp-mode . lsp-deferred)
@@ -1262,7 +1258,9 @@ ask user for an additional input."
 (use-package flymake
   :ensure nil
   :defer t
-  :hook (prog-mode . flymake-mode))
+  :hook (prog-mode . (lambda ()
+                       (unless (derived-mode-p 'emacs-lisp-mode)
+                         (flymake-mode 1)))))
 
 (use-package eldoc
   :ensure nil
