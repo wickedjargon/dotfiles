@@ -62,6 +62,42 @@
     ;; f-string format (Python-style)
     ("f\"\\(?:\\\\.\\|[^\"\\]\\)*\"" . font-lock-string-face)))
 
+(defun ocen-indent-line ()
+  "Indent current line as Ocen code."
+  (interactive)
+  (let ((indent-level 0)
+        (not-indented t)
+        (cur-indent)
+        (offset 4))  ;; Default indentation offset
+      (beginning-of-line)
+      (if (bobp)  ;; If at the beginning of the buffer, indent to 0
+          (setq not-indented nil)
+        (if (looking-at "^[[:space:]]*\\(}\\|else\\|else if\\)")  ;; Decrease indent for closing braces and else/else if
+            (progn
+              (save-excursion
+                (forward-line -1)
+                (setq cur-indent (- (current-indentation) offset)))
+              (if (< cur-indent 0)
+                  (setq cur-indent 0)))
+          (save-excursion
+            (while not-indented
+              (forward-line -1)
+              (cond
+               ((looking-at "^[[:space:]]*\\(def\\|struct\\|enum\\|union\\|if\\|while\\|for\\|match\\|namespace\\).*{")
+                (setq cur-indent (+ (current-indentation) offset))
+                (setq not-indented nil))
+               ((looking-at "^[[:space:]]*}")
+                (setq cur-indent (current-indentation))
+                (setq not-indented nil))
+               ((bobp)
+                (setq not-indented nil)))))))
+    (if cur-indent
+        (indent-line-to cur-indent)
+      (indent-line-to 0))))
+
+(defvar ocen-defun-regexp "^\\s-*\\(def\\|enum\\|struct\\|union\\).*"
+  "Regular expression to match the start of a function, enum, or struct definition in Ocen.")
+
 ;;;###autoload
 (define-derived-mode ocen-mode prog-mode "Ocen"
   "Major mode for editing Ocen files."
@@ -75,8 +111,8 @@
   (setq-local tab-width 4)
   (setq-local buffer-file-coding-system 'utf-8-unix)
   (setq-local electric-indent-chars (append "{}():;," electric-indent-chars))
-  (setq-local indent-line-function #'js-indent-line)
-  (setq-local js-indent-level tab-width)
+  (setq-local indent-line-function #'ocen-indent-line)
+  (setq-local defun-prompt-regexp #'ocen-defun-regexp)
 
   ;; Set up syntax highlighting
   (setq-local font-lock-defaults '((ocen-font-lock-keywords)))
@@ -90,9 +126,6 @@
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.oc\\'" . ocen-mode))
-
-
-
 
 (provide 'ocen-mode)
 
