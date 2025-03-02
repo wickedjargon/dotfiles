@@ -139,6 +139,19 @@
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.oc\\'" . ocen-mode))
 
+(defun ocen-move-if-bol-and-whitespace-only ()
+  "Move cursor to the end of the line if it's at the beginning and
+the line has only whitespace."
+  (when (and (derived-mode-p 'ocen-mode) ; Ensure we're in `ocen-mode`
+             (looking-at-p "^[ \t]*$"))  ; Line has only whitespace
+    (end-of-line)))
+
+(defun setup-ocen-mode-whitespace-cursor-movement ()
+  "Set up cursor movement for whitespace-only lines in Ocen mode."
+  (add-hook 'post-command-hook 'ocen-move-if-bol-and-whitespace-only nil t))
+
+(add-hook 'ocen-mode-hook 'setup-ocen-mode-whitespace-cursor-movement)
+
 (provide 'ocen-mode)
 
 ;;; ocen-mode.el ends here
