@@ -54,158 +54,158 @@
 
 ;;; Constants
 
-(defconst js--name-start-re "[[:alpha:]_$]"
-  "Regexp matching the start of a JavaScript identifier, without grouping.")
+(defconst ocen--name-start-re "[[:alpha:]_$]"
+  "Regexp matching the start of a Ocen identifier, without grouping.")
 
-(defconst js--stmt-delim-chars "^;{}?:")
+(defconst ocen--stmt-delim-chars "^;{}?:")
 
-(defconst js--name-re (concat js--name-start-re
+(defconst ocen--name-re (concat ocen--name-start-re
                               "\\(?:\\s_\\|\\sw\\)*")
-  "Regexp matching a JavaScript identifier, without grouping.")
+  "Regexp matching a Ocen identifier, without grouping.")
 
-(defconst js--objfield-re (concat js--name-re ":")
-  "Regexp matching the start of a JavaScript object field.")
+(defconst ocen--objfield-re (concat ocen--name-re ":")
+  "Regexp matching the start of a Ocen object field.")
 
-(defconst js--dotted-name-re
-  (concat js--name-re "\\(?:\\." js--name-re "\\)*")
-  "Regexp matching a dot-separated sequence of JavaScript names.")
+(defconst ocen--dotted-name-re
+  (concat ocen--name-re "\\(?:\\." ocen--name-re "\\)*")
+  "Regexp matching a dot-separated sequence of Ocen names.")
 
-(defconst js--cpp-name-re js--name-re
+(defconst ocen--cpp-name-re ocen--name-re
   "Regexp matching a C preprocessor name.")
 
-(defconst js--opt-cpp-start "^\\s-*#\\s-*\\([[:alnum:]]+\\)"
+(defconst ocen--opt-cpp-start "^\\s-*#\\s-*\\([[:alnum:]]+\\)"
   "Regexp matching the prefix of a cpp directive.
 This includes the directive name, or nil in languages without
 preprocessor support.  The first submatch surrounds the directive
 name.")
 
-(defconst js--plain-method-re
-  (concat "^\\s-*?\\(" js--dotted-name-re "\\)\\.prototype"
-          "\\.\\(" js--name-re "\\)\\s-*?=\\s-*?\\(\\(?:async[ \t\n]+\\)function\\)\\_>")
-  "Regexp matching an explicit JavaScript prototype \"method\" declaration.
+(defconst ocen--plain-method-re
+  (concat "^\\s-*?\\(" ocen--dotted-name-re "\\)\\.prototype"
+          "\\.\\(" ocen--name-re "\\)\\s-*?=\\s-*?\\(\\(?:async[ \t\n]+\\)function\\)\\_>")
+  "Regexp matching an explicit Ocen prototype \"method\" declaration.
 Group 1 is a (possibly-dotted) class name, group 2 is a method name,
 and group 3 is the `function' keyword.")
 
-(defconst js--plain-class-re
-  (concat "^\\s-*\\(" js--dotted-name-re "\\)\\.prototype"
+(defconst ocen--plain-class-re
+  (concat "^\\s-*\\(" ocen--dotted-name-re "\\)\\.prototype"
           "\\s-*=\\s-*{")
-  "Regexp matching a JavaScript explicit prototype \"class\" declaration.
+  "Regexp matching a Ocen explicit prototype \"class\" declaration.
 An example of this is \"Class.prototype = { method1: ...}\".")
 
 ;; var NewClass = BaseClass.extend(
-(defconst js--mp-class-decl-re
+(defconst ocen--mp-class-decl-re
   (concat "^\\s-*var\\s-+"
-          "\\(" js--name-re "\\)"
+          "\\(" ocen--name-re "\\)"
           "\\s-*=\\s-*"
-          "\\(" js--dotted-name-re
+          "\\(" ocen--dotted-name-re
           "\\)\\.extend\\(?:Final\\)?\\s-*(\\s-*{?\\s-*$"))
 
 ;; var NewClass = Class.create()
-(defconst js--prototype-obsolete-class-decl-re
+(defconst ocen--prototype-obsolete-class-decl-re
   (concat "^\\s-*\\(?:var\\s-+\\)?"
-          "\\(" js--dotted-name-re "\\)"
+          "\\(" ocen--dotted-name-re "\\)"
           "\\s-*=\\s-*Class\\.create()"))
 
-(defconst js--prototype-objextend-class-decl-re-1
+(defconst ocen--prototype-objextend-class-decl-re-1
   (concat "^\\s-*Object\\.extend\\s-*("
-          "\\(" js--dotted-name-re "\\)"
+          "\\(" ocen--dotted-name-re "\\)"
           "\\s-*,\\s-*{"))
 
-(defconst js--prototype-objextend-class-decl-re-2
+(defconst ocen--prototype-objextend-class-decl-re-2
   (concat "^\\s-*\\(?:var\\s-+\\)?"
-          "\\(" js--dotted-name-re "\\)"
+          "\\(" ocen--dotted-name-re "\\)"
           "\\s-*=\\s-*Object\\.extend\\s-*("))
 
 ;; var NewClass = Class.create({
-(defconst js--prototype-class-decl-re
+(defconst ocen--prototype-class-decl-re
   (concat "^\\s-*\\(?:var\\s-+\\)?"
-          "\\(" js--name-re "\\)"
+          "\\(" ocen--name-re "\\)"
           "\\s-*=\\s-*Class\\.create\\s-*(\\s-*"
-          "\\(?:\\(" js--dotted-name-re "\\)\\s-*,\\s-*\\)?{?"))
+          "\\(?:\\(" ocen--dotted-name-re "\\)\\s-*,\\s-*\\)?{?"))
 
-;; Parent class name(s) (yes, multiple inheritance in JavaScript) are
+;; Parent class name(s) (yes, multiple inheritance in Ocen) are
 ;; matched with dedicated font-lock matchers
-(defconst js--dojo-class-decl-re
-  (concat "^\\s-*dojo\\.declare\\s-*(\"\\(" js--dotted-name-re "\\)"))
+(defconst ocen--dojo-class-decl-re
+  (concat "^\\s-*dojo\\.declare\\s-*(\"\\(" ocen--dotted-name-re "\\)"))
 
-(defconst js--extjs-class-decl-re-1
+(defconst ocen--extocen-class-decl-re-1
   (concat "^\\s-*Ext\\.extend\\s-*("
-          "\\s-*\\(" js--dotted-name-re "\\)"
-          "\\s-*,\\s-*\\(" js--dotted-name-re "\\)")
-  "Regexp matching an ExtJS class declaration (style 1).")
+          "\\s-*\\(" ocen--dotted-name-re "\\)"
+          "\\s-*,\\s-*\\(" ocen--dotted-name-re "\\)")
+  "Regexp matching class declaration (style 1).")
 
-(defconst js--extjs-class-decl-re-2
+(defconst ocen--extocen-class-decl-re-2
   (concat "^\\s-*\\(?:var\\s-+\\)?"
-          "\\(" js--name-re "\\)"
+          "\\(" ocen--name-re "\\)"
           "\\s-*=\\s-*Ext\\.extend\\s-*(\\s-*"
-          "\\(" js--dotted-name-re "\\)")
-  "Regexp matching an ExtJS class declaration (style 2).")
+          "\\(" ocen--dotted-name-re "\\)")
+  "Regexp matching class declaration (style 2).")
 
-(defconst js--mochikit-class-re
+(defconst ocen--mochikit-class-re
   (concat "^\\s-*MochiKit\\.Base\\.update\\s-*(\\s-*"
-          "\\(" js--dotted-name-re "\\)")
+          "\\(" ocen--dotted-name-re "\\)")
   "Regexp matching a MochiKit class declaration.")
 
-(defconst js--dummy-class-style
+(defconst ocen--dummy-class-style
   '(:name "[Automatically Generated Class]"))
 
-(defconst js--class-styles
+(defconst ocen--class-styles
   `((:name            "Plain"
-     :class-decl      ,js--plain-class-re
+     :class-decl      ,ocen--plain-class-re
      :prototype       t
      :contexts        (toplevel)
-     :framework       javascript)
+     :framework       ocen)
 
     (:name            "MochiKit"
-     :class-decl      ,js--mochikit-class-re
+     :class-decl      ,ocen--mochikit-class-re
      :prototype       t
      :contexts        (toplevel)
      :framework       mochikit)
 
     (:name            "Prototype (Obsolete)"
-     :class-decl      ,js--prototype-obsolete-class-decl-re
+     :class-decl      ,ocen--prototype-obsolete-class-decl-re
      :contexts        (toplevel)
      :framework       prototype)
 
     (:name            "Prototype (Modern)"
-     :class-decl      ,js--prototype-class-decl-re
+     :class-decl      ,ocen--prototype-class-decl-re
      :contexts        (toplevel)
      :framework       prototype)
 
     (:name            "Prototype (Object.extend)"
-     :class-decl      ,js--prototype-objextend-class-decl-re-1
+     :class-decl      ,ocen--prototype-objextend-class-decl-re-1
      :prototype       t
      :contexts        (toplevel)
      :framework       prototype)
 
     (:name            "Prototype (Object.extend) 2"
-     :class-decl      ,js--prototype-objextend-class-decl-re-2
+     :class-decl      ,ocen--prototype-objextend-class-decl-re-2
      :prototype       t
      :contexts        (toplevel)
      :framework       prototype)
 
     (:name            "Dojo"
-     :class-decl      ,js--dojo-class-decl-re
+     :class-decl      ,ocen--dojo-class-decl-re
      :contexts        (toplevel)
      :framework       dojo)
 
     (:name            "ExtJS (style 1)"
-     :class-decl      ,js--extjs-class-decl-re-1
+     :class-decl      ,ocen--extocen-class-decl-re-1
      :prototype       t
      :contexts        (toplevel)
      :framework       extjs)
 
     (:name            "ExtJS (style 2)"
-     :class-decl      ,js--extjs-class-decl-re-2
+     :class-decl      ,ocen--extocen-class-decl-re-2
      :contexts        (toplevel)
      :framework       extjs)
 
     (:name            "Merrill Press"
-     :class-decl      ,js--mp-class-decl-re
+     :class-decl      ,ocen--mp-class-decl-re
      :contexts        (toplevel)
      :framework       merrillpress))
 
-  "List of JavaScript class definition styles.
+  "List of Ocen class definition styles.
 
 A class definition style is a plist with the following keys:
 
@@ -225,44 +225,44 @@ unnecessarily: it has an associated cost in performance.
 If :strip-prototype is present and non-nil, then if the class
 name as matched contains.")
 
-(defconst js--available-frameworks
-  (cl-loop for style in js--class-styles
+(defconst ocen--available-frameworks
+  (cl-loop for style in ocen--class-styles
            for framework = (plist-get style :framework)
            unless (memq framework available-frameworks)
            collect framework into available-frameworks
            finally return available-frameworks)
-  "List of available JavaScript frameworks symbols.")
+  "List of available Ocen frameworks symbols.")
 
-(defconst js--function-heading-1-re
+(defconst ocen--function-heading-1-re
   (concat
-   "^\\s-*function\\(?:\\s-\\|\\*\\)+\\(" js--name-re "\\)")
-  "Regexp matching the start of a JavaScript function header.
+   "^\\s-*function\\(?:\\s-\\|\\*\\)+\\(" ocen--name-re "\\)")
+  "Regexp matching the start of a Ocen function header.
 Match group 1 is the name of the function.")
 
-(defconst js--function-heading-2-re
+(defconst ocen--function-heading-2-re
   (concat
-   "^\\s-*\\(" js--name-re "\\)\\s-*:\\s-*function\\_>")
+   "^\\s-*\\(" ocen--name-re "\\)\\s-*:\\s-*function\\_>")
   "Regexp matching the start of a function entry in an associative array.
 Match group 1 is the name of the function.")
 
-(defconst js--function-heading-3-re
+(defconst ocen--function-heading-3-re
   (concat
-   "^\\s-*\\(?:var\\s-+\\)?\\(" js--dotted-name-re "\\)"
+   "^\\s-*\\(?:var\\s-+\\)?\\(" ocen--dotted-name-re "\\)"
    "\\s-*=\\s-*function\\_>")
-  "Regexp matching a line in the JavaScript form \"var MUMBLE = function\".
+  "Regexp matching a line in the Ocen form \"var MUMBLE = function\".
 Match group 1 is MUMBLE.")
 
-(defconst js--macro-decl-re
-  (concat "^\\s-*#\\s-*define\\s-+\\(" js--cpp-name-re "\\)\\s-*(")
+(defconst ocen--macro-decl-re
+  (concat "^\\s-*#\\s-*define\\s-+\\(" ocen--cpp-name-re "\\)\\s-*(")
   "Regexp matching a CPP macro definition, up to the opening parenthesis.
 Match group 1 is the name of the macro.")
 
-(defun js--regexp-opt-symbol (list)
+(defun ocen--regexp-opt-symbol (list)
   "Like `regexp-opt', but surround the result with `\\\\_<' and `\\\\_>'."
   (concat "\\_<" (regexp-opt list t) "\\_>"))
 
-(defconst js--keyword-re
-  (js--regexp-opt-symbol
+(defconst ocen--keyword-re
+  (ocen--regexp-opt-symbol
    '("abstract" "async" "await" "break" "case" "catch" "class" "const"
      "continue" "debugger" "default" "delete" "do" "else"
      "enum" "export" "extends" "final" "finally" "for"
@@ -272,40 +272,40 @@ Match group 1 is the name of the macro.")
      "super" "switch" "synchronized" "throw"
      "throws" "transient" "try" "typeof" "var" "void" "let"
      "yield" "volatile" "while" "with"))
-  "Regexp matching any JavaScript keyword.")
+  "Regexp matching any Ocen keyword.")
 
-(defconst js--basic-type-re
-  (js--regexp-opt-symbol
+(defconst ocen--basic-type-re
+  (ocen--regexp-opt-symbol
    '("boolean" "byte" "char" "double" "float" "int" "long"
      "short" "void"))
-  "Regular expression matching any predefined type in JavaScript.")
+  "Regular expression matching any predefined type in Ocen.")
 
-(defconst js--constant-re
-  (js--regexp-opt-symbol '("false" "null" "undefined"
+(defconst ocen--constant-re
+  (ocen--regexp-opt-symbol '("false" "null" "undefined"
                                  "Infinity" "NaN"
                                  "true" "arguments" "this"))
-  "Regular expression matching any future reserved words in JavaScript.")
+  "Regular expression matching any future reserved words in Ocen.")
 
 
-(defconst js--font-lock-keywords-1
+(defconst ocen--font-lock-keywords-1
   (list
    "\\_<import\\_>"
-   (list js--function-heading-1-re 1 font-lock-function-name-face)
-   (list js--function-heading-2-re 1 font-lock-function-name-face))
-  "Level one font lock keywords for `js-mode'.")
+   (list ocen--function-heading-1-re 1 font-lock-function-name-face)
+   (list ocen--function-heading-2-re 1 font-lock-function-name-face))
+  "Level one font lock keywords for `ocen-mode'.")
 
-(defconst js--font-lock-keywords-2
-  (append js--font-lock-keywords-1
-          (list (list js--keyword-re 1 font-lock-keyword-face)
-                (cons js--basic-type-re font-lock-type-face)
-                (cons js--constant-re font-lock-constant-face)))
-  "Level two font lock keywords for `js-mode'.")
+(defconst ocen--font-lock-keywords-2
+  (append ocen--font-lock-keywords-1
+          (list (list ocen--keyword-re 1 font-lock-keyword-face)
+                (cons ocen--basic-type-re font-lock-type-face)
+                (cons ocen--constant-re font-lock-constant-face)))
+  "Level two font lock keywords for `ocen-mode'.")
 
-;; js--pitem is the basic building block of the lexical
+;; ocen--pitem is the basic building block of the lexical
 ;; database. When one refers to a real part of the buffer, the region
 ;; of text to which it refers is split into a conceptual header and
 ;; body. Consider the (very short) block described by a hypothetical
-;; js--pitem:
+;; ocen--pitem:
 ;;
 ;;   function foo(a,b,c) { return 42; }
 ;;   ^                    ^            ^
@@ -324,7 +324,7 @@ Match group 1 is the name of the macro.")
 ;; header.
 ;;
 ;; The body is the region [h-end, b-end]. It may contain nested
-;; js--pitem instances. The body of a pitem may be empty: in
+;; ocen--pitem instances. The body of a pitem may be empty: in
 ;; that case, b-end is equal to header-end.
 ;;
 ;; The three points obey the following relationship:
@@ -334,29 +334,29 @@ Match group 1 is the name of the macro.")
 ;; We put a text property in the buffer on the character *before*
 ;; h-end, and if we see it, on the character *before* b-end.
 ;;
-;; The text property for h-end, js--pstate, is actually a list
-;; of all js--pitem instances open after the marked character.
+;; The text property for h-end, ocen--pstate, is actually a list
+;; of all ocen--pitem instances open after the marked character.
 ;;
-;; The text property for b-end, js--pend, is simply the
-;; js--pitem that ends after the marked character. (Because
+;; The text property for b-end, ocen--pend, is simply the
+;; ocen--pitem that ends after the marked character. (Because
 ;; pitems always end when the paren-depth drops below a critical
 ;; value, and because we can only drop one level per character, only
 ;; one pitem may end at a given character.)
 ;;
 ;; In the structure below, we only store h-begin and (sometimes)
 ;; b-end. We can trivially and quickly find h-end by going to h-begin
-;; and searching for an js--pstate text property. Since no other
-;; js--pitem instances can be nested inside the header of a
+;; and searching for an ocen--pstate text property. Since no other
+;; ocen--pitem instances can be nested inside the header of a
 ;; pitem, the location after the character with this text property
 ;; must be h-end.
 ;;
-;; js--pitem instances are never modified (with the exception
+;; ocen--pitem instances are never modified (with the exception
 ;; of the b-end field). Instead, modified copies are added at
 ;; subsequence parse points.
 ;; (The exception for b-end and its caveats is described below.)
 ;;
 
-(cl-defstruct (js--pitem (:type list))
+(cl-defstruct (ocen--pitem (:type list))
   ;; IMPORTANT: Do not alter the position of fields within the list.
   ;; Various bits of code depend on their positions, particularly
   ;; anything that manipulates the list of children.
@@ -385,107 +385,107 @@ Match group 1 is the name of the macro.")
   ;; The field value is either a number (buffer location) or nil if
   ;; unknown.
   ;;
-  ;; If the field's value is greater than `js--cache-end', the
+  ;; If the field's value is greater than `ocen--cache-end', the
   ;; value is stale and must be treated as if it were nil. Conversely,
   ;; if this field is nil, it is guaranteed that this pitem is open up
-  ;; to at least `js--cache-end'. (This property is handy when
+  ;; to at least `ocen--cache-end'. (This property is handy when
   ;; computing whether we're inside a given pitem.)
   ;;
   (b-end nil))
 
 ;; The pitem we start parsing with.
-(defconst js--initial-pitem
-  (make-js--pitem
+(defconst ocen--initial-pitem
+  (make-ocen--pitem
    :paren-depth most-negative-fixnum
    :type 'toplevel))
 
 ;;; User Customization
 
 (defgroup js nil
-  "Customization variables for JavaScript mode."
-  :tag "JavaScript"
+  "Customization variables for Ocen mode."
+  :tag "Ocen"
   :group 'languages)
 
-(defcustom js-indent-level 4
-  "Number of spaces for each indentation step in `js-mode'."
+(defcustom ocen-indent-level 4
+  "Number of spaces for each indentation step in `ocen-mode'."
   :type 'integer
   :safe 'integerp)
 
-(defcustom js-expr-indent-offset 0
+(defcustom ocen-expr-indent-offset 0
   "Number of additional spaces for indenting continued expressions.
-The value must be no less than minus `js-indent-level'."
+The value must be no less than minus `ocen-indent-level'."
   :type 'integer
   :safe 'integerp)
 
-(defcustom js-paren-indent-offset 0
+(defcustom ocen-paren-indent-offset 0
   "Number of additional spaces for indenting expressions in parentheses.
-The value must be no less than minus `js-indent-level'."
+The value must be no less than minus `ocen-indent-level'."
   :type 'integer
   :safe 'integerp
   :version "24.1")
 
-(defcustom js-square-indent-offset 0
+(defcustom ocen-square-indent-offset 0
   "Number of additional spaces for indenting expressions in square braces.
-The value must be no less than minus `js-indent-level'."
+The value must be no less than minus `ocen-indent-level'."
   :type 'integer
   :safe 'integerp
   :version "24.1")
 
-(defcustom js-curly-indent-offset 0
+(defcustom ocen-curly-indent-offset 0
   "Number of additional spaces for indenting expressions in curly braces.
-The value must be no less than minus `js-indent-level'."
+The value must be no less than minus `ocen-indent-level'."
   :type 'integer
   :safe 'integerp
   :version "24.1")
 
-(defcustom js-switch-indent-offset 0
+(defcustom ocen-switch-indent-offset 0
   "Number of additional spaces for indenting the contents of a switch block.
 The value must not be negative."
   :type 'integer
   :safe 'integerp
   :version "24.4")
 
-(defcustom js-flat-functions nil
-  "Treat nested functions as top-level functions in `js-mode'.
+(defcustom ocen-flat-functions nil
+  "Treat nested functions as top-level functions in `ocen-mode'.
 This applies to function movement, marking, and so on."
   :type 'boolean)
 
-(defcustom js-indent-align-list-continuation t
-  "Align continuation of non-empty ([{ lines in `js-mode'."
+(defcustom ocen-indent-align-list-continuation t
+  "Align continuation of non-empty ([{ lines in `ocen-mode'."
   :version "26.1"
   :type 'boolean
   :safe 'booleanp)
 
-(defcustom js-comment-lineup-func #'c-lineup-C-comments
-  "Lineup function for `cc-mode-style', for C comments in `js-mode'."
+(defcustom ocen-comment-lineup-func #'c-lineup-C-comments
+  "Lineup function for `cc-mode-style', for C comments in `ocen-mode'."
   :type 'function)
 
-(defcustom js-enabled-frameworks js--available-frameworks
-  "Frameworks recognized by `js-mode'.
+(defcustom ocen-enabled-frameworks ocen--available-frameworks
+  "Frameworks recognized by `ocen-mode'.
 To improve performance, you may turn off some frameworks you
 seldom use, either globally or on a per-buffer basis."
   :type (cons 'set (mapcar (lambda (x)
                              (list 'const x))
-                           js--available-frameworks)))
+                           ocen--available-frameworks)))
 
-(defvar js-js-switch-tabs (and (memq system-type '(darwin)) t)
-  "Whether `js-mode' should display tabs while selecting them.
+(defvar ocen-ocen-switch-tabs (and (memq system-type '(darwin)) t)
+  "Whether `ocen-mode' should display tabs while selecting them.
 This is useful only if the windowing system has a good mechanism
 for preventing Firefox from stealing the keyboard focus.")
-(make-obsolete-variable 'js-js-switch-tabs "MozRepl no longer exists" "28.1")
+(make-obsolete-variable 'ocen-ocen-switch-tabs "MozRepl no longer exists" "28.1")
 
-(defvar js-js-tmpdir (locate-user-emacs-file "js/js")
-  "Temporary directory used by `js-mode' to communicate with Mozilla.
+(defvar ocen-ocen-tmpdir (locate-user-emacs-file "js/js")
+  "Temporary directory used by `ocen-mode' to communicate with Mozilla.
 This directory must be readable and writable by both Mozilla and Emacs.")
-(make-obsolete-variable 'js-js-tmpdir "MozRepl no longer exists" "28.1")
+(make-obsolete-variable 'ocen-ocen-tmpdir "MozRepl no longer exists" "28.1")
 
-(defvar js-js-timeout 5
-  "Reply timeout for executing commands in Mozilla via `js-mode'.
+(defvar ocen-ocen-timeout 5
+  "Reply timeout for executing commands in Mozilla via `ocen-mode'.
 The value is given in seconds.  Increase this value if you are
 getting timeout messages.")
-(make-obsolete-variable 'js-js-timeout "MozRepl no longer exists" "28.1")
+(make-obsolete-variable 'ocen-ocen-timeout "MozRepl no longer exists" "28.1")
 
-(defcustom js-indent-first-init nil
+(defcustom ocen-indent-first-init nil
   "Non-nil means specially indent the first variable declaration's initializer.
 Normally, the first declaration's initializer is unindented, and
 subsequent declarations have their identifiers aligned with it:
@@ -526,7 +526,7 @@ don't indent the first one's initializer; otherwise, indent it.
   :type '(choice (const nil) (const t) (const dynamic))
   :safe 'symbolp)
 
-(defcustom js-chain-indent nil
+(defcustom ocen-chain-indent nil
   "Use \"chained\" indentation.
 Chained indentation applies when the current line starts with \".\".
 If the previous expression also contains a \".\" at the same level,
@@ -538,34 +538,34 @@ then the \".\"s will be lined up:
   :type 'boolean
   :safe 'booleanp)
 
-(defcustom js-jsx-detect-syntax t
-  "When non-nil, automatically detect whether JavaScript uses JSX.
-`js-jsx-syntax' (which see) may be made buffer-local and set to
+(defcustom ocen-detect-syntax t
+  "When non-nil, automatically detect whether Ocen uses JSX.
+`ocen-syntax' (which see) may be made buffer-local and set to
 t.  The detection strategy can be customized by adding elements
-to `js-jsx-regexps', which see."
+to `ocen-regexps', which see."
   :version "27.1"
   :type 'boolean
   :safe 'booleanp)
 
-(defcustom js-jsx-syntax nil
-  "When non-nil, parse JavaScript with consideration for JSX syntax.
+(defcustom ocen-syntax nil
+  "When non-nil, parse Ocen with consideration for JSX syntax.
 
 This enables proper font-locking and indentation of code using
-Facebook’s “JSX” syntax extension for JavaScript, for use with
+Facebook’s “JSX” syntax extension for Ocen, for use with
 Facebook’s “React” library.  Font-locking is like `sgml-mode'.
 Indentation is also like `sgml-mode', although some indentation
 behavior may differ slightly to align more closely with the
 conventions of the React developer community.
 
-When `js-mode' is already enabled, you should call
-`js-jsx-enable' to set this variable.
+When `ocen-mode' is already enabled, you should call
+`ocen-enable' to set this variable.
 
-It is set to be buffer-local (and t) when in `js-jsx-mode'."
+It is set to be buffer-local (and t) when in `ocen-mode'."
   :version "27.1"
   :type 'boolean
   :safe 'booleanp)
 
-(defcustom js-jsx-align->-with-< t
+(defcustom ocen-align->-with-< t
   "When non-nil, “>” will be indented to the opening “<” in JSX.
 
 When this is enabled, JSX indentation looks like this:
@@ -589,10 +589,10 @@ When this is disabled, JSX indentation looks like this:
   :type 'boolean
   :safe 'booleanp)
 
-(defcustom js-jsx-indent-level nil
+(defcustom ocen-indent-level nil
   "When non-nil, indent JSX by this value, instead of like JS.
 
-Let `js-indent-level' be 4.  When this variable is also set to
+Let `ocen-indent-level' be 4.  When this variable is also set to
 nil, JSX indentation looks like this (consistent):
 
   return (
@@ -619,16 +619,16 @@ indentation looks like this (different):
   :safe (lambda (x) (or (null x) (integerp x))))
 ;; This is how indentation behaved out-of-the-box until Emacs 27.  JSX
 ;; indentation was controlled with `sgml-basic-offset', which defaults
-;; to 2, whereas `js-indent-level' defaults to 4.  Users who had the
+;; to 2, whereas `ocen-indent-level' defaults to 4.  Users who had the
 ;; same values configured for both their HTML and JS indentation would
 ;; luckily get consistent JSX indentation; most others were probably
 ;; unhappy.  I’d be surprised if anyone actually wants different
 ;; indentation levels, but just in case, here’s a way back to that.
 
-(defcustom js-jsx-attribute-offset 0
+(defcustom ocen-attribute-offset 0
   "Specifies a delta for JSXAttribute indentation.
 
-Let `js-indent-level' be 2.  When this variable is also set to 0,
+Let `ocen-indent-level' be 2.  When this variable is also set to 0,
 JSXAttribute indentation looks like this:
 
   <element
@@ -649,40 +649,40 @@ This variable is like `sgml-attribute-offset'."
 
 ;;; Keymap
 
-(defvar-keymap js-mode-map
-  :doc "Keymap for `js-mode'."
-  "M-." #'js-find-symbol)
+(defvar-keymap ocen-mode-map
+  :doc "Keymap for `ocen-mode'."
+  "M-." #'ocen-find-symbol)
 
-(defvar js-ts-mode-map (copy-keymap js-mode-map)
-  "Keymap used in `js-ts-mode'.")
+(defvar ocen-ts-mode-map (copy-keymap ocen-mode-map)
+  "Keymap used in `ocen-ts-mode'.")
 
 ;;; Syntax table and parsing
 
-(defvar js-mode-syntax-table
+(defvar ocen-mode-syntax-table
   (let ((table (make-syntax-table)))
     (c-populate-syntax-table table)
     (modify-syntax-entry ?$ "_" table)
     (modify-syntax-entry ?` "\"" table)
     table)
-  "Syntax table for `js-mode' and `js-ts-mode'.")
+  "Syntax table for `ocen-mode' and `ocen-ts-mode'.")
 
-(defvar-local js--quick-match-re nil
-  "Autogenerated regexp used by `js-mode' to match buffer constructs.")
+(defvar-local ocen--quick-match-re nil
+  "Autogenerated regexp used by `ocen-mode' to match buffer constructs.")
 
-(defvar-local js--quick-match-re-func nil
-  "Autogenerated regexp used by `js-mode' to match constructs and functions.")
+(defvar-local ocen--quick-match-re-func nil
+  "Autogenerated regexp used by `ocen-mode' to match constructs and functions.")
 
-(defvar-local js--cache-end 1
-  "Last valid buffer position for the `js-mode' function cache.")
+(defvar-local ocen--cache-end 1
+  "Last valid buffer position for the `ocen-mode' function cache.")
 
-(defvar-local js--last-parse-pos nil
-  "Latest parse position reached by `js--ensure-cache'.")
+(defvar-local ocen--last-parse-pos nil
+  "Latest parse position reached by `ocen--ensure-cache'.")
 
-(defvar-local js--state-at-last-parse-pos nil
-  "Parse state at `js--last-parse-pos'.")
+(defvar-local ocen--state-at-last-parse-pos nil
+  "Parse state at `ocen--last-parse-pos'.")
 
-(defun js--maybe-join (prefix separator suffix &rest list)
-  "Helper function for `js--update-quick-match-re'.
+(defun ocen--maybe-join (prefix separator suffix &rest list)
+  "Helper function for `ocen--update-quick-match-re'.
 If LIST contains any element that is not nil, return its non-nil
 elements, separated by SEPARATOR, prefixed by PREFIX, and ended
 with SUFFIX as with `concat'.  Otherwise, if LIST is empty, return
@@ -692,59 +692,59 @@ element."
   (when list
     (concat prefix (mapconcat #'identity list separator) suffix)))
 
-(defun js--update-quick-match-re ()
-  "Internal function used by `js-mode' for caching buffer constructs.
-This updates `js--quick-match-re', based on the current set of
+(defun ocen--update-quick-match-re ()
+  "Internal function used by `ocen-mode' for caching buffer constructs.
+This updates `ocen--quick-match-re', based on the current set of
 enabled frameworks."
-  (setq js--quick-match-re
-        (js--maybe-join
+  (setq ocen--quick-match-re
+        (ocen--maybe-join
          "^[ \t]*\\(?:" "\\|" "\\)"
 
          ;; #define mumble
          "#define[ \t]+[a-zA-Z_]"
 
-         (when (memq 'extjs js-enabled-frameworks)
+         (when (memq 'extjs ocen-enabled-frameworks)
            "Ext\\.extend")
 
-         (when (memq 'prototype js-enabled-frameworks)
+         (when (memq 'prototype ocen-enabled-frameworks)
            "Object\\.extend")
 
           ;; var mumble = THING (
-         (js--maybe-join
+         (ocen--maybe-join
           "\\(?:var[ \t]+\\)?[a-zA-Z_$0-9.]+[ \t]*=[ \t]*\\(?:"
           "\\|"
           "\\)[ \t]*("
 
-          (when (memq 'prototype js-enabled-frameworks)
+          (when (memq 'prototype ocen-enabled-frameworks)
                     "Class\\.create")
 
-          (when (memq 'extjs js-enabled-frameworks)
+          (when (memq 'extjs ocen-enabled-frameworks)
             "Ext\\.extend")
 
-          (when (memq 'merrillpress js-enabled-frameworks)
+          (when (memq 'merrillpress ocen-enabled-frameworks)
             "[a-zA-Z_$0-9]+\\.extend\\(?:Final\\)?"))
 
-         (when (memq 'dojo js-enabled-frameworks)
+         (when (memq 'dojo ocen-enabled-frameworks)
            "dojo\\.declare[ \t]*(")
 
-         (when (memq 'mochikit js-enabled-frameworks)
+         (when (memq 'mochikit ocen-enabled-frameworks)
            "MochiKit\\.Base\\.update[ \t]*(")
 
          ;; mumble.prototypeTHING
-         (js--maybe-join
+         (ocen--maybe-join
           "[a-zA-Z_$0-9.]+\\.prototype\\(?:" "\\|" "\\)"
 
-          (when (memq 'javascript js-enabled-frameworks)
+          (when (memq 'ocen ocen-enabled-frameworks)
             '( ;; foo.prototype.bar = function(
               "\\.[a-zA-Z_$0-9]+[ \t]*=[ \t]*function[ \t]*("
 
               ;; mumble.prototype = {
               "[ \t]*=[ \t]*{")))))
 
-  (setq js--quick-match-re-func
-        (concat "function\\|" js--quick-match-re)))
+  (setq ocen--quick-match-re-func
+        (concat "function\\|" ocen--quick-match-re)))
 
-(defun js--forward-text-property (propname)
+(defun ocen--forward-text-property (propname)
   "Move over the next value of PROPNAME in the buffer.
 If found, return that value and leave point after the character
 having that value; otherwise, return nil and leave point at EOB."
@@ -760,7 +760,7 @@ having that value; otherwise, return nil and leave point at EOB."
 
     next-value))
 
-(defun js--backward-text-property (propname)
+(defun ocen--backward-text-property (propname)
   "Move over the previous value of PROPNAME in the buffer.
 If found, return that value and leave point just before the
 character that has that value, otherwise return nil and leave
@@ -779,22 +779,22 @@ point at BOB."
 
         prev-value)))
 
-(defsubst js--forward-pstate ()
-  (js--forward-text-property 'js--pstate))
+(defsubst ocen--forward-pstate ()
+  (ocen--forward-text-property 'ocen--pstate))
 
-(defsubst js--backward-pstate ()
-  (js--backward-text-property 'js--pstate))
+(defsubst ocen--backward-pstate ()
+  (ocen--backward-text-property 'ocen--pstate))
 
-(defun js--pitem-goto-h-end (pitem)
-  (goto-char (js--pitem-h-begin pitem))
-  (js--forward-pstate))
+(defun ocen--pitem-goto-h-end (pitem)
+  (goto-char (ocen--pitem-h-begin pitem))
+  (ocen--forward-pstate))
 
-(defun js--re-search-forward-inner (regexp &optional bound count)
-  "Helper function for `js--re-search-forward'."
+(defun ocen--re-search-forward-inner (regexp &optional bound count)
+  "Helper function for `ocen--re-search-forward'."
   (let ((parse)
         str-terminator
         (orig-macro-end (save-excursion
-                          (when (js--beginning-of-macro)
+                          (when (ocen--beginning-of-macro)
                             (c-end-of-macro)
                             (point)))))
     (while (> count 0)
@@ -813,14 +813,14 @@ point at BOB."
              (re-search-forward "\\*/"))
             ((and (not (and orig-macro-end
                             (<= (point) orig-macro-end)))
-                  (js--beginning-of-macro))
+                  (ocen--beginning-of-macro))
              (c-end-of-macro))
             (t
              (setq count (1- count))))))
   (point))
 
 
-(defun js--re-search-forward (regexp &optional bound noerror count)
+(defun ocen--re-search-forward (regexp &optional bound noerror count)
   "Search forward, ignoring strings, cpp macros, and comments.
 This function invokes `re-search-forward', but treats the buffer
 as if strings, cpp macros, and comments have been removed.
@@ -831,8 +831,8 @@ macro as normal text."
   (let ((saved-point (point))
         (search-fun
          (cond ((< count 0) (setq count (- count))
-                #'js--re-search-backward-inner)
-               ((> count 0) #'js--re-search-forward-inner)
+                #'ocen--re-search-backward-inner)
+               ((> count 0) #'ocen--re-search-forward-inner)
                (t #'ignore))))
     (condition-case err
         (funcall search-fun regexp bound count)
@@ -842,12 +842,12 @@ macro as normal text."
          (signal (car err) (cdr err)))))))
 
 
-(defun js--re-search-backward-inner (regexp &optional bound count)
-  "Auxiliary function for `js--re-search-backward'."
+(defun ocen--re-search-backward-inner (regexp &optional bound count)
+  "Auxiliary function for `ocen--re-search-backward'."
   (let ((parse)
         (orig-macro-start
          (save-excursion
-           (and (js--beginning-of-macro)
+           (and (ocen--beginning-of-macro)
                 (point)))))
     (while (> count 0)
       (re-search-backward regexp bound)
@@ -862,13 +862,13 @@ macro as normal text."
              (re-search-backward "/\\*"))
             ((and (not (and orig-macro-start
                             (>= (point) orig-macro-start)))
-                  (js--beginning-of-macro)))
+                  (ocen--beginning-of-macro)))
             (t
              (setq count (1- count))))))
   (point))
 
 
-(defun js--re-search-backward (regexp &optional bound noerror count)
+(defun ocen--re-search-backward (regexp &optional bound noerror count)
   "Search backward, ignoring strings, preprocessor macros, and comments.
 
 This function invokes `re-search-backward' but treats the buffer
@@ -876,10 +876,10 @@ as if strings, preprocessor macros, and comments have been
 removed.
 
 If invoked while inside a macro, treat the macro as normal text."
-  (js--re-search-forward regexp bound noerror (if count (- count) -1)))
+  (ocen--re-search-forward regexp bound noerror (if count (- count) -1)))
 
-(defun js--forward-expression ()
-  "Move forward over a whole JavaScript expression.
+(defun ocen--forward-expression ()
+  "Move forward over a whole Ocen expression.
 This function doesn't move over expressions continued across
 lines."
   (cl-loop
@@ -893,10 +893,10 @@ lines."
    while (and (eq (char-after) ?\n)
               (save-excursion
                 (forward-char)
-                (js--continued-expression-p)))))
+                (ocen--continued-expression-p)))))
 
-(defun js--forward-function-decl ()
-  "Move forward over a JavaScript function declaration.
+(defun ocen--forward-function-decl ()
+  "Move forward over a Ocen function declaration.
 This puts point at the `function' keyword.
 
 If this is a syntactically-correct non-expression function,
@@ -910,7 +910,7 @@ determined.  Otherwise, return nil."
     (when (eq (char-after) ?*)
       (forward-char)
       (forward-comment most-positive-fixnum))
-    (when (looking-at js--name-re)
+    (when (looking-at ocen--name-re)
       (setq name (match-string-no-properties 0))
       (goto-char (match-end 0)))
     (forward-comment most-positive-fixnum)
@@ -920,8 +920,8 @@ determined.  Otherwise, return nil."
                 (and (eq (char-after) ?{)
                      name)))))
 
-(defun js--function-prologue-beginning (&optional pos)
-  "Return the start of the JavaScript function prologue containing POS.
+(defun ocen--function-prologue-beginning (&optional pos)
+  "Return the start of the Ocen function prologue containing POS.
 A function prologue is everything from start of the definition up
 to and including the opening brace.  POS defaults to point.
 If POS is not in a function prologue, return nil."
@@ -933,8 +933,8 @@ If POS is not in a function prologue, return nil."
 
       (when (save-excursion
               (forward-line 0)
-              (or (looking-at js--function-heading-2-re)
-                  (looking-at js--function-heading-3-re)))
+              (or (looking-at ocen--function-heading-2-re)
+                  (looking-at ocen--function-heading-3-re)))
 
         (setq prologue-begin (match-beginning 1))
         (when (<= prologue-begin pos)
@@ -943,79 +943,79 @@ If POS is not in a function prologue, return nil."
       (skip-syntax-backward "w_")
       (let ((start nil))
         (and (or (looking-at "\\_<function\\_>")
-                 (js--re-search-backward "\\_<function\\_>" nil t))
+                 (ocen--re-search-backward "\\_<function\\_>" nil t))
              (progn
                (setq start (match-beginning 0))
                (goto-char start)
                (when (looking-back "\\_<async\\_>[ \t\n]+" (- (point) 30))
                  (setq start (match-beginning 0)))
-               (js--forward-function-decl))
+               (ocen--forward-function-decl))
              (<= pos (point))
              (or prologue-begin start))))))
 
-(defun js--beginning-of-defun-raw ()
-  "Helper function for `js-beginning-of-defun'.
+(defun ocen--beginning-of-defun-raw ()
+  "Helper function for `ocen-beginning-of-defun'.
 Go to previous defun-beginning and return the parse state for it,
 or nil if we went all the way back to bob and don't find
 anything."
-  (js--ensure-cache)
+  (ocen--ensure-cache)
   (let (pstate)
-    (while (and (setq pstate (js--backward-pstate))
-                (not (eq 'function (js--pitem-type (car pstate))))))
+    (while (and (setq pstate (ocen--backward-pstate))
+                (not (eq 'function (ocen--pitem-type (car pstate))))))
     (and (not (bobp)) pstate)))
 
-(defun js--pstate-is-toplevel-defun (pstate)
-  "Helper function for `js--beginning-of-defun-nested'.
+(defun ocen--pstate-is-toplevel-defun (pstate)
+  "Helper function for `ocen--beginning-of-defun-nested'.
 If PSTATE represents a non-empty top-level defun, return the
 top-most pitem.  Otherwise, return nil."
   (cl-loop for pitem in pstate
            with func-depth = 0
            with func-pitem
-           if (eq 'function (js--pitem-type pitem))
+           if (eq 'function (ocen--pitem-type pitem))
            do (cl-incf func-depth)
            and do (setq func-pitem pitem)
            finally return (if (eq func-depth 1) func-pitem)))
 
-(defun js--beginning-of-defun-nested ()
-  "Helper function for `js--beginning-of-defun'.
+(defun ocen--beginning-of-defun-nested ()
+  "Helper function for `ocen--beginning-of-defun'.
 Return the pitem of the function we went to the beginning of."
   (or
    ;; Look for the smallest function that encloses point...
-   (cl-loop for pitem in (js--parse-state-at-point)
-            if (and (eq 'function (js--pitem-type pitem))
-                    (js--inside-pitem-p pitem))
-            do (goto-char (js--pitem-h-begin pitem))
+   (cl-loop for pitem in (ocen--parse-state-at-point)
+            if (and (eq 'function (ocen--pitem-type pitem))
+                    (ocen--inside-pitem-p pitem))
+            do (goto-char (ocen--pitem-h-begin pitem))
             and return pitem)
 
    ;; ...and if that isn't found, look for the previous top-level
    ;; defun
-   (cl-loop for pstate = (js--backward-pstate)
+   (cl-loop for pstate = (ocen--backward-pstate)
             while pstate
-            if (js--pstate-is-toplevel-defun pstate)
-            do (goto-char (js--pitem-h-begin it))
+            if (ocen--pstate-is-toplevel-defun pstate)
+            do (goto-char (ocen--pitem-h-begin it))
             and return it)))
 
-(defun js--beginning-of-defun-flat ()
-  "Helper function for `js-beginning-of-defun'."
-  (let ((pstate (js--beginning-of-defun-raw)))
+(defun ocen--beginning-of-defun-flat ()
+  "Helper function for `ocen-beginning-of-defun'."
+  (let ((pstate (ocen--beginning-of-defun-raw)))
     (when pstate
-      (goto-char (js--pitem-h-begin (car pstate)))
+      (goto-char (ocen--pitem-h-begin (car pstate)))
       t)))
 
-(defun js-beginning-of-defun (&optional arg)
-  "Value of `beginning-of-defun-function' for `js-mode'."
+(defun ocen-beginning-of-defun (&optional arg)
+  "Value of `beginning-of-defun-function' for `ocen-mode'."
   (setq arg (or arg 1))
   (let ((found))
     (while (and (not (eobp)) (< arg 0))
       (cl-incf arg)
-      (when (and (not js-flat-functions)
-                 (or (eq (js-syntactic-context) 'function)
-                     (js--function-prologue-beginning)))
-        (js-end-of-defun))
+      (when (and (not ocen-flat-functions)
+                 (or (eq (ocen-syntactic-context) 'function)
+                     (ocen--function-prologue-beginning)))
+        (ocen-end-of-defun))
 
-      (if (js--re-search-forward
+      (if (ocen--re-search-forward
            "\\_<function\\_>" nil t)
-          (progn (goto-char (js--function-prologue-beginning))
+          (progn (goto-char (ocen--function-prologue-beginning))
                  (setq found t))
         (goto-char (point-max))
         (setq found nil)))
@@ -1027,87 +1027,87 @@ Return the pitem of the function we went to the beginning of."
       (when (eq (char-before) ?})
         (backward-char))
 
-      (let ((prologue-begin (js--function-prologue-beginning)))
+      (let ((prologue-begin (ocen--function-prologue-beginning)))
         (cond ((and prologue-begin (< prologue-begin (point)))
                (goto-char prologue-begin)
                (setq found t))
 
-              (js-flat-functions
-               (setq found (js--beginning-of-defun-flat)))
+              (ocen-flat-functions
+               (setq found (ocen--beginning-of-defun-flat)))
               (t
-               (when (js--beginning-of-defun-nested)
+               (when (ocen--beginning-of-defun-nested)
                  (setq found t))))))
     found))
 
-(defun js--flush-caches (&optional beg _ignored)
-  "Flush the `js-mode' syntax cache after position BEG.
+(defun ocen--flush-caches (&optional beg _ignored)
+  "Flush the `ocen-mode' syntax cache after position BEG.
 BEG defaults to `point-min', meaning to flush the entire cache."
   (interactive)
   (setq beg (or beg (save-restriction (widen) (point-min))))
-  (setq js--cache-end (min js--cache-end beg)))
+  (setq ocen--cache-end (min ocen--cache-end beg)))
 
-(defmacro js--debug (&rest _arguments)
+(defmacro ocen--debug (&rest _arguments)
   ;; `(message ,@arguments)
   )
 
-(defun js--ensure-cache--pop-if-ended (open-items paren-depth)
+(defun ocen--ensure-cache--pop-if-ended (open-items paren-depth)
   (let ((top-item (car open-items)))
-    (when (<= paren-depth (js--pitem-paren-depth top-item))
-      (cl-assert (not (get-text-property (1- (point)) 'js-pend)))
-      (put-text-property (1- (point)) (point) 'js--pend top-item)
-      (setf (js--pitem-b-end top-item) (point))
+    (when (<= paren-depth (ocen--pitem-paren-depth top-item))
+      (cl-assert (not (get-text-property (1- (point)) 'ocen-pend)))
+      (put-text-property (1- (point)) (point) 'ocen--pend top-item)
+      (setf (ocen--pitem-b-end top-item) (point))
       (setq open-items
             ;; open-items must contain at least two items for this to
             ;; work, but because we push a dummy item to start with,
             ;; that assumption holds.
-            (cons (js--pitem-add-child (cl-second open-items) top-item)
+            (cons (ocen--pitem-add-child (cl-second open-items) top-item)
                   (cddr open-items)))))
   open-items)
 
-(defmacro js--ensure-cache--update-parse ()
-  "Helper function for `js--ensure-cache'.
+(defmacro ocen--ensure-cache--update-parse ()
+  "Helper function for `ocen--ensure-cache'.
 Update parsing information up to point, referring to parse,
 prev-parse-point, goal-point, and open-items bound lexically in
-the body of `js--ensure-cache'."
+the body of `ocen--ensure-cache'."
   '(progn
      (setq goal-point (point))
      (goto-char prev-parse-point)
      (while (progn
-              (setq open-items (js--ensure-cache--pop-if-ended
+              (setq open-items (ocen--ensure-cache--pop-if-ended
                                 open-items (car parse)))
               ;; Make sure parse-partial-sexp doesn't stop because we *entered*
               ;; the given depth -- i.e., make sure we're deeper than the target
               ;; depth.
               (cl-assert (> (nth 0 parse)
-                            (js--pitem-paren-depth (car open-items))))
+                            (ocen--pitem-paren-depth (car open-items))))
               (setq parse (parse-partial-sexp
                            prev-parse-point goal-point
-                           (js--pitem-paren-depth (car open-items))
+                           (ocen--pitem-paren-depth (car open-items))
                            nil parse))
 
 ;;              (let ((overlay (make-overlay prev-parse-point (point))))
 ;;                (overlay-put overlay 'face '(:background "red"))
 ;;                (unwind-protect
 ;;                     (progn
-;;                       (js--debug "parsed: %S" parse)
+;;                       (ocen--debug "parsed: %S" parse)
 ;;                       (sit-for 1))
 ;;                  (delete-overlay overlay)))
 
               (setq prev-parse-point (point))
               (< (point) goal-point)))
 
-     (setq open-items (js--ensure-cache--pop-if-ended
+     (setq open-items (ocen--ensure-cache--pop-if-ended
                        open-items (car parse)))))
 
-(defun js--show-cache-at-point ()
+(defun ocen--show-cache-at-point ()
   (interactive)
   (require 'pp)
-  (let ((prop (get-text-property (point) 'js--pstate)))
+  (let ((prop (get-text-property (point) 'ocen--pstate)))
     (with-output-to-temp-buffer "*Help*"
       (pp prop))))
 
-(defun js--split-name (string)
-  "Split a JavaScript name into its dot-separated parts.
+(defun ocen--split-name (string)
+  "Split a Ocen name into its dot-separated parts.
 This also removes any prototype parts from the split name
 \(unless the name is just \"prototype\" to start with)."
   (let ((name (save-match-data
@@ -1117,50 +1117,50 @@ This also removes any prototype parts from the split name
 
       (setq name (remove "prototype" name)))))
 
-(defvar js--guess-function-name-start nil)
+(defvar ocen--guess-function-name-start nil)
 
-(defun js--guess-function-name (position)
-  "Guess the name of the JavaScript function at POSITION.
+(defun ocen--guess-function-name (position)
+  "Guess the name of the Ocen function at POSITION.
 POSITION should be just after the end of the word \"function\".
 Return the name of the function, or nil if the name could not be
 guessed.
 
 This function clobbers match data.  If we find the preamble
 begins earlier than expected while guessing the function name,
-set `js--guess-function-name-start' to that position; otherwise,
+set `ocen--guess-function-name-start' to that position; otherwise,
 set that variable to nil."
-  (setq js--guess-function-name-start nil)
+  (setq ocen--guess-function-name-start nil)
   (save-excursion
     (goto-char position)
     (forward-line 0)
     (cond
-     ((looking-at js--function-heading-3-re)
+     ((looking-at ocen--function-heading-3-re)
       (and (eq (match-end 0) position)
-           (setq js--guess-function-name-start (match-beginning 1))
+           (setq ocen--guess-function-name-start (match-beginning 1))
            (match-string-no-properties 1)))
 
-     ((looking-at js--function-heading-2-re)
+     ((looking-at ocen--function-heading-2-re)
       (and (eq (match-end 0) position)
-           (setq js--guess-function-name-start (match-beginning 1))
+           (setq ocen--guess-function-name-start (match-beginning 1))
            (match-string-no-properties 1))))))
 
-(defun js--clear-stale-cache ()
+(defun ocen--clear-stale-cache ()
   ;; Clear any endings that occur after point
   (let (end-prop)
     (save-excursion
-      (while (setq end-prop (js--forward-text-property
-                             'js--pend))
-        (setf (js--pitem-b-end end-prop) nil))))
+      (while (setq end-prop (ocen--forward-text-property
+                             'ocen--pend))
+        (setf (ocen--pitem-b-end end-prop) nil))))
 
   ;; Remove any cache properties after this point
   (remove-text-properties (point) (point-max)
-                          '(js--pstate t js--pend t)))
+                          '(ocen--pstate t ocen--pend t)))
 
-(defun js--ensure-cache (&optional limit)
+(defun ocen--ensure-cache (&optional limit)
   "Ensures brace cache is valid up to the character before LIMIT.
 LIMIT defaults to point."
   (setq limit (or limit (point)))
-  (when (< js--cache-end limit)
+  (when (< ocen--cache-end limit)
 
     (c-save-buffer-state
         (open-items
@@ -1173,9 +1173,9 @@ LIMIT defaults to point."
 
       ;; Figure out which class styles we need to look for
       (setq filtered-class-styles
-            (cl-loop for style in js--class-styles
+            (cl-loop for style in ocen--class-styles
                      if (memq (plist-get style :framework)
-                              js-enabled-frameworks)
+                              ocen-enabled-frameworks)
                      collect style))
 
       (save-excursion
@@ -1183,41 +1183,41 @@ LIMIT defaults to point."
           (widen)
 
           ;; Find last known good position
-          (goto-char js--cache-end)
+          (goto-char ocen--cache-end)
           (unless (bobp)
             (setq open-items (get-text-property
-                              (1- (point)) 'js--pstate))
+                              (1- (point)) 'ocen--pstate))
 
             (unless open-items
               (goto-char (previous-single-property-change
-                          (point) 'js--pstate nil (point-min)))
+                          (point) 'ocen--pstate nil (point-min)))
 
               (unless (bobp)
                 (setq open-items (get-text-property (1- (point))
-                                                    'js--pstate))
+                                                    'ocen--pstate))
                 (cl-assert open-items))))
 
           (unless open-items
             ;; Make a placeholder for the top-level definition
-            (setq open-items (list js--initial-pitem)))
+            (setq open-items (list ocen--initial-pitem)))
 
           (setq parse (syntax-ppss))
           (setq prev-parse-point (point))
 
-          (js--clear-stale-cache)
+          (ocen--clear-stale-cache)
 
           (narrow-to-region (point-min) limit)
 
-          (cl-loop while (re-search-forward js--quick-match-re-func nil t)
+          (cl-loop while (re-search-forward ocen--quick-match-re-func nil t)
                    for orig-match-start = (goto-char (match-beginning 0))
                    for orig-match-end = (match-end 0)
-                   do (js--ensure-cache--update-parse)
+                   do (ocen--ensure-cache--update-parse)
                    for orig-depth = (nth 0 parse)
 
                    ;; Each of these conditions should return non-nil if
                    ;; we should add a new item and leave point at the end
                    ;; of the new item's header (h-end in the
-                   ;; js--pitem diagram). This point is the one
+                   ;; ocen--pitem diagram). This point is the one
                    ;; after the last character we need to unambiguously
                    ;; detect this construct. If one of these evaluates to
                    ;; nil, the location of the point is ignored.
@@ -1227,13 +1227,13 @@ LIMIT defaults to point."
 
                        ;; Regular function declaration
                        ((and (looking-at "\\_<function\\_>")
-                             (setq name (js--forward-function-decl)))
+                             (setq name (ocen--forward-function-decl)))
                         (when (eq name t)
-                          (setq name (js--guess-function-name orig-match-end))
+                          (setq name (ocen--guess-function-name orig-match-end))
                           (if name
-                              (when js--guess-function-name-start
+                              (when ocen--guess-function-name-start
                                 (setq orig-match-start
-                                      js--guess-function-name-start))
+                                      ocen--guess-function-name-start))
 
                             (setq name t)))
 
@@ -1244,47 +1244,47 @@ LIMIT defaults to point."
                           (when (looking-back "\\_<async\\_>[ \t\n]+"
                                               (- (point) 30))
                             (setq orig-match-start (match-beginning 0))))
-                        (make-js--pitem
+                        (make-ocen--pitem
                          :paren-depth orig-depth
                          :h-begin orig-match-start
                          :type 'function
                          :name (if (eq name t)
                                    name
-                                 (js--split-name name))))
+                                 (ocen--split-name name))))
 
                        ;; Macro
-                       ((looking-at js--macro-decl-re)
+                       ((looking-at ocen--macro-decl-re)
 
                         ;; Macros often contain unbalanced parentheses.
                         ;; Make sure that h-end is at the textual end of
                         ;; the macro no matter what the parenthesis say.
                         (c-end-of-macro)
-                        (js--ensure-cache--update-parse)
+                        (ocen--ensure-cache--update-parse)
 
-                        (make-js--pitem
+                        (make-ocen--pitem
                          :paren-depth (nth 0 parse)
                          :h-begin orig-match-start
                          :type 'macro
                          :name (list (match-string-no-properties 1))))
 
                        ;; "Prototype function" declaration
-                       ((looking-at js--plain-method-re)
+                       ((looking-at ocen--plain-method-re)
                         (goto-char (match-beginning 3))
                         (when (save-match-data
-                                (js--forward-function-decl))
+                                (ocen--forward-function-decl))
                           (forward-char)
-                          (make-js--pitem
+                          (make-ocen--pitem
                            :paren-depth orig-depth
                            :h-begin orig-match-start
                            :type 'function
-                           :name (nconc (js--split-name
+                           :name (nconc (ocen--split-name
                                          (match-string-no-properties 1))
                                         (list (match-string-no-properties 2))))))
 
                        ;; Class definition
                        ((cl-loop
                          with syntactic-context =
-                         (js--syntactic-context-from-pstate open-items)
+                         (ocen--syntactic-context-from-pstate open-items)
                          for class-style in filtered-class-styles
                          if (and (memq syntactic-context
                                        (plist-get class-style :contexts))
@@ -1292,41 +1292,41 @@ LIMIT defaults to point."
                                                         :class-decl)))
                          do (goto-char (match-end 0))
                          and return
-                         (make-js--pitem
+                         (make-ocen--pitem
                           :paren-depth orig-depth
                           :h-begin orig-match-start
                           :type class-style
-                          :name (js--split-name
+                          :name (ocen--split-name
                                  (match-string-no-properties 1))))))
 
-                   do (js--ensure-cache--update-parse)
+                   do (ocen--ensure-cache--update-parse)
                    and do (push it open-items)
                    and do (put-text-property
-                           (1- (point)) (point) 'js--pstate open-items)
+                           (1- (point)) (point) 'ocen--pstate open-items)
                    else do (goto-char orig-match-end))
 
           (goto-char limit)
-          (js--ensure-cache--update-parse)
-          (setq js--cache-end limit)
-          (setq js--last-parse-pos limit)
-          (setq js--state-at-last-parse-pos open-items)
+          (ocen--ensure-cache--update-parse)
+          (setq ocen--cache-end limit)
+          (setq ocen--last-parse-pos limit)
+          (setq ocen--state-at-last-parse-pos open-items)
           )))))
 
-(defun js--end-of-defun-flat ()
-  "Helper function for `js-end-of-defun'."
-  (cl-loop while (js--re-search-forward "}" nil t)
-           do (js--ensure-cache)
-           if (get-text-property (1- (point)) 'js--pend)
-           if (eq 'function (js--pitem-type it))
+(defun ocen--end-of-defun-flat ()
+  "Helper function for `ocen-end-of-defun'."
+  (cl-loop while (ocen--re-search-forward "}" nil t)
+           do (ocen--ensure-cache)
+           if (get-text-property (1- (point)) 'ocen--pend)
+           if (eq 'function (ocen--pitem-type it))
            return t
            finally do (goto-char (point-max))))
 
-(defun js--end-of-defun-nested ()
-  "Helper function for `js-end-of-defun'."
+(defun ocen--end-of-defun-nested ()
+  "Helper function for `ocen-end-of-defun'."
   (let* (pitem
          (this-end (save-excursion
-                     (and (setq pitem (js--beginning-of-defun-nested))
-                          (js--pitem-goto-h-end pitem)
+                     (and (setq pitem (ocen--beginning-of-defun-nested))
+                          (ocen--pitem-goto-h-end pitem)
                           (progn (backward-char)
                                  (forward-list)
                                  (point)))))
@@ -1337,47 +1337,47 @@ LIMIT defaults to point."
         (goto-char this-end)
 
       ;; Otherwise, go to the end of the next function...
-      (while (and (js--re-search-forward "\\_<function\\_>" nil t)
+      (while (and (ocen--re-search-forward "\\_<function\\_>" nil t)
                   (not (setq found (progn
                                      (goto-char (match-beginning 0))
-                                     (js--forward-function-decl))))))
+                                     (ocen--forward-function-decl))))))
 
       (if found (forward-list)
         ;; ... or eob.
         (goto-char (point-max))))))
 
-(defun js-end-of-defun (&optional arg)
-  "Value of `end-of-defun-function' for `js-mode'."
+(defun ocen-end-of-defun (&optional arg)
+  "Value of `end-of-defun-function' for `ocen-mode'."
   (setq arg (or arg 1))
   (while (and (not (bobp)) (< arg 0))
     (cl-incf arg)
-    (js-beginning-of-defun)
-    (js-beginning-of-defun)
+    (ocen-beginning-of-defun)
+    (ocen-beginning-of-defun)
     (unless (bobp)
-      (js-end-of-defun)))
+      (ocen-end-of-defun)))
 
   (while (> arg 0)
     (cl-decf arg)
     ;; look for function backward. if we're inside it, go to that
     ;; function's end. otherwise, search for the next function's end and
     ;; go there
-    (if js-flat-functions
-        (js--end-of-defun-flat)
+    (if ocen-flat-functions
+        (ocen--end-of-defun-flat)
 
       ;; if we're doing nested functions, see whether we're in the
       ;; prologue. If we are, go to the end of the function; otherwise,
-      ;; call js--end-of-defun-nested to do the real work
-      (let ((prologue-begin (js--function-prologue-beginning)))
+      ;; call ocen--end-of-defun-nested to do the real work
+      (let ((prologue-begin (ocen--function-prologue-beginning)))
         (cond ((and prologue-begin (<= prologue-begin (point)))
                (goto-char prologue-begin)
                (re-search-forward "\\_<function")
                (goto-char (match-beginning 0))
-               (js--forward-function-decl)
+               (ocen--forward-function-decl)
                (forward-list))
 
-              (t (js--end-of-defun-nested)))))))
+              (t (ocen--end-of-defun-nested)))))))
 
-(defun js--beginning-of-macro (&optional lim)
+(defun ocen--beginning-of-macro (&optional lim)
   (let ((here (point)))
     (save-restriction
       (if lim (narrow-to-region lim (point-max)))
@@ -1386,28 +1386,28 @@ LIMIT defaults to point."
         (forward-line -1))
       (back-to-indentation)
       (if (and (<= (point) here)
-               (looking-at js--opt-cpp-start))
+               (looking-at ocen--opt-cpp-start))
           t
         (goto-char here)
         nil))))
 
-(defun js--backward-syntactic-ws (&optional lim)
-  "Simple implementation of `c-backward-syntactic-ws' for `js-mode'."
+(defun ocen--backward-syntactic-ws (&optional lim)
+  "Simple implementation of `c-backward-syntactic-ws' for `ocen-mode'."
   (save-restriction
     (when lim (narrow-to-region lim (point-max)))
 
-    (let ((in-macro (save-excursion (js--beginning-of-macro)))
+    (let ((in-macro (save-excursion (ocen--beginning-of-macro)))
           (pos (point)))
 
-      (while (progn (unless in-macro (js--beginning-of-macro))
+      (while (progn (unless in-macro (ocen--beginning-of-macro))
                     (forward-comment most-negative-fixnum)
                     (/= (point)
                         (prog1
                             pos
                           (setq pos (point)))))))))
 
-(defun js--forward-syntactic-ws (&optional lim)
-  "Simple implementation of `c-forward-syntactic-ws' for `js-mode'."
+(defun ocen--forward-syntactic-ws (&optional lim)
+  "Simple implementation of `c-forward-syntactic-ws' for `ocen-mode'."
   (save-restriction
     (when lim (narrow-to-region (point-min) lim))
     (let ((pos (point)))
@@ -1421,50 +1421,50 @@ LIMIT defaults to point."
                      (setq pos (point)))))))))
 
 ;; Like (up-list -1), but only considers lists that end nearby"
-(defun js--up-nearby-list ()
+(defun ocen--up-nearby-list ()
   (save-restriction
     ;; Look at a very small region so our computation time doesn't
     ;; explode in pathological cases.
     (narrow-to-region (max (point-min) (- (point) 500)) (point))
     (up-list -1)))
 
-(defun js--inside-param-list-p ()
+(defun ocen--inside-param-list-p ()
   "Return non-nil if point is in a function parameter list."
   (ignore-errors
     (save-excursion
-      (js--up-nearby-list)
+      (ocen--up-nearby-list)
       (and (looking-at "(")
            (progn (forward-symbol -1)
                   (or (looking-at "function")
                       (progn (forward-symbol -1)
                              (looking-at "function"))))))))
 
-(defun js--inside-dojo-class-list-p ()
+(defun ocen--inside-dojo-class-list-p ()
   "Return non-nil if point is in a Dojo multiple-inheritance class block."
   (ignore-errors
     (save-excursion
-      (js--up-nearby-list)
+      (ocen--up-nearby-list)
       (let ((list-begin (point)))
         (forward-line 0)
-        (and (looking-at js--dojo-class-decl-re)
+        (and (looking-at ocen--dojo-class-decl-re)
              (goto-char (match-end 0))
              (looking-at "\"\\s-*,\\s-*\\[")
              (eq (match-end 0) (1+ list-begin)))))))
 
 ;;; Font Lock
-(defun js--make-framework-matcher (framework &rest regexps)
-  "Helper function for building `js--font-lock-keywords'.
+(defun ocen--make-framework-matcher (framework &rest regexps)
+  "Helper function for building `ocen--font-lock-keywords'.
 Create a byte-compiled function for matching a concatenation of
-REGEXPS, but only if FRAMEWORK is in `js-enabled-frameworks'."
+REGEXPS, but only if FRAMEWORK is in `ocen-enabled-frameworks'."
   (let ((regexp (apply #'concat regexps)))
     (lambda (limit)
-      (when (memq framework js-enabled-frameworks)
+      (when (memq framework ocen-enabled-frameworks)
         (re-search-forward regexp limit t)))))
 
-(defvar-local js--tmp-location nil)
+(defvar-local ocen--tmp-location nil)
 
-(defun js--forward-destructuring-spec (&optional func)
-  "Move forward over a JavaScript destructuring spec.
+(defun ocen--forward-destructuring-spec (&optional func)
+  "Move forward over a Ocen destructuring spec.
 If FUNC is supplied, call it with no arguments before every
 variable name in the spec.  Return true if this was actually a
 spec.  FUNC must preserve the match data."
@@ -1475,13 +1475,13 @@ spec.  FUNC must preserve the match data."
          (progn
            (forward-comment most-positive-fixnum)
            (cond ((memq (char-after) '(?\[ ?\{))
-                  (js--forward-destructuring-spec func))
+                  (ocen--forward-destructuring-spec func))
 
                  ((eq (char-after) ?,)
                   (forward-char)
                   t)
 
-                 ((looking-at js--name-re)
+                 ((looking-at ocen--name-re)
                   (and func (funcall func))
                   (goto-char (match-end 0))
                   t))))
@@ -1493,12 +1493,12 @@ spec.  FUNC must preserve the match data."
      (forward-char)
      (forward-comment most-positive-fixnum)
      (while
-         (when (looking-at js--objfield-re)
+         (when (looking-at ocen--objfield-re)
            (goto-char (match-end 0))
            (forward-comment most-positive-fixnum)
            (and (cond ((memq (char-after) '(?\[ ?\{))
-                       (js--forward-destructuring-spec func))
-                      ((looking-at js--name-re)
+                       (ocen--forward-destructuring-spec func))
+                      ((looking-at ocen--name-re)
                        (and func (funcall func))
                        (goto-char (match-end 0))
                        t))
@@ -1511,7 +1511,7 @@ spec.  FUNC must preserve the match data."
        (forward-char)
        t))))
 
-(defun js--variable-decl-matcher (limit)
+(defun ocen--variable-decl-matcher (limit)
   "Font-lock matcher for variable names in a variable declaration.
 This is a cc-mode-style matcher that *always* fails, from the
 point of view of font-lock.  It applies highlighting directly with
@@ -1528,15 +1528,15 @@ point of view of font-lock.  It applies highlighting directly with
                          (forward-char)
                          (forward-comment most-positive-fixnum)
                          t))
-                   (cond ((looking-at js--name-re)
+                   (cond ((looking-at ocen--name-re)
                           (font-lock-apply-highlight
                            '(0 font-lock-variable-name-face))
                           (goto-char (match-end 0)))
 
                          ((save-excursion
-                            (js--forward-destructuring-spec))
+                            (ocen--forward-destructuring-spec))
 
-                          (js--forward-destructuring-spec
+                          (ocen--forward-destructuring-spec
                            (lambda ()
                              (font-lock-apply-highlight
                               '(0 font-lock-variable-name-face)))))))
@@ -1544,7 +1544,7 @@ point of view of font-lock.  It applies highlighting directly with
             (forward-comment most-positive-fixnum)
             (when (eq (char-after) ?=)
               (forward-char)
-              (js--forward-expression)
+              (ocen--forward-expression)
               (forward-comment most-positive-fixnum))
 
             (setq first nil))))
@@ -1569,90 +1569,90 @@ point of view of font-lock.  It applies highlighting directly with
 ;;          ) && void(0)   ← JS
 ;;        }></div>         ← JSX
 ;;
-;; `js-syntax-propertize' unambiguously identifies JSX syntax,
+;; `ocen-syntax-propertize' unambiguously identifies JSX syntax,
 ;; including when it’s nested.
 ;;
 ;; Using a matcher function for each relevant part, retrieve match
 ;; data recorded as syntax properties for fontification.
 
-(defconst js-jsx--font-lock-keywords
-  `((js-jsx--match-tag-name 0 font-lock-function-name-face t)
-    (js-jsx--match-attribute-name 0 font-lock-variable-name-face t)
-    (js-jsx--match-text 0 'default t) ; “Undo” keyword fontification.
-    (js-jsx--match-tag-beg)
-    (js-jsx--match-tag-end)
-    (js-jsx--match-expr))
+(defconst ocen--font-lock-keywords
+  `((ocen--match-tag-name 0 font-lock-function-name-face t)
+    (ocen--match-attribute-name 0 font-lock-variable-name-face t)
+    (ocen--match-text 0 'default t) ; “Undo” keyword fontification.
+    (ocen--match-tag-beg)
+    (ocen--match-tag-end)
+    (ocen--match-expr))
   "JSX font lock faces and multiline text properties.")
 
-(defun js-jsx--match-tag-name (limit)
+(defun ocen--match-tag-name (limit)
   "Match JSXBoundaryElement names, until LIMIT."
-  (when js-jsx-syntax
-    (let ((pos (next-single-char-property-change (point) 'js-jsx-tag-name nil limit))
+  (when ocen-syntax
+    (let ((pos (next-single-char-property-change (point) 'ocen-tag-name nil limit))
           value)
       (when (and pos (> pos (point)))
         (goto-char pos)
-        (or (and (setq value (get-text-property pos 'js-jsx-tag-name))
+        (or (and (setq value (get-text-property pos 'ocen-tag-name))
                  (progn (set-match-data value) t))
-            (js-jsx--match-tag-name limit))))))
+            (ocen--match-tag-name limit))))))
 
-(defun js-jsx--match-attribute-name (limit)
+(defun ocen--match-attribute-name (limit)
   "Match JSXAttribute names, until LIMIT."
-  (when js-jsx-syntax
-    (let ((pos (next-single-char-property-change (point) 'js-jsx-attribute-name nil limit))
+  (when ocen-syntax
+    (let ((pos (next-single-char-property-change (point) 'ocen-attribute-name nil limit))
           value)
       (when (and pos (> pos (point)))
         (goto-char pos)
-        (or (and (setq value (get-text-property pos 'js-jsx-attribute-name))
+        (or (and (setq value (get-text-property pos 'ocen-attribute-name))
                  (progn (set-match-data value) t))
-            (js-jsx--match-attribute-name limit))))))
+            (ocen--match-attribute-name limit))))))
 
-(defun js-jsx--match-text (limit)
+(defun ocen--match-text (limit)
   "Match JSXText, until LIMIT."
-  (when js-jsx-syntax
-    (let ((pos (next-single-char-property-change (point) 'js-jsx-text nil limit))
+  (when ocen-syntax
+    (let ((pos (next-single-char-property-change (point) 'ocen-text nil limit))
           value)
       (when (and pos (> pos (point)))
         (goto-char pos)
-        (or (and (setq value (get-text-property pos 'js-jsx-text))
+        (or (and (setq value (get-text-property pos 'ocen-text))
                  (progn (set-match-data value)
                         (put-text-property (car value) (cadr value) 'font-lock-multiline t)
                         t))
-            (js-jsx--match-text limit))))))
+            (ocen--match-text limit))))))
 
-(defun js-jsx--match-tag-beg (limit)
+(defun ocen--match-tag-beg (limit)
   "Match JSXBoundaryElements from start, until LIMIT."
-  (when js-jsx-syntax
-    (let ((pos (next-single-char-property-change (point) 'js-jsx-tag-beg nil limit))
+  (when ocen-syntax
+    (let ((pos (next-single-char-property-change (point) 'ocen-tag-beg nil limit))
           value)
       (when (and pos (> pos (point)))
         (goto-char pos)
-        (or (and (setq value (get-text-property pos 'js-jsx-tag-beg))
+        (or (and (setq value (get-text-property pos 'ocen-tag-beg))
                  (progn (put-text-property pos (cdr value) 'font-lock-multiline t) t))
-            (js-jsx--match-tag-beg limit))))))
+            (ocen--match-tag-beg limit))))))
 
-(defun js-jsx--match-tag-end (limit)
+(defun ocen--match-tag-end (limit)
   "Match JSXBoundaryElements from end, until LIMIT."
-  (when js-jsx-syntax
-    (let ((pos (next-single-char-property-change (point) 'js-jsx-tag-end nil limit))
+  (when ocen-syntax
+    (let ((pos (next-single-char-property-change (point) 'ocen-tag-end nil limit))
           value)
       (when (and pos (> pos (point)))
         (goto-char pos)
-        (or (and (setq value (get-text-property pos 'js-jsx-tag-end))
+        (or (and (setq value (get-text-property pos 'ocen-tag-end))
                  (progn (put-text-property value pos 'font-lock-multiline t) t))
-            (js-jsx--match-tag-end limit))))))
+            (ocen--match-tag-end limit))))))
 
-(defun js-jsx--match-expr (limit)
+(defun ocen--match-expr (limit)
   "Match JSXExpressionContainers, until LIMIT."
-  (when js-jsx-syntax
-    (let ((pos (next-single-char-property-change (point) 'js-jsx-expr nil limit))
+  (when ocen-syntax
+    (let ((pos (next-single-char-property-change (point) 'ocen-expr nil limit))
           value)
       (when (and pos (> pos (point)))
         (goto-char pos)
-        (or (and (setq value (get-text-property pos 'js-jsx-expr))
+        (or (and (setq value (get-text-property pos 'ocen-expr))
                  (progn (put-text-property pos value 'font-lock-multiline t) t))
-            (js-jsx--match-expr limit))))))
+            (ocen--match-expr limit))))))
 
-(defconst js--font-lock-keywords-3
+(defconst ocen--font-lock-keywords-3
   `(
     ;; This goes before keywords-2 so it gets used preferentially
     ;; instead of the keywords in keywords-2. Don't use override
@@ -1661,68 +1661,68 @@ point of view of font-lock.  It applies highlighting directly with
     ;; commented out.
     ,@cpp-font-lock-keywords ; from font-lock.el
 
-    ,@js--font-lock-keywords-2
+    ,@ocen--font-lock-keywords-2
 
     ("\\.\\(prototype\\)\\_>"
      (1 font-lock-constant-face))
 
     ;; Highlights class being declared, in parts
-    (js--class-decl-matcher
-     ,(concat "\\(" js--name-re "\\)\\(?:\\.\\|.*$\\)")
+    (ocen--class-decl-matcher
+     ,(concat "\\(" ocen--name-re "\\)\\(?:\\.\\|.*$\\)")
      (goto-char (match-beginning 1))
      nil
      (1 font-lock-type-face))
 
     ;; Highlights parent class, in parts, if available
-    (js--class-decl-matcher
-     ,(concat "\\(" js--name-re "\\)\\(?:\\.\\|.*$\\)")
+    (ocen--class-decl-matcher
+     ,(concat "\\(" ocen--name-re "\\)\\(?:\\.\\|.*$\\)")
      (if (match-beginning 2)
          (progn
-           (setq js--tmp-location (match-end 2))
-           (goto-char js--tmp-location)
+           (setq ocen--tmp-location (match-end 2))
+           (goto-char ocen--tmp-location)
            (insert "=")
            (goto-char (match-beginning 2)))
-       (setq js--tmp-location nil)
+       (setq ocen--tmp-location nil)
        (goto-char (line-end-position)))
-     (when js--tmp-location
+     (when ocen--tmp-location
        (save-excursion
-         (goto-char js--tmp-location)
+         (goto-char ocen--tmp-location)
          (delete-char 1)))
      (1 font-lock-type-face))
 
     ;; Highlights parent class
-    (js--class-decl-matcher
+    (ocen--class-decl-matcher
      (2 font-lock-type-face nil t))
 
     ;; Dojo needs its own matcher to override the string highlighting
-    (,(js--make-framework-matcher
+    (,(ocen--make-framework-matcher
        'dojo
        "^\\s-*dojo\\.declare\\s-*(\""
-       "\\(" js--dotted-name-re "\\)"
-       "\\(?:\"\\s-*,\\s-*\\(" js--dotted-name-re "\\)\\)?")
+       "\\(" ocen--dotted-name-re "\\)"
+       "\\(?:\"\\s-*,\\s-*\\(" ocen--dotted-name-re "\\)\\)?")
      (1 font-lock-type-face t)
      (2 font-lock-type-face nil t))
 
     ;; Match Dojo base classes. Of course Mojo has to be different
     ;; from everything else under the sun...
-    (,(js--make-framework-matcher
+    (,(ocen--make-framework-matcher
        'dojo
        "^\\s-*dojo\\.declare\\s-*(\""
-       "\\(" js--dotted-name-re "\\)\"\\s-*,\\s-*\\[")
-     ,(concat "[[,]\\s-*\\(" js--dotted-name-re "\\)\\s-*"
+       "\\(" ocen--dotted-name-re "\\)\"\\s-*,\\s-*\\[")
+     ,(concat "[[,]\\s-*\\(" ocen--dotted-name-re "\\)\\s-*"
               "\\(?:\\].*$\\)?")
      (backward-char)
      (end-of-line)
      (1 font-lock-type-face))
 
     ;; continued Dojo base-class list
-    (,(js--make-framework-matcher
+    (,(ocen--make-framework-matcher
        'dojo
-       "^\\s-*" js--dotted-name-re "\\s-*[],]")
-     ,(concat "\\(" js--dotted-name-re "\\)"
+       "^\\s-*" ocen--dotted-name-re "\\s-*[],]")
+     ,(concat "\\(" ocen--dotted-name-re "\\)"
               "\\s-*\\(?:\\].*$\\)?")
      (if (save-excursion (backward-char)
-                         (js--inside-dojo-class-list-p))
+                         (ocen--inside-dojo-class-list-p))
          (forward-symbol -1)
        (end-of-line))
      (end-of-line)
@@ -1730,25 +1730,25 @@ point of view of font-lock.  It applies highlighting directly with
 
     ;; variable declarations
     ,(list
-      (concat "\\_<\\(const\\|var\\|let\\)\\_>\\|" js--basic-type-re)
-      (list #'js--variable-decl-matcher nil nil nil))
+      (concat "\\_<\\(const\\|var\\|let\\)\\_>\\|" ocen--basic-type-re)
+      (list #'ocen--variable-decl-matcher nil nil nil))
 
     ;; class instantiation
     ,(list
-      (concat "\\_<new\\_>\\s-+\\(" js--dotted-name-re "\\)")
+      (concat "\\_<new\\_>\\s-+\\(" ocen--dotted-name-re "\\)")
       (list 1 'font-lock-type-face))
 
     ;; instanceof
     ,(list
-      (concat "\\_<instanceof\\_>\\s-+\\(" js--dotted-name-re "\\)")
+      (concat "\\_<instanceof\\_>\\s-+\\(" ocen--dotted-name-re "\\)")
       (list 1 'font-lock-type-face))
 
     ;; formal parameters
     ,(list
       (concat
-       "\\_<function\\_>\\(\\s-+" js--name-re "\\)?\\s-*(\\s-*"
-       js--name-start-re)
-      (list (concat "\\(" js--name-re "\\)\\(\\s-*).*\\)?")
+       "\\_<function\\_>\\(\\s-+" ocen--name-re "\\)?\\s-*(\\s-*"
+       ocen--name-start-re)
+      (list (concat "\\(" ocen--name-re "\\)\\(\\s-*).*\\)?")
             '(backward-char)
             '(end-of-line)
             '(1 font-lock-variable-name-face)))
@@ -1756,87 +1756,87 @@ point of view of font-lock.  It applies highlighting directly with
     ;; continued formal parameter list
     ,(list
       (concat
-       "^\\s-*" js--name-re "\\s-*[,)]")
-      (list js--name-re
+       "^\\s-*" ocen--name-re "\\s-*[,)]")
+      (list ocen--name-re
             '(if (save-excursion (backward-char)
-                                 (js--inside-param-list-p))
+                                 (ocen--inside-param-list-p))
                  (forward-symbol -1)
                (end-of-line))
             '(end-of-line)
             '(0 font-lock-variable-name-face)))
 
     ;; jsx (when enabled)
-    ,@js-jsx--font-lock-keywords)
-  "Level three font lock for `js-mode'.")
+    ,@ocen--font-lock-keywords)
+  "Level three font lock for `ocen-mode'.")
 
-(defun js--inside-pitem-p (pitem)
+(defun ocen--inside-pitem-p (pitem)
   "Return whether point is inside the given pitem's header or body."
-  (js--ensure-cache)
-  (cl-assert (js--pitem-h-begin pitem))
-  (cl-assert (js--pitem-paren-depth pitem))
+  (ocen--ensure-cache)
+  (cl-assert (ocen--pitem-h-begin pitem))
+  (cl-assert (ocen--pitem-paren-depth pitem))
 
-  (and (> (point) (js--pitem-h-begin pitem))
-       (or (null (js--pitem-b-end pitem))
-           (> (js--pitem-b-end pitem) (point)))))
+  (and (> (point) (ocen--pitem-h-begin pitem))
+       (or (null (ocen--pitem-b-end pitem))
+           (> (ocen--pitem-b-end pitem) (point)))))
 
-(defun js--parse-state-at-point ()
-  "Parse the JavaScript program state at point.
-Return a list of `js--pitem' instances that apply to point, most
+(defun ocen--parse-state-at-point ()
+  "Parse the Ocen program state at point.
+Return a list of `ocen--pitem' instances that apply to point, most
 specific first.  In the worst case, the current toplevel instance
 will be returned."
   (save-excursion
     (save-restriction
       (widen)
-      (js--ensure-cache)
+      (ocen--ensure-cache)
       (let ((pstate (or (save-excursion
-                          (js--backward-pstate))
-                        (list js--initial-pitem))))
+                          (ocen--backward-pstate))
+                        (list ocen--initial-pitem))))
 
         ;; Loop until we either hit a pitem at BOB or pitem ends after
         ;; point (or at point if we're at eob)
         (cl-loop for pitem = (car pstate)
-                 until (or (eq (js--pitem-type pitem)
+                 until (or (eq (ocen--pitem-type pitem)
                                'toplevel)
-                           (js--inside-pitem-p pitem))
+                           (ocen--inside-pitem-p pitem))
                  do (pop pstate))
 
         pstate))))
 
-(defun js--syntactic-context-from-pstate (pstate)
-  "Return the JavaScript syntactic context corresponding to PSTATE."
-  (let ((type (js--pitem-type (car pstate))))
+(defun ocen--syntactic-context-from-pstate (pstate)
+  "Return the Ocen syntactic context corresponding to PSTATE."
+  (let ((type (ocen--pitem-type (car pstate))))
     (cond ((memq type '(function macro))
            type)
           ((consp type)
            'class)
           (t 'toplevel))))
 
-(defun js-syntactic-context ()
-  "Return the JavaScript syntactic context at point.
+(defun ocen-syntactic-context ()
+  "Return the Ocen syntactic context at point.
 When called interactively, also display a message with that
 context."
   (interactive)
-  (let* ((syntactic-context (js--syntactic-context-from-pstate
-                             (js--parse-state-at-point))))
+  (let* ((syntactic-context (ocen--syntactic-context-from-pstate
+                             (ocen--parse-state-at-point))))
 
     (when (called-interactively-p 'interactive)
       (message "Syntactic context: %s" syntactic-context))
 
     syntactic-context))
 
-(defun js--class-decl-matcher (limit)
-  "Font lock function used by `js-mode'.
-This performs fontification according to `js--class-styles'."
-  (when js-enabled-frameworks
-    (cl-loop initially (js--ensure-cache limit)
-             while (re-search-forward js--quick-match-re limit t)
+(defun ocen--class-decl-matcher (limit)
+  "Font lock function used by `ocen-mode'.
+This performs fontification according to `ocen--class-styles'."
+  (when ocen-enabled-frameworks
+    (cl-loop initially (ocen--ensure-cache limit)
+             while (re-search-forward ocen--quick-match-re limit t)
              for orig-end = (match-end 0)
              do (goto-char (match-beginning 0))
-             if (cl-loop for style in js--class-styles
+             if (cl-loop for style in ocen--class-styles
                          for decl-re = (plist-get style :class-decl)
                          if (and (memq (plist-get style :framework)
-                                       js-enabled-frameworks)
-                                 (memq (js-syntactic-context)
+                                       ocen-enabled-frameworks)
+                                 (memq (ocen-syntactic-context)
                                        (plist-get style :contexts))
                                  decl-re
                                  (looking-at decl-re))
@@ -1845,13 +1845,13 @@ This performs fontification according to `js--class-styles'."
              return t
              else do (goto-char orig-end))))
 
-(defconst js--font-lock-keywords
-  '(js--font-lock-keywords-3 js--font-lock-keywords-1
-                                   js--font-lock-keywords-2
-                                   js--font-lock-keywords-3)
-  "Font lock keywords for `js-mode'.  See `font-lock-keywords'.")
+(defconst ocen--font-lock-keywords
+  '(ocen--font-lock-keywords-3 ocen--font-lock-keywords-1
+                                   ocen--font-lock-keywords-2
+                                   ocen--font-lock-keywords-3)
+  "Font lock keywords for `ocen-mode'.  See `font-lock-keywords'.")
 
-(defun js-font-lock-syntactic-face-function (state)
+(defun ocen-font-lock-syntactic-face-function (state)
   "Return syntactic face given STATE."
   (if (nth 3 state)
       font-lock-string-face
@@ -1861,7 +1861,7 @@ This performs fontification according to `js--class-styles'."
         font-lock-doc-face
       font-lock-comment-face)))
 
-(defconst js--syntax-propertize-regexp-regexp
+(defconst ocen--syntax-propertize-regexp-regexp
   (rx
    ;; Start of regexp.
    "/"
@@ -1878,14 +1878,14 @@ This performs fontification according to `js--class-styles'."
               (and "\\" not-newline)))
          "]")))
    (group (zero-or-one "/")))
-  "Regular expression matching a JavaScript regexp literal.")
+  "Regular expression matching a Ocen regexp literal.")
 
-(defun js-syntax-propertize-regexp (end)
+(defun ocen-syntax-propertize-regexp (end)
   (let ((ppss (syntax-ppss)))
     (when (eq (nth 3 ppss) ?/)
       ;; A /.../ regexp.
       (goto-char (nth 8 ppss))
-      (when (looking-at js--syntax-propertize-regexp-regexp)
+      (when (looking-at ocen--syntax-propertize-regexp-regexp)
         ;; Don't touch text after END.
         (when (> end (match-end 1))
           (setq end (match-end 1)))
@@ -1893,13 +1893,13 @@ This performs fontification according to `js--class-styles'."
                            'syntax-table (string-to-syntax "\"/"))
         (goto-char end)))))
 
-(defconst js--unary-keyword-re
-  (js--regexp-opt-symbol '("await" "delete" "typeof" "void" "yield"))
+(defconst ocen--unary-keyword-re
+  (ocen--regexp-opt-symbol '("await" "delete" "typeof" "void" "yield"))
   "Regexp matching unary operator keywords.")
 
-(defun js--unary-keyword-p (string)
-  "Check if STRING is a unary operator keyword in JavaScript."
-  (string-match-p js--unary-keyword-re string))
+(defun ocen--unary-keyword-p (string)
+  "Check if STRING is a unary operator keyword in Ocen."
+  (string-match-p ocen--unary-keyword-re string))
 
 ;; Adding `syntax-multiline' text properties to JSX isn’t sufficient
 ;; to identify multiline JSX when first typing it.  For instance, if
@@ -1922,12 +1922,12 @@ This performs fontification according to `js--class-styles'."
 ;; from “>” to try and find the start of JSXBoundaryElements, and
 ;; extend the `syntax-propertize' region there.
 
-(defun js--syntax-propertize-extend-region (start end)
+(defun ocen--syntax-propertize-extend-region (start end)
   "Extend the START-END region for propertization, if necessary.
 For use by `syntax-propertize-extend-region-functions'."
-  (if js-jsx-syntax (js-jsx--syntax-propertize-extend-region start end)))
+  (if ocen-syntax (ocen--syntax-propertize-extend-region start end)))
 
-(defun js-jsx--syntax-propertize-extend-region (start end)
+(defun ocen--syntax-propertize-extend-region (start end)
   "Extend the START-END region for propertization, if necessary.
 If any “>” in the region appears to be the end of a tag starting
 before the start of the region, extend region backwards to the
@@ -1956,7 +1956,7 @@ For use by `syntax-propertize-extend-region-functions'."
                       (backward-sexp)
                     (scan-error (throw 'continue nil))))
                  ((memq (char-before) '(?\/ ?\=)) (backward-char))
-                 ((looking-back js--dotted-name-re (line-beginning-position) t)
+                 ((looking-back ocen--dotted-name-re (line-beginning-position) t)
                   (goto-char (match-beginning 0)))
                  (t (throw 'continue nil))))
               (when (< (point) start)
@@ -1964,7 +1964,7 @@ For use by `syntax-propertize-extend-region-functions'."
                 (throw 'stop nil)))))))
     (if new-start (cons new-start end))))
 
-;; When applying syntax properties, since `js-syntax-propertize' uses
+;; When applying syntax properties, since `ocen-syntax-propertize' uses
 ;; `syntax-propertize-rules' to parse JSXBoundaryElements iteratively
 ;; and statelessly, whenever we exit such an element, we need to
 ;; determine the JSX depth.  If >0, then we know to apply syntax
@@ -1981,16 +1981,16 @@ For use by `syntax-propertize-extend-region-functions'."
 ;; determine whether point is enclosed in JSX or not; and, if so,
 ;; where the JSX is.  The following functions provide that knowledge.
 
-(defconst js-jsx--tag-start-re
-  (concat "\\(" js--dotted-name-re "\\)\\(?:"
+(defconst ocen--tag-start-re
+  (concat "\\(" ocen--dotted-name-re "\\)\\(?:"
           ;; Whitespace is only necessary if an attribute implies JSX.
           "\\(?:\\s-\\|\n\\)*[{/>]"
           "\\|"
-          "\\(?:\\s-\\|\n\\)+" js--name-start-re
+          "\\(?:\\s-\\|\n\\)+" ocen--name-start-re
           "\\)")
   "Regexp unambiguously matching a JSXOpeningElement.")
 
-(defun js-jsx--matched-tag-type ()
+(defun ocen--matched-tag-type ()
   "Determine if the last “<” was a JSXBoundaryElement and its type.
 Return `close' for a JSXClosingElement/JSXClosingFragment match,
 return `self-closing' for some self-closing JSXOpeningElements,
@@ -1998,15 +1998,15 @@ else return `other'."
   (cond
    ((= (char-after) ?/) (forward-char) 'close) ; JSXClosingElement/JSXClosingFragment
    ((= (char-after) ?>) (forward-char) 'other) ; JSXOpeningFragment
-   ((and (looking-at js-jsx--tag-start-re) ; JSXOpeningElement
-         (not (js--unary-keyword-p (match-string 1))))
+   ((and (looking-at ocen--tag-start-re) ; JSXOpeningElement
+         (not (ocen--unary-keyword-p (match-string 1))))
     (goto-char (match-end 0))
     (if (= (char-before) ?/) 'self-closing 'other))))
 
-(defconst js-jsx--self-closing-re "/\\s-*>"
+(defconst ocen--self-closing-re "/\\s-*>"
   "Regexp matching the end of a self-closing JSXOpeningElement.")
 
-(defun js-jsx--matching-close-tag-pos ()
+(defun ocen--matching-close-tag-pos ()
   "Return position of the closer of the opener before point.
 Assuming a JSXOpeningElement or a JSXOpeningFragment is
 immediately before point, find a matching JSXClosingElement or
@@ -2018,11 +2018,11 @@ the match.  Return nil if a match can’t be found."
         ;; Not inside a comment or string.
         (unless (nth 8 (save-excursion (syntax-ppss (match-beginning 0))))
           (when (setq tag-pos (match-beginning 0)
-                      type (js-jsx--matched-tag-type))
+                      type (ocen--matched-tag-type))
             (when last-pos
               (setq pos (point))
               (goto-char last-pos)
-              (while (re-search-forward js-jsx--self-closing-re pos 'move)
+              (while (re-search-forward ocen--self-closing-re pos 'move)
                 (setq tag-stack (1- tag-stack))))
             (if (eq type 'close)
                 (progn
@@ -2036,7 +2036,7 @@ the match.  Return nil if a match can’t be found."
                 (setq tag-stack (1+ tag-stack))))
             (setq last-pos (point))))))))
 
-(defun js-jsx--enclosing-tag-pos ()
+(defun ocen--enclosing-tag-pos ()
   "Return beginning and end of a JSXElement about point.
 Look backward for a JSXElement that both starts before point and
 also ends at/after point.  That may be either a self-closing
@@ -2044,7 +2044,7 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
   (let ((start (point)) tag-beg tag-beg-pos tag-end-pos close-tag-pos)
     (while
         (and
-         (setq tag-beg (js--backward-text-property 'js-jsx-tag-beg))
+         (setq tag-beg (ocen--backward-text-property 'ocen-tag-beg))
          (progn
            (setq tag-beg-pos (point)
                  tag-end-pos (cdr tag-beg))
@@ -2059,16 +2059,16 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
                             ;; Try to read a cached close position,
                             ;; but it might not be available yet.
                             (setq close-tag-pos
-                                  (get-text-property (point) 'js-jsx-close-tag-pos))
+                                  (get-text-property (point) 'ocen-close-tag-pos))
                           (save-excursion
                             (goto-char tag-end-pos)
-                            (setq close-tag-pos (js-jsx--matching-close-tag-pos)))
+                            (setq close-tag-pos (ocen--matching-close-tag-pos)))
                           (when close-tag-pos
                             ;; Cache the close position to make future
                             ;; searches faster.
                             (put-text-property
                              (point) (1+ (point))
-                             'js-jsx-close-tag-pos close-tag-pos)))
+                             'ocen-close-tag-pos close-tag-pos)))
                         ;; The JSXOpeningElement may be unclosed, else
                         ;; the closure must occur at/after the start
                         ;; point (otherwise, a miscellaneous previous
@@ -2079,9 +2079,9 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
       (setq tag-beg nil close-tag-pos nil))
     (and tag-beg (list tag-beg-pos tag-end-pos close-tag-pos))))
 
-(defun js-jsx--at-enclosing-tag-child-p ()
+(defun ocen--at-enclosing-tag-child-p ()
   "Return t if point is at an enclosing tag’s child."
-  (let ((pos (save-excursion (js-jsx--enclosing-tag-pos))))
+  (let ((pos (save-excursion (ocen--enclosing-tag-pos))))
     (and pos (>= (point) (nth 1 pos)))))
 
 ;; We implement `syntax-propertize-function' logic fully parsing JSX
@@ -2102,7 +2102,7 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
 ;; `syntax-propertize-rules' loop so the next JSXBoundaryElement can
 ;; be parsed, if any, be it an opening or closing one.
 
-(defun js-jsx--text-range (beg end)
+(defun ocen--text-range (beg end)
   "Identify JSXText within a “>/{/}/<” pair."
   (when (> (- end beg) 0)
     (save-excursion
@@ -2116,7 +2116,7 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
           (put-text-property (point) (1+ (point)) 'syntax-table '(1)))
         (forward-char)))
     ;; Mark JSXText so it can be font-locked as non-keywords.
-    (put-text-property beg (1+ beg) 'js-jsx-text (list beg end (current-buffer)))
+    (put-text-property beg (1+ beg) 'ocen-text (list beg end (current-buffer)))
     ;; Ensure future propertization beginning from within the
     ;; JSXText determines JSXText context from earlier lines.
     (put-text-property beg end 'syntax-multiline t)))
@@ -2125,7 +2125,7 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
 ;; sets, care is taken in the following functions to abort parsing
 ;; whenever that boundary is reached.
 
-(defun js-jsx--syntax-propertize-tag-text (end)
+(defun ocen--syntax-propertize-tag-text (end)
   "Determine if JSXText is before END and propertize it.
 Text within an open/close tag pair may be JSXText.  Temporarily
 interrupt JSXText by JSXExpressionContainers, and terminate
@@ -2137,7 +2137,7 @@ been propertized."
         forward-sexp-function) ; Use Lisp version.
     (catch 'stop
       (while (re-search-forward "[{<]" end t)
-        (js-jsx--text-range text-beg (1- (point)))
+        (ocen--text-range text-beg (1- (point)))
         (cond
          ((= (char-before) ?{)
           (let (expr-beg expr-end)
@@ -2150,11 +2150,11 @@ been propertized."
               (scan-error nil))
             ;; Recursively propertize the JSXExpressionContainer’s
             ;; (possibly-incomplete) expression.
-            (js-syntax-propertize (1+ expr-beg) (if expr-end (min (1- expr-end) end) end))
+            (ocen-syntax-propertize (1+ expr-beg) (if expr-end (min (1- expr-end) end) end))
             ;; Ensure future propertization beginning from within the
             ;; (possibly-incomplete) expression can determine JSXText
             ;; context from earlier lines.
-            (put-text-property expr-beg (1+ expr-beg) 'js-jsx-expr (or expr-end end)) ; font-lock
+            (put-text-property expr-beg (1+ expr-beg) 'ocen-expr (or expr-end end)) ; font-lock
             (put-text-property expr-beg (if expr-end (min expr-end end) end) 'syntax-multiline t) ; syntax-propertize
             ;; Exit the JSXExpressionContainer if that’s possible,
             ;; else move to the end of the propertized area.
@@ -2164,11 +2164,11 @@ been propertized."
           (throw 'stop nil)))
         (setq text-beg (point))))))
 
-(defconst js-jsx--attribute-name-re (concat js--name-start-re
+(defconst ocen--attribute-name-re (concat ocen--name-start-re
                                             "\\(?:\\s_\\|\\sw\\|-\\)*")
-  "Like `js--name-re', but matches “-” as well.")
+  "Like `ocen--name-re', but matches “-” as well.")
 
-(defun js-jsx--syntax-propertize-tag (end)
+(defun ocen--syntax-propertize-tag (end)
   "Determine if a JSXBoundaryElement is before END and propertize it.
 Disambiguate JSX from inequality operators and arrow functions by
 testing for syntax only valid as JSX."
@@ -2199,7 +2199,7 @@ testing for syntax only valid as JSX."
             ;; JSXAttribute, as that can affect its expression’s
             ;; indentation.
             (put-text-property
-             (point) (1+ (point)) 'js-jsx-expr-attribute expr-attribute-beg)
+             (point) (1+ (point)) 'ocen-expr-attribute expr-attribute-beg)
             (setq expr-attribute-beg nil))
           (let (expr-end)
             (condition-case nil
@@ -2214,7 +2214,7 @@ testing for syntax only valid as JSX."
             (if (= (char-after) ?}) (forward-char) ; Shortcut to bail.
               ;; Recursively propertize the JSXExpressionContainer’s
               ;; expression.
-              (js-syntax-propertize (point) (if expr-end (min (1- expr-end) end) end))
+              (ocen-syntax-propertize (point) (if expr-end (min (1- expr-end) end) end))
               ;; Exit the JSXExpressionContainer if that’s possible,
               ;; else move to the end of the propertized area.
               (goto-char (if expr-end (min expr-end end) end)))))
@@ -2223,19 +2223,19 @@ testing for syntax only valid as JSX."
           ;; figure out what type it actually is.
           (if (eq type 'open) (setq type (if name-beg 'self-closing 'close)))
           (forward-char))
-         ((and (not name-beg) (looking-at js--dotted-name-re))
+         ((and (not name-beg) (looking-at ocen--dotted-name-re))
           ;; Don’t match code like “if (i < await foo)”
-          (if (js--unary-keyword-p (match-string 0)) (throw 'stop nil))
+          (if (ocen--unary-keyword-p (match-string 0)) (throw 'stop nil))
           ;; Save boundaries for later fontification after
           ;; unambiguously determining the code is JSX.
           (setq name-beg (match-beginning 0)
                 name-match-data (match-data))
           (goto-char (match-end 0)))
-         ((and name-beg (looking-at js-jsx--attribute-name-re))
+         ((and name-beg (looking-at ocen--attribute-name-re))
           (setq unambiguous t) ; Non-unary name followed by 2nd name ⇒ JSX
           ;; Save JSXAttribute’s name’s match data for font-locking later.
           (put-text-property (match-beginning 0) (1+ (match-beginning 0))
-                             'js-jsx-attribute-name (match-data))
+                             'ocen-attribute-name (match-data))
           (goto-char (match-end 0))
           (if (>= (point) end) (throw 'stop nil))
           (skip-chars-forward " \t\n" end)
@@ -2254,7 +2254,7 @@ testing for syntax only valid as JSX."
                   ;; Record the string’s position so derived modes
                   ;; applying syntactic fontification atypically
                   ;; (e.g. js2-mode) can recognize it as part of JSX.
-                  (put-text-property (point) (1+ (point)) 'js-jsx-string t)
+                  (put-text-property (point) (1+ (point)) 'ocen-string t)
                   (condition-case nil
                       (forward-sexp)
                     (scan-error (throw 'stop nil))))
@@ -2267,15 +2267,15 @@ testing for syntax only valid as JSX."
          (t (throw 'stop nil)))))
     (when unambiguous
       ;; Save JSXBoundaryElement’s name’s match data for font-locking.
-      (if name-beg (put-text-property name-beg (1+ name-beg) 'js-jsx-tag-name name-match-data))
+      (if name-beg (put-text-property name-beg (1+ name-beg) 'ocen-tag-name name-match-data))
       ;; Make the opening “<” an open parenthesis.
       (put-text-property tag-beg (1+ tag-beg) 'syntax-table
                          (eval-when-compile (string-to-syntax "(>")))
       ;; Prevent “out of range” errors when typing at the end of a buffer.
       (setq tag-end (if (eobp) (1- (point)) (point)))
       ;; Mark beginning and end of tag for font-locking.
-      (put-text-property tag-beg (1+ tag-beg) 'js-jsx-tag-beg (cons type tag-end))
-      (put-text-property tag-end (1+ tag-end) 'js-jsx-tag-end tag-beg)
+      (put-text-property tag-beg (1+ tag-beg) 'ocen-tag-beg (cons type tag-end))
+      (put-text-property tag-end (1+ tag-end) 'ocen-tag-end tag-beg)
       ;; Use text properties to extend the syntax-propertize region
       ;; backward to the beginning of the JSXBoundaryElement in the
       ;; future.  Typically the closing angle bracket could suggest
@@ -2283,25 +2283,25 @@ testing for syntax only valid as JSX."
       ;; parsing, and the closing angle bracket may not even exist yet
       ;; if the JSXBoundaryElement is still being typed.
       (put-text-property tag-beg (1+ tag-end) 'syntax-multiline t))
-    (if (js-jsx--at-enclosing-tag-child-p) (js-jsx--syntax-propertize-tag-text end))))
+    (if (ocen--at-enclosing-tag-child-p) (ocen--syntax-propertize-tag-text end))))
 
-(defconst js-jsx--text-properties
+(defconst ocen--text-properties
   (list
-   'js-jsx-tag-beg nil 'js-jsx-tag-end nil 'js-jsx-close-tag-pos nil
-   'js-jsx-tag-name nil 'js-jsx-attribute-name nil 'js-jsx-string nil
-   'js-jsx-text nil 'js-jsx-expr nil 'js-jsx-expr-attribute nil)
-  "Plist of text properties added by `js-syntax-propertize'.")
+   'ocen-tag-beg nil 'ocen-tag-end nil 'ocen-close-tag-pos nil
+   'ocen-tag-name nil 'ocen-attribute-name nil 'ocen-string nil
+   'ocen-text nil 'ocen-expr nil 'ocen-expr-attribute nil)
+  "Plist of text properties added by `ocen-syntax-propertize'.")
 
-(defun js-syntax-propertize (start end)
-  ;; JavaScript allows immediate regular expression objects, written /.../.
+(defun ocen-syntax-propertize (start end)
+  ;; Ocen allows immediate regular expression objects, written /.../.
   (goto-char start)
-  (if js-jsx-syntax (remove-text-properties start end js-jsx--text-properties))
-  (js-syntax-propertize-regexp end)
+  (if ocen-syntax (remove-text-properties start end ocen--text-properties))
+  (ocen-syntax-propertize-regexp end)
   (funcall
    (syntax-propertize-rules
     ;; Distinguish /-division from /-regexp chars (and from /-comment-starter).
     ;; FIXME: Allow regexps after infix ops like + ...
-    ;; https://developer.mozilla.org/en/JavaScript/Reference/Operators
+    ;; https://developer.mozilla.org/en/Ocen/Reference/Operators
     ;; We can probably just add +, -, <, >, %, ^, ~, ?, : at which
     ;; point I think only * and / would be missing which could also be added,
     ;; but need care to avoid affecting the // and */ comment markers.
@@ -2318,52 +2318,52 @@ testing for syntax only valid as JSX."
                            (eval-when-compile (append "=({[,:;" '(nil))))))
            (put-text-property (match-beginning 1) (match-end 1)
                               'syntax-table (string-to-syntax "\"/"))
-           (js-syntax-propertize-regexp end)))))
+           (ocen-syntax-propertize-regexp end)))))
     ("\\`\\(#\\)!" (1 "< b"))
     ("<" (0 (ignore
-             (when js-jsx-syntax
+             (when ocen-syntax
                ;; Not inside a comment or string.
                (unless (nth 8 (save-excursion (syntax-ppss (match-beginning 0))))
-                 (js-jsx--syntax-propertize-tag end)))))))
+                 (ocen--syntax-propertize-tag end)))))))
    (point) end))
 
-(defconst js--prettify-symbols-alist
+(defconst ocen--prettify-symbols-alist
   '(("=>" . ?⇒)
     (">=" . ?≥)
     ("<=" . ?≤))
-  "Alist of symbol prettifications for JavaScript.")
+  "Alist of symbol prettifications for Ocen.")
 
 ;;; Indentation
 
-(defconst js--possibly-braceless-keyword-re
-  (js--regexp-opt-symbol
+(defconst ocen--possibly-braceless-keyword-re
+  (ocen--regexp-opt-symbol
    '("catch" "do" "else" "finally" "for" "if" "try" "while" "with"
      "each"))
   "Regexp matching keywords optionally followed by an opening brace.")
 
-(defconst js--declaration-keyword-re
+(defconst ocen--declaration-keyword-re
   (regexp-opt '("var" "let" "const") 'words)
   "Regular expression matching variable declaration keywords.")
 
-(defconst js--indent-operator-re
+(defconst ocen--indent-operator-re
   (concat "[-+*/%<>&^|?:.]\\([^-+*/.]\\|$\\)\\|!?=\\|"
-          (js--regexp-opt-symbol '("in" "instanceof")))
+          (ocen--regexp-opt-symbol '("in" "instanceof")))
   "Regexp matching operators that affect indentation of continued expressions.")
 
-(defun js-jsx--looking-at-start-tag-p ()
+(defun ocen--looking-at-start-tag-p ()
   "Non-nil if a JSXOpeningElement immediately follows point."
-  (let ((tag-beg (get-text-property (point) 'js-jsx-tag-beg)))
+  (let ((tag-beg (get-text-property (point) 'ocen-tag-beg)))
     (and tag-beg (memq (car tag-beg) '(open self-closing)))))
 
-(defun js--looking-at-operator-p ()
-  "Return non-nil if point is on a JavaScript operator, other than a comma."
+(defun ocen--looking-at-operator-p ()
+  "Return non-nil if point is on a Ocen operator, other than a comma."
   (save-match-data
-    (and (looking-at js--indent-operator-re)
+    (and (looking-at ocen--indent-operator-re)
          (or (not (eq (char-after) ?:))
              (save-excursion
-               (js--backward-syntactic-ws)
+               (ocen--backward-syntactic-ws)
                (when (= (char-before) ?\)) (backward-list))
-               (and (js--re-search-backward "[?:{]\\|\\_<case\\_>" nil t)
+               (and (ocen--re-search-backward "[?:{]\\|\\_<case\\_>" nil t)
                     (eq (char-after) ??))))
          (not (and
                (eq (char-after) ?/)
@@ -2372,16 +2372,16 @@ testing for syntax only valid as JSX."
          (not (and
                (eq (char-after) ?*)
                ;; Generator method (possibly using computed property).
-               (looking-at (concat "\\* *\\(?:\\[\\|" js--name-re " *(\\)"))
+               (looking-at (concat "\\* *\\(?:\\[\\|" ocen--name-re " *(\\)"))
                (save-excursion
-                 (js--backward-syntactic-ws)
+                 (ocen--backward-syntactic-ws)
                  ;; We might misindent some expressions that would
                  ;; return NaN anyway.  Shouldn't be a problem.
                  (memq (char-before) '(?, ?} ?{)))))
          ;; “<” isn’t necessarily an operator in JSX.
-         (not (and js-jsx-syntax (js-jsx--looking-at-start-tag-p))))))
+         (not (and ocen-syntax (ocen--looking-at-start-tag-p))))))
 
-(defun js--find-newline-backward ()
+(defun ocen--find-newline-backward ()
   "Move backward to the nearest newline that is not in a block comment."
   (let ((continue t)
         (result t))
@@ -2399,15 +2399,15 @@ testing for syntax only valid as JSX."
         (setq result nil)))
     result))
 
-(defun js-jsx--looking-back-at-end-tag-p ()
+(defun ocen--looking-back-at-end-tag-p ()
   "Non-nil if a JSXClosingElement immediately precedes point."
-  (get-text-property (point) 'js-jsx-tag-end))
+  (get-text-property (point) 'ocen-tag-end))
 
-(defun js--continued-expression-p ()
+(defun ocen--continued-expression-p ()
   "Return non-nil if the current line continues an expression."
   (save-excursion
     (back-to-indentation)
-    (if (js--looking-at-operator-p)
+    (if (ocen--looking-at-operator-p)
         (if (eq (char-after) ?/)
             (prog1
                 (not (nth 3 (syntax-ppss (1+ (point)))))
@@ -2417,24 +2417,24 @@ testing for syntax only valid as JSX."
            (progn
              (forward-comment (- (point)))
              (not (memq (char-before) '(?, ?\[ ?\())))))
-      (and (js--find-newline-backward)
+      (and (ocen--find-newline-backward)
            (progn
              (skip-chars-backward " \t")
              (and
               ;; The “>” at the end of any JSXBoundaryElement isn’t
               ;; part of a continued expression.
-              (not (and js-jsx-syntax (js-jsx--looking-back-at-end-tag-p)))
+              (not (and ocen-syntax (ocen--looking-back-at-end-tag-p)))
               (progn
                 (or (bobp) (backward-char))
                 (and (> (point) (point-min))
                      (save-excursion
                        (backward-char)
                        (not (looking-at "[/*]/\\|=>")))
-                     (js--looking-at-operator-p)
+                     (ocen--looking-at-operator-p)
                      (and (progn (backward-char)
                                  (not (looking-at "\\+\\+\\|--\\|/[/*]"))))))))))))
 
-(defun js--skip-term-backward ()
+(defun ocen--skip-term-backward ()
   "Skip a term before point; return t if a term was skipped."
   (let ((term-skipped nil))
     ;; Skip backward over balanced parens.
@@ -2453,7 +2453,7 @@ testing for syntax only valid as JSX."
     ;; Maybe skip over a symbol.
     (let ((save-point (point)))
       (if (and (< (skip-syntax-backward "w_") 0)
-                 (looking-at js--name-re))
+                 (looking-at ocen--name-re))
           ;; Skipped.
           (progn
             (setq term-skipped t)
@@ -2464,35 +2464,35 @@ testing for syntax only valid as JSX."
       (backward-char)
       (eq (char-after) ?.))))
 
-(defun js--skip-terms-backward ()
+(defun ocen--skip-terms-backward ()
   "Skip any number of terms backward.
 Move point to the earliest \".\" without changing paren levels.
 Returns t if successful, nil if no term was found."
-  (when (js--skip-term-backward)
+  (when (ocen--skip-term-backward)
     ;; Found at least one.
     (let ((last-point (point)))
-      (while (js--skip-term-backward)
+      (while (ocen--skip-term-backward)
         (setq last-point (point)))
       (goto-char last-point)
       t)))
 
-(defun js--chained-expression-p ()
-  "A helper for js--proper-indentation that handles chained expressions.
+(defun ocen--chained-expression-p ()
+  "A helper for ocen--proper-indentation that handles chained expressions.
 A chained expression is when the current line starts with '.' and the
 previous line also has a '.' expression.
 This function returns the indentation for the current line if it is
 a chained expression line; otherwise nil.
 This should only be called while point is at the start of the line's content,
 as determined by `back-to-indentation'."
-  (when js-chain-indent
+  (when ocen-chain-indent
     (save-excursion
       (when (and (eq (char-after) ?.)
-                 (js--continued-expression-p)
-                 (js--find-newline-backward)
-                 (js--skip-terms-backward))
+                 (ocen--continued-expression-p)
+                 (ocen--find-newline-backward)
+                 (ocen--skip-terms-backward))
         (current-column)))))
 
-(defun js--end-of-do-while-loop-p ()
+(defun ocen--end-of-do-while-loop-p ()
   "Return non-nil if point is on the \"while\" of a do-while statement.
 Otherwise, return nil.  A braceless do-while statement spanning
 several lines requires that the start of the loop is indented to
@@ -2506,19 +2506,19 @@ the same column as the current line."
 	      (looking-at "[ \t\n]*}"))
 	    (save-excursion
 	      (backward-list) (forward-symbol -1) (looking-at "\\_<do\\_>"))
-          (js--re-search-backward "\\_<do\\_>" (line-beginning-position) t)
+          (ocen--re-search-backward "\\_<do\\_>" (line-beginning-position) t)
 	  (or (looking-at "\\_<do\\_>")
 	      (let ((saved-indent (current-indentation)))
-		(while (and (js--re-search-backward "^\\s-*\\_<" nil t)
+		(while (and (ocen--re-search-backward "^\\s-*\\_<" nil t)
 			    (/= (current-indentation) saved-indent)))
 		(and (looking-at "\\s-*\\_<do\\_>")
-		     (not (js--re-search-forward
+		     (not (ocen--re-search-forward
                            "\\_<while\\_>" (line-end-position) t))
 		     (= (current-indentation) saved-indent)))))))))
 
 
-(defun js--ctrl-statement-indentation ()
-  "Helper function for `js--proper-indentation'.
+(defun ocen--ctrl-statement-indentation ()
+  "Helper function for `ocen--proper-indentation'.
 Return the proper indentation of the current line if it starts
 the body of a control statement without braces; otherwise, return
 nil."
@@ -2527,39 +2527,39 @@ nil."
     (when (save-excursion
             (and (not (eq (line-beginning-position) (point-min)))
                  (not (looking-at "[{]"))
-                 (js--re-search-backward "[[:graph:]]" nil t)
+                 (ocen--re-search-backward "[[:graph:]]" nil t)
                  (progn
                    (or (eobp) (forward-char))
                    (when (= (char-before) ?\)) (backward-list))
                    (skip-syntax-backward " ")
                    (skip-syntax-backward "w_")
-                   (looking-at js--possibly-braceless-keyword-re))
+                   (looking-at ocen--possibly-braceless-keyword-re))
                  (memq (char-before) '(?\s ?\t ?\n ?\}))
-                 (not (js--end-of-do-while-loop-p))))
+                 (not (ocen--end-of-do-while-loop-p))))
       (save-excursion
         (goto-char (match-beginning 0))
-        (+ (current-indentation) js-indent-level)))))
+        (+ (current-indentation) ocen-indent-level)))))
 
-(defun js--get-c-offset (symbol anchor)
+(defun ocen--get-c-offset (symbol anchor)
   (let ((c-offsets-alist
-         (list (cons 'c js-comment-lineup-func))))
+         (list (cons 'c ocen-comment-lineup-func))))
     (c-get-syntactic-indentation (list (cons symbol anchor)))))
 
-(defun js--same-line (pos)
+(defun ocen--same-line (pos)
   (and (>= pos (line-beginning-position))
        (<= pos (line-end-position))))
 
-(defun js--multi-line-declaration-indentation ()
-  "Helper function for `js--proper-indentation'.
+(defun ocen--multi-line-declaration-indentation ()
+  "Helper function for `ocen--proper-indentation'.
 Return the proper indentation of the current line if it belongs to a declaration
 statement spanning multiple lines; otherwise, return nil."
   (let (forward-sexp-function ; Use Lisp version.
         at-opening-bracket)
     (save-excursion
       (back-to-indentation)
-      (when (not (looking-at js--declaration-keyword-re))
+      (when (not (looking-at ocen--declaration-keyword-re))
         (let ((pt (point)))
-          (when (looking-at js--indent-operator-re)
+          (when (looking-at ocen--indent-operator-re)
             (goto-char (match-end 0)))
           ;; The "operator" is probably a regexp literal opener.
           (when (nth 3 (syntax-ppss))
@@ -2568,23 +2568,23 @@ statement spanning multiple lines; otherwise, return nil."
                     (not (bobp))
                     (let ((pos (point)))
                       (save-excursion
-                        (js--backward-syntactic-ws)
+                        (ocen--backward-syntactic-ws)
                         (or (eq (char-before) ?,)
                             (and (not (eq (char-before) ?\;))
                                  (prog2
                                      (skip-syntax-backward ".")
-                                     (looking-at js--indent-operator-re)
-                                   (js--backward-syntactic-ws))
+                                     (looking-at ocen--indent-operator-re)
+                                   (ocen--backward-syntactic-ws))
                                  (not (eq (char-before) ?\;)))
-                            (js--same-line pos)))))
+                            (ocen--same-line pos)))))
           (condition-case nil
               (backward-sexp)
             (scan-error (setq at-opening-bracket t))))
-        (when (looking-at js--declaration-keyword-re)
+        (when (looking-at ocen--declaration-keyword-re)
           (goto-char (match-end 0))
           (1+ (current-column)))))))
 
-(defun js--indent-in-array-comp (bracket)
+(defun ocen--indent-in-array-comp (bracket)
   "Return non-nil if we think we're in an array comprehension.
 In particular, return the buffer position of the first `for' kwd."
   (let ((end (point)))
@@ -2592,13 +2592,13 @@ In particular, return the buffer position of the first `for' kwd."
       (goto-char bracket)
       (when (looking-at "\\[")
         (forward-char 1)
-        (js--forward-syntactic-ws)
+        (ocen--forward-syntactic-ws)
         (if (looking-at "[[{]")
             (let (forward-sexp-function) ; Use Lisp version.
               (condition-case nil
                   (progn
                     (forward-sexp)       ; Skip destructuring form.
-                    (js--forward-syntactic-ws)
+                    (ocen--forward-syntactic-ws)
                     (if (and (/= (char-after) ?,) ; Regular array.
                              (looking-at "for"))
                         (match-beginning 0)))
@@ -2615,8 +2615,8 @@ In particular, return the buffer position of the first `for' kwd."
                           (not (nth 8 status)))))
               (match-beginning 1)))))))
 
-(defun js--array-comp-indentation (bracket for-kwd)
-  (if (js--same-line for-kwd)
+(defun ocen--array-comp-indentation (bracket for-kwd)
+  (if (ocen--same-line for-kwd)
       ;; First continuation line.
       (save-excursion
         (goto-char bracket)
@@ -2627,22 +2627,22 @@ In particular, return the buffer position of the first `for' kwd."
       (goto-char for-kwd)
       (current-column))))
 
-(defun js--maybe-goto-declaration-keyword-end (parse-status)
-  "Helper function for `js--proper-indentation'.
-Depending on the value of `js-indent-first-init', move
+(defun ocen--maybe-goto-declaration-keyword-end (parse-status)
+  "Helper function for `ocen--proper-indentation'.
+Depending on the value of `ocen-indent-first-init', move
 point to the end of a variable declaration keyword so that
 indentation is aligned to that column."
   (cond
-   ((eq js-indent-first-init t)
-    (when (looking-at js--declaration-keyword-re)
+   ((eq ocen-indent-first-init t)
+    (when (looking-at ocen--declaration-keyword-re)
       (goto-char (1+ (match-end 0)))))
-   ((eq js-indent-first-init 'dynamic)
+   ((eq ocen-indent-first-init 'dynamic)
     (let ((bracket (nth 1 parse-status))
           declaration-keyword-end
           at-closing-bracket-p
           forward-sexp-function ; Use Lisp version.
           comma-p)
-      (when (looking-at js--declaration-keyword-re)
+      (when (looking-at ocen--declaration-keyword-re)
         (setq declaration-keyword-end (match-end 0))
         (save-excursion
           (goto-char bracket)
@@ -2658,17 +2658,17 @@ indentation is aligned to that column."
         (when comma-p
           (goto-char (1+ declaration-keyword-end))))))))
 
-(defconst js--line-terminating-arrow-re "=>\\s-*\\(/[/*]\\|$\\)"
+(defconst ocen--line-terminating-arrow-re "=>\\s-*\\(/[/*]\\|$\\)"
   "Regexp matching the last \"=>\" (arrow) token on a line.
 Whitespace and comments around the arrow are ignored.")
 
-(defun js--broken-arrow-terminates-line-p ()
-  "Helper function for `js--proper-indentation'.
+(defun ocen--broken-arrow-terminates-line-p ()
+  "Helper function for `ocen--proper-indentation'.
 Return non-nil if the last non-comment, non-whitespace token of the
 current line is the \"=>\" token (of an arrow function)."
   (let ((from (point)))
     (end-of-line)
-    (re-search-backward js--line-terminating-arrow-re from t)))
+    (re-search-backward ocen--line-terminating-arrow-re from t)))
 
 ;; When indenting, we want to know if the line is…
 ;;
@@ -2682,14 +2682,14 @@ current line is the \"=>\" token (of an arrow function)."
 ;; combined, such that JS indentation is “relative” to the JSX’s.
 ;;
 ;; Therefore, functions below provide such contextual information, and
-;; `js--proper-indentation' may call itself once recursively in order
+;; `ocen--proper-indentation' may call itself once recursively in order
 ;; to finish calculating that “relative” JS+JSX indentation.
 
-(defun js-jsx--context ()
+(defun ocen--context ()
   "Determine JSX context and move to enclosing JSX."
   (let ((pos (point))
         (parse-status (syntax-ppss))
-        (enclosing-tag-pos (js-jsx--enclosing-tag-pos)))
+        (enclosing-tag-pos (ocen--enclosing-tag-pos)))
     (when enclosing-tag-pos
       (if (< pos (nth 1 enclosing-tag-pos))
           (if (nth 3 parse-status)
@@ -2697,7 +2697,7 @@ current line is the \"=>\" token (of an arrow function)."
             (list 'tag (nth 0 enclosing-tag-pos) (nth 1 enclosing-tag-pos)))
         (list 'text (nth 0 enclosing-tag-pos) (nth 2 enclosing-tag-pos))))))
 
-(defun js-jsx--contextual-indentation (line context)
+(defun ocen--contextual-indentation (line context)
   "Calculate indentation column for LINE from CONTEXT.
 The column calculation is based off of `sgml-calculate-indent'."
   (pcase (nth 0 context)
@@ -2719,7 +2719,7 @@ The column calculation is based off of `sgml-calculate-indent'."
      ;; opening angle bracket of the JSXElement.  Otherwise, indent
      ;; JSXAttribute space like SGML.
      (if (and
-          js-jsx-align->-with-<
+          ocen-align->-with-<
           (progn
             (goto-char (nth 2 context))
             (and (= line (line-number-at-pos))
@@ -2736,8 +2736,8 @@ The column calculation is based off of `sgml-calculate-indent'."
        (if (not (eolp))
 	   (current-column)
          ;; This is the first attribute: indent.
-         (goto-char (+ (nth 1 context) js-jsx-attribute-offset))
-         (+ (current-column) (or js-jsx-indent-level js-indent-level)))))
+         (goto-char (+ (nth 1 context) ocen-attribute-offset))
+         (+ (current-column) (or ocen-indent-level ocen-indent-level)))))
 
     ('text
      ;; Indent to reflect nesting.
@@ -2746,12 +2746,12 @@ The column calculation is based off of `sgml-calculate-indent'."
         ;; The last line isn’t nested, but the rest are.
         (if (or (not (nth 2 context)) ; Unclosed.
                 (< line (line-number-at-pos (nth 2 context))))
-            (or js-jsx-indent-level js-indent-level)
+            (or ocen-indent-level ocen-indent-level)
           0)))
 
     ))
 
-(defun js-jsx--enclosing-curly-pos ()
+(defun ocen--enclosing-curly-pos ()
   "Return position of enclosing “{” in a “{/}” pair about point."
   (let ((parens (reverse (nth 9 (syntax-ppss)))) paren-pos curly-pos)
     (while
@@ -2762,16 +2762,16 @@ The column calculation is based off of `sgml-calculate-indent'."
          (setq parens (cdr parens))))
     curly-pos))
 
-(defun js-jsx--goto-outermost-enclosing-curly (limit)
+(defun ocen--goto-outermost-enclosing-curly (limit)
   "Set point to enclosing “{” at or closest after LIMIT."
   (let (pos)
     (while
         (and
-         (setq pos (js-jsx--enclosing-curly-pos))
+         (setq pos (ocen--enclosing-curly-pos))
          (if (>= pos limit) (goto-char pos))
          (> pos limit)))))
 
-(defun js-jsx--expr-attribute-pos (start limit)
+(defun ocen--expr-attribute-pos (start limit)
   "Look back from START to LIMIT for a JSXAttribute."
   (save-excursion
     (goto-char start) ; Skip the first curly.
@@ -2779,33 +2779,33 @@ The column calculation is based off of `sgml-calculate-indent'."
     ;; beginning position; the last curly ought to be one of a
     ;; JSXExpressionContainer, which may refer to its JSXAttribute’s
     ;; beginning position (if it has one).
-    (js-jsx--goto-outermost-enclosing-curly limit)
-    (get-text-property (point) 'js-jsx-expr-attribute)))
+    (ocen--goto-outermost-enclosing-curly limit)
+    (get-text-property (point) 'ocen-expr-attribute)))
 
-(defvar js-jsx--indent-col nil
+(defvar ocen--indent-col nil
   "Baseline column for JS indentation within JSX.")
 
-(defvar js-jsx--indent-attribute-line nil
+(defvar ocen--indent-attribute-line nil
   "Line relative to which indentation uses JSX as a baseline.")
 
-(defun js-jsx--expr-indentation (parse-status pos col)
+(defun ocen--expr-indentation (parse-status pos col)
   "Indent using PARSE-STATUS; relative to POS, use base COL.
 To indent a JSXExpressionContainer’s expression, calculate the JS
 indentation, using JSX indentation as the base column when
 indenting relative to the beginning line of the
 JSXExpressionContainer’s JSXAttribute (if any)."
-  (let* ((js-jsx--indent-col col)
-         (js-jsx--indent-attribute-line
+  (let* ((ocen--indent-col col)
+         (ocen--indent-attribute-line
           (if pos (line-number-at-pos pos))))
-    (js--proper-indentation parse-status)))
+    (ocen--proper-indentation parse-status)))
 
-(defun js-jsx--indentation (parse-status)
-  "Helper function for `js--proper-indentation'.
+(defun ocen--indentation (parse-status)
+  "Helper function for `ocen--proper-indentation'.
 Return the proper indentation of the current line if it is part
 of a JSXElement expression spanning multiple lines; otherwise,
 return nil."
   (let ((current-line (line-number-at-pos))
-        (curly-pos (js-jsx--enclosing-curly-pos))
+        (curly-pos (ocen--enclosing-curly-pos))
         nth-context context expr-p beg-line col
         forward-sexp-function) ; Use the Lisp version.
     ;; Find the immediate context for indentation information, but
@@ -2814,7 +2814,7 @@ return nil."
     (save-excursion
       (while
           (and
-           (setq nth-context (js-jsx--context))
+           (setq nth-context (ocen--context))
            (progn
              (unless context
                (setq context nth-context)
@@ -2829,54 +2829,54 @@ return nil."
     ;; column while switching back to JS indentation.
     (when (and context (> current-line beg-line))
       (save-excursion
-        (setq col (js-jsx--contextual-indentation current-line context)))
+        (setq col (ocen--contextual-indentation current-line context)))
       (if expr-p
-          (js-jsx--expr-indentation
-           parse-status (js-jsx--expr-attribute-pos curly-pos (nth 1 context)) col)
+          (ocen--expr-indentation
+           parse-status (ocen--expr-attribute-pos curly-pos (nth 1 context)) col)
         col))))
 
-(defun js--proper-indentation (parse-status)
+(defun ocen--proper-indentation (parse-status)
   "Return the proper indentation for the current line."
   (save-excursion
     (back-to-indentation)
     (cond ((nth 4 parse-status)    ; inside comment
-           (js--get-c-offset 'c (nth 8 parse-status)))
+           (ocen--get-c-offset 'c (nth 8 parse-status)))
           ((nth 3 parse-status) 0) ; inside string
-          ((when (and js-jsx-syntax (not js-jsx--indent-col))
-             (save-excursion (js-jsx--indentation parse-status))))
+          ((when (and ocen-syntax (not ocen--indent-col))
+             (save-excursion (ocen--indentation parse-status))))
           ((and (eq (char-after) ?#)
                 (save-excursion
                   (forward-char 1)
                   (looking-at-p cpp-font-lock-keywords-source-directives)))
            0)
-          ((save-excursion (js--beginning-of-macro)) 4)
+          ((save-excursion (ocen--beginning-of-macro)) 4)
           ;; Indent array comprehension continuation lines specially.
           ((let ((bracket (nth 1 parse-status))
                  beg)
              (and bracket
-                  (not (js--same-line bracket))
-                  (setq beg (js--indent-in-array-comp bracket))
+                  (not (ocen--same-line bracket))
+                  (setq beg (ocen--indent-in-array-comp bracket))
                   ;; At or after the first loop?
                   (>= (point) beg)
-                  (js--array-comp-indentation bracket beg))))
-          ((js--chained-expression-p))
-          ((js--ctrl-statement-indentation))
+                  (ocen--array-comp-indentation bracket beg))))
+          ((ocen--chained-expression-p))
+          ((ocen--ctrl-statement-indentation))
           ((nth 1 parse-status)
 	   ;; A single closing paren/bracket should be indented at the
 	   ;; same level as the opening statement. Same goes for
 	   ;; "case" and "default".
            (let ((same-indent-p (looking-at "[]})]"))
                  (switch-keyword-p (looking-at "default\\_>\\|case\\_>[^:]"))
-                 (continued-expr-p (js--continued-expression-p)))
+                 (continued-expr-p (ocen--continued-expression-p)))
              (goto-char (nth 1 parse-status)) ; go to the opening char
-             (if (or (not js-indent-align-list-continuation)
+             (if (or (not ocen-indent-align-list-continuation)
                      (looking-at "[({[]\\s-*\\(/[/*]\\|$\\)")
-                     (save-excursion (forward-char) (js--broken-arrow-terminates-line-p)))
+                     (save-excursion (forward-char) (ocen--broken-arrow-terminates-line-p)))
                  (progn ; nothing following the opening paren/bracket
                    (skip-syntax-backward " ")
                    (when (eq (char-before) ?\)) (backward-list))
                    (back-to-indentation)
-                   (js--maybe-goto-declaration-keyword-end parse-status)
+                   (ocen--maybe-goto-declaration-keyword-end parse-status)
                    (let* ((in-switch-p (unless same-indent-p
                                          (looking-at "\\_<switch\\_>")))
                           (same-indent-p (or same-indent-p
@@ -2885,24 +2885,24 @@ return nil."
                           (indent
                            (+
                             (cond
-                             ((and js-jsx--indent-attribute-line
-                                   (eq js-jsx--indent-attribute-line
+                             ((and ocen--indent-attribute-line
+                                   (eq ocen--indent-attribute-line
                                        (line-number-at-pos)))
-                              js-jsx--indent-col)
+                              ocen--indent-col)
                              (t
                               (current-column)))
                             (cond (same-indent-p 0)
                                   (continued-expr-p
-                                   (+ js-indent-level
-                                      js-expr-indent-offset))
+                                   (+ ocen-indent-level
+                                      ocen-expr-indent-offset))
                                   (t
-                                   (+ js-indent-level
+                                   (+ ocen-indent-level
                                       (pcase (char-after (nth 1 parse-status))
-                                        (?\( js-paren-indent-offset)
-                                        (?\[ js-square-indent-offset)
-                                        (?\{ js-curly-indent-offset))))))))
+                                        (?\( ocen-paren-indent-offset)
+                                        (?\[ ocen-square-indent-offset)
+                                        (?\{ ocen-curly-indent-offset))))))))
                      (if in-switch-p
-                         (+ indent js-switch-indent-offset)
+                         (+ indent ocen-switch-indent-offset)
                        indent)))
                ;; If there is something following the opening
                ;; paren/bracket, everything else should be indented at
@@ -2912,18 +2912,18 @@ return nil."
                  (skip-chars-forward " \t"))
                (current-column))))
 
-          ((js--continued-expression-p)
-           (+ js-indent-level js-expr-indent-offset))
+          ((ocen--continued-expression-p)
+           (+ ocen-indent-level ocen-expr-indent-offset))
           (t (prog-first-column)))))
 
-(defun js-indent-line ()
-  "Indent the current line as JavaScript."
+(defun ocen-indent-line ()
+  "Indent the current line as Ocen."
   (interactive)
   (let* ((parse-status
           (save-excursion (syntax-ppss (line-beginning-position))))
          (offset (- (point) (save-excursion (back-to-indentation) (point)))))
     (unless (nth 3 parse-status)
-      (indent-line-to (js--proper-indentation parse-status))
+      (indent-line-to (ocen--proper-indentation parse-status))
       (when (> offset 0) (forward-char offset)))))
 ;; end of copy-paste of js.el
 
@@ -2986,8 +2986,8 @@ return nil."
   (setq-local tab-width 4)
   (setq-local buffer-file-coding-system 'utf-8-unix)
   (setq-local electric-indent-chars (append "{}():;," electric-indent-chars))
-  (setq-local indent-line-function #'js-indent-line)
-  (setq-local js-indent-level tab-width)
+  (setq-local indent-line-function #'ocen-indent-line)
+  (setq-local ocen-indent-level tab-width)
   (setq-local defun-prompt-regexp ocen-defun-regexp)
 
   ;; Set up syntax highlighting
