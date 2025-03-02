@@ -18,8 +18,6 @@
 
 ;;; ocen-mode.el --- Major mode for editing Ocen files
 
-
-;; copy-paste of js.el
 (require 'cc-mode)
 (eval-when-compile
   (require 'cc-langs)
@@ -2925,7 +2923,6 @@ return nil."
     (unless (nth 3 parse-status)
       (indent-line-to (ocen--proper-indentation parse-status))
       (when (> offset 0) (forward-char offset)))))
-;; end of copy-paste of js.el
 
 (defconst ocen-mode-syntax-table
   (let ((table (make-syntax-table)))
