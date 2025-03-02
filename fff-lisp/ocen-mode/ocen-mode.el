@@ -2861,7 +2861,6 @@ return nil."
                   (js--array-comp-indentation bracket beg))))
           ((js--chained-expression-p))
           ((js--ctrl-statement-indentation))
-          ((js--multi-line-declaration-indentation))
           ((nth 1 parse-status)
 	   ;; A single closing paren/bracket should be indented at the
 	   ;; same level as the opening statement. Same goes for
@@ -2894,7 +2893,7 @@ return nil."
                               (current-column)))
                             (cond (same-indent-p 0)
                                   (continued-expr-p
-                                   (+ (* 2 js-indent-level)
+                                   (+ js-indent-level
                                       js-expr-indent-offset))
                                   (t
                                    (+ js-indent-level
