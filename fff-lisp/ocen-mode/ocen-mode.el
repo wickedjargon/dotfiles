@@ -112,7 +112,7 @@
   (setq-local buffer-file-coding-system 'utf-8-unix)
   (setq-local electric-indent-chars (append "{}():;," electric-indent-chars))
   (setq-local indent-line-function #'ocen-indent-line)
-  (setq-local defun-prompt-regexp #'ocen-defun-regexp)
+  (setq-local defun-prompt-regexp ocen-defun-regexp)
 
   ;; Set up syntax highlighting
   (setq-local font-lock-defaults '((ocen-font-lock-keywords)))
