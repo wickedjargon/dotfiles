@@ -2833,6 +2833,8 @@ return nil."
            parse-status (ocen--expr-attribute-pos curly-pos (nth 1 context)) col)
         col))))
 
+;; this is the function that was causing the problem.
+;; diff with js.el version to determine the changes
 (defun ocen--proper-indentation (parse-status)
   "Return the proper indentation for the current line."
   (save-excursion
@@ -2948,7 +2950,7 @@ return nil."
     "for" "while" "namespace" "import" "enum"
     "struct" "union" "yield" "as" "and" "or"
     "not" "main" "extern" "false" "true" "atomic"
-    "then" "in")
+    "then" "in" "return")
   "Ocen language keywords.")
 
 (defconst ocen-builtin-types
