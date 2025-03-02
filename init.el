@@ -363,6 +363,7 @@
     ;; project root
     (evil-leader/set-key "h k" 'fff-find-file-in-project-root)
     (evil-leader/set-key "p r" 'fff-find-file-in-project-root)
+    (evil-leader/set-key "p p" 'project-find-file)
 
     ;; winner undo/redo and previous buffer
     (evil-leader/set-key "u u" 'fff-winner/winner-undo)
@@ -605,7 +606,7 @@
   :config
   (vertico-mode +1)
   (define-key vertico-map (kbd "C-c d") 'vertico-exit-input)
-  (define-key vertico-map (kbd "C-<backspace>") 'vertico-directory-delete-word))
+  (define-key vertico-map (kbd "C-<backspace>") 'vertico-directory-up))
 
 (use-package vertico-prescient :straight t :ensure t
   :config
@@ -927,7 +928,8 @@
   :custom
   (treesit-auto-install 'prompt)
   :config
-  (treesit-auto-add-to-auto-mode-alist 'all)
+  (setq treesit-auto-langs
+        '(awk bash bibtex blueprint c clojure cmake commonlisp cpp css dart dockerfile elixir glsl go gomod heex html janet java javascript json julia kotlin latex lua magik make markdown nix nu org perl proto python r ruby rust scala sql surface toml tsx typescript typst verilog vhdl vue wast wat wgsl yaml))
   (global-treesit-auto-mode t))
 
 (use-package devdocs :ensure t
@@ -1146,6 +1148,10 @@ ask user for an additional input."
                        (set (make-local-variable 'compile-command)
                             (format "cargo run")))))
 
+(use-package rust-mode
+  :straight t
+  :ensure t)
+
 (use-package evil-mc
   :straight t
   :ensure t
@@ -1277,3 +1283,23 @@ ask user for an additional input."
 (use-package markdown-mode
   :ensure nil
   :hook (markdown-mode . visual-line-mode))
+
+(use-package haxe-mode
+  :ensure t
+  :straight t
+  :defer t)
+
+(use-package adaptive-wrap
+  :ensure t
+  :straight t
+  :defer t
+  :init
+  (setq adaptive-wrap-extra-indent 2)
+  :config
+  (add-hook 'prog-mode-hook #'adaptive-wrap-prefix-mode))
+
+(use-package topsy
+  :straight (topsy :type git :host github :repo "alphapapa/topsy.el")
+  :hook
+  ((prog-mode . topsy-mode)
+   (magit-section-mode . topsy-mode)))
