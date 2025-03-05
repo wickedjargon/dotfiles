@@ -73,13 +73,19 @@
   (add-hook 'after-change-major-mode-hook
             (lambda ()
               (setq buffer-display-table (make-display-table))
-              (aset buffer-display-table ?\^M [])))
+              ;; Hide ^M
+              (aset buffer-display-table ?\^M [])
+              ;; Hide ^L
+              (aset buffer-display-table ?\^L [])))
 
   ;; kill the scratch buffer
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (when (get-buffer "*scratch*")
-                (kill-buffer "*scratch*"))))
+  (defun my/delete-scratch-buffer ()
+    (let ((scratch-buffer (get-buffer "*scratch*")))
+      (when scratch-buffer
+        (kill-buffer scratch-buffer))))
+
+  (add-hook 'emacs-startup-hook 'my/delete-scratch-buffer)
+  (add-hook 'server-after-make-frame-hook 'my/delete-scratch-buffer)
 
   ;; key bindings
   (global-unset-key (kbd "C-x C-c"))
@@ -157,12 +163,15 @@
   (defun display-startup-echo-area-message ()
     (message "(emacs-init-time) -> %s" (emacs-init-time)))
 
+  ;; recent files
   (setq recentf-max-menu-items 25)
   (setq recentf-max-saved-items 25)
   (recentf-mode +1)
+
   ;; Do not allow the cursor in the minibuffer prompt
   (setq minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt))
+
   ;; all the builtin themes suck except for modus themes. remove all of them except modus themes.
   (advice-add 'custom-available-themes :filter-return
               (lambda (themes)
@@ -1116,7 +1125,13 @@ ask user for an additional input."
 
 (use-package hyperspec
   :straight t
-  :ensure t)
+  :ensure t
+  :config
+  (defun fff-hyperspec-lookup ()
+    "Open the HyperSpec entry in EWW instead of the default browser."
+    (interactive)
+    (let ((browse-url-browser-function 'eww-browse-url))
+      (hyperspec-lookup (thing-at-point 'symbol)))))
 
 (use-package compile
   :ensure nil
@@ -1146,7 +1161,13 @@ ask user for an additional input."
                             (format "sbcl --script %s" (file-name-nondirectory buffer-file-name)))))
   :hook (rust-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
-                            (format "cargo run")))))
+                            (format "cargo run"))))
+  :hook (d-mode . (lambda ()
+              (set (make-local-variable 'compile-command)
+                   (format "dmd %s -of=%s && ./%s"
+                           (file-name-nondirectory buffer-file-name)
+                           (file-name-sans-extension (file-name-nondirectory buffer-file-name))
+                           (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))))
 
 (use-package rust-mode
   :straight t
