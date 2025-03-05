@@ -100,3 +100,4 @@ tutorial/
 /.openweathermap_api_key
 /.secrets
 /.secrets/*
+/tree-sitter/
