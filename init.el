@@ -78,15 +78,6 @@
               ;; Hide ^L
               (aset buffer-display-table ?\^L [])))
 
-  ;; kill the scratch buffer
-  (defun my/delete-scratch-buffer ()
-    (let ((scratch-buffer (get-buffer "*scratch*")))
-      (when scratch-buffer
-        (kill-buffer scratch-buffer))))
-
-  (add-hook 'emacs-startup-hook 'my/delete-scratch-buffer)
-  (add-hook 'server-after-make-frame-hook 'my/delete-scratch-buffer)
-
   ;; key bindings
   (global-unset-key (kbd "C-x C-c"))
   (global-unset-key (kbd "C-h h"))                            ;; I press this by accident sometimes
@@ -151,6 +142,7 @@
   (pixel-scroll-precision-mode t)                          ;; better for scrolling
   (setq pixel-scroll-precision-use-momentum nil)           ;; but no momentum please
   (setq warning-minimum-level :emergency)                  ;; Set the minimum level of warnings to display.
+  (setq initial-major-mode 'fundamental-mode)              ;; I prefer this
 
   ;; launch new buffers in current window
   (setq display-buffer-alist
