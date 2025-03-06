@@ -185,7 +185,10 @@
   ;; load my own config
   (with-eval-after-load 'evil
     (load (expand-file-name "fff-lisp/hide-comnt.el" user-emacs-directory))
-    (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory))))
+    (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory)))
+  (unless (display-graphic-p)
+  (with-eval-after-load 'evil
+    (define-key evil-insert-state-map (kbd "ESC ESC <escape>") 'evil-normal-state))))
 
 (use-package modus-themes
   :ensure t
@@ -411,6 +414,7 @@
     (setq evil-search-wrap nil)
     (setq evil-kill-on-visual-paste nil)
     (evil-mode +1)
+    (global-visual-line-mode +1)
 
     (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
@@ -435,7 +439,8 @@
     (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-normal-state-map (kbd "C-e") 'move-end-of-line)
     (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
-    (define-key evil-normal-state-map (kbd "C-o") 'evil-jump-backward)
+    (define-key evil-normal-state-map (kbd "C-S-o") 'evil-jump-backward)
+    (define-key evil-normal-state-map (kbd "C-o") 'pop-to-mark-command)
     (define-key evil-normal-state-map (kbd "M-o") 'evil-jump-forward)
     (define-key evil-normal-state-map (kbd "gp") 'fff-evil-paste-and-indent-after)
     (define-key evil-normal-state-map (kbd "gP") 'fff-evil-paste-and-indent-before)
@@ -450,8 +455,6 @@
     (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
     (define-key evil-normal-state-map (kbd "ZZ") 'fff-save-and-bury-buffer)
     (define-key evil-normal-state-map (kbd "ZQ") 'fff-revert-and-bury-buffer)
-    (define-key evil-normal-state-map (kbd "o") 'fff-evil-open-below)
-    (define-key evil-normal-state-map (kbd "O") 'fff-evil-open-above)
     (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
@@ -746,6 +749,7 @@
   ;; :hook (python-mode . lsp-deferred)
   ;; :hook (d-mode . lsp-deferred)
   ;; :hook (go-mode . lsp-deferred)
+  :hook ((java-mode . lsp))
   ;; to do, find a way to conditionally install
   ;; an lsp using:
   ;; (lsp-install-server nil 'jsts-ls)
@@ -792,6 +796,11 @@
   (add-to-list 'lsp-language-id-configuration '(".*\\.erb$" . "html")) ;; Associate ERB files with HTML.
   :init
   (setq lsp-tailwindcss-add-on-mode t))
+
+(use-package lsp-java
+  :straight t
+  :ensure t
+  :config (add-hook 'java-mode-hook 'lsp))
 
 (use-package macrostep :straight t :ensure t :defer t)
 
@@ -937,8 +946,8 @@
   :custom
   (treesit-auto-install 'prompt)
   :config
-  (setq treesit-auto-langs
-        '(awk bash bibtex blueprint c clojure cmake commonlisp cpp css dart dockerfile elixir glsl go gomod heex html janet java javascript json julia kotlin latex lua magik make markdown nix nu org perl proto python r ruby rust scala sql surface toml tsx typescript typst verilog vhdl vue wast wat wgsl yaml))
+  ;; removing csharp from list
+  (setq treesit-auto-langs (remove 'csharp treesit-auto-langs))
   (global-treesit-auto-mode t))
 
 (use-package devdocs :ensure t
@@ -1088,8 +1097,7 @@ ask user for an additional input."
         (setq word (read-string "read aloud: " word 'read-aloud-word-hist)) )
 
       (read-aloud--overlay-make (nth 0 cw) (nth 1 cw))
-      (read-aloud--string (replace-regexp-in-string "\\." "," word) "word")
-      ))
+      (read-aloud--string (replace-regexp-in-string "\\." "," word) "word")))
 
   (cl-defun read-aloud-this()
     "Pronounce either the selection or a word under the pointer."
@@ -1123,6 +1131,7 @@ ask user for an additional input."
                    browse-url-chromium-program "--new-window" url))
   (setq browse-url-browser-function 'browse-url-chromium-new-window))
 
+;; common lisp reference / doc lookup
 (use-package hyperspec
   :straight t
   :ensure t
@@ -1142,6 +1151,9 @@ ask user for an additional input."
                                  (file-name-nondirectory buffer-file-name)
                                  (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (rust-mode . (lambda ()
+                       (set (make-local-variable 'compile-command)
+                            "cargo run")))
+  :hook (rust-ts-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
                             "cargo run")))
   :hook (python-mode . (lambda ()
@@ -1167,7 +1179,12 @@ ask user for an additional input."
                    (format "dmd %s -of=%s && ./%s"
                            (file-name-nondirectory buffer-file-name)
                            (file-name-sans-extension (file-name-nondirectory buffer-file-name))
-                           (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))))
+                           (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+  :hook (java-mode . (lambda ()
+                       (set (make-local-variable 'compile-command)
+                            (format "javac %s && java %s"
+                                    (file-name-nondirectory buffer-file-name)
+                                    (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))))
 
 (use-package rust-mode
   :straight t
@@ -1317,10 +1334,16 @@ ask user for an additional input."
   :init
   (setq adaptive-wrap-extra-indent 2)
   :config
-  (add-hook 'prog-mode-hook #'adaptive-wrap-prefix-mode))
+  (add-hook 'prog-mode-hook #'adaptive-wrap-prefix-mode)
+  (add-hook 'emacs-lisp-mode-hook #'adaptive-wrap-prefix-mode))
 
 (use-package topsy
   :straight (topsy :type git :host github :repo "alphapapa/topsy.el")
   :hook
   ((prog-mode . topsy-mode)
    (magit-section-mode . topsy-mode)))
+
+(use-package dumb-jump
+  :straight t
+  :init
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
