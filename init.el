@@ -267,6 +267,7 @@
     ;; single key
     (evil-leader/set-key "SPC" 'execute-extended-command)
     (evil-leader/set-key "RET" 'crux-open-with)
+    (evil-leader/set-key "TAB" 'tab-bar-switch-to-tab)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
     (evil-leader/set-key "o" 'other-window)
@@ -450,11 +451,24 @@
     (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
-    (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)))
+    (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)
 
-(use-package evil-better-visual-line :ensure t :straight t
-  :config
-  (evil-better-visual-line-on))
+    ;; move by visual line
+    (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
+    (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
+    (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
+    (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
+    (define-key evil-normal-state-map (kbd "0") 'evil-beginning-of-visual-line)
+    (define-key evil-normal-state-map (kbd "$") 'evil-end-of-visual-line)
+    (define-key evil-visual-state-map (kbd "0") 'evil-beginning-of-visual-line)
+    (define-key evil-visual-state-map (kbd "$") 'evil-end-of-visual-line)
+
+
+    ;; instead of `vi(' or `di[' use  `vib' or `dib' instead
+    (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
+    (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)
+
+    ))
 
 (use-package yt-dlp-mode
   :ensure nil
@@ -1142,6 +1156,11 @@ ask user for an additional input."
                          (format "gcc %s -o %s && ./%s"
                                  (file-name-nondirectory buffer-file-name)
                                  (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+  :hook (c-ts-mode . (lambda ()
+                    (set (make-local-variable 'compile-command)
+                         (format "gcc %s -o %s && ./%s"
+                                 (file-name-nondirectory buffer-file-name)
+                                 (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (rust-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
                             "cargo run")))
@@ -1339,3 +1358,53 @@ ask user for an additional input."
   :straight t
   :init
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+
+(use-package wgrep :straight t :ensure t :defer t)
+
+;; search incremental count in minibuffer
+(use-package evil-anzu :straight t :ensure t
+  :config
+  (global-anzu-mode))
+
+;; x object for editing html/xml tab attributes
+(use-package exato :straight t :ensure t :defer t)
+
+;; visual select inside generic brackets using `b', `vib'
+(use-package evil-textobj-anyblock
+  :ensure t
+  :straight t
+  :defer t)
+
+;; inline evaluation
+(use-package eros
+  :straight t
+  :ensure t
+  :config
+  (eros-mode +1))
+
+;; highlight quote chars in emacs lisp mode
+(use-package highlight-quoted
+  :straight t
+  :ensure t
+  :defer t
+  :init
+  (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
+
+;; generate markdown toc
+(use-package markdown-toc
+  :straight t
+  :ensure t
+  :defer t)
+
+;; export a code file to html
+(use-package htmlize
+  :ensure t
+  :straight (:type git :host github :repo "hniksic/emacs-htmlize")
+  :defer t)
+
+;; remove white space as you type
+(use-package ws-butler
+  :straight t
+  :ensure t
+  :defer t
+  :hook (prog-mode . ws-butler-mode))
