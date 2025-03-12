@@ -704,18 +704,16 @@ in whole buffer.  With neither, delete comments on current line."
 
 (defun fff-switch-or-create-vterm ()
   (interactive)
-  (if (eq major-mode 'vterm-mode)
-      (evil-switch-to-windows-last-buffer)
-	(let ((vterm-buffers (delq nil (mapcar (lambda (b)
-											 (when (string-match "\\*vterm\\*<\\([0-9]+\\)>" (buffer-name b))
-											   (cons (string-to-number (match-string 1 (buffer-name b))) b)))
-										   (buffer-list))))
-		  (newest-buffer nil))
-	  (if vterm-buffers
-		  (progn
-			(setq newest-buffer (cdr (cl-reduce (lambda (a b) (if (> (car a) (car b)) a b)) vterm-buffers)))
-			(switch-to-buffer newest-buffer))
-		(vterm)))))
+  (let ((vterm-buffers (delq nil (mapcar (lambda (b)
+										   (when (string-match "\\*vterm\\*<\\([0-9]+\\)>" (buffer-name b))
+											 (cons (string-to-number (match-string 1 (buffer-name b))) b)))
+										 (buffer-list))))
+		(newest-buffer nil))
+	(if vterm-buffers
+		(progn
+		  (setq newest-buffer (cdr (cl-reduce (lambda (a b) (if (> (car a) (car b)) a b)) vterm-buffers)))
+		  (switch-to-buffer newest-buffer))
+	  (vterm))))
 
 (defun fff-increase-font-size ()
   "Increase the font size."

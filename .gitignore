@@ -102,4 +102,4 @@ tutorial/
 /.secrets/*
 /tree-sitter/
 /workspace/
-/doom-packages.txt
+/doom-packages.md
