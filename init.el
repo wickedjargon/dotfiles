@@ -125,7 +125,7 @@
   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
   (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
-  (electric-pair-mode 1)                                  ;; automatically insert matching paren as well as auto indent on new line
+  (electric-pair-mode +1)                                  ;; automatically insert matching paren as well as auto indent on new line
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
@@ -143,6 +143,7 @@
   (setq pixel-scroll-precision-use-momentum nil)           ;; but no momentum please
   (setq warning-minimum-level :emergency)                  ;; Set the minimum level of warnings to display.
   (setq initial-major-mode 'fundamental-mode)              ;; I prefer this
+  (setq require-final-newline nil)                         ;; don't add a new line to the bottom of the file
 
   ;; launch new buffers in current window
   (setq display-buffer-alist
@@ -585,7 +586,7 @@
   (setq company-format-margin-function nil)
   ;; (setq company-idle-delay 0.2)
   (setq company-idle-delay 0)
-  (setq company-tooltip-limit 2)
+  (setq company-tooltip-limit 4)
   (global-company-mode)
   :config
   (add-hook 'c-mode-common-hook
@@ -744,18 +745,26 @@
   ;; hooks:
   :hook (rust-mode . lsp-deferred)
   :hook (rust-ts-mode . lsp-deferred)
-  ;; :hook (svelte-mode . lsp-deferred)
+  :hook (svelte-mode . lsp-deferred)
   :hook (c-mode . lsp-deferred)
   :hook (c-ts-mode . lsp-deferred)
   :hook (cc-mode . lsp-deferred)
   :hook (c++-mode . lsp-deferred)
   :hook (csharp-mode . lsp-deferred)
-  ;; :hook (typescript-mode . lsp-deferred)
-  ;; :hook (javascript-mode . lsp-deferred)
-  ;; :hook (python-mode . lsp-deferred)
-  ;; :hook (d-mode . lsp-deferred)
-  ;; :hook (go-mode . lsp-deferred)
-  :hook ((java-mode . lsp))
+  :hook (typescript-mode . lsp-deferred)
+  :hook (javascript-mode . lsp-deferred)
+  :hook (python-mode . lsp-deferred)
+  :hook (d-mode . lsp-deferred)
+  :hook (go-mode . lsp-deferred)
+  :hook (java-mode . lsp)
+  :hook (rust-ts-mode . lsp-deferred)
+  :hook (c-ts-mode . lsp-deferred)
+  :hook (c++-ts-mode . lsp-deferred)
+  :hook (typescript-ts-mode . lsp-deferred)
+  :hook (js-ts-mode . lsp-deferred)
+  :hook (python-ts-mode . lsp-deferred)
+  :hook (java-ts-mode . lsp)
+
   ;; to do, find a way to conditionally install
   ;; an lsp using:
   ;; (lsp-install-server nil 'jsts-ls)
@@ -1157,45 +1166,62 @@ ask user for an additional input."
                                  (file-name-nondirectory buffer-file-name)
                                  (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (c-ts-mode . (lambda ()
-                    (set (make-local-variable 'compile-command)
-                         (format "gcc %s -o %s && ./%s"
-                                 (file-name-nondirectory buffer-file-name)
-                                 (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+                       (set (make-local-variable 'compile-command)
+                            (format "gcc %s -o %s && ./%s"
+                                    (file-name-nondirectory buffer-file-name)
+                                    (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (rust-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
                             "cargo run")))
   :hook (rust-ts-mode . (lambda ()
-                       (set (make-local-variable 'compile-command)
-                            "cargo run")))
+                          (set (make-local-variable 'compile-command)
+                               "cargo run")))
   :hook (python-mode . (lambda ()
                          (set (make-local-variable 'compile-command)
                               (format "python %s" (file-name-nondirectory buffer-file-name)))))
+  :hook (python-ts-mode . (lambda ()
+                            (set (make-local-variable 'compile-command)
+                                 (format "python %s" (file-name-nondirectory buffer-file-name)))))
   :hook (ocen-mode . (lambda ()
-                         (set (make-local-variable 'compile-command)
-                              (format "ocen %s -d -r" (file-name-nondirectory buffer-file-name)))))
+                       (set (make-local-variable 'compile-command)
+                            (format "ocen %s -d -r" (file-name-nondirectory buffer-file-name)))))
   :hook (csharp-mode . (lambda ()
                          (set (make-local-variable 'compile-command)
                               (format "dotnet run" (file-name-nondirectory buffer-file-name)))))
+  :hook (csharp-ts-mode . (lambda ()
+                            (set (make-local-variable 'compile-command)
+                                 (format "dotnet run" (file-name-nondirectory buffer-file-name)))))
   :hook (shell-script-mode . (lambda ()
-                         (set (make-local-variable 'compile-command)
-                              (format "source %s" (file-name-nondirectory buffer-file-name)))))
+                               (set (make-local-variable 'compile-command)
+                                    (format "source %s" (file-name-nondirectory buffer-file-name)))))
   :hook (lisp-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
                             (format "sbcl --script %s" (file-name-nondirectory buffer-file-name)))))
-  :hook (rust-mode . (lambda ()
-                       (set (make-local-variable 'compile-command)
-                            (format "cargo run"))))
+  :hook (lisp-ts-mode . (lambda ()
+                          (set (make-local-variable 'compile-command)
+                               (format "sbcl --script %s" (file-name-nondirectory buffer-file-name)))))
   :hook (d-mode . (lambda ()
-              (set (make-local-variable 'compile-command)
-                   (format "dmd %s -of=%s && ./%s"
-                           (file-name-nondirectory buffer-file-name)
-                           (file-name-sans-extension (file-name-nondirectory buffer-file-name))
-                           (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+                    (set (make-local-variable 'compile-command)
+                         (format "dmd %s -of=%s && ./%s"
+                                 (file-name-nondirectory buffer-file-name)
+                                 (file-name-sans-extension (file-name-nondirectory buffer-file-name))
+                                 (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+  :hook (d-ts-mode . (lambda ()
+                       (set (make-local-variable 'compile-command)
+                            (format "dmd %s -of=%s && ./%s"
+                                    (file-name-nondirectory buffer-file-name)
+                                    (file-name-sans-extension (file-name-nondirectory buffer-file-name))
+                                    (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (java-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
                             (format "javac %s && java %s"
                                     (file-name-nondirectory buffer-file-name)
-                                    (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))))
+                                    (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+  :hook (java-ts-mode . (lambda ()
+                          (set (make-local-variable 'compile-command)
+                               (format "javac %s && java %s"
+                                       (file-name-nondirectory buffer-file-name)
+                                       (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))))
 
 (use-package rust-mode
   :straight t
@@ -1382,14 +1408,6 @@ ask user for an additional input."
   :config
   (eros-mode +1))
 
-;; highlight quote chars in emacs lisp mode
-(use-package highlight-quoted
-  :straight t
-  :ensure t
-  :defer t
-  :init
-  (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
-
 ;; generate markdown toc
 (use-package markdown-toc
   :straight t
@@ -1408,3 +1426,15 @@ ask user for an additional input."
   :ensure t
   :defer t
   :hook (prog-mode . ws-butler-mode))
+
+(use-package swiper
+  :straight t
+  :ensure t
+  :defer t)
+
+(use-package insert-shebang
+  :straight t
+  :ensure t
+  :defer t
+  :init
+  (add-hook 'find-file-hook 'insert-shebang))
