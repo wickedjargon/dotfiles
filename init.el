@@ -962,7 +962,8 @@
   (treesit-auto-install 'prompt)
   :config
   ;; removing csharp from list
-  (setq treesit-auto-langs (remove 'csharp treesit-auto-langs))
+  :init
+  (setq treesit-auto-langs '(awk bash bibtex blueprint c c-sharp clojure cmake commonlisp cpp css dart dockerfile elixir glsl go gomod heex html janet java javascript json julia kotlin latex lua magik make markdown nix nu org perl proto python r ruby rust scala sql surface toml tsx typescript typst verilog vhdl vue wast wat wgsl yaml))
   (global-treesit-auto-mode t))
 
 (use-package devdocs :ensure t
@@ -1436,5 +1437,4 @@ ask user for an additional input."
   :straight t
   :ensure t
   :defer t
-  :init
-  (add-hook 'find-file-hook 'insert-shebang))
+  :hook (find-file-hook . insert-shebang))
