@@ -45,7 +45,7 @@
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
   (add-hook 'prog-mode-hook (lambda ()
                               (setq show-trailing-whitespace t)))
-  (add-hook 'dired-mode-hook #'auto-revert-mode)          ;; revert dired buffers, but not buffer list buffers
+  ;; (add-hook 'dired-mode-hook #'auto-revert-mode)          ;; revert dired buffers, but not buffer list buffers
   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
@@ -298,7 +298,7 @@
 
     ;; search and replace
     (evil-leader/set-key "a a" 'avy-goto-char)
-    (evil-leader/set-key "r" 'fff-evil-regex-search)
+    (evil-leader/set-key "r r" 'fff-evil-regex-search)
 
     ;; narrow
     (evil-leader/set-key "n n" 'narrow-to-region)
@@ -428,6 +428,7 @@
     (define-key evil-insert-state-map (kbd "M-a") 'yas-insert-snippet)
     (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
     (define-key evil-insert-state-map (kbd "C-/") 'fff-comment)
+    (define-key evil-insert-state-map (kbd "C-k") 'kill-line)
 
     (define-key evil-normal-state-map (kbd "C-<backspace>") 'fff-delete-till-beginning-of-line)
     (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
@@ -664,7 +665,8 @@
 
 (use-package emojify :straight t :ensure t :defer t)
 
-(use-package dired :defer t :ensure nil
+(use-package dired :ensure nil
+  :hook (dired-mode . auto-revert-mode)  ;; revert dired buffers, but not buffer list buffers
   :custom
   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
   (dired-kill-when-opening-new-dired-buffer t)               ;; Close the previous buffer when opening a new `dired' instance.
@@ -1166,7 +1168,17 @@ ask user for an additional input."
                          (format "gcc %s -o %s && ./%s"
                                  (file-name-nondirectory buffer-file-name)
                                  (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+  :hook (cc-mode . (lambda ()
+                    (set (make-local-variable 'compile-command)
+                         (format "gcc %s -o %s && ./%s"
+                                 (file-name-nondirectory buffer-file-name)
+                                 (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (c-ts-mode . (lambda ()
+                       (set (make-local-variable 'compile-command)
+                            (format "gcc %s -o %s && ./%s"
+                                    (file-name-nondirectory buffer-file-name)
+                                    (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+  :hook (cc-ts-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
                             (format "gcc %s -o %s && ./%s"
                                     (file-name-nondirectory buffer-file-name)
@@ -1438,3 +1450,15 @@ ask user for an additional input."
   :ensure t
   :defer t
   :hook (find-file-hook . insert-shebang))
+
+(use-package elisp-demos
+  :straight t
+  :ensure t
+  :defer t
+  :init
+  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
+
+(use-package realgud
+  :straight t
+  :defer t
+  :ensure t)
