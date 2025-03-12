@@ -928,6 +928,7 @@ in whole buffer.  With neither, delete comments on current line."
                            find-tag
                            rgrep
                            deadgrep
+                           swiper
                            ))
          (selected-function (completing-read "Select a search function: " functions-list nil t)))
     (when selected-function
