@@ -69,15 +69,6 @@
             (lambda ()
               (yes-or-no-p "Are you sure you want to exit Emacs? ")))
 
-  ;; remove ^M from mixed line endings
-  (add-hook 'after-change-major-mode-hook
-            (lambda ()
-              (setq buffer-display-table (make-display-table))
-              ;; Hide ^M
-              (aset buffer-display-table ?\^M [])
-              ;; Hide ^L
-              (aset buffer-display-table ?\^L [])))
-
   ;; key bindings
   (global-unset-key (kbd "C-x C-c"))
   (global-unset-key (kbd "C-h h"))                            ;; I press this by accident sometimes
@@ -1338,6 +1329,7 @@ ask user for an additional input."
   (add-to-list 'pulsar-pulse-functions 'evil-delete-line)
   (add-to-list 'pulsar-pulse-functions 'evil-jump-item))
 
+;; colorful parentheses
 (use-package rainbow-delimiters :straight t :defer t :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
 
@@ -1352,15 +1344,12 @@ ask user for an additional input."
 (use-package flymake
   :ensure nil
   :defer t
+  ;; run this in all programming modes except emacs lisp mode
   :hook (prog-mode . (lambda ()
                        (unless (derived-mode-p 'emacs-lisp-mode)
                          (flymake-mode 1)))))
 
-(use-package eldoc
-  :ensure nil
-  :init
-  (global-eldoc-mode))
-
+;; irc client
 (use-package erc :ensure nil :defer t
   :custom
   (erc-join-buffer 'window)                                         ;; Open a new window for joining channels.
@@ -1387,12 +1376,14 @@ ask user for an additional input."
   (add-hook 'prog-mode-hook #'adaptive-wrap-prefix-mode)
   (add-hook 'emacs-lisp-mode-hook #'adaptive-wrap-prefix-mode))
 
+;; sticky header function/struct signature
 (use-package topsy
   :straight (topsy :type git :host github :repo "alphapapa/topsy.el")
   :hook
   ((prog-mode . topsy-mode)
    (magit-section-mode . topsy-mode)))
 
+;; jump to definition without ctags in many supported languages
 (use-package dumb-jump
   :straight t
   :init
