@@ -626,7 +626,8 @@
   :config
   (vertico-mode +1)
   (define-key vertico-map (kbd "C-c d") 'vertico-exit-input)
-  (define-key vertico-map (kbd "C-<backspace>") 'vertico-directory-up))
+  (define-key vertico-map (kbd "C-<backspace>") 'vertico-directory-up)
+  (define-key minibuffer-local-map (kbd "C-c C-o") 'embark-collect))
 
 (use-package vertico-prescient :straight t :ensure t
   :config
@@ -963,10 +964,9 @@
   :custom
   (treesit-auto-install 'prompt)
   :config
-  ;; removing csharp from list
+  (global-treesit-auto-mode t)
   :init
-  (setq treesit-auto-langs '(awk bash bibtex blueprint c c-sharp clojure cmake commonlisp cpp css dart dockerfile elixir glsl go gomod heex html janet java javascript json julia kotlin latex lua magik make markdown nix nu org perl proto python r ruby rust scala sql surface toml tsx typescript typst verilog vhdl vue wast wat wgsl yaml))
-  (global-treesit-auto-mode t))
+  (setq treesit-auto-langs '(awk bash bibtex blueprint c c-sharp clojure cmake commonlisp cpp css dart dockerfile elixir glsl go gomod heex html janet java javascript json julia kotlin latex lua magik make markdown nix nu org perl proto python r ruby rust scala sql surface toml tsx typescript typst verilog vhdl vue wast wat wgsl yaml)))
 
 (use-package devdocs :ensure t
   :straight t
