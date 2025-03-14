@@ -1389,3 +1389,19 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   (let ((new-buffer-name (generate-new-buffer-name "*ChatGPT*")))
     (gptel new-buffer-name)
     (switch-to-buffer new-buffer-name)))
+
+(defun fff-toggle-light-dark-theme ()
+  "Toggle between light and dark themes.
+   The themes should be named themename-light and themename-dark."
+  (interactive)
+  (let ((current-theme (car custom-enabled-themes)))
+    (if (and current-theme
+             (string-match "\\(.*\\)-\\(light\\|dark\\)" (symbol-name current-theme)))
+        (let* ((theme-base (match-string 1 (symbol-name current-theme)))
+               (theme-target (concat theme-base "-"
+                                     (if (string= (match-string 2 (symbol-name current-theme)) "light")
+                                         "dark"
+                                       "light"))))
+          (load-theme (intern theme-target) t)
+          (disable-theme current-theme))
+      (message "No active theme or theme name does not match the expected pattern."))))

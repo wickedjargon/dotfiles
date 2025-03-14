@@ -120,7 +120,18 @@
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
-  (display-battery-mode +1)
+
+  (let ((has-battery-p
+       (lambda ()
+         "Check if the system has a battery by inspecting /sys/class/power_supply/."
+         (let ((directory "/sys/class/power_supply/"))
+           (when (file-directory-p directory)
+             (cl-some (lambda (entry)
+                        (string-prefix-p "BAT" entry))
+                      (directory-files directory)))))))
+  ;; Conditionally enable display-battery-mode using the lambda
+  (when (funcall has-battery-p)
+    (display-battery-mode +1)))                           ;; conditionally check if file exists before displaying battery mode
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
@@ -183,9 +194,9 @@
       (add-hook 'after-make-frame-functions
                 (lambda (frame)
                   (with-selected-frame frame
-                    (load-theme 'modus-vivendi t))))
+                    (load-theme 'standard-light t))))
     ;; Otherwise, running Emacs normally, load modus-vivendi-tinted
-    (load-theme 'modus-vivendi-tinted t)))
+    (load-theme 'standard-light t)))
 
 (use-package  doom-themes :straight t :ensure t :defer t)
 
@@ -636,7 +647,8 @@
                   "Pipfile" "tox.ini" "requirements.txt" "pom.xml" "build.gradle" "Cargo.lock" "yarn.lock"
                   "webpack.config.js" "Gemfile" ".ruby-version" "composer.json" ".env" "README.md" ".eslint.js"
                   "tsconfig.json" ".babelrc" ".prettierrc" "CMakeLists.txt" ".project"))
-    (add-to-list 'projectile-project-root-files file))
+    (add-to-list 'projectile-project-root-files file)
+    (add-to-list 'projectile-project-root-files-bottom-up file))
   :init
   (setq projectile-ignored-projects '("~/"))
   (defun fff-ignore-home-directory (dir)
