@@ -194,9 +194,9 @@
       (add-hook 'after-make-frame-functions
                 (lambda (frame)
                   (with-selected-frame frame
-                    (load-theme 'standard-light t))))
+                    (load-theme 'modus-operandi t))))
     ;; Otherwise, running Emacs normally, load modus-vivendi-tinted
-    (load-theme 'standard-light t)))
+    (load-theme 'modus-operandi t)))
 
 (use-package  doom-themes :straight t :ensure t :defer t)
 
@@ -360,7 +360,7 @@
     (evil-leader/set-key "4 1" 'same-window-prefix)
 
     ;; access dirs
-    (evil-leader/set-key "x c" 'fff-access-config-dir)
+    ;; (evil-leader/set-key "x c" 'fff-access-config-dir)
     (evil-leader/set-key "x m" 'fff-access-home-dir)
     (evil-leader/set-key "x n" 'fff-open-file-in-notes)
     (evil-leader/set-key "x p" 'fff-open-file-in-projects)
