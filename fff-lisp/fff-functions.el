@@ -1405,3 +1405,21 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
           (load-theme (intern theme-target) t)
           (disable-theme current-theme))
       (message "No active theme or theme name does not match the expected pattern."))))
+
+(defun fff-delete-current-directory ()
+  "Delete the current directory, prompting for confirmation."
+  (interactive)
+  (let ((current-dir default-directory))
+    (when (yes-or-no-p (format "Are you sure you want to delete the directory: %s? " current-dir))
+      (delete-directory current-dir t)
+      (message "Directory %s deleted." current-dir))))
+
+(defun fff-insert-date ()
+  "Insert the current date in YYYY-MM-DD format."
+  (interactive)
+  (insert (format-time-string "%Y-%m-%d")))
+
+(defun fff-insert-time ()
+  "Insert the current time in 12-hour format with AM/PM."
+  (interactive)
+  (insert (format-time-string "%I:%M:%S %p")))

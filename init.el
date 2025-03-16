@@ -230,6 +230,7 @@
   (setq doom-modeline-env-enable-rust nil)
   (setq display-time-default-load-average nil)
   (setq display-time-day-and-date t)
+  (setq doom-modeline-buffer-file-name-style 'relative-from-project)
   (display-time)
   :init
   (doom-modeline-mode +1))
@@ -372,6 +373,7 @@
     (evil-leader/set-key "h k" 'fff-find-file-in-project-root)
     (evil-leader/set-key "p r" 'fff-find-file-in-project-root)
     (evil-leader/set-key "p p" 'project-find-file)
+    (evil-leader/set-key "p P" 'projectile-find-file-or-dir)
 
     ;; winner undo/redo and previous buffer
     (evil-leader/set-key "u u" 'fff-winner/winner-undo)
@@ -646,9 +648,28 @@
                   "make.bat" "Makefile" "Dockerfile" ".editorconfig" ".gitignore" ".svn" ".hg" ".bzr"
                   "Pipfile" "tox.ini" "requirements.txt" "pom.xml" "build.gradle" "Cargo.lock" "yarn.lock"
                   "webpack.config.js" "Gemfile" ".ruby-version" "composer.json" ".env" "README.md" ".eslint.js"
-                  "tsconfig.json" ".babelrc" ".prettierrc" "CMakeLists.txt" ".project"))
+                  "tsconfig.json" ".babelrc" ".prettierrc" "CMakeLists.txt" ".project" "hugo.toml"))
     (add-to-list 'projectile-project-root-files file)
     (add-to-list 'projectile-project-root-files-bottom-up file))
+  (defun projectile--find-file-or-dir (invalidate-cache)
+    "Jump to a project's file or directory using completion.
+With INVALIDATE-CACHE, invalidates the cache first."
+    (projectile-maybe-invalidate-cache invalidate-cache)
+    (let* ((project (projectile-acquire-root))
+           (all-entries (projectile-project-files project))
+           (dir-entries (projectile-project-dirs project))
+           (candidates (append all-entries dir-entries))
+           (selection (projectile-completing-read "Find file or directory: " candidates)))
+      (if (member selection dir-entries)
+          (dired (expand-file-name selection project))
+        (find-file (expand-file-name selection project)))
+      (run-hooks 'projectile-find-file-hook)))
+
+  (defun projectile-find-file-or-dir (&optional invalidate-cache)
+    "Jump to a project's file or directory using completion.
+With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
+    (interactive "P")
+    (projectile--find-file-or-dir invalidate-cache))
   :init
   (setq projectile-ignored-projects '("~/"))
   (defun fff-ignore-home-directory (dir)
@@ -1371,7 +1392,13 @@ ask user for an additional input."
 
 (use-package markdown-mode
   :ensure nil
-  :hook (markdown-mode . visual-line-mode))
+  :hook (markdown-mode . visual-line-mode)
+  :config
+  (add-to-list 'markdown-code-lang-modes '("html" . web-mode)))
+
+(use-package edit-indirect
+  :straight t
+  :ensure t)
 
 (use-package haxe-mode
   :ensure t
@@ -1465,3 +1492,24 @@ ask user for an additional input."
   :straight t
   :defer t
   :ensure t)
+
+(use-package web-mode
+  :straight t
+  :mode (("\\.html?\\'" . web-mode)
+         ("\\.jinja\\'" . web-mode)
+         ("\\.hugo\\'" . web-mode))
+  :hook (web-mode . (lambda () (electric-pair-mode -1)))
+  :config
+  (setq web-mode-engines-alist
+        '(("django" . "\\.html\\'")
+          ("go" . "\\.hugo\\'")))
+  (setq web-mode-enable-auto-pairing t)
+  (setq web-mode-enable-auto-closing t))
+
+(use-package emmet-mode
+  :straight t
+  :hook (web-mode . emmet-mode) ; Enable emmet-mode in web-mode
+  :config
+  (setq emmet-expand-jsx-className? t) ; Optional: if you deal with JSX
+  ;; You can also customize the key binding if needed
+  (define-key emmet-mode-keymap (kbd "C-j") 'emmet-expand-line))
