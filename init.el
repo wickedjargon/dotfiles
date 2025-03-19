@@ -122,16 +122,16 @@
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
 
   (let ((has-battery-p
-       (lambda ()
-         "Check if the system has a battery by inspecting /sys/class/power_supply/."
-         (let ((directory "/sys/class/power_supply/"))
-           (when (file-directory-p directory)
-             (cl-some (lambda (entry)
-                        (string-prefix-p "BAT" entry))
-                      (directory-files directory)))))))
-  ;; Conditionally enable display-battery-mode using the lambda
-  (when (funcall has-battery-p)
-    (display-battery-mode +1)))                           ;; conditionally check if file exists before displaying battery mode
+         (lambda ()
+           "Check if the system has a battery by inspecting /sys/class/power_supply/."
+           (let ((directory "/sys/class/power_supply/"))
+             (when (file-directory-p directory)
+               (cl-some (lambda (entry)
+                          (string-prefix-p "BAT" entry))
+                        (directory-files directory)))))))
+    ;; Conditionally enable display-battery-mode using the lambda
+    (when (funcall has-battery-p)
+      (display-battery-mode +1)))                           ;; conditionally check if file exists before displaying battery mode
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
@@ -182,15 +182,15 @@
     (load (expand-file-name "fff-lisp/hide-comnt.el" user-emacs-directory))
     (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory)))
   (unless (display-graphic-p)
-  (with-eval-after-load 'evil
-    (define-key evil-insert-state-map (kbd "ESC ESC <escape>") 'evil-normal-state))))
+    (with-eval-after-load 'evil
+      (define-key evil-insert-state-map (kbd "ESC ESC <escape>") 'evil-normal-state))))
 
 (use-package modus-themes
   :ensure t
   :straight t
   :config
   (if (daemonp)
-      ;; If running as a client (daemon mode), load modus-vivendi
+      ;; If running as a client (daemon mode), load this theme
       (add-hook 'after-make-frame-functions
                 (lambda (frame)
                   (with-selected-frame frame
@@ -459,6 +459,14 @@
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
     (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)
 
+    (evil-define-operator my-evil-yank-to-eol (beg end type register)
+      "Yank from point to the end of the line into the kill-ring."
+      :move-point nil
+      :type inclusive
+      (interactive "<x><y>")
+      (evil-yank (point) (line-end-position) type register))
+    (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-eol)
+
     ;; move by visual line
     (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
@@ -469,12 +477,9 @@
     (define-key evil-visual-state-map (kbd "0") 'evil-beginning-of-visual-line)
     (define-key evil-visual-state-map (kbd "$") 'evil-end-of-visual-line)
 
-
     ;; instead of `vi(' or `di[' use  `vib' or `dib' instead
     (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
-    (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)
-
-    ))
+    (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)))
 
 (use-package yt-dlp-mode
   :ensure nil
@@ -705,11 +710,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package rainbow-mode :straight t :ensure t :defer t)
 
 (use-package vimrc-mode :straight t :ensure t :defer t)
-
-;; (use-package org-bullets :straight t :ensure t :defer t
-;;   :init
-;;   (require 'org-bullets)
-;;   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 (use-package emmet-mode :straight t :ensure t :defer t
   :init
@@ -1193,20 +1193,20 @@ ask user for an additional input."
                                  (file-name-nondirectory buffer-file-name)
                                  (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (cc-mode . (lambda ()
-                    (set (make-local-variable 'compile-command)
-                         (format "gcc %s -o %s && ./%s"
-                                 (file-name-nondirectory buffer-file-name)
-                                 (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+                     (set (make-local-variable 'compile-command)
+                          (format "gcc %s -o %s && ./%s"
+                                  (file-name-nondirectory buffer-file-name)
+                                  (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (c-ts-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
                             (format "gcc %s -o %s && ./%s"
                                     (file-name-nondirectory buffer-file-name)
                                     (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (cc-ts-mode . (lambda ()
-                       (set (make-local-variable 'compile-command)
-                            (format "gcc %s -o %s && ./%s"
-                                    (file-name-nondirectory buffer-file-name)
-                                    (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+                        (set (make-local-variable 'compile-command)
+                             (format "gcc %s -o %s && ./%s"
+                                     (file-name-nondirectory buffer-file-name)
+                                     (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (rust-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
                             "cargo run")))
@@ -1312,7 +1312,6 @@ ask user for an additional input."
    ("C-c r" . tab-bar-rename-tab)
    ("C-c h" . tab-bar-switch-to-prev-tab)
    ("C-c l" . tab-bar-switch-to-next-tab))
-
   :config
   (defun my-tab-bar-close-tab ()
     "Close the current tab. Disable tab-bar-mode if there's only one left."
