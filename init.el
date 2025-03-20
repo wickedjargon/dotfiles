@@ -1385,7 +1385,7 @@ ask user for an additional input."
 (use-package erc :ensure nil :defer t
   :custom
   (erc-join-buffer 'window)                                         ;; Open a new window for joining channels.
-  (erc-hide-list '("JOIN" "PART" "QUIT"))                           ;; Hide messages for joins, parts, and quits to reduce clutter.
+  (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
   (erc-timestamp-format "[%H:%M]")                                  ;; Format for timestamps in messages.
   (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs")))) ;; Automatically join the #emacs channel on Libera.Chat.
 
@@ -1494,14 +1494,9 @@ ask user for an additional input."
 
 (use-package web-mode
   :straight t
-  :mode (("\\.html?\\'" . web-mode)
-         ("\\.jinja\\'" . web-mode)
-         ("\\.hugo\\'" . web-mode))
+  :mode (("\\.html?\\'" . web-mode))
   :hook (web-mode . (lambda () (electric-pair-mode -1)))
-  :config
-  (setq web-mode-engines-alist
-        '(("django" . "\\.html\\'")
-          ("go" . "\\.hugo\\'")))
+  :init
   (setq web-mode-enable-auto-pairing t)
   (setq web-mode-enable-auto-closing t))
 
