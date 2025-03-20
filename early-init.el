@@ -20,12 +20,3 @@
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
-
-;; (defun fff-emacs-re-enable-frame-theme (_frame)
-;;   (when-let ((theme (car custom-enabled-themes)))
-;;     (enable-theme theme)))
-
-;; (setq mode-line-format nil)
-;; (set-face-attribute 'default nil :background "#000000" :foreground "#ffffff")
-;; (set-face-attribute 'mode-line nil :background "#000000" :foreground "#ffffff" :box 'unspecified)
-;; (add-hook 'after-make-frame-functions #'fff-emacs-re-enable-frame-theme)
