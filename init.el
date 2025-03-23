@@ -30,8 +30,7 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-(use-package emacs
-  :ensure nil
+(use-package emacs :ensure nil
   :config
 
   ;; for youtube change it to this:
@@ -71,16 +70,22 @@
 
   ;; key bindings
   (global-unset-key (kbd "C-x C-c"))
-  (global-unset-key (kbd "C-h h"))                            ;; I press this by accident sometimes
-  (global-unset-key (kbd "C-h C-a"))                          ;; I don't use about emacs page
-  (global-unset-key (kbd "C-h ?"))                            ;; unsetting this prevents help-for-help in favor of embark-bindings for `C-h ?'
-  (global-unset-key (kbd "M-ESC ESC"))                        ;; because of my OS remaping of ESC, the typical evil remaping for this doesn't work
-  (global-set-key (kbd "M-ESC M-ESC") 'keyboard-escape-quit)  ;; I have to remap to this instead
-  (global-set-key (kbd "M-u") 'universal-argument)            ;; C-u is bound to evil-scroll-up
-  (global-set-key (kbd "C-x k") 'bury-buffer)                 ;; kill buffers doesn't save memory
+  (global-unset-key (kbd "C-h h"))                                     ;; I press this by accident sometimes
+  (global-unset-key (kbd "C-h C-a"))                                   ;; I don't use about emacs page
+  (global-unset-key (kbd "C-h ?"))                                     ;; unsetting this prevents help-for-help in favor of embark-bindings for `C-h ?'
+  (global-unset-key (kbd "C-x"))                                       ;; I use my own leader keybindings for most things
+
+  (global-unset-key (kbd "M-ESC ESC"))                                 ;; because of my OS remaping of ESC, the typical evil remaping for this doesn't work
+  (global-set-key (kbd "M-ESC M-ESC") 'keyboard-escape-quit)           ;; I have to remap to this instead
+  (global-set-key (kbd "M-u") 'universal-argument)                     ;; C-u is bound to evil-scroll-up
+  (global-set-key (kbd "C-x k") 'bury-buffer)                          ;; kill buffers doesn't save memory
   (global-set-key (kbd "C-c c")  'fff-clear-shell)
-  (global-set-key [remap find-file] 'fff-find-file)          ;; updates the current directory when in vterm
-  (global-set-key [remap list-buffers] 'ibuffer)             ;; ibuffer is superior
+  (global-set-key (kbd "C-g")  #'fff-keyboard-quit-dwim)
+  (global-set-key [remap find-file] 'fff-find-file)                    ;; updates the current directory when in vterm
+  (global-set-key [remap list-buffers] 'ibuffer)                       ;; ibuffer is superior
+  (global-set-key [remap beginning-of-line] 'beginning-of-visual-line) ;; use visual line for beginning and end of line
+  (global-set-key [remap end-of-line] 'end-of-visual-line)             ;; same here.
+
 
   ;; backup and auto save
   (setq version-control t)
@@ -120,7 +125,9 @@
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
+  (setq yank-excluded-properties t)                       ;; don't copy text with syntax highlighting
 
+  ;; display battery information if battery exists on system
   (let ((has-battery-p
          (lambda ()
            "Check if the system has a battery by inspecting /sys/class/power_supply/."
@@ -132,6 +139,7 @@
     ;; Conditionally enable display-battery-mode using the lambda
     (when (funcall has-battery-p)
       (display-battery-mode +1)))                           ;; conditionally check if file exists before displaying battery mode
+
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
   (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
@@ -183,11 +191,25 @@
     (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory)))
   (unless (display-graphic-p)
     (with-eval-after-load 'evil
-      (define-key evil-insert-state-map (kbd "ESC ESC <escape>") 'evil-normal-state))))
+      (define-key evil-insert-state-map (kbd "ESC ESC <escape>") 'evil-normal-state)))
 
-(use-package modus-themes
-  :ensure t
-  :straight t
+  ;; Override `package-install` to do nothing
+  (defun package-install (&rest args)
+    "This has been overridden to do nothing because we use straight.el."
+    (interactive)
+    (message "`package-install` is disabled. Use straight.el instead."))
+
+  ;; Optionally, prevent `package-list-packages` from running
+  (defun package-list-packages (&rest args)
+    "This has been overridden to do nothing because we use straight.el."
+    (interactive)
+    (message "`package-list-packages` is disabled. Use straight.el instead."))
+
+  ;; Prevent package menu from displaying
+  (eval-after-load 'package
+    '(defalias 'list-packages 'straight-list-packages)))
+
+(use-package modus-themes :ensure t :straight t
   :config
   (if (daemonp)
       ;; If running as a client (daemon mode), load this theme
@@ -218,8 +240,7 @@
                               (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
                               (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
 
-(use-package doom-modeline :ensure t :defer t
-  :straight t
+(use-package doom-modeline :ensure t :defer t :straight t
   :config
   (setq doom-modeline-hud t)
   (setq doom-modeline-highlight-modified-buffer-name nil)
@@ -235,9 +256,7 @@
   :init
   (doom-modeline-mode +1))
 
-(use-package yasnippet
-  :straight t
-  :ensure t
+(use-package yasnippet :straight t :ensure t
   :init
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   (add-hook 'org-mode-hook #'yas-minor-mode)
@@ -245,19 +264,16 @@
   (add-to-list #'yas-snippet-dirs (expand-file-name "snippets/" user-emacs-directory))
   (yas-reload-all))
 
-(use-package flimenu :ensure t
-  :straight t
+(use-package flimenu :ensure t :straight t
   :config
   (flimenu-global-mode))
 
-(use-package evil-collection
-  :straight t
+(use-package evil-collection :straight t
   :after evil
   :config
   (evil-collection-init))
 
-(use-package evil-leader :defer t
-  :straight t
+(use-package evil-leader :defer t :straight t
   :commands (evil-leader-mode)
   :ensure t
   :init
@@ -382,8 +398,7 @@
     ;; tooltip hover
     (evil-leader/set-key "h h" 'fff-display-tooltip-at-point)))
 
-(use-package evil :defer nil :ensure t
-  :straight t
+(use-package evil :defer nil :ensure t :straight t
   :init
   (setq evil-insert-state-message nil)
   (setq evil-undo-system 'undo-fu)
@@ -481,8 +496,7 @@
     (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
     (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)))
 
-(use-package yt-dlp-mode
-  :ensure nil
+(use-package yt-dlp-mode :ensure nil
   :init
   (add-to-list 'load-path (expand-file-name "fff-lisp" user-emacs-directory))
   (load (expand-file-name "fff-lisp/yt-dlp-mode.el" user-emacs-directory))
@@ -492,11 +506,12 @@
     (define-key yt-dlp-mode-map (kbd "<mouse-2>") 'yt-dlp-play-current-entry)
     (define-key goto-address-highlight-keymap (kbd "<mouse-2>") 'yt-dlp-play-current-entry)))
 
-(use-package ocen-mode
-  :straight nil ; not to install from a package repository
+(use-package ocen-mode :ensure nil
   :load-path (lambda () (expand-file-name "fff-lisp/ocen-mode" user-emacs-directory))
   :mode "\\.oc\\'"
   :init
+  (add-hook 'your-major-mode-hook #'tree-sitter-mode)
+  (add-hook 'your-major-mode-hook #'tree-sitter-hl-mode)
   (with-eval-after-load 'lsp-mode              ;; can't use typical use-package hook as
     (add-hook 'ocen-mode-hook #'lsp-deferred)) ;; ocen-mode is not registered with lsp-mode
   :config
@@ -513,8 +528,7 @@
 
 (use-package undo-fu :straight t :defer t :ensure t)
 
-(use-package evil-surround :ensure t
-  :straight t
+(use-package evil-surround :ensure t :straight t
   :config
   (global-evil-surround-mode +1))
 
@@ -550,8 +564,7 @@
   :init
   (setq terminal-here-linux-terminal-command 'st))
 
-(use-package so-long :defer t :ensure t
-  :straight t
+(use-package so-long :defer t :ensure t :straight t
   :init
   (global-so-long-mode +1))
 
@@ -606,9 +619,7 @@
                 (setq-local company-backends
                             (remove 'company-clang company-backends))))))
 
-(use-package company-statistics
-  :straight t
-  :ensure t
+(use-package company-statistics :straight t :ensure t
   :after company
   :hook (after-init . company-statistics-mode))
 
@@ -830,18 +841,13 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                             "-J-Dmetals.icons=unicode"))
   (lsp-metals-enable-semantic-highlighting t))
 
-(use-package lsp-tailwindcss
-  :straight t
-  :ensure t
-  :defer t
+(use-package lsp-tailwindcss :straight t :ensure t :defer t
   :config
   (add-to-list 'lsp-language-id-configuration '(".*\\.erb$" . "html")) ;; Associate ERB files with HTML.
   :init
   (setq lsp-tailwindcss-add-on-mode t))
 
-(use-package lsp-java
-  :straight t
-  :ensure t
+(use-package lsp-java :straight t :ensure t
   :config (add-hook 'java-mode-hook 'lsp))
 
 (use-package macrostep :straight t :ensure t :defer t)
@@ -936,9 +942,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (add-hook 'dired-mode-hook 'org-download-enable))
 
-(use-package evil-org
-  :straight t
-  :ensure t
+(use-package evil-org :straight t :ensure t
   :after org
   :hook (org-mode . (lambda () evil-org-mode))
   :config
@@ -946,13 +950,11 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys))
 
-(use-package evil-visualstar :straight t :ensure t :defer nil
-  :straight t
+(use-package evil-visualstar :straight t :ensure t :defer nil :straight t
   :config
   (global-evil-visualstar-mode))
 
-(use-package evil-matchit :straight t :ensure t :defer nil
-  :straight t
+(use-package evil-matchit :straight t :ensure t :defer nil :straight t
   :config
   (global-evil-matchit-mode +1))
 
@@ -969,31 +971,23 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :interpreter
   ("scala" . scala-mode))
 
-(use-package tree-sitter
-  :straight t
-  :ensure t
+(use-package tree-sitter :straight t :ensure t
   :config
   (global-tree-sitter-mode)
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
-(use-package tree-sitter-langs
-  :straight t
-  :ensure t
-  :after tree-sitter)
+(use-package tree-sitter-langs :straight t :ensure t :after tree-sitter)
 
-(use-package treesit-auto
-  :straight t
-  :ensure t
+(use-package treesit-auto :straight t :ensure t
   :after emacs
   :custom
   (treesit-auto-install 'prompt)
   :config
   (global-treesit-auto-mode t)
   :init
-  (setq treesit-auto-langs '(awk bash bibtex blueprint c c-sharp clojure cmake commonlisp cpp css dart dockerfile elixir glsl go gomod heex html janet java javascript json julia kotlin latex lua magik make markdown nix nu org perl proto python r ruby rust scala sql surface toml tsx typescript typst verilog vhdl vue wast wat wgsl yaml)))
+  (setq treesit-auto-langs '(awk bash bibtex blueprint c c-sharp clojure cmake commonlisp cpp css dart dockerfile elixir glsl go gomod heex html janet java javascript json julia kotlin latex lua magik make markdown nix nu org perl proto python r ruby rust scala sql surface toml tsx typescript typst verilog vhdl vue wast wat wgsl yaml ocen)))
 
-(use-package devdocs :ensure t
-  :straight t
+(use-package devdocs :ensure t :straight t
   :init
   (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
 
@@ -1007,9 +1001,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package aggressive-indent :straight t :ensure t)
 
-(use-package exec-path-from-shell
-  :straight t
-  :ensure t
+(use-package exec-path-from-shell :straight t :ensure t
   :config
   ;; only initialize this package when on unix-like system:
   (when (memq window-system '(mac ns x))
@@ -1017,9 +1009,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package wgrep :straight t :ensure t :defer t)
 
-(use-package gptel
-  :straight t
-  :ensure t
+(use-package gptel :straight t :ensure t
   :init
   (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents (expand-file-name ".secrets/chat_gpt_api_key" user-emacs-directory)) (buffer-string))))
   :config
@@ -1029,9 +1019,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package clhs :straight t :ensure t :defer t)
 
-(use-package d-mode
-  :straight t
-  :ensure t
+(use-package d-mode :straight t :ensure t
   :mode "\\.d\\'"
   :config
   (setq d-mode-indent-style 'k&r))
@@ -1052,9 +1040,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                             (when (called-interactively-p 'any)
                               (dtrt-indent-try-set-offset))))))
 
-(use-package elfeed
-  :straight t
-  :ensure t
+(use-package elfeed :straight t :ensure t
   :init
   (setq elfeed-feeds
         '("https://www.youtube.com/feeds/videos.xml?channel_id=UCrqM0Ym_NbK1fqeQG2VIohg" ;; Tsoding Daily
@@ -1068,6 +1054,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
           "https://sachachua.com/blog/feed/index.xml"                                    ;; sacha chua
           "https://www.youtube.com/feeds/videos.xml?channel_id=UC1tV5SjRyejRGeHAaMGYSsQ" ;; Joshua Blais YT
           "https://joshblais.com/index.xml"                                              ;; Joshua Blais blog
+          "https://eshelyaron.com/rss.xml"                                               ;; Eshel Yaron blog
           )))
 
 (use-package eww :ensure nil
@@ -1117,16 +1104,11 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package v-mode :straight t :ensure t :defer t)
 
-(use-package sly-macrostep
-  :defer t
-  :straight t
+(use-package sly-macrostep :defer t :straight t
   :config
   (add-to-list 'sly-contribs 'sly-macrostep 'append))
 
-(use-package read-aloud
-  :defer t
-  :ensure t
-  :straight t
+(use-package read-aloud :defer t :ensure t :straight t
   :config
   (cl-defun read-aloud--current-word()
     "Pronounce a word under the pointer. If under there is rubbish,
@@ -1154,16 +1136,12 @@ ask user for an additional input."
           (read-aloud--string (replace-regexp-in-string "\\." "," text) "selection"))
       (read-aloud--current-word))))
 
-(use-package graphviz-dot-mode
-  :defer t
-  :straight t
-  :ensure t
+(use-package graphviz-dot-mode :defer t :straight t :ensure t
   :config
   (setq graphviz-dot-indent-width 4))
 
 ;; always open urls in a new window, use chromium always.
-(use-package browse-url
-  :ensure nil
+(use-package browse-url :ensure nil
   :init
   (setq browse-url-chromium-program "chromium")
   (defun browse-url-chromium-new-window (url &optional _new-window)
@@ -1174,9 +1152,7 @@ ask user for an additional input."
   (setq browse-url-browser-function 'browse-url-chromium-new-window))
 
 ;; common lisp reference / doc lookup
-(use-package hyperspec
-  :straight t
-  :ensure t
+(use-package hyperspec :straight t :ensure t
   :config
   (defun fff-hyperspec-lookup ()
     "Open the HyperSpec entry in EWW instead of the default browser."
@@ -1184,8 +1160,7 @@ ask user for an additional input."
     (let ((browse-url-browser-function 'eww-browse-url))
       (hyperspec-lookup (thing-at-point 'symbol)))))
 
-(use-package compile
-  :ensure nil
+(use-package compile :ensure nil
   :hook (compilation-filter . ansi-color-compilation-filter)
   :hook (c-mode . (lambda ()
                     (set (make-local-variable 'compile-command)
@@ -1260,21 +1235,15 @@ ask user for an additional input."
                                        (file-name-nondirectory buffer-file-name)
                                        (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))))
 
-(use-package rust-mode
-  :straight t
-  :ensure t)
+(use-package rust-mode :straight t :ensure t)
 
-(use-package evil-mc
-  :straight t
-  :ensure t
+(use-package evil-mc :straight t :ensure t
   :after evil
   :config
   (global-evil-mc-mode 1))
 
-(use-package copilot
+(use-package copilot :defer t :ensure t
   :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
-  :defer t
-  :ensure t
   :init
   (add-hook 'prog-mode-hook 'copilot-mode)
   (setq copilot-idle-delay nil)
@@ -1299,8 +1268,7 @@ ask user for an additional input."
                                           ("Namespaces" "^namespace +\\([a-z0-9_]*\\)" 1))))
                                    (imenu--generic-function imenu-generic-expression)))))))
 
-(use-package tab-bar
-  :ensure nil
+(use-package tab-bar :ensure nil
   :init
   (tab-bar-mode -1) ;; Off by default
   :custom
@@ -1366,10 +1334,7 @@ ask user for an additional input."
   :hook (prog-mode . rainbow-delimiters-mode))
 
 ;; allow copy/paste when in terminal
-(use-package xclip
-  :straight t
-  :ensure t
-  :defer t
+(use-package xclip :straight t :ensure t :defer t
   :hook
   (after-init . xclip-mode))
 
@@ -1379,7 +1344,7 @@ ask user for an additional input."
   ;; run this in all programming modes except emacs lisp mode
   :hook (prog-mode . (lambda ()
                        (unless (derived-mode-p 'emacs-lisp-mode)
-                         (flymake-mode 1)))))
+                         (flymake-mode +1)))))
 
 ;; irc client
 (use-package erc :ensure nil :defer t
@@ -1395,24 +1360,9 @@ ask user for an additional input."
   :config
   (add-to-list 'markdown-code-lang-modes '("html" . web-mode)))
 
-(use-package edit-indirect
-  :straight t
-  :ensure t)
+(use-package edit-indirect :straight t :ensure t)
 
-(use-package haxe-mode
-  :ensure t
-  :straight t
-  :defer t)
-
-(use-package adaptive-wrap
-  :ensure t
-  :straight t
-  :defer t
-  :init
-  (setq adaptive-wrap-extra-indent 2)
-  :config
-  (add-hook 'prog-mode-hook #'adaptive-wrap-prefix-mode)
-  (add-hook 'emacs-lisp-mode-hook #'adaptive-wrap-prefix-mode))
+(use-package haxe-mode :ensure t :straight t :defer t)
 
 ;; sticky header function/struct signature
 (use-package topsy
@@ -1422,8 +1372,7 @@ ask user for an additional input."
    (magit-section-mode . topsy-mode)))
 
 ;; jump to definition without ctags in many supported languages
-(use-package dumb-jump
-  :straight t
+(use-package dumb-jump :straight t
   :init
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
@@ -1438,70 +1387,51 @@ ask user for an additional input."
 (use-package exato :straight t :ensure t :defer t)
 
 ;; visual select inside generic brackets using `b', `vib'
-(use-package evil-textobj-anyblock
-  :ensure t
-  :straight t
-  :defer t)
+(use-package evil-textobj-anyblock :ensure t :straight t :defer t)
 
 ;; inline evaluation
-(use-package eros
-  :straight t
-  :ensure t
-  :config
+(use-package eros :straight t :ensure t :config
   (eros-mode +1))
 
 ;; generate markdown toc
-(use-package markdown-toc
-  :straight t
-  :ensure t
+(use-package markdown-toc :straight t :ensure t
   :defer t)
 
 ;; export a code file to html
-(use-package htmlize
-  :ensure t
+(use-package htmlize :ensure t
   :straight (:type git :host github :repo "hniksic/emacs-htmlize")
   :defer t)
 
 ;; remove white space as you type
-(use-package ws-butler
-  :straight t
-  :ensure t
-  :defer t
+(use-package ws-butler :straight t :ensure t :defer t
   :hook (prog-mode . ws-butler-mode))
 
-(use-package swiper
-  :straight t
-  :ensure t
-  :defer t)
+(use-package swiper :straight t :ensure t :defer t)
 
-(use-package insert-shebang
-  :straight t
-  :ensure t
-  :defer t
+(use-package insert-shebang :straight t :ensure t :defer t
   :hook (find-file-hook . insert-shebang))
 
-(use-package elisp-demos
-  :straight t
-  :ensure t
-  :defer t
+(use-package elisp-demos :straight t :ensure t :defer t
   :init
   (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
 
-(use-package realgud
-  :straight t
-  :defer t
-  :ensure t)
+(use-package realgud :straight t :defer t :ensure t)
 
 (use-package web-mode
+  :ensure t
   :straight t
-  :mode (("\\.html?\\'" . web-mode))
+  :mode (("\\.html?\\'" . web-mode)
+         ("\\.jinja\\'" . web-mode)
+         ("\\.hugo\\'" . web-mode))
   :hook (web-mode . (lambda () (electric-pair-mode -1)))
-  :init
+  :config
+  (setq web-mode-engines-alist
+        '(("django" . "\\.html\\'")
+          ("go" . "\\.hugo\\'")))
   (setq web-mode-enable-auto-pairing t)
   (setq web-mode-enable-auto-closing t))
 
-(use-package emmet-mode
-  :straight t
+(use-package emmet-mode :ensure nil
   :hook (web-mode . emmet-mode) ; Enable emmet-mode in web-mode
   :config
   (setq emmet-expand-jsx-className? t) ; Optional: if you deal with JSX

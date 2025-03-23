@@ -786,23 +786,13 @@ in whole buffer.  With neither, delete comments on current line."
           (call-interactively 'v-load-tags))
       (message "Not in a project root directory. No v.mod file found."))))
 
-(defun fff-start-server ()
-  "Start the BrowserSync server."
+(defun fff-run-browser-sync ()
+  "Run 'browser-sync --watch' as an asynchronous process."
   (interactive)
-  (let ((default-directory default-directory))
-    (async-shell-command "browser-sync start --watch --server --files \"**/*\" & disown && xdg-open http://localhost:3000")))
-
-(defun fff-stop-server ()
-  "Stop the BrowserSync server."
-  (interactive)
-  ;; Killing the BrowserSync process
-  (async-shell-command "pkill -f 'browser-sync start --server'"))
-
-(defun fff-reload-server ()
-  "Reload the BrowserSync server."
-  (interactive)
-  ;; Reloading the BrowserSync server
-  (async-shell-command "browser-sync reload"))
+  (start-process-shell-command
+   "browser-sync"        ; name of the process
+   "*browser-sync-output*" ; buffer to capture output
+   "browser-sync --watch"))
 
 (defun fff-display-project-root ()
   "Display the current Projectile project root."
@@ -1423,3 +1413,28 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   "Insert the current time in 12-hour format with AM/PM."
   (interactive)
   (insert (format-time-string "%I:%M:%S %p")))
+
+;; From https://protesilaos.com/codelog/2024-11-28-basic-emacs-configuration/
+(defun  fff-keyboard-quit-dwim ()
+  "Do-What-I-Mean behaviour for a general `keyboard-quit'.
+
+The generic `keyboard-quit' does not do the expected thing when
+the minibuffer is open.  Whereas we want it to close the
+minibuffer, even without explicitly focusing it.
+
+The DWIM behaviour of this command is as follows:
+
+- When the region is active, disable it.
+- When a minibuffer is open, but not focused, close the minibuffer.
+- When the Completions buffer is selected, close it.
+- In every other case use the regular `keyboard-quit'."
+  (interactive)
+  (cond
+    ((region-active-p)
+      (keyboard-quit))
+    ((derived-mode-p  'completion-list-mode)
+      (delete-completion-window))
+    ((>  ( minibuffer-depth)  0)
+      (abort-recursive-edit))
+    (t
+      (keyboard-quit))))
