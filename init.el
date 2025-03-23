@@ -73,6 +73,7 @@
   (global-unset-key (kbd "C-h h"))                                     ;; I press this by accident sometimes
   (global-unset-key (kbd "C-h C-a"))                                   ;; I don't use about emacs page
   (global-unset-key (kbd "C-h ?"))                                     ;; unsetting this prevents help-for-help in favor of embark-bindings for `C-h ?'
+  (global-unset-key (kbd "C-h C-h"))                                   ;; unsetting this prevents help-for-help in favor of embark-bindings for `C-h ?'
   (global-unset-key (kbd "C-x"))                                       ;; I use my own leader keybindings for most things
 
   (global-unset-key (kbd "M-ESC ESC"))                                 ;; because of my OS remaping of ESC, the typical evil remaping for this doesn't work
