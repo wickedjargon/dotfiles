@@ -68,15 +68,77 @@
             (lambda ()
               (yes-or-no-p "Are you sure you want to exit Emacs? ")))
 
+  ;; I don't use most emacs keybindings. unsetting many bindings here:
   ;; key bindings
   (global-unset-key (kbd "C-x C-c"))
-  (global-unset-key (kbd "C-h h"))                                     ;; I press this by accident sometimes
-  (global-unset-key (kbd "C-h C-a"))                                   ;; I don't use about emacs page
-  (global-unset-key (kbd "C-h ?"))                                     ;; unsetting this prevents help-for-help in favor of embark-bindings for `C-h ?'
-  (global-unset-key (kbd "C-h C-h"))                                   ;; unsetting this prevents help-for-help in favor of embark-bindings for `C-h ?'
-  (global-unset-key (kbd "C-x"))                                       ;; I use my own leader keybindings for most things
+  (global-unset-key (kbd "C-h h"))
+  (global-unset-key (kbd "C-h C-a"))
+  (global-unset-key (kbd "C-h ?"))
+  (global-unset-key (kbd "C-h C-h"))
+  (global-unset-key (kbd "C-x"))
+  (global-unset-key (kbd "M-s o"))
+  (global-unset-key (kbd "C-_"))
+  (global-unset-key (kbd "<f2> s"))
+  (global-unset-key (kbd "<f2> 1"))
+  (global-unset-key (kbd "M-g g"))
+  (global-unset-key (kbd "C-M-@"))
+  (global-unset-key (kbd "C-M-d"))
+  (global-unset-key (kbd "M-@"))
+  (global-unset-key (kbd "C-M-x"))
+  (global-unset-key (kbd "M-g n"))
+  (global-unset-key (kbd "C-M-o"))
+  (global-unset-key (kbd "C-<right>"))
+  (global-unset-key (kbd "<f2> RET"))
+  (global-unset-key (kbd "C-M-h"))
+  (global-unset-key (kbd "C-c @ C-t"))
+  (global-unset-key (kbd "M-`"))
+  (global-unset-key (kbd "<f3>"))
+  (global-unset-key (kbd "M-X"))
+  (global-unset-key (kbd "M-s h w"))
+  (global-unset-key (kbd "M-<begin>"))
+  (global-unset-key (kbd "M-s h l"))
+  (global-unset-key (kbd "M-s ."))
+  (global-unset-key (kbd "M-r"))
+  (global-unset-key (kbd "M-)"))
+  (global-unset-key (kbd "M-<end>"))
+  (global-unset-key (kbd "M-s h ."))
+  (global-unset-key (kbd "<f4>"))
+  (global-unset-key (kbd "C-M-j"))
+  (global-unset-key (kbd "M-\\"))
+  (global-unset-key (kbd "M-|"))
+  (global-unset-key (kbd "C-M-\\"))
+  (global-unset-key (kbd "M-ESC ESC"))
+  (global-set-key (kbd "<f2> 1") nil)
+  (global-unset-key (kbd "C-M-q"))
+  (global-unset-key (kbd "C-M-x"))
+  (global-unset-key (kbd "C-M-i"))
+  (global-unset-key (kbd "M-a"))
+  (global-unset-key (kbd "C-c C-f"))
+  (global-unset-key (kbd "C-c C-e"))
+  (global-unset-key (kbd "C-c C-b"))
+  (global-unset-key (kbd "C-x M-g"))
+  (global-unset-key (kbd "M-:"))
 
-  (global-unset-key (kbd "M-ESC ESC"))                                 ;; because of my OS remaping of ESC, the typical evil remaping for this doesn't work
+
+  (with-eval-after-load 'hideshow
+    (setq hs-minor-mode-map (make-sparse-keymap)))
+
+  (with-eval-after-load 'yasnippet
+    (setq yas-minor-mode-map (make-sparse-keymap)))
+
+  (with-eval-after-load 'erc-track
+    (setq erc-track-minor-mode-map (make-sparse-keymap)))
+
+  (with-eval-after-load 'emacs-lisp-mode
+    (setq emacs-lisp-mode-map (make-sparse-keymap)))
+
+  (with-eval-after-load 'lisp-interaction-mode
+    (setq lisp-interaction-mode-map (make-sparse-keymap)))
+
+  ;; adding a few back that I actually might use:
+  (global-set-key (kbd "C-x o") 'other-window)
+  (global-set-key (kbd "C-x u") 'undo)
+
   (global-set-key (kbd "M-ESC M-ESC") 'keyboard-escape-quit)           ;; I have to remap to this instead
   (global-set-key (kbd "M-u") 'universal-argument)                     ;; C-u is bound to evil-scroll-up
   (global-set-key (kbd "C-x k") 'bury-buffer)                          ;; kill buffers doesn't save memory
@@ -445,7 +507,6 @@
     (define-key evil-insert-state-map (kbd "C-y") 'yank)
     (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
     (define-key evil-insert-state-map (kbd "C-'") 'hippie-expand)
-    (define-key evil-insert-state-map (kbd "M-a") 'yas-insert-snippet)
     (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
     (define-key evil-insert-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-insert-state-map (kbd "C-k") 'kill-line)
@@ -473,7 +534,7 @@
     (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
-    (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)
+    (evil-global-set-key 'normal (kbd "SPC e e") 'eval-last-sexp)
 
     (evil-define-operator my-evil-yank-to-eol (beg end type register)
       "Yank from point to the end of the line into the kill-ring."
@@ -568,8 +629,6 @@
 (use-package so-long :defer t :ensure t :straight t
   :init
   (global-so-long-mode +1))
-
-(use-package lorem-ipsum :straight t :defer t :ensure t)
 
 (use-package hydra :straight t :defer t :ensure t :commands defhydra
   :config
@@ -863,6 +922,9 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
    ("C-h b" . embark-bindings))
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
+  (setq embark-prompter #'embark-completing-read-prompter)
+  (setq embark-indicators '(embark--vertico-indicator))
+
   :config
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
@@ -1432,9 +1494,12 @@ ask user for an additional input."
   (setq web-mode-enable-auto-pairing t)
   (setq web-mode-enable-auto-closing t))
 
-(use-package emmet-mode :ensure nil
+(use-package emmet-mode :ensure t
+  :straight t
   :hook (web-mode . emmet-mode) ; Enable emmet-mode in web-mode
   :config
   (setq emmet-expand-jsx-className? t) ; Optional: if you deal with JSX
   ;; You can also customize the key binding if needed
   (define-key emmet-mode-keymap (kbd "C-j") 'emmet-expand-line))
+
+(use-package consult-gh :straight t :ensure t :after consult)
