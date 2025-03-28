@@ -973,6 +973,20 @@ but only if the buffer is read-only."
         (delete-non-matching-lines regex))
     (message "This command only works in read-only buffers.")))
 
+(defun fff-filter-out-lines-with-regex (regex)
+  "Remove lines in the current buffer that match REGEX,
+but only if the buffer is read-only."
+  (interactive "sEnter regex to filter out lines: ")
+  (if buffer-read-only
+      (let ((inhibit-read-only t))
+        (goto-char (point-min))
+        (while (re-search-forward regex nil t)
+          (beginning-of-line)
+          (let ((beg (point)))
+            (forward-line 1)
+            (delete-region beg (point)))))
+    (message "This command only works in read-only buffers.")))
+
 (defun fff-filter-lines-with-regex-writable (regex)
   "Filter lines in the current buffer to show only those matching REGEX,
 but only if the buffer is read-only."
@@ -986,6 +1000,15 @@ but only if the buffer is read-only."
   "just revert the buffer"
   ("interactive")
   (revert-buffer))
+
+(defun fff-hide-lines-in-region (start end)
+  "Hide lines in the region from START to END."
+  (interactive "r")
+  (let ((overlay (make-overlay start end)))
+    (overlay-put overlay 'invisible t)
+    (overlay-put overlay 'intangible t)
+    (overlay-put overlay 'isearch-open-invisible
+                 'delete-overlay)))
 
 (defun fff-show-current-line-number ()
   "Display the current line number in the echo area."
@@ -1438,3 +1461,25 @@ The DWIM behaviour of this command is as follows:
       (abort-recursive-edit))
     (t
       (keyboard-quit))))
+
+(defun fff-easy-hugo-menu-functions ()
+  "Select and run an Easy Hugo function."
+  (interactive)
+  (let* ((functions-list '(easy-hugo-newpost
+                           easy-hugo-article
+                           easy-hugo-preview
+                           easy-hugo-publish
+                           easy-hugo-open
+                           easy-hugo-delete
+                           easy-hugo-open-config
+                           easy-hugo-no-help
+                           easy-hugo-view
+                           easy-hugo-refresh
+                           easy-hugo-sort-time
+                           easy-hugo-sort-char
+                           easy-hugo-github-deploy
+                           easy-hugo-amazon-s3-deploy
+                           easy-hugo-google-cloud-storage-deploy))
+         (selected-function (completing-read "Select an Easy Hugo function: " functions-list nil t)))
+    (when selected-function
+      (call-interactively (intern selected-function)))))
