@@ -817,13 +817,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package haskell-mode :straight t :ensure t :defer t)
 
-(use-package helpful :straight t :ensure t :defer t
-  :bind
-  ([remap describe-key] . helpful-key)
-  ([remap describe-command] . helpful-command)
-  ([remap describe-variable] . helpful-variable)
-  ([remap describe-function] . helpful-callable))
-
 (use-package volatile-highlights :straight t :ensure t :defer t
   :init
   (volatile-highlights-mode t)
@@ -1474,9 +1467,21 @@ ask user for an additional input."
 (use-package insert-shebang :straight t :ensure t :defer t
   :hook (find-file-hook . insert-shebang))
 
+(use-package helpful :straight t :ensure t :defer t
+  :bind
+  ([remap describe-key] . helpful-key)
+  ([remap describe-command] . helpful-command)
+  ([remap describe-variable] . helpful-variable)
+  ([remap describe-function] . helpful-callable))
+
 (use-package elisp-demos :straight t :ensure t :defer t
   :init
   (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
+
+;; ;; start using this after upgrading from emacs 29 to 30:
+;; (use-package help-fns :ensure nil
+;;   :hook
+;;   (help-fns-describe-function-functions . shortdoc-help-fns-examples-function))
 
 (use-package realgud :straight t :defer t :ensure t)
 
