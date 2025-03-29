@@ -2,6 +2,10 @@
 ;; auctex, org
 ;; writing studio (https://leanpub.com/emacswritingstudio)
 
+;; TODO: implement my own method for customizing packages
+;; either via github forking or mantaining
+;; a local branch and an upstream branch
+
 ;; Maximize screen on new frame:
 (add-hook 'after-make-frame-functions
           (lambda (&optional frame)
@@ -118,7 +122,6 @@
   (global-unset-key (kbd "C-c C-b"))
   (global-unset-key (kbd "C-x M-g"))
   (global-unset-key (kbd "M-:"))
-
 
   (with-eval-after-load 'hideshow
     (setq hs-minor-mode-map (make-sparse-keymap)))
@@ -361,8 +364,9 @@
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
 
-
-    (evil-leader/set-key "RET RET" 'embark-act)
+    ;; embark
+    (evil-leader/set-key "RET" 'embark-dwim)
+    (evil-leader/set-key "c e" 'embark-act)
 
     ;; shell, compile, eval
     (evil-leader/set-key "x x" 'shell-command)
@@ -536,7 +540,7 @@
     (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
-    (evil-global-set-key 'normal (kbd "SPC e e") 'eval-last-sexp)
+    (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)
 
     (evil-define-operator my-evil-yank-to-eol (beg end type register)
       "Yank from point to the end of the line into the kill-ring."
@@ -911,6 +915,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :init
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
+;; TODO: use embark-target-finders to add a new type for youtube urls.
 (use-package embark
   :straight t
   :ensure t
@@ -923,7 +928,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setq embark-prompter #'embark-completing-read-prompter)
   (setq embark-indicators '(embark--vertico-indicator))
   :config
-  ;; (setq embark-keymap-alist nil)
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
@@ -931,6 +935,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
   ;; Add crux-open-with to the existing file map
   (define-key embark-file-map (kbd "o") #'crux-open-with)
+  (define-key embark-file-map (kbd "y") #'yt-dlp-play-current-entry)
 
   ;; Set crux-open-with as the default action for files
   (setf (alist-get 'file embark-default-action-overrides) #'crux-open-with))
