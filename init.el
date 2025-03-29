@@ -74,6 +74,14 @@
 
   ;; I don't use most emacs keybindings. unsetting many bindings here:
   ;; key bindings
+
+  (global-unset-key (kbd "<f1>"))
+  (global-unset-key (kbd "<f2>"))
+  (global-unset-key (kbd "<f3>"))
+  (global-unset-key (kbd "<f4>"))
+  (global-unset-key (kbd "<f4>"))
+  (global-unset-key (kbd "<f10>"))
+  (global-unset-key (kbd "<f11>"))
   (global-unset-key (kbd "C-x C-c"))
   (global-unset-key (kbd "C-h h"))
   (global-unset-key (kbd "C-h C-a"))
@@ -82,8 +90,6 @@
   (global-unset-key (kbd "C-x"))
   (global-unset-key (kbd "M-s o"))
   (global-unset-key (kbd "C-_"))
-  (global-unset-key (kbd "<f2> s"))
-  (global-unset-key (kbd "<f2> 1"))
   (global-unset-key (kbd "M-g g"))
   (global-unset-key (kbd "C-M-@"))
   (global-unset-key (kbd "C-M-d"))
@@ -92,11 +98,9 @@
   (global-unset-key (kbd "M-g n"))
   (global-unset-key (kbd "C-M-o"))
   (global-unset-key (kbd "C-<right>"))
-  (global-unset-key (kbd "<f2> RET"))
   (global-unset-key (kbd "C-M-h"))
   (global-unset-key (kbd "C-c @ C-t"))
   (global-unset-key (kbd "M-`"))
-  (global-unset-key (kbd "<f3>"))
   (global-unset-key (kbd "M-X"))
   (global-unset-key (kbd "M-s h w"))
   (global-unset-key (kbd "M-<begin>"))
@@ -106,13 +110,11 @@
   (global-unset-key (kbd "M-)"))
   (global-unset-key (kbd "M-<end>"))
   (global-unset-key (kbd "M-s h ."))
-  (global-unset-key (kbd "<f4>"))
   (global-unset-key (kbd "C-M-j"))
   (global-unset-key (kbd "M-\\"))
   (global-unset-key (kbd "M-|"))
   (global-unset-key (kbd "C-M-\\"))
   (global-unset-key (kbd "M-ESC ESC"))
-  (global-set-key (kbd "<f2> 1") nil)
   (global-unset-key (kbd "C-M-q"))
   (global-unset-key (kbd "C-M-x"))
   (global-unset-key (kbd "C-M-i"))
@@ -1451,9 +1453,7 @@ ask user for an additional input."
 (use-package wgrep :straight t :ensure t :defer t)
 
 ;; search incremental count in minibuffer
-(use-package evil-anzu :straight t :ensure t
-  :config
-  (global-anzu-mode))
+(use-package evil-anzu :straight t :ensure t :config (global-anzu-mode))
 
 ;; x object for editing html/xml tab attributes
 (use-package exato :straight t :ensure t :defer t)
@@ -1462,12 +1462,10 @@ ask user for an additional input."
 (use-package evil-textobj-anyblock :ensure t :straight t :defer t)
 
 ;; inline evaluation
-(use-package eros :straight t :ensure t :config
-  (eros-mode +1))
+(use-package eros :straight t :ensure t :config (eros-mode +1))
 
 ;; generate markdown toc
-(use-package markdown-toc :straight t :ensure t
-  :defer t)
+(use-package markdown-toc :straight t :ensure t :defer t)
 
 ;; export a code file to html
 (use-package htmlize :ensure t
