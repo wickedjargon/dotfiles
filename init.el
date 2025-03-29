@@ -349,7 +349,6 @@
 
     ;; single key
     (evil-leader/set-key "SPC" 'execute-extended-command)
-    (evil-leader/set-key "RET" 'crux-open-with)
     (evil-leader/set-key "TAB" 'tab-bar-switch-to-tab)
     (evil-leader/set-key "d" 'delete-blank-lines)
     (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
@@ -361,6 +360,9 @@
     (evil-leader/set-key "0" 'fff-set-scale-to-zero)
     (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
     (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
+
+
+    (evil-leader/set-key "RET RET" 'embark-act)
 
     ;; shell, compile, eval
     (evil-leader/set-key "x x" 'shell-command)
@@ -909,7 +911,10 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :init
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
-(use-package embark :straight t :ensure t :defer t
+(use-package embark
+  :straight t
+  :ensure t
+  :defer t
   :bind*
   (("C-c e" . embark-act)
    ("C-h b" . embark-bindings))
@@ -917,12 +922,18 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setq prefix-help-command #'embark-prefix-help-command)
   (setq embark-prompter #'embark-completing-read-prompter)
   (setq embark-indicators '(embark--vertico-indicator))
-
   :config
+  ;; (setq embark-keymap-alist nil)
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
-                 (window-parameters (mode-line-format . none)))))
+                 (window-parameters (mode-line-format . none))))
+
+  ;; Add crux-open-with to the existing file map
+  (define-key embark-file-map (kbd "o") #'crux-open-with)
+
+  ;; Set crux-open-with as the default action for files
+  (setf (alist-get 'file embark-default-action-overrides) #'crux-open-with))
 
 (use-package diminish :straight t :ensure t :defer t)
 
@@ -1174,10 +1185,10 @@ ask user for an additional input."
 
       (unless (and word (string-match "[[:alnum:]]" word))
         ;; maybe we should share the hist list w/ `wordnut-completion-hist`?
-        (setq word (read-string "read aloud: " word 'read-aloud-word-hist)) )
+        (setq word (read-string "read aloud: " word 'read-aloud-word-hist)))
 
       (read-aloud--overlay-make (nth 0 cw) (nth 1 cw))
-      (read-aloud--string (replace-regexp-in-string "\\." "," word) "word")))
+      (read-aloud--string (replace-regexp-in-string "[.\n]" "," word) "word")))
 
   (cl-defun read-aloud-this()
     "Pronounce either the selection or a word under the pointer."
@@ -1189,7 +1200,7 @@ ask user for an additional input."
 
     (if (use-region-p)
         (let ((text (buffer-substring-no-properties (region-beginning) (region-end))))
-          (read-aloud--string (replace-regexp-in-string "\\." "," text) "selection"))
+          (read-aloud--string (replace-regexp-in-string "[.\n]" "," text) "selection"))
       (read-aloud--current-word))))
 
 (use-package graphviz-dot-mode :defer t :straight t :ensure t
