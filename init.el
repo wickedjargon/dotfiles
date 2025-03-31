@@ -154,7 +154,6 @@
   (global-set-key [remap beginning-of-line] 'beginning-of-visual-line) ;; use visual line for beginning and end of line
   (global-set-key [remap end-of-line] 'end-of-visual-line)             ;; same here.
 
-
   ;; backup and auto save
   (setq version-control t)
   (setq vc-make-backup-files t)
@@ -1086,6 +1085,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package gptel :straight t :ensure t
   :init
   (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents (expand-file-name ".secrets/chat_gpt_api_key" user-emacs-directory)) (buffer-string))))
+  (setq markdown-fontify-code-blocks-natively t)
   :config
   (setq gptel-model 'gpt-4o))
 
@@ -1522,3 +1522,27 @@ ask user for an additional input."
   (define-key emmet-mode-keymap (kbd "C-j") 'emmet-expand-line))
 
 (use-package consult-gh :straight t :ensure t :after consult)
+
+(use-package gitignore-mode
+  :ensure t
+  :straight (:host github :repo "magit/git-modes")
+  :mode "\\.gitignore\\'"
+  :defer t)
+
+(use-package aggressive-indent
+  :straight t
+  :ensure t
+  :config
+  (add-hook 'prog-mode-hook 'aggressive-indent-mode))
+
+(use-package eglot
+  :defer
+  :hook
+  (python-mode . eglot-ensure)
+  (markdown-mode . eglot-ensure)
+  :config
+  (add-to-list 'eglot-server-programs
+               '(markdown-mode . ("harper-ls" "--stdio")))
+  :custom
+  (eglot-autoshutdown t) ;; default is to leave servers runing when last buffer exits
+  (eglot-extend-to-xref nil)) ;; cover files found through xref (M-.)
