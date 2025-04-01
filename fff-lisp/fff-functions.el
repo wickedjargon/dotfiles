@@ -715,6 +715,24 @@ in whole buffer.  With neither, delete comments on current line."
 		  (switch-to-buffer newest-buffer))
 	  (vterm))))
 
+(defun fff-open-new-eshell ()
+  "Open a new eshell buffer."
+  (interactive)
+  (eshell (generate-new-buffer-name "*eshell*")))
+
+(defun fff-switch-or-create-eshell ()
+  (interactive)
+  (let ((eshell-buffers (delq nil (mapcar (lambda (b)
+                                            (when (string-match "\\*eshell\\*<\\([0-9]+\\)>" (buffer-name b))
+                                              (cons (string-to-number (match-string 1 (buffer-name b))) b)))
+                                          (buffer-list))))
+        (newest-buffer nil))
+    (if eshell-buffers
+        (progn
+          (setq newest-buffer (cdr (cl-reduce (lambda (a b) (if (> (car a) (car b)) a b)) eshell-buffers)))
+          (switch-to-buffer newest-buffer))
+      (eshell))))
+
 (defun fff-increase-font-size ()
   "Increase the font size."
   (interactive)
