@@ -6,6 +6,9 @@
 ;; either via github forking or mantaining
 ;; a local branch and an upstream branch
 
+;; TODO: transition from lsp-mode to eglot.
+;; eglot is built in and is more future-proof
+
 ;; Maximize screen on new frame:
 (add-hook 'after-make-frame-functions
           (lambda (&optional frame)
@@ -124,6 +127,8 @@
   (global-unset-key (kbd "C-c C-b"))
   (global-unset-key (kbd "C-x M-g"))
   (global-unset-key (kbd "M-:"))
+  (global-unset-key (kbd "C-x g"))
+  (global-unset-key (kbd "C-x M-g"))
 
   (with-eval-after-load 'hideshow
     (setq hs-minor-mode-map (make-sparse-keymap)))
@@ -219,7 +224,7 @@
   (pixel-scroll-precision-mode t)                          ;; better for scrolling
   (setq pixel-scroll-precision-use-momentum nil)           ;; but no momentum please
   (setq warning-minimum-level :emergency)                  ;; Set the minimum level of warnings to display.
-  (setq initial-major-mode 'fundamental-mode)              ;; I prefer this
+  (setq initial-major-mode 'fundamental-mode)              ;; I prefer this as the mode for scratch buffers
   (setq require-final-newline nil)                         ;; don't add a new line to the bottom of the file
 
   ;; launch new buffers in current window
@@ -690,8 +695,6 @@
   :after company
   :hook (after-init . company-statistics-mode))
 
-(use-package restart-emacs :straight t :defer t :ensure t)
-
 (use-package windsize :straight t :defer t :ensure t)
 
 (use-package crux :straight t :defer t :ensure t)
@@ -727,11 +730,16 @@
 
 (use-package projectile :straight t :defer t :ensure t
   :config
-  (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod" "package.json" "Cargo.toml" "build.sh" "v.mod"
-                  "make.bat" "Makefile" "Dockerfile" ".editorconfig" ".gitignore" ".svn" ".hg" ".bzr"
-                  "Pipfile" "tox.ini" "requirements.txt" "pom.xml" "build.gradle" "Cargo.lock" "yarn.lock"
-                  "webpack.config.js" "Gemfile" ".ruby-version" "composer.json" ".env" "README.md" ".eslint.js"
-                  "tsconfig.json" ".babelrc" ".prettierrc" "CMakeLists.txt" ".project" "hugo.toml"))
+  (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod"
+                  "package.json" "Cargo.toml" "build.sh" "v.mod"
+                  "make.bat" "Makefile" "Dockerfile" ".editorconfig"
+                  ".gitignore" ".svn" ".hg" ".bzr" "Pipfile" "tox.ini"
+                  "requirements.txt" "pom.xml" "build.gradle"
+                  "Cargo.lock" "yarn.lock" "webpack.config.js"
+                  "Gemfile" ".ruby-version" "composer.json" ".env"
+                  "README.md" "README.txt" "README.org" ".eslint.js"
+                  "tsconfig.json" ".babelrc" ".prettierrc"
+                  "CMakeLists.txt" ".project" "hugo.toml"))
     (add-to-list 'projectile-project-root-files file)
     (add-to-list 'projectile-project-root-files-bottom-up file))
   (defun projectile--find-file-or-dir (invalidate-cache)
@@ -1100,13 +1108,16 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package svelte-mode :straight t :ensure t :mode "\\.svelte\\'")
 
+;; sets indentation variables
 (use-package dtrt-indent :straight t :ensure t :defer nil
   :config
-  (require 'dtrt-indent)
+  ;; (require 'dtrt-indent)
   (dtrt-indent-global-mode +1)
   ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
   (dolist (fn '(lsp-format-buffer
                 lsp-format-region
+                eglot-format-buffer
+                elgot-format-region
                 indent-region
                 tabify
                 untabify))
@@ -1446,7 +1457,7 @@ ask user for an additional input."
    (magit-section-mode . topsy-mode)))
 
 ;; jump to definition without ctags in many supported languages
-(use-package dumb-jump :straight t
+(use-package dumb-jump :straight t :ensure t
   :init
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
@@ -1492,7 +1503,7 @@ ask user for an additional input."
   :init
   (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
 
-;; ;; start using this after upgrading from emacs 29 to 30:
+;; ;; start using this after upgrading from emacs 29 to 30 as elisp-demos alternative:
 ;; (use-package help-fns :ensure nil
 ;;   :hook
 ;;   (help-fns-describe-function-functions . shortdoc-help-fns-examples-function))
