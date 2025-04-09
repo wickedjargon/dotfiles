@@ -2833,8 +2833,9 @@ return nil."
            parse-status (ocen--expr-attribute-pos curly-pos (nth 1 context)) col)
         col))))
 
-;; this is the function that was causing the problem.
-;; diff with js.el version to determine the changes
+;; this is the function that was causing the problem where the dot
+;; operator (implicit `this') causes an indentation issues diff with
+;; js.el version to determine the changes
 (defun ocen--proper-indentation (parse-status)
   "Return the proper indentation for the current line."
   (save-excursion
@@ -2862,9 +2863,9 @@ return nil."
           ((ocen--chained-expression-p))
           ((ocen--ctrl-statement-indentation))
           ((nth 1 parse-status)
-	   ;; A single closing paren/bracket should be indented at the
-	   ;; same level as the opening statement. Same goes for
-	   ;; "case" and "default".
+	       ;; A single closing paren/bracket should be indented at the
+	       ;; same level as the opening statement. Same goes for
+	       ;; "case" and "default".
            (let ((same-indent-p (looking-at "[]})]"))
                  (switch-keyword-p (looking-at "default\\_>\\|case\\_>[^:]"))
                  (continued-expr-p (ocen--continued-expression-p)))

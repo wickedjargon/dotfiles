@@ -1,6 +1,16 @@
 ;; explore these packages:
 ;; auctex, org
 ;; writing studio (https://leanpub.com/emacswritingstudio)
+;; dired-kill-when-opening-new-dired-buffer
+
+;; TODO: start using email in emacs
+;; emacs mail clients:
+;; - Rmail
+;; - MH-E
+;; - Gnus
+;; - Mu4e
+;; - Wanderlust
+;; - Notmuch
 
 ;; TODO: implement my own method for customizing packages
 ;; either via github forking or mantaining
@@ -129,21 +139,41 @@
   (global-unset-key (kbd "M-:"))
   (global-unset-key (kbd "C-x g"))
   (global-unset-key (kbd "C-x M-g"))
+  (global-unset-key (kbd "M-q"))
+  (global-unset-key (kbd "M-g i"))
+  (global-unset-key (kbd "C-M-x"))
+  (global-unset-key (kbd "C-M-t"))
+  (global-unset-key (kbd "M-,"))
+  (global-unset-key (kbd "C-M-,"))
+  (global-unset-key (kbd "M-c"))
+  (global-unset-key (kbd "M-i"))
+  (global-unset-key (kbd "M-g M-g"))
+  (global-unset-key (kbd "C-M-<down>"))
+  (global-unset-key (kbd "M-g c"))
+  (global-unset-key (kbd "M-d"))
+  (global-unset-key (kbd "C-M-_"))
+  (global-unset-key (kbd "C-M-k"))
+  (global-unset-key (kbd "M-g M-n"))
+  (setq hs-minor-mode-map (make-sparse-keymap))
+  (setq yas-minor-mode-map (make-sparse-keymap))
+  (setq erc-track-minor-mode-map (make-sparse-keymap))
+  (setq emacs-lisp-mode-map (make-sparse-keymap))
+  (setq lisp-interaction-mode-map (make-sparse-keymap))
 
-  (with-eval-after-load 'hideshow
-    (setq hs-minor-mode-map (make-sparse-keymap)))
+  ;; (with-eval-after-load 'hideshow
+  ;;   (setq hs-minor-mode-map (make-sparse-keymap)))
 
-  (with-eval-after-load 'yasnippet
-    (setq yas-minor-mode-map (make-sparse-keymap)))
+  ;; (with-eval-after-load 'yasnippet
+  ;;   (setq yas-minor-mode-map (make-sparse-keymap)))
 
-  (with-eval-after-load 'erc-track
-    (setq erc-track-minor-mode-map (make-sparse-keymap)))
+  ;; (with-eval-after-load 'erc-track
+  ;;   (setq erc-track-minor-mode-map (make-sparse-keymap)))
 
-  (with-eval-after-load 'emacs-lisp-mode
-    (setq emacs-lisp-mode-map (make-sparse-keymap)))
+  ;; (with-eval-after-load 'emacs-lisp-mode
+  ;;   (setq emacs-lisp-mode-map (make-sparse-keymap)))
 
-  (with-eval-after-load 'lisp-interaction-mode
-    (setq lisp-interaction-mode-map (make-sparse-keymap)))
+  ;; (with-eval-after-load 'lisp-interaction-mode
+  ;;   (setq lisp-interaction-mode-map (make-sparse-keymap)))
 
   ;; adding a few back that I actually might use:
   (global-set-key (kbd "C-x o") 'other-window)
@@ -227,9 +257,9 @@
   (setq initial-major-mode 'fundamental-mode)              ;; I prefer this as the mode for scratch buffers
   (setq require-final-newline nil)                         ;; don't add a new line to the bottom of the file
 
-  ;; launch new buffers in current window
-  (setq display-buffer-alist
-        '((".*" . (display-buffer-same-window))))
+  ;; ;; launch new buffers in current window
+  ;; (setq display-buffer-alist
+  ;;       '((".*" . (display-buffer-same-window))))
 
   ;; prevent active process when closing a shell like vterm or eshell:
   (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
@@ -502,7 +532,6 @@
     (setq evil-search-wrap nil)
     (setq evil-kill-on-visual-paste nil)
     (evil-mode +1)
-    (global-visual-line-mode +1)
 
     (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
@@ -785,7 +814,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :hook (dired-mode . auto-revert-mode)  ;; revert dired buffers, but not buffer list buffers
   :custom
   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
-  (dired-kill-when-opening-new-dired-buffer t)               ;; Close the previous buffer when opening a new `dired' instance.
+  (dired-kill-when-opening-new-dired-buffer nil)               ;; Close the previous buffer when opening a new `dired' instance.
   :config
   (add-hook 'dired-mode-hook
             (lambda ()
@@ -1125,6 +1154,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                             (when (called-interactively-p 'any)
                               (dtrt-indent-try-set-offset))))))
 
+;; rss reader
 (use-package elfeed :straight t :ensure t
   :init
   (setq elfeed-feeds
@@ -1408,6 +1438,8 @@ ask user for an additional input."
   (add-to-list 'pulsar-pulse-functions 'evil-scroll-up)
   (add-to-list 'pulsar-pulse-functions 'flymake-goto-next-error)
   (add-to-list 'pulsar-pulse-functions 'flymake-goto-prev-error)
+  (add-to-list 'pulsar-pulse-functions 'next-error)
+  (add-to-list 'pulsar-pulse-functions 'previous-error)
   (add-to-list 'pulsar-pulse-functions 'evil-yank)
   (add-to-list 'pulsar-pulse-functions 'evil-yank-line)
   (add-to-list 'pulsar-pulse-functions 'evil-delete)
