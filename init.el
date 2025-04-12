@@ -577,6 +577,15 @@
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
     (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)
 
+    ;; this fixes a bug that only occurs in terminal mode related to
+    ;; the escape key
+    (when (not window-system) ; Check if running in terminal
+      (define-key key-translation-map (kbd "ESC <escape>") (kbd "ESC"))
+      ;; Bind ESC in insert state to evil-normal-state
+      (evil-define-key 'insert global-map (kbd "ESC") 'evil-normal-state)
+      ;; Bind ESC in normal state to evil-force-normal-state
+      (evil-define-key 'normal global-map (kbd "ESC") 'evil-force-normal-state))
+
     (evil-define-operator my-evil-yank-to-eol (beg end type register)
       "Yank from point to the end of the line into the kill-ring."
       :move-point nil
@@ -1466,10 +1475,19 @@ ask user for an additional input."
 ;; irc client
 (use-package erc :ensure nil :defer t
   :custom
-  (erc-join-buffer 'window)                                         ;; Open a new window for joining channels.
+  (erc-join-buffer 'window) ;; Open a new window for joining channels.
   (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
-  (erc-timestamp-format "[%H:%M]")                                  ;; Format for timestamps in messages.
-  (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs")))) ;; Automatically join the #emacs channel on Libera.Chat.
+  (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs")))  ;; Automatically join the #emacs channel on Libera.Chat.
+  ;; (erc-timestamp-format nil) ;; No time stamp.
+  (erc-hide-timestamps t)
+  ;; wont need all this:
+  ;; (erc-away-timestamp-format nil)
+  ;; (erc-echo-timestamps nil)
+  ;; (erc-timestamp-format-left nil)
+  ;; (erc-timestamp-format-right nil)
+  ;; (erc-timestamp-right-column nil)
+  ;; (erc-timestamp-use-align-to nil)
+  )
 
 (use-package markdown-mode
   :ensure nil
