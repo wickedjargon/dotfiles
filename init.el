@@ -160,20 +160,20 @@
   (setq emacs-lisp-mode-map (make-sparse-keymap))
   (setq lisp-interaction-mode-map (make-sparse-keymap))
 
-  ;; (with-eval-after-load 'hideshow
-  ;;   (setq hs-minor-mode-map (make-sparse-keymap)))
+  (with-eval-after-load 'hideshow
+    (setq hs-minor-mode-map (make-sparse-keymap)))
 
-  ;; (with-eval-after-load 'yasnippet
-  ;;   (setq yas-minor-mode-map (make-sparse-keymap)))
+  (with-eval-after-load 'yasnippet
+    (setq yas-minor-mode-map (make-sparse-keymap)))
 
-  ;; (with-eval-after-load 'erc-track
-  ;;   (setq erc-track-minor-mode-map (make-sparse-keymap)))
+  (with-eval-after-load 'erc-track
+    (setq erc-track-minor-mode-map (make-sparse-keymap)))
 
-  ;; (with-eval-after-load 'emacs-lisp-mode
-  ;;   (setq emacs-lisp-mode-map (make-sparse-keymap)))
+  (with-eval-after-load 'emacs-lisp-mode
+    (setq emacs-lisp-mode-map (make-sparse-keymap)))
 
-  ;; (with-eval-after-load 'lisp-interaction-mode
-  ;;   (setq lisp-interaction-mode-map (make-sparse-keymap)))
+  (with-eval-after-load 'lisp-interaction-mode
+    (setq lisp-interaction-mode-map (make-sparse-keymap)))
 
   ;; adding a few back that I actually might use:
   (global-set-key (kbd "C-x o") 'other-window)
