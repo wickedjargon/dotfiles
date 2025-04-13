@@ -1112,8 +1112,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package deadgrep :straight t :ensure t)
 
-(use-package aggressive-indent :straight t :ensure t)
-
 (use-package exec-path-from-shell :straight t :ensure t
   :config
   ;; only initialize this package when on unix-like system:
