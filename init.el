@@ -1585,13 +1585,16 @@ ask user for an additional input."
 (use-package aggressive-indent
   :straight t
   :ensure t
+  :hook
+  (prog-mode . my-conditional-aggressive-indent)
   :config
-  (add-hook 'prog-mode-hook 'aggressive-indent-mode))
+  (defun my-conditional-aggressive-indent ()
+    "Enable `aggressive-indent-mode` except in Python modes."
+    (unless (derived-mode-p 'python-mode 'python-ts-mode)
+      (aggressive-indent-mode 1))))
 
 (use-package eglot
-  :defer
   :hook
-  (python-mode . eglot-ensure)
   (markdown-mode . eglot-ensure)
   :config
   (add-to-list 'eglot-server-programs
