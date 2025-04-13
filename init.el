@@ -1586,12 +1586,10 @@ ask user for an additional input."
   :straight t
   :ensure t
   :hook
-  (prog-mode . my-conditional-aggressive-indent)
-  :config
-  (defun my-conditional-aggressive-indent ()
-    "Enable `aggressive-indent-mode` except in Python modes."
-    (unless (derived-mode-p 'python-mode 'python-ts-mode)
-      (aggressive-indent-mode 1))))
+  (prog-mode . (lambda ()
+                 "Enable `aggressive-indent-mode` except in Python modes."
+                 (unless (derived-mode-p 'python-mode 'python-ts-mode)
+                   (aggressive-indent-mode 1)))))
 
 (use-package eglot
   :hook
