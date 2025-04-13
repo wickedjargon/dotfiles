@@ -577,15 +577,7 @@
     (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
     (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)
 
-    ;; this fixes a bug that only occurs in terminal mode related to
-    ;; the escape key
-    (when (not window-system) ; Check if running in terminal
-      (define-key key-translation-map (kbd "ESC <escape>") (kbd "ESC"))
-      ;; Bind ESC in insert state to evil-normal-state
-      (evil-define-key 'insert global-map (kbd "ESC") 'evil-normal-state)
-      ;; Bind ESC in normal state to evil-force-normal-state
-      (evil-define-key 'normal global-map (kbd "ESC") 'evil-force-normal-state))
-
+    ;; a new definition for Y that is consistant with K
     (evil-define-operator my-evil-yank-to-eol (beg end type register)
       "Yank from point to the end of the line into the kill-ring."
       :move-point nil
