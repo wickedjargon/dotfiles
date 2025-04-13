@@ -531,7 +531,7 @@
     (setq evil-want-fine-undo t)
     (setq evil-search-wrap nil)
     (setq evil-kill-on-visual-paste nil)
-    (evil-mode +1)
+    (evil-mode +2)
 
     (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
