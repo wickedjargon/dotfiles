@@ -1,3 +1,5 @@
+;; works with emacs version 29
+
 ;; explore these packages:
 ;; auctex, org
 ;; writing studio (https://leanpub.com/emacswritingstudio)
