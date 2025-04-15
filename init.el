@@ -1472,16 +1472,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (erc-join-buffer 'window) ;; Open a new window for joining channels.
   (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
   (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs")))  ;; Automatically join the #emacs channel on Libera.Chat.
-  ;; (erc-timestamp-format nil) ;; No time stamp.
-  (erc-hide-timestamps t)
-  ;; wont need all this:
-  ;; (erc-away-timestamp-format nil)
-  ;; (erc-echo-timestamps nil)
-  ;; (erc-timestamp-format-left nil)
-  ;; (erc-timestamp-format-right nil)
-  ;; (erc-timestamp-right-column nil)
-  ;; (erc-timestamp-use-align-to nil)
-  )
+  (erc-hide-timestamps t))
 
 (use-package markdown-mode
   :ensure nil
