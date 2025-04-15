@@ -1230,7 +1230,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (cl-defun read-aloud--current-word()
     "Pronounce a word under the pointer. If under there is rubbish,
-ask user for an additional input."
+          ask user for an additional input."
     (let* ((cw (read-aloud--u-current-word))
            (word (nth 2 cw)))
 
