@@ -1552,7 +1552,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :mode (("\\.html?\\'" . web-mode)
          ("\\.jinja\\'" . web-mode)
          ("\\.hugo\\'" . web-mode))
-  :hook (web-mode . (lambda () (electric-pair-mode -1)))
+  :hook (web-mode . (lambda () (electric-pair-local-mode -1)))
   :config
   (setq web-mode-engines-alist
         '(("django" . "\\.html\\'")
