@@ -1580,7 +1580,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :ensure t
   :hook
   (prog-mode . (lambda ()
-                 "Enable `aggressive-indent-mode` except in Python modes."
+                 "Enable `aggressive-indent-mode` except in Python modes." ;; because python doesn't have curly braces
                  (unless (derived-mode-p 'python-mode 'python-ts-mode)
                    (aggressive-indent-mode 1)))))
 
