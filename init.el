@@ -1173,6 +1173,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
           "https://www.youtube.com/feeds/videos.xml?channel_id=UC1tV5SjRyejRGeHAaMGYSsQ" ;; Joshua Blais YT
           "https://joshblais.com/index.xml"                                              ;; Joshua Blais blog
           "https://eshelyaron.com/rss.xml"                                               ;; Eshel Yaron blog
+          "https://coredumped.dev/index.xml"                                             ;; Core Dumped
           )))
 
 (use-package eww :ensure nil
