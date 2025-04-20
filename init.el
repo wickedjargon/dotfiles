@@ -1140,10 +1140,10 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package deadgrep :straight t :ensure t)
 
 (use-package exec-path-from-shell :straight t :ensure t
+  :if (memq system-type '(darwin gnu/linux))
+  :ensure t
   :config
-  ;; only initialize this package when on unix-like system:
-  (when (memq window-system '(mac ns x))
-    (exec-path-from-shell-initialize)))
+  (exec-path-from-shell-initialize))
 
 (use-package wgrep :straight t :ensure t :defer t)
 
