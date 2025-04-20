@@ -156,6 +156,32 @@
   (global-unset-key (kbd "C-M-_"))
   (global-unset-key (kbd "C-M-k"))
   (global-unset-key (kbd "M-g M-n"))
+  (global-unset-key (kbd "C-M-SPC"))
+  (global-unset-key (kbd "C-x C-a C-w"))
+  (global-unset-key (kbd "C-M-%"))
+  (global-unset-key (kbd "M-s w"))
+  (global-unset-key (kbd "C-l"))
+  (global-unset-key (kbd "M-<"))
+  (global-unset-key (kbd "M->"))
+  (global-unset-key (kbd "C-c M-g"))
+  (global-unset-key (kbd "M-m"))
+  (global-unset-key (kbd "C-M-c"))
+  (global-unset-key (kbd "C-M-v"))
+  (global-unset-key (kbd "M-v"))
+  (global-unset-key (kbd "M-s h u"))
+  (global-unset-key (kbd "M-^"))
+  (global-unset-key (kbd "M-="))
+  (global-unset-key (kbd "M-("))
+  (global-unset-key (kbd "M-{"))
+  (global-unset-key (kbd "M-'"))
+  (global-unset-key (kbd "C-M-/"))
+  (global-unset-key (kbd "C-M-a"))
+  (global-unset-key (kbd "M-}"))
+  (global-unset-key (kbd "C-M-l"))
+  (global-unset-key (kbd "C-M-."))
+  (global-unset-key (kbd "M-e"))
+  (global-unset-key (kbd "M-<f10>"))
+
   (setq hs-minor-mode-map (make-sparse-keymap))
   (setq yas-minor-mode-map (make-sparse-keymap))
   (setq erc-track-minor-mode-map (make-sparse-keymap))
@@ -601,8 +627,7 @@
 
     ;; instead of `vi(' or `di[' use  `vib' or `dib' instead
     (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
-    (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block))
-  )
+    (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)))
 
 (use-package yt-dlp-mode :ensure nil
   :init
@@ -1352,7 +1377,13 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                           (set (make-local-variable 'compile-command)
                                (format "javac %s && java %s"
                                        (file-name-nondirectory buffer-file-name)
-                                       (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))))
+                                       (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+  :hook (go-mode . (lambda ()
+                     (set (make-local-variable 'compile-command)
+                          (format "go build %s" (file-name-nondirectory buffer-file-name)))))
+  :hook (go-ts-mode . (lambda ()
+                        (set (make-local-variable 'compile-command)
+                             (format "go build %s" (file-name-nondirectory buffer-file-name))))))
 
 (use-package rust-mode :straight t :ensure t)
 
