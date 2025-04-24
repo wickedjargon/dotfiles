@@ -5,6 +5,10 @@
 ;; writing studio (https://leanpub.com/emacswritingstudio)
 ;; dired-kill-when-opening-new-dired-buffer
 
+;; Common commands for Prot's Emacs
+;; prot-simple.el
+;; https://protesilaos.com/emacs/dotemacs#h:5f78e837-0d27-4390-bd9a-6d0bca57fa50
+
 ;; TODO: start using email in emacs
 ;; emacs mail clients:
 ;; - Rmail
