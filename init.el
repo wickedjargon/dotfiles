@@ -5,6 +5,12 @@
 ;; writing studio (https://leanpub.com/emacswritingstudio)
 ;; dired-kill-when-opening-new-dired-buffer
 
+;; a few emacs kick starters:
+;; emacs-kick       https://github.com/LionyxML/emacs-kick
+;; Lionyxemacs-kick https://github.com/LionyxML/emacs-kick
+;; kickstart.emacs  https://github.com/MiniApollo/kickstart.emacs
+;; venom-emacs      https://gitlab.com/dvrbs/venom-emacs
+
 ;; Common commands for Prot's Emacs
 ;; prot-simple.el
 ;; https://protesilaos.com/emacs/dotemacs#h:5f78e837-0d27-4390-bd9a-6d0bca57fa50
