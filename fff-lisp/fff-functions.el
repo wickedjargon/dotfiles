@@ -556,17 +556,6 @@ in whole buffer.  With neither, delete comments on current line."
         (evil-insert-state 1))
     (evil-open-above 1)))
 
-(defun fff-toggle-theme ()
-  "Toggle between the 'plain' and 'dark' themes."
-  (interactive)
-  (if (eq (car custom-enabled-themes) 'plain)
-      (progn
-        (disable-theme 'plain)
-        (load-theme 'dark t))
-    (progn
-      (disable-theme 'dark)
-      (load-theme 'plain t))))
-
 (defun fff-down-list-back ()
   (interactive)
   (down-list -1)
