@@ -1662,3 +1662,9 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :custom
   (eglot-autoshutdown t) ;; default is to leave servers runing when last buffer exits
   (eglot-extend-to-xref nil)) ;; cover files found through xref (M-.)
+
+(use-package pet
+  :ensure t
+  :straight t
+  :config
+  (add-hook 'python-base-mode-hook 'pet-mode -10))
