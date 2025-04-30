@@ -1405,17 +1405,25 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 
 (defun fff-toggle-light-dark-theme ()
   "Toggle between light and dark themes.
-   The themes should be named themename-light and themename-dark."
+   The themes should be named themename-light and themename-dark,
+   or they should be named with specific patterns like modus-vivendi/modus-operandi."
   (interactive)
   (let ((current-theme (car custom-enabled-themes)))
     (if (and current-theme
-             (string-match "\\(.*\\)-\\(light\\|dark\\)" (symbol-name current-theme)))
-        (let* ((theme-base (match-string 1 (symbol-name current-theme)))
-               (theme-target (concat theme-base "-"
-                                     (if (string= (match-string 2 (symbol-name current-theme)) "light")
-                                         "dark"
-                                       "light"))))
-          (load-theme (intern theme-target) t)
+             (or (string-match "\\(.*\\)-\\(light\\|dark\\)" (symbol-name current-theme))
+                 (member current-theme '(modus-vivendi modus-operandi))))
+        (let* ((theme-target
+                (cond
+                 ;; Handle vexed naming schemes
+                 ((eq current-theme 'modus-vivendi) 'modus-operandi)
+                 ((eq current-theme 'modus-operandi) 'modus-vivendi)
+                 ;; Handle regular -light/-dark pattern
+                 (t (let ((theme-base (match-string 1 (symbol-name current-theme))))
+                      (intern (concat theme-base "-"
+                                      (if (string= (match-string 2 (symbol-name current-theme)) "light")
+                                          "dark"
+                                        "light"))))))))
+          (load-theme theme-target t)
           (disable-theme current-theme))
       (message "No active theme or theme name does not match the expected pattern."))))
 
