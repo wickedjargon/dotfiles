@@ -60,4 +60,19 @@
                          (read-only-mode 1)
                          (display-buffer buf)))))))))
 
+
+(defun play-audio-url-with-mpv (url)
+  "Play only the audio from the given URL with mpv, using no video."
+  (interactive "sEnter URL: ")
+  (let ((socket (format "/tmp/mpv-socket-%d" (emacs-pid))))
+    (start-process "mpv-process" nil "mpv" "--no-video" "--input-ipc-server" socket url)))
+
+(defun mpv-pause-resume ()
+  "Toggle pause/resume on the mpv process."
+  (interactive)
+  (let ((socket (format "/tmp/mpv-socket-%d" (emacs-pid))))
+    (when (file-exists-p socket)
+      (with-temp-buffer
+        (call-process "echo" nil (current-buffer) nil "cycle pause" "| socat - " socket)))))
+
 (provide 'yt-dlp-mode)
