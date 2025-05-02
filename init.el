@@ -1322,21 +1322,25 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                     (set (make-local-variable 'compile-command)
                          (format "gcc %s -o %s && ./%s"
                                  (file-name-nondirectory buffer-file-name)
+                                 (file-name-sans-extension (file-name-nondirectory buffer-file-name))
                                  (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (cc-mode . (lambda ()
                      (set (make-local-variable 'compile-command)
                           (format "gcc %s -o %s && ./%s"
                                   (file-name-nondirectory buffer-file-name)
+                                  (file-name-sans-extension (file-name-nondirectory buffer-file-name))
                                   (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (c-ts-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
                             (format "gcc %s -o %s && ./%s"
                                     (file-name-nondirectory buffer-file-name)
+                                    (file-name-sans-extension (file-name-nondirectory buffer-file-name))
                                     (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (cc-ts-mode . (lambda ()
                         (set (make-local-variable 'compile-command)
                              (format "gcc %s -o %s && ./%s"
                                      (file-name-nondirectory buffer-file-name)
+                                     (file-name-sans-extension (file-name-nondirectory buffer-file-name))
                                      (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
   :hook (rust-mode . (lambda ()
                        (set (make-local-variable 'compile-command)
