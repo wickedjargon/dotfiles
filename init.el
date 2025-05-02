@@ -1680,3 +1680,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :straight t
   :config
   (add-hook 'python-base-mode-hook 'pet-mode -10))
+
+(use-package racket-mode
+  :ensure t
+  :straight t
+  :mode "\\.rkt\\'")
