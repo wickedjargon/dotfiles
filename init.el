@@ -1663,10 +1663,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :straight t
   :ensure t
   :hook
-  (prog-mode . (lambda ()
-                 "Enable `aggressive-indent-mode` except in Python modes." ;; because python doesn't have curly braces
-                 (unless (derived-mode-p 'python-mode 'python-ts-mode)
-                   (aggressive-indent-mode 1)))))
+  ((emacs-lisp-mode lisp-mode lisp-interaction-mode) . aggressive-indent-mode))
 
 (use-package eglot
   :hook
