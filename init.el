@@ -1432,7 +1432,10 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                             (format "perl %s" (file-name-nondirectory buffer-file-name)))))
   :hook (swift-mode . (lambda ()
                         (set (make-local-variable 'compile-command)
-                             (format "swift %s" (file-name-nondirectory buffer-file-name))))))
+                             (format "swift %s" (file-name-nondirectory buffer-file-name)))))
+  :hook (racket-mode . (lambda ()
+                         (set (make-local-variable 'compile-command)
+                              (format "racket %s" (file-name-nondirectory buffer-file-name))))))
 
 (use-package rust-mode :straight t :ensure t)
 
