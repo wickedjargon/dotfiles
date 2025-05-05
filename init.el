@@ -1415,8 +1415,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :hook (go-ts-mode . (lambda ()
                         (set (make-local-variable 'compile-command)
                              (format "go build %s" (file-name-nondirectory buffer-file-name)))))
-
-
   :hook (typescript-mode . (lambda ()
                              (set (make-local-variable 'compile-command)
                                   (format "tsc %s && node %s.js"
