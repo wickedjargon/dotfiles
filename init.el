@@ -835,7 +835,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
     (interactive "P")
     (projectile--find-file-or-dir invalidate-cache))
   :init
-  (setq projectile-ignored-projects '("~/"))
+  (setq projectile-ignored-projects '("/home/ff"))
   (defun fff-ignore-home-directory (dir)
     "Ignore the home directory as a project root."
     (let ((home (expand-file-name "~/")))
