@@ -1480,3 +1480,24 @@ The DWIM behaviour of this command is as follows:
          (selected-function (completing-read "Select an Easy Hugo function: " functions-list nil t)))
     (when selected-function
       (call-interactively (intern selected-function)))))
+
+(defun fff-load-theme (theme)
+  "Disable active themes and load the specified THEME."
+  (interactive
+   (list (intern (completing-read "Load custom theme: "
+                                  (mapcar #'symbol-name (custom-available-themes))))))
+  (mapc #'disable-theme custom-enabled-themes)
+  (load-theme theme t))
+
+(defun fff-menu-functions ()
+  "Select and run a function with a name starting with 'fff-'."
+  (interactive)
+  (let (fff-functions)
+    (mapatoms (lambda (sym)
+                (when (and (fboundp sym)
+                           (string-prefix-p "fff-" (symbol-name sym)))
+                  (push (symbol-name sym) fff-functions)))
+              obarray)
+    (let ((selected-function (completing-read "Select a function: " fff-functions nil t)))
+      (when selected-function
+        (call-interactively (intern selected-function))))))
