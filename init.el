@@ -1566,9 +1566,21 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 ;; irc client
 (use-package erc :ensure nil :defer t
   :custom
-  (erc-join-buffer 'window) ;; Open a new window for joining channels.
+  (erc-join-buffer 'window) ;; Open a new window when joining channels.
   (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
-  (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs")))  ;; Automatically join the #emacs channel on Libera.Chat.
+  (erc-autojoin-channels-alist
+   '((".*\\.libera\\.chat"
+      "#emacs"
+      "#python"
+      "#javascript"
+      "#rust"
+      "#c"
+      "#haskell"
+      "#go-nuts"
+      "#linux"
+      "#archlinux"
+      "#debian"
+      "#latex")))
   (erc-hide-timestamps t))
 
 (use-package markdown-mode
