@@ -77,12 +77,6 @@
   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
-  (add-hook 'comint-mode-hook (lambda ()
-                                (define-key comint-mode-map (kbd "C-p") 'comint-previous-input)
-                                (define-key comint-mode-map (kbd "C-n") 'comint-next-input)))
-  (add-hook 'inferior-lisp-mode-hook (lambda ()
-                                       (define-key inferior-lisp-mode-map (kbd "C-p") 'comint-previous-input)
-                                       (define-key inferior-lisp-mode-map (kbd "C-n") 'comint-next-input)))
   (add-hook 'prog-mode-hook 'visual-line-mode)
 
   ;; make elpa and straight files read-only
