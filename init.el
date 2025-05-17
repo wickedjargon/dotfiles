@@ -1595,6 +1595,10 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
       "#latex")))
   (erc-hide-timestamps t))
 
+(use-package consult-erc
+  :ensure t
+  :straight (consult-erc :type git :host codeberg :repo "mekeor/consult-erc"))
+
 (use-package markdown-mode
   :ensure nil
   :hook (markdown-mode . visual-line-mode)
