@@ -477,6 +477,7 @@
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f B" 'fff-access-books)
     (evil-leader/set-key "f h" 'fff-access-hosts)
+    (evil-leader/set-key "f n" 'fff-access-notes)
 
     ;; full screen
     (evil-leader/set-key "f s" 'toggle-frame-fullscreen)
