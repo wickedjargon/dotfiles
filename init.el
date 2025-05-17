@@ -1,4 +1,4 @@
-;; works with emacs version 29
+;; works with emacs version 30.1
 
 ;; explore these packages:
 ;; auctex, org
