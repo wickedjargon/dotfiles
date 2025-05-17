@@ -126,6 +126,10 @@
   (interactive)
   (find-file "~/d/notes/personal-notes.md"))
 
+(defun fff-access-notes ()
+  (interactive)
+  (find-file "~/d/notes/exercise_routine.md"))
+
 (defun fff-access-functions-file ()
   (interactive)
   (find-file (expand-file-name "fff-functions.el" user-emacs-directory)))
