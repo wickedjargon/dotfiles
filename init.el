@@ -1203,19 +1203,29 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package elfeed :straight t :ensure t
   :init
   (setq elfeed-feeds
-        '("https://www.youtube.com/feeds/videos.xml?channel_id=UCrqM0Ym_NbK1fqeQG2VIohg" ;; Tsoding Daily
+        '(
+          ;; tech:
           "https://protesilaos.com/codelog.xml"                                          ;; prot code blogs
-          "https://www.youtube.com/feeds/videos.xml?channel_id=UC2eYFnH61tmytImy1mTYvhA" ;; Luke Smith yt
-          "https://lukesmith.xyz/index.xml"                                              ;; Luke Smith site
-          "https://www.youtube.com/feeds/videos.xml?channel_id=UC6biysICWOJ-C3P4Tyeggzg" ;; Low level programming
           "https://bergsoe.net/rss.xml"                                                  ;; Fatty's blog
           "https://lyte.dev/blog/index.xml"                                              ;; Daniel's blog
           "https://planet.emacslife.com/atom.xml"                                        ;; emacslife
           "https://sachachua.com/blog/feed/index.xml"                                    ;; sacha chua
-          "https://www.youtube.com/feeds/videos.xml?channel_id=UC1tV5SjRyejRGeHAaMGYSsQ" ;; Joshua Blais YT
           "https://joshblais.com/index.xml"                                              ;; Joshua Blais blog
           "https://eshelyaron.com/rss.xml"                                               ;; Eshel Yaron blog
           "https://coredumped.dev/index.xml"                                             ;; Core Dumped
+
+          ;; youtube non tech:
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UC2eYFnH61tmytImy1mTYvhA" ;; Luke Smith yt
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UCa-txVhLu0DzTA1DhmBYw-A" ;; Fleccas yt
+
+
+          ;; tech youtube:
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UC1tV5SjRyejRGeHAaMGYSsQ" ;; Joshua Blais YT
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UC6biysICWOJ-C3P4Tyeggzg" ;; Low level programming
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UCrqM0Ym_NbK1fqeQG2VIohg" ;; Tsoding Daily
+
+          ;; non tech
+          "https://lukesmith.xyz/index.xml"                                              ;; Luke Smith site
           )))
 
 (use-package eww :ensure nil
