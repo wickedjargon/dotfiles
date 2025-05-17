@@ -1581,6 +1581,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
   (erc-autojoin-channels-alist
    '((".*\\.libera\\.chat"
+      "#programming"
       "#emacs"
       "#python"
       "#javascript"
