@@ -1505,3 +1505,9 @@ The DWIM behaviour of this command is as follows:
     (let ((selected-function (completing-read "Select a function: " fff-functions nil t)))
       (when selected-function
         (call-interactively (intern selected-function))))))
+
+(defun fff-remove-dos-eol ()
+  "Do not show ^M in files containing mixed UNIX and DOS line endings."
+  (interactive)
+  (setq buffer-display-table (make-display-table))
+  (aset buffer-display-table ?\^M []))
