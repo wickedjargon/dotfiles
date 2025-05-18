@@ -1720,3 +1720,11 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :ensure t
   :straight t
   :mode "\\.rkt\\'")
+
+(use-package yeetube
+  :straight t
+  :ensure t
+  :config
+  (setf yeetube-mpv-disable-video t)
+  ;; Set RET in normal state when in yeetube-mode
+  (evil-define-key 'normal yeetube-mode-map (kbd "RET") #'yeetube-play))
