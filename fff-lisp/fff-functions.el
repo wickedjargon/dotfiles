@@ -1511,3 +1511,17 @@ The DWIM behaviour of this command is as follows:
   (interactive)
   (setq buffer-display-table (make-display-table))
   (aset buffer-display-table ?\^M []))
+
+(defun fff-newsticker-treeview-quit ()
+  "Quit newsticker treeview."
+  (interactive)
+  (setq newsticker--sentinel-callback nil)
+  (kill-buffer "*Newsticker Tree*")
+  (kill-buffer "*Newsticker List*")
+  (kill-buffer "*Newsticker Item*")
+  (set-window-configuration newsticker--saved-window-config)
+  (when newsticker--frame
+    (if (frame-live-p newsticker--frame)
+        (delete-frame newsticker--frame))
+    (setq newsticker--frame nil))
+  (newsticker-treeview-save))
