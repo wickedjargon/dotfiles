@@ -623,8 +623,8 @@
     (define-key evil-normal-state-map (kbd "ZZ") 'fff-save-and-bury-buffer)
     (define-key evil-normal-state-map (kbd "ZQ") 'fff-revert-and-bury-buffer)
     (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
-    (define-key evil-normal-state-map (kbd "<left>") 'previous-buffer)
-    (define-key evil-normal-state-map (kbd "<right>") 'next-buffer)
+    (define-key evil-normal-state-map (kbd "<kp-left>") 'winner-undo)
+    (define-key evil-normal-state-map (kbd "<kp-right>") 'winner-redo)
     (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)
 
     ;; a new definition for Y that is consistant with K
