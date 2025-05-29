@@ -966,6 +966,18 @@ but only if the buffer is read-only."
         (delete-non-matching-lines regex))
     (message "This command only works in read-only buffers.")))
 
+(defun fff-filter-out-lines-with-regex-writable (regex)
+  "Remove lines in the current buffer that match REGEX,
+but only if the buffer is read-only."
+  (interactive "sEnter regex to filter out lines: ")
+  (let ((inhibit-read-only t))
+    (goto-char (point-min))
+    (while (re-search-forward regex nil t)
+      (beginning-of-line)
+      (let ((beg (point)))
+        (forward-line 1)
+        (delete-region beg (point))))))
+
 (defun fff-filter-out-lines-with-regex (regex)
   "Remove lines in the current buffer that match REGEX,
 but only if the buffer is read-only."
