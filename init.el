@@ -307,10 +307,6 @@
   (setq initial-major-mode 'fundamental-mode)              ;; I prefer this as the mode for scratch buffers
   (setq require-final-newline nil)                         ;; don't add a new line to the bottom of the file
 
-  ;; ;; launch new buffers in current window
-  ;; (setq display-buffer-alist
-  ;;       '((".*" . (display-buffer-same-window))))
-
   ;; prevent active process when closing a shell like vterm or eshell:
   (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
