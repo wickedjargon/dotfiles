@@ -1184,7 +1184,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 ;; sets indentation variables
 (use-package dtrt-indent :straight t :ensure t :defer nil
   :config
-  ;; (require 'dtrt-indent)
   (dtrt-indent-global-mode +1)
   ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
   (dolist (fn '(lsp-format-buffer
