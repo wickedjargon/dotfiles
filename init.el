@@ -751,11 +751,7 @@
 
   (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
     ( "h" previous-buffer)
-    ( "l" next-buffer))
-
-  (defhydra fff-winner (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-    ("u" winner-undo)
-    ("U" winner-redo)))
+    ( "l" next-buffer)))
 
 (use-package company :straight t :defer t :ensure t
   :init
