@@ -1537,3 +1537,15 @@ The DWIM behaviour of this command is as follows:
         (delete-frame newsticker--frame))
     (setq newsticker--frame nil))
   (newsticker-treeview-save))
+
+(defun fff-filter-out-lines-without-keybinding ()
+  "Remove lines in the current buffer that do not contain a keybinding in brackets."
+  (interactive)
+  (if buffer-read-only
+      (let ((inhibit-read-only t))
+        (goto-char (point-min))
+        (while (not (eobp))
+          (if (not (re-search-forward " \\([^(]*\\)([^)]+)" (line-end-position) t))
+              (delete-region (line-beginning-position) (line-end-position)))
+          (forward-line 1)))
+    (message "This command only works in read-only buffers.")))
