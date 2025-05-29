@@ -547,8 +547,7 @@
     (evil-leader/set-key "p p" 'project-find-file)
     (evil-leader/set-key "p P" 'projectile-find-file-or-dir)
 
-    ;; winner undo/redo and previous buffer
-    (evil-leader/set-key "u u" 'fff-winner/winner-undo)
+    ;; back to previous buffer commands
     (evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
 
     ;; tooltip hover
