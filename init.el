@@ -269,7 +269,9 @@
   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
   (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
-  (electric-pair-mode +1)                                  ;; automatically insert matching paren as well as auto indent on new line
+  (electric-pair-mode +1)                                 ;; automatically insert matching paren as well as auto indent on new line
+  (show-paren-mode -1)                                    ;; Disable show-paren-mode globally
+  (add-hook 'prog-mode-hook #'show-paren-local-mode)      ;; Enable show-paren-mode only in prog-mode
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
