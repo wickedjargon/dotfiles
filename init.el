@@ -1713,3 +1713,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setf yeetube-mpv-disable-video t)
   ;; Set RET in normal state when in yeetube-mode
   (evil-define-key 'normal yeetube-mode-map (kbd "RET") #'yeetube-play))
+
+(use-package casual
+  :straight (casual :type git :host github :repo "kickingvegas/casual"))
