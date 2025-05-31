@@ -1642,11 +1642,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :init
   (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
 
-;; ;; start using this after upgrading from emacs 29 to 30 as elisp-demos alternative:
-;; (use-package help-fns :ensure nil
-;;   :hook
-;;   (help-fns-describe-function-functions . shortdoc-help-fns-examples-function))
-
 (use-package realgud :straight t :defer t :ensure t)
 
 (use-package web-mode
