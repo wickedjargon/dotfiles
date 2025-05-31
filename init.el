@@ -1685,16 +1685,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :hook
   ((emacs-lisp-mode lisp-mode lisp-interaction-mode) . aggressive-indent-mode))
 
-(use-package eglot
-  :hook
-  (markdown-mode . eglot-ensure)
-  :config
-  (add-to-list 'eglot-server-programs
-               '(markdown-mode . ("harper-ls" "--stdio")))
-  :custom
-  (eglot-autoshutdown t) ;; default is to leave servers runing when last buffer exits
-  (eglot-extend-to-xref nil)) ;; cover files found through xref (M-.)
-
 (use-package pet
   :ensure t
   :straight t
