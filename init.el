@@ -101,6 +101,7 @@
   (global-unset-key (kbd "<f4>"))
   (global-unset-key (kbd "<f10>"))
   (global-unset-key (kbd "<f11>"))
+  (global-unset-key (kbd "<f16>"))
   (global-unset-key (kbd "C-x C-c"))
   (global-unset-key (kbd "C-h h"))
   (global-unset-key (kbd "C-h C-a"))
@@ -197,12 +198,18 @@
   (global-unset-key (kbd "M-<right>"))
   (global-unset-key (kbd "M-z"))
   (global-unset-key (kbd "M-~"))
+  (global-unset-key (kbd "C-<next>"))
+  (global-unset-key (kbd "C-<previous>"))
+  (global-unset-key (kbd "C-<delete>"))
+  (global-unset-key (kbd "M-<home>"))
+  (global-unset-key (kbd "M-s M-."))
 
   (setq hs-minor-mode-map (make-sparse-keymap))
   (setq yas-minor-mode-map (make-sparse-keymap))
   (setq erc-track-minor-mode-map (make-sparse-keymap))
   (setq emacs-lisp-mode-map (make-sparse-keymap))
   (setq lisp-interaction-mode-map (make-sparse-keymap))
+  (setq aggressive-indent-mode-map (make-sparse-keymap))
 
   (with-eval-after-load 'hideshow
     (setq hs-minor-mode-map (make-sparse-keymap)))
