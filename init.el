@@ -222,8 +222,8 @@
   ;; adding a few back that I actually might use:
   (global-set-key (kbd "C-x o") 'other-window)
   (global-set-key (kbd "C-x u") 'undo)
+  (global-set-key (kbd "C-y") 'yank)
   (global-set-key (kbd "C-x C-f") 'fff-find-file)
-
 
   (global-set-key (kbd "M-ESC M-ESC") 'keyboard-escape-quit)           ;; I have to remap to this instead
   (global-set-key (kbd "M-u") 'universal-argument)                     ;; C-u is bound to evil-scroll-up
