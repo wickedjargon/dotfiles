@@ -385,16 +385,6 @@
 
 (use-package standard-themes :straight t :ensure t)
 
-(use-package hippie-expand :ensure nil :defer t
-  :init
-  (setq hippie-expand-try-functions-list '(try-expand-dabbrev try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list  try-expand-line  try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
-
-(use-package Info :ensure nil :defer t
-  :init
-  (add-hook 'Info-mode-hook (lambda ()
-                              (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
-                              (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
-
 (use-package doom-modeline :ensure t :defer t :straight t
   :config
   (setq doom-modeline-hud t)
@@ -410,6 +400,16 @@
   (display-time)
   :init
   (doom-modeline-mode +1))
+
+(use-package hippie-expand :ensure nil :defer t
+  :init
+  (setq hippie-expand-try-functions-list '(try-expand-dabbrev try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list  try-expand-line  try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
+
+(use-package Info :ensure nil :defer t
+  :init
+  (add-hook 'Info-mode-hook (lambda ()
+                              (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
+                              (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
 
 (use-package yasnippet :straight t :ensure t
   :init
