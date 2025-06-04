@@ -76,7 +76,10 @@
   ;; (set-face-attribute 'default nil :height 150)
 
   ;; setting font height
-  (set-face-attribute 'default nil :height 135)
+
+  (if (string= (system-name) "x220")
+	  (set-face-attribute 'default nil :height 95)
+    (set-face-attribute 'default nil :height 135))
 
   ;; hooks
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
