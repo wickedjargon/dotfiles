@@ -1044,6 +1044,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package diminish :straight t :ensure t :defer t)
 
+;; audio / music payer
 (use-package emms :straight t :ensure t :defer t
   :diminish emms-mode-line
   :config
