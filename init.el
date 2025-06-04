@@ -1338,21 +1338,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (global-evil-mc-mode 1))
 
-(use-package copilot :defer t :ensure t
-  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
-  :init
-  (add-hook 'prog-mode-hook 'copilot-mode)
-  (setq copilot-idle-delay nil)
-  :config
-  (add-to-list 'warning-suppress-types '(copilot))
-  :bind
-  (:map copilot-completion-map
-        ("<tab>" . copilot-accept-completion)
-        ("C-k" . copilot-complete)
-        ("TAB" . copilot-accept-completion)
-        ("C-<tab>" . copilot-accept-completion-by-word)
-        ("C-TAB" . copilot-accept-completion-by-word)))
-
 (use-package csharp-mode :ensure nil
   :hook (csharp-mode . (lambda ()
                          (setq imenu-create-index-function
