@@ -1578,4 +1578,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (evil-define-key 'normal yeetube-mode-map (kbd "RET") #'yeetube-play))
 
 (use-package casual
-  :straight (casual :type git :host github :repo "kickingvegas/casual"))
+  :straight (casual :type git :host github :repo "kickingvegas/casual")
+  :config
+  (require 'casual-timezone))
