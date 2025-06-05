@@ -1500,7 +1500,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 ;; remove white space as you type
 (use-package ws-butler
-  :straight (ws-butler :type git :host github :repo "lewang/ws-butler")
+  :straight t
   :defer t
   :hook (prog-mode . ws-butler-mode))
 
