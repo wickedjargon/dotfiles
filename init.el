@@ -1086,9 +1086,19 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
    '((python .t)
      (haskell . t)
      (lisp . t)
+     (racket . t)
      (ruby . t)
      (C . t)
      (js . t))))
+
+(use-package ob-racket
+  :straight (ob-racket
+	         :type git :host github :repo "hasu/emacs-ob-racket"
+	         :files ("*.el" "*.rkt"))
+  :after org
+  :config
+  (add-hook 'ob-racket-pre-runtime-library-load-hook
+	        #'ob-racket-raco-make-runtime-library))
 
 (use-package magit :straight t :ensure t :defer t
   :init
