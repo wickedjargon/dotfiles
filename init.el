@@ -1158,7 +1158,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :interpreter
   ("scala" . scala-mode))
 
-(use-package tree-sitter :straight t :ensure t
+(use-package tree-sitter
+  :ensure nil
   :config
   (global-tree-sitter-mode)
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
