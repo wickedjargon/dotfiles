@@ -384,9 +384,9 @@
       (add-hook 'after-make-frame-functions
                 (lambda (frame)
                   (with-selected-frame frame
-                    (load-theme 'modus-vivendi t))))
+                    (load-theme 'ef-tritanopia-dark t))))
     ;; Otherwise, running Emacs normally, load modus-vivendi-tinted
-    (load-theme 'modus-vivendi t)))
+    (load-theme 'ef-tritanopia-dark t)))
 
 (use-package  doom-themes :straight t :ensure t :defer t)
 
