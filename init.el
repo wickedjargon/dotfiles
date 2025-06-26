@@ -1071,6 +1071,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (define-key vterm-mode-map (kbd "C-c c") 'vterm-clear))
 
 (use-package org :ensure nil :defer t
+  :hook (org-mode . visual-line-mode)
   :init
   (setq org-babel-default-header-args:python
         '((:results . "output")))
