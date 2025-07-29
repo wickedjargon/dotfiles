@@ -386,7 +386,7 @@
                   (with-selected-frame frame
                     (load-theme 'ef-tritanopia-dark t))))
     ;; Otherwise, running Emacs normally, load modus-vivendi-tinted
-    (load-theme 'ef-tritanopia-dark t)))
+    (load-theme 'modus-vivendi-tinted t)))
 
 (use-package  doom-themes :straight t :ensure t :defer t)
 
