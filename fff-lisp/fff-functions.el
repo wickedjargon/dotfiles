@@ -1124,8 +1124,8 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 
 (defun fff-maldev-academy-open-modules ()
   "Open a dired buffer with MalDev Academy modules sorted numerically, excluding directories."
-  (require 'seq)
   (interactive)
+  (require 'seq)
   (let* ((modules-dir "~/d/books/MalDev-Academy-2024/MalDev-Academy/MalDev Modules/")
          (files (directory-files-and-attributes modules-dir nil "^[0-9]+\\..*"))
          ;; Filter out directories
