@@ -1238,9 +1238,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (setq eww-search-prefix "https://wiby.me/?q="))
 
-(use-package text-mode :ensure nil
-  :hook (text-mode . display-line-numbers-mode))
-
 (use-package asm-mode :ensure nil
   :mode ("\\.s\\'" . asm-mode)
   ("\\.asm\\'" . asm-mode)
