@@ -65,9 +65,6 @@
   ;; x220 config
   (when (string= (system-name) "x220")
 	(progn
-      (shell-command "source /home/ff/.emacs.d/.remap")
-  	  (shell-command "xdotool search --onlyvisible --class emacs windowfocus")
-  	  (add-to-list 'default-frame-alist '(fullscreen . maximized))
 	  (global-set-key (kbd "<XF86AudioLowerVolume>") 'fff-lower-volume)
 	  (global-set-key (kbd "<XF86AudioRaiseVolume>") 'fff-raise-volume)
 	  (global-set-key (kbd "<XF86AudioMute>") 'fff-toggle-audio-mute)))
