@@ -90,6 +90,25 @@
   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
+
+  ;; num of lines selected appears in modeline
+  (defvar selected-region-line-count "")
+
+  (defun update-selected-line-count ()
+    "Update the line count in the mode line when a region is active."
+    (if (use-region-p)
+        (let ((lines (count-lines (region-beginning) (region-end))))
+          (setq selected-region-line-count
+                (format " [%d line%s]" lines (if (= lines 1) "" "s"))))
+      (setq selected-region-line-count "")))
+
+  ;; Add our variable to the mode line
+  (unless (member 'selected-region-line-count global-mode-string)
+    (add-to-list 'global-mode-string 'selected-region-line-count t))
+
+  ;; Hook it into the post-command-hook so it updates when the region changes
+  (add-hook 'post-command-hook #'update-selected-line-count)
+
   (add-hook 'prog-mode-hook 'visual-line-mode)
 
   ;; make elpa and straight files read-only
