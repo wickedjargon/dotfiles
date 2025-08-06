@@ -1199,6 +1199,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package sml-mode :straight t :ensure t)
 
+;; common lisp hyperspec
 (use-package clhs :straight t :ensure t :defer t)
 
 (use-package d-mode :straight t :ensure t
