@@ -1549,3 +1549,10 @@ The DWIM behaviour of this command is as follows:
               (delete-region (line-beginning-position) (line-end-position)))
           (forward-line 1)))
     (message "This command only works in read-only buffers.")))
+
+(defun fff-eshell-clear-1 ()
+  "Clear eshell buffer and send the clear 1 command."
+  (interactive)
+  (eshell-send-input)
+  (insert "clear 1")
+  (eshell-send-input))
