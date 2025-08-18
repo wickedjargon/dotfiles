@@ -1499,12 +1499,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :straight (:type git :host github :repo "hniksic/emacs-htmlize")
   :defer t)
 
-;; remove white space as you type
-(use-package ws-butler
-  :straight t
-  :defer t
-  :hook (prog-mode . ws-butler-mode))
-
 (use-package swiper :straight t :ensure t :defer t)
 
 (use-package insert-shebang :straight t :ensure t :defer t
@@ -1545,7 +1539,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   ;; You can also customize the key binding if needed
   (define-key emmet-mode-keymap (kbd "C-j") 'emmet-expand-line))
 
-(use-package consult-gh :straight t :ensure t :after consult)
+;; (use-package consult-gh :straight t :ensure t :after consult)
 
 (use-package consult-notes
   :straight (:type git :host github :repo "mclear-tools/consult-notes")
@@ -1587,6 +1581,3 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setf yeetube-mpv-disable-video t)
   ;; Set RET in normal state when in yeetube-mode
   (evil-define-key 'normal yeetube-mode-map (kbd "RET") #'yeetube-play))
-
-(use-package casual
-  :straight (casual :type git :host github :repo "kickingvegas/casual"))
