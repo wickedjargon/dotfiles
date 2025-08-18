@@ -512,8 +512,8 @@
     (evil-leader/set-key "i M" 'lsp-ui-imenu)
 
     ;; terminal
-    (evil-leader/set-key "t t" 'fff-switch-or-create-vterm)
-    (evil-leader/set-key "t T" 'fff-open-new-vterm)
+    (evil-leader/set-key "t t" 'fff-switch-or-create-eshell)
+    (evil-leader/set-key "t T" 'fff-open-new-eshell)
     (evil-leader/set-key "t p" 'terminal-here)
 
     ;; chatgpt
@@ -1063,10 +1063,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (pdf-tools-install :no-query))
 
-(use-package vterm :straight t :ensure t :defer t
-  :config
-  (define-key vterm-mode-map (kbd "C-c c") 'vterm-clear))
-
 (use-package org :ensure nil :defer t
   :hook (org-mode . visual-line-mode)
   :init
@@ -1581,3 +1577,12 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setf yeetube-mpv-disable-video t)
   ;; Set RET in normal state when in yeetube-mode
   (evil-define-key 'normal yeetube-mode-map (kbd "RET") #'yeetube-play))
+
+(use-package eshell
+  :ensure nil
+  :hook (eshell-mode . fff-eshell-clear-1-binding)
+  :config
+  (defun fff-eshell-clear-1-binding ()
+    "Bind C-c C-c to fff-eshell-clear-1 in eshell."
+    (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
+
