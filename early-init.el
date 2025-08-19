@@ -20,3 +20,18 @@
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
+
+(setq default-frame-alist
+      (append
+       '((background-color . "#000000")
+         (foreground-color . "#ffffff")
+         (background-mode . dark))
+       default-frame-alist))
+
+(defun fff-reapply-theme-to-new-frame (frame)
+  "Reapply the current theme to FRAME so it overrides default-frame-alist colors."
+  (with-selected-frame frame
+    (when-let ((theme (car custom-enabled-themes)))
+      (enable-theme theme))))
+
+(add-hook 'after-make-frame-functions #'fff-reapply-theme-to-new-frame)
