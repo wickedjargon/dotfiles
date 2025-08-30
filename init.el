@@ -247,7 +247,6 @@
   (global-set-key (kbd "C-x k") 'bury-buffer)                          ;; kill buffers doesn't save memory
   (global-set-key (kbd "C-c c") 'fff-clear-shell)
   (global-set-key (kbd "C-g")  #'fff-keyboard-quit-dwim)
-  (global-set-key [remap find-file] 'fff-find-file)                    ;; updates the current directory when in vterm
   (global-set-key [remap list-buffers] 'ibuffer)                       ;; ibuffer is superior
   (global-set-key [remap beginning-of-line] 'beginning-of-visual-line) ;; use visual line for beginning and end of line
   (global-set-key [remap end-of-line] 'end-of-visual-line)             ;; same here.
@@ -324,7 +323,7 @@
   (setq initial-major-mode 'fundamental-mode)              ;; I prefer this as the mode for scratch buffers
   (setq require-final-newline nil)                         ;; don't add a new line to the bottom of the file
 
-  ;; prevent active process when closing a shell like vterm or eshell:
+  ;; prevent active process when closing a shell like eshell:
   (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
   ;; show startup time on launch
