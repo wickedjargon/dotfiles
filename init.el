@@ -663,16 +663,6 @@
     (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
     (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)))
 
-(use-package yt-dlp-mode :ensure nil
-  :init
-  (add-to-list 'load-path (expand-file-name "fff-lisp" user-emacs-directory))
-  (load (expand-file-name "fff-lisp/yt-dlp-mode.el" user-emacs-directory))
-  (with-eval-after-load 'yt-dlp-mode
-    (define-key yt-dlp-mode-map (kbd "C-c RET") 'yt-dlp-play-current-entry)
-    (define-key goto-address-highlight-keymap (kbd "C-c RET") 'yt-dlp-play-current-entry)
-    (define-key yt-dlp-mode-map (kbd "<mouse-2>") 'yt-dlp-play-current-entry)
-    (define-key goto-address-highlight-keymap (kbd "<mouse-2>") 'yt-dlp-play-current-entry)))
-
 (use-package ocen-mode :ensure nil
   :load-path (lambda () (expand-file-name "fff-lisp/ocen-mode" user-emacs-directory))
   :mode "\\.oc\\'"
@@ -1584,4 +1574,3 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (defun fff-eshell-clear-1-binding ()
     "Bind C-c C-c to fff-eshell-clear-1 in eshell."
     (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
-
