@@ -240,7 +240,6 @@
   (global-set-key (kbd "C-x o") 'other-window)
   (global-set-key (kbd "C-x u") 'undo)
   (global-set-key (kbd "C-y") 'yank)
-  (global-set-key (kbd "C-x C-f") 'fff-find-file)
 
   (global-set-key (kbd "M-ESC M-ESC") 'keyboard-escape-quit)           ;; I have to remap to this instead
   (global-set-key (kbd "M-u") 'universal-argument)                     ;; C-u is bound to evil-scroll-up
@@ -1330,9 +1329,9 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                                (lambda ()
                                  (let ((imenu-generic-expression
                                         '(("Variables" "^\\s-*[a-zA-Z0-9._ ]* \\([a-zA-Z0-9_]*\\)\\( = \\sw*\\|\\s-*\\);$" 1)
-          ("Functions" "^\\s-*[^/]* \\([a-zA-Z0-9_]+\\)(.*)\\(\\s-*.*\n\\|\\ *\\)\\s-*{" 1)
-          ("Classes" "^\\s-*\\(.*\\)class +\\([a-zA-Z0-9_]+\\)" 2)
-          ("Namespaces" "^namespace +\\([a-z0-9_]*\\)" 1))))
+                                          ("Functions" "^\\s-*[^/]* \\([a-zA-Z0-9_]+\\)(.*)\\(\\s-*.*\n\\|\\ *\\)\\s-*{" 1)
+                                          ("Classes" "^\\s-*\\(.*\\)class +\\([a-zA-Z0-9_]+\\)" 2)
+                                          ("Namespaces" "^namespace +\\([a-z0-9_]*\\)" 1))))
                                    (imenu--generic-function imenu-generic-expression)))))))
 
 (use-package tab-bar :ensure nil
