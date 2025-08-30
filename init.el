@@ -920,81 +920,21 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package typescript-mode :straight t :ensure t :defer t)
 
-(use-package lsp-mode :straight t :ensure t
-  ;; preferred LSPs:
-  ;; - javascript/typescript: jsts-ls
-  ;; - python:  pylsp, python-pyflakes
-  ;; - html:
-  ;; - css:
-  ;; hooks:
-  :hook (rust-mode . lsp-deferred)
-  :hook (rust-ts-mode . lsp-deferred)
-  :hook (svelte-mode . lsp-deferred)
-  :hook (c-mode . lsp-deferred)
-  :hook (c-ts-mode . lsp-deferred)
-  :hook (cc-mode . lsp-deferred)
-  :hook (c++-mode . lsp-deferred)
-  :hook (csharp-mode . lsp-deferred)
-  :hook (typescript-mode . lsp-deferred)
-  :hook (javascript-mode . lsp-deferred)
-  :hook (python-mode . lsp-deferred)
-  :hook (d-mode . lsp-deferred)
-  :hook (go-mode . lsp-deferred)
-  :hook (java-mode . lsp)
-  :hook (rust-ts-mode . lsp-deferred)
-  :hook (c-ts-mode . lsp-deferred)
-  :hook (c++-ts-mode . lsp-deferred)
-  :hook (typescript-ts-mode . lsp-deferred)
-  :hook (js-ts-mode . lsp-deferred)
-  :hook (python-ts-mode . lsp-deferred)
-  :hook (java-ts-mode . lsp)
-
-  ;; to do, find a way to conditionally install
-  ;; an lsp using:
-  ;; (lsp-install-server nil 'jsts-ls)
+(use-package eglot
+  :ensure nil
+  :hook ((rust-mode
+          rust-ts-mode
+          svelte-mode
+          c-mode c-ts-mode cc-mode c++-mode c++-ts-mode
+          csharp-mode
+          typescript-mode typescript-ts-mode
+          js-ts-mode javascript-mode
+          python-mode python-ts-mode
+          d-mode
+          go-mode
+          java-mode java-ts-mode) . eglot-ensure)
   :init
-  (setq read-process-output-max (* 1024 1024))
-  (setq lsp-diagnostics-provider :flymake)
-  (setq lsp-auto-guess-root t)
-  (setq lsp-keymap-prefix "C-c l")
-  ;; I use the copilot.el package, so I don't need this
-  (setq lsp-copilot-enabled nil)
-  ;; https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
-  (setq lsp-enable-file-watchers nil) ; Disable file watchers for better performance
-  (setq lsp-enable-symbol-highlighting nil) ; disable symbol highlighting
-  (setq lsp-headerline-breadcrumb-enable nil) ; Disable breadcrumbs in the headerline
-  (setq lsp-completion-show-kind nil)
-  (setq lsp-completion-show-detail nil)
-  (setq lsp-signature-auto-activate nil)
-  (setq lsp-lens-enable nil)
-  ;; (setq lsp-inlay-hints-mode t) ; the type hints next to arguments in func signature lines and variable definitions.
-  ;; (setq lsp-inlay-hint-enable t)
-  (setq lsp-rust-analyzer-display-parameter-hints t))
-
-(use-package lsp-ui :straight t :ensure t :defer t
-  :init
-  (lsp-ui-mode +1))
-
-(use-package lsp-python-ms :straight t :ensure t :defer t)
-
-(use-package lsp-haskell :straight t :ensure t :defer t)
-
-(use-package lsp-metals
-  :straight t
-  :ensure t
-  :custom
-  (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off"
-                            "-J-Dmetals.icons=unicode"))
-  (lsp-metals-enable-semantic-highlighting t))
-
-(use-package lsp-tailwindcss :straight t :ensure t :defer t
-  :config
-  (add-to-list 'lsp-language-id-configuration '(".*\\.erb$" . "html")) ;; Associate ERB files with HTML.
-  :init
-  (setq lsp-tailwindcss-add-on-mode t))
-
-(use-package lsp-java :straight t :ensure t
-  :config (add-hook 'java-mode-hook 'lsp))
+  (setq eglot-ignored-server-capabilities '(:documentHighlightProvider)))
 
 (use-package macrostep :straight t :ensure t :defer t)
 
