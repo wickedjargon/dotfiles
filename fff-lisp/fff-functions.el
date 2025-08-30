@@ -769,21 +769,11 @@ in whole buffer.  With neither, delete comments on current line."
         (message "No command selected.")
       (execute-extended-command (intern command)))))
 
-(defun fff-find-file ()
-  "Like find-file, but calls fff-vterm-directory-sync if the current buffer is a vterm buffer, unless using TRAMP."
-  (interactive)
-  (if (and (eq major-mode 'vterm-mode)
-           (not (tramp-tramp-file-p default-directory)))
-      (progn
-       (fff-vterm-directory-sync)
-       (call-interactively 'find-file))
-    (call-interactively 'find-file)))
-
 (defun fff-buffer-switch-pop ()
- (interactive)
- (let ((last-buf (last-buffer)))
-   (when last-buf
-     (switch-to-buffer last-buf))))
+  (interactive)
+  (let ((last-buf (last-buffer)))
+    (when last-buf
+      (switch-to-buffer last-buf))))
 
 (defun fff-v-build-ctags ()
   "Run ctags command from the project root directory and load TAGS file for V programming language."
