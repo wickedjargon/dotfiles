@@ -1585,3 +1585,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
     "Bind C-c C-c to fff-eshell-clear-1 in eshell."
     (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
 
+(use-package ws-butler
+  :straight (ws-butler :type git :host github :repo "lewang/ws-butler")
+  :hook (prog-mode . ws-butler-mode))
