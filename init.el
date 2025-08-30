@@ -1204,33 +1204,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (add-to-list 'sly-contribs 'sly-macrostep 'append))
 
-(use-package read-aloud :defer t :ensure t :straight t
-  :config
-  (cl-defun read-aloud--current-word()
-    "Pronounce a word under the pointer. If under there is rubbish,
-          ask user for an additional input."
-    (let* ((cw (read-aloud--u-current-word))
-           (word (nth 2 cw)))
-
-      (unless (and word (string-match "[[:alnum:]]" word))
-        ;; maybe we should share the hist list w/ `wordnut-completion-hist`?
-        (setq word (read-string "read aloud: " word 'read-aloud-word-hist)))
-
-      (read-aloud--overlay-make (nth 0 cw) (nth 1 cw))
-      (read-aloud--string (replace-regexp-in-string "[.\n]" "," word) "word")))
-
-  (cl-defun read-aloud-this()
-    "Pronounce either the selection or a word under the pointer."
-    (interactive)
-
-    (when read-aloud--c-locked
-      (read-aloud-stop)
-      (cl-return-from read-aloud-selection))
-
-    (if (use-region-p)
-        (let ((text (buffer-substring-no-properties (region-beginning) (region-end))))
-          (read-aloud--string (replace-regexp-in-string "[.\n]" "," text) "selection"))
-      (read-aloud--current-word))))
+(use-package read-aloud :defer t :ensure t :straight t)
 
 (use-package graphviz-dot-mode :defer t :straight t :ensure t
   :config
