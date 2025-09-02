@@ -934,7 +934,9 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
           go-mode
           java-mode java-ts-mode) . eglot-ensure)
   :init
-  (setq eglot-ignored-server-capabilities '(:documentHighlightProvider)))
+  (setq eglot-ignored-server-capabilities
+        '(:inlayHintProvider
+          :documentHighlightProvider)))
 
 (use-package macrostep :straight t :ensure t :defer t)
 
