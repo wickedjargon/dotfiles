@@ -1487,3 +1487,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (defun fff-eshell-clear-1-binding ()
     "Bind C-c C-c to fff-eshell-clear-1 in eshell."
     (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
+
+(use-package posframe
+  :straight (posframe :type git :host github :repo "tumashu/posframe")
+  :ensure t)
