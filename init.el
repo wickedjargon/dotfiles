@@ -1215,11 +1215,11 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 ;; always open urls in a new window, use chromium always.
 (use-package browse-url :ensure nil
   :init
-  (setq browse-url-chromium-program "chromium")
+  (setq browse-url-chromium-program "google-chrome")
   (defun browse-url-chromium-new-window (url &optional _new-window)
     "Open URL in a new Chromium window."
     (interactive (browse-url-interactive-arg "URL: "))
-    (start-process (concat "chromium " url) nil
+    (start-process (concat "google-chrome" url) nil
                    browse-url-chromium-program "--new-window" url))
   (setq browse-url-browser-function 'browse-url-chromium-new-window))
 
