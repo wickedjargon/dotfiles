@@ -661,25 +661,21 @@
     (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
     (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)))
 
-(use-package ocen-mode :ensure nil
+(use-package ocen-mode
   :load-path (lambda () (expand-file-name "fff-lisp/ocen-mode" user-emacs-directory))
   :mode "\\.oc\\'"
   :init
-  (add-hook 'your-major-mode-hook #'tree-sitter-mode)
-  (add-hook 'your-major-mode-hook #'tree-sitter-hl-mode)
-  (with-eval-after-load 'lsp-mode              ;; can't use typical use-package hook as
-    (add-hook 'ocen-mode-hook #'lsp-deferred)) ;; ocen-mode is not registered with lsp-mode
+  ;; Enable Tree-sitter for syntax highlighting
+  (add-hook 'ocen-mode-hook #'tree-sitter-mode)
+  (add-hook 'ocen-mode-hook #'tree-sitter-hl-mode)
+  ;; Start eglot when entering ocen-mode
+  (add-hook 'ocen-mode-hook #'eglot-ensure)
   :config
-  (require 'lsp-mode)
-  (with-eval-after-load 'lsp-mode
-    (add-to-list 'lsp-language-id-configuration '("\\.oc\\'" . "ocen"))
-    (add-to-list 'lsp-language-id-configuration '(oc-mode . "ocen")))
-  (lsp-register-client
-   (make-lsp-client
-    :new-connection (lsp-stdio-connection
-                     (lambda () '("node" "/home/ff/.local/src/ocen-vscode/out/server/src/server.js" "--stdio")))
-    :major-modes '(ocen-mode)
-    :server-id 'ocen-language-server)))
+  ;; Tell eglot how to start the ocen language server
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs
+                 '(ocen-mode . ("node" "/home/ff/.local/src/ocen-vscode/out/server/src/server.js" "--stdio")))))
+
 
 (use-package undo-fu :straight t :defer t :ensure t)
 
@@ -924,7 +920,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :hook ((rust-mode
           rust-ts-mode
           svelte-mode
-          c-mode c-ts-mode cc-mode c++-mode c++-ts-mode
+          c-ts-mode c++-ts-mode
           csharp-mode
           typescript-mode typescript-ts-mode
           js-ts-mode javascript-mode
@@ -1081,12 +1077,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :interpreter
   ("scala" . scala-mode))
 
-(use-package tree-sitter-langs :straight t :ensure t :after tree-sitter)
-
 (use-package treesit-auto :straight t :ensure t
   :after emacs
-  :custom
-  (treesit-auto-install 'prompt)
   :config
   (global-treesit-auto-mode t)
   :init
