@@ -496,7 +496,6 @@
     (evil-leader/set-key "f b" 'fff-access-bookmarks)
     (evil-leader/set-key "f B" 'fff-access-books)
     (evil-leader/set-key "f h" 'fff-access-hosts)
-    (evil-leader/set-key "f n" 'fff-access-notes)
 
     ;; full screen
     (evil-leader/set-key "f s" 'toggle-frame-fullscreen)
@@ -546,7 +545,7 @@
     ;; access dirs
     ;; (evil-leader/set-key "x c" 'fff-access-config-dir)
     (evil-leader/set-key "x m" 'fff-access-home-dir)
-    (evil-leader/set-key "x n" 'consult-notes)
+    (evil-leader/set-key "x n" 'fff-open-file-in-notes)
     (evil-leader/set-key "x p" 'fff-open-file-in-projects)
     (evil-leader/set-key "x s" 'fff-find-file-ssh)
     (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
@@ -1438,16 +1437,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setq emmet-expand-jsx-className? t) ; Optional: if you deal with JSX
   ;; You can also customize the key binding if needed
   (define-key emmet-mode-keymap (kbd "C-j") 'emmet-expand-line))
-
-(use-package consult-notes
-  :straight (:type git :host github :repo "mclear-tools/consult-notes")
-  :commands (consult-notes
-             consult-notes-search-in-all-notes
-             ;; if using org-roam
-             consult-notes-org-roam-find-node
-             consult-notes-org-roam-find-node-relation)
-  :config
-  (setq consult-notes-file-dir-sources '(("Notes"  ?k  "~/d/notes/"))))
 
 (use-package gitignore-mode
   :ensure t
