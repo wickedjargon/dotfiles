@@ -1104,9 +1104,17 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package wgrep :straight t :ensure t :defer t)
 
-(use-package gptel :straight t :ensure t
+(use-package gptel
+  :straight t
+  :ensure t
   :init
-  (setq gptel-api-key (string-trim (with-temp-buffer (insert-file-contents (expand-file-name ".secrets/chat_gpt_api_key" user-emacs-directory)) (buffer-string))))
+  (let ((key-file (expand-file-name ".secrets/chat_gpt_api_key" user-emacs-directory)))
+    (when (file-exists-p key-file)
+      (setq gptel-api-key
+            (string-trim
+             (with-temp-buffer
+               (insert-file-contents key-file)
+               (buffer-string))))))
   (setq markdown-fontify-code-blocks-natively t)
   :config
   (setq gptel-model 'gpt-4o))
