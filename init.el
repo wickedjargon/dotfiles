@@ -1080,9 +1080,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package treesit-auto :straight t :ensure t
   :after emacs
   :config
-  (global-treesit-auto-mode t)
-  :init
-  (setq treesit-auto-langs '(awk bash bibtex blueprint c c-sharp clojure cmake commonlisp cpp css dart dockerfile elixir glsl go gomod heex html janet java javascript json julia kotlin latex lua magik make markdown nix nu org perl proto python r ruby rust scala sql surface toml tsx typescript typst verilog vhdl vue wast wat wgsl yaml ocen)))
+  (global-treesit-auto-mode t))
 
 (use-package devdocs :ensure t :straight t
   :init
