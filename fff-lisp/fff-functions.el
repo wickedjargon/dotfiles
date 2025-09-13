@@ -1546,3 +1546,16 @@ The DWIM behaviour of this command is as follows:
   (eshell-send-input)
   (insert "clear 1")
   (eshell-send-input))
+
+(defun fff-write-dir-locals-here-with-compile-command ()
+  "Prompt for a compile command and write it to .dir-locals.el in the current directory."
+  (interactive)
+  (let* ((current-dir (file-name-directory (or (buffer-file-name) default-directory)))
+         (compile-cmd (read-shell-command "Set compile-command: "))
+         (dir-locals-file (expand-file-name ".dir-locals.el" current-dir))
+         (locals-form `((nil . ((compile-command . ,compile-cmd))))))
+    (with-temp-file dir-locals-file
+      (insert ";;; Directory Local Variables\n")
+      (insert ";;; For more information see (info \"(emacs) Directory Variables\")\n\n")
+      (insert (format "%S\n" locals-form)))
+    (message "Wrote compile-command to %s" dir-locals-file)))
