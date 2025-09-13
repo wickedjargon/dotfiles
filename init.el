@@ -856,9 +856,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package dired :ensure nil
   :hook (dired-mode . auto-revert-mode)  ;; revert dired buffers, but not buffer list buffers
-  :custom
+  :init
   (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
-  (dired-kill-when-opening-new-dired-buffer nil)               ;; Close the previous buffer when opening a new `dired' instance.
   :config
   (add-hook 'dired-mode-hook
             (lambda ()
