@@ -62,13 +62,6 @@
 (use-package emacs :ensure nil
   :config
 
-  ;; x220 config
-  (when (string= (system-name) "x220")
-	(progn
-	  (global-set-key (kbd "<XF86AudioLowerVolume>") 'fff-lower-volume)
-	  (global-set-key (kbd "<XF86AudioRaiseVolume>") 'fff-raise-volume)
-	  (global-set-key (kbd "<XF86AudioMute>") 'fff-toggle-audio-mute)))
-
   ;; for youtube change it to this:
   ;; (set-face-attribute 'default nil :height 150)
 
