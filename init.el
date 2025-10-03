@@ -1422,8 +1422,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :straight t
   :hook (web-mode . emmet-mode) ; Enable emmet-mode in web-mode
   :config
-  (setq emmet-expand-jsx-className? t) ; Optional: if you deal with JSX
-  ;; You can also customize the key binding if needed
+  (setq emmet-expand-jsx-className? t)
   (define-key emmet-mode-keymap (kbd "C-j") 'emmet-expand-line))
 
 (use-package gitignore-mode
