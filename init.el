@@ -28,9 +28,6 @@
 ;; either via github forking or mantaining
 ;; a local branch and an upstream branch
 
-;; TODO: transition from lsp-mode to eglot.
-;; eglot is built in and is more future-proof
-
 ;; Maximize screen on new frame:
 (add-hook 'after-make-frame-functions
           (lambda (&optional frame)
