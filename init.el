@@ -710,9 +710,14 @@
   (define-key lisp-mode-map (kbd "C-<return>") 'sly-eval-print-last-expression)
   (evil-set-initial-state 'sly-mrepl-mode 'normal))
 
-(use-package terminal-here :straight t :defer t :ensure t
+(use-package terminal-here
+  :straight t
+  :defer t
+  :ensure t
   :init
-  (setq terminal-here-linux-terminal-command 'st))
+  ;; Default terminals for each OS
+  (setq terminal-here-linux-terminal-command 'st)
+  (setq terminal-here-windows-terminal-command 'cmd))
 
 (use-package so-long :defer t :ensure t :straight t
   :init
