@@ -570,6 +570,19 @@
     (setq evil-search-wrap nil)
     (setq evil-kill-on-visual-paste nil)
     (evil-mode +2)
+    ;; Force Evil mode in Eglot event buffers
+    (add-hook 'eglot-managed-mode-hook
+              (lambda ()
+                (dolist (buf (buffer-list))
+                  (when (string-match-p "^\\*EGLOT" (buffer-name buf))
+                    (with-current-buffer buf
+                      (evil-normalize-keymaps)
+                      (evil-local-mode 1))))))
+
+    ;; Optional: enable Evil in all *-buffers
+    (setq evil-buffer-regexps
+          (append evil-buffer-regexps '(("^\\*EGLOT" . normal))))
+
 
     (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
