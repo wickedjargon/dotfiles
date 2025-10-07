@@ -271,7 +271,6 @@
   (setq yank-excluded-properties t)                       ;; don't copy text with syntax highlighting
   (setq server-client-instructions "")
 
-
   ;; display battery information if battery exists on system
   (let ((has-battery-p
          (lambda ()
