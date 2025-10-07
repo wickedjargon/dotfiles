@@ -715,9 +715,13 @@
   :defer t
   :ensure t
   :init
-  ;; Default terminals for each OS
   (setq terminal-here-linux-terminal-command 'st)
-  (setq terminal-here-windows-terminal-command 'cmd))
+  (setq terminal-here-windows-terminal-command 'powershell)
+  :config
+  (with-eval-after-load 'terminal-here
+    (add-to-list 'terminal-here-terminal-command-table
+                 (cons 'powershell
+                       '("cmd.exe" "/C" "start" "powershell.exe" "-NoExit" "-Command" "cd $PWD")))))
 
 (use-package so-long :defer t :ensure t :straight t
   :init
