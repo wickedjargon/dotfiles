@@ -350,16 +350,25 @@
   (eval-after-load 'package
     '(defalias 'list-packages 'straight-list-packages)))
 
-(use-package modus-themes :ensure t :straight t
+(use-package modus-themes
+  :ensure t
+  :straight t
   :config
-  (if (daemonp)
-      ;; If running as a client (daemon mode), load this theme
-      (add-hook 'after-make-frame-functions
-                (lambda (frame)
-                  (with-selected-frame frame
-                    (load-theme 'ef-tritanopia-dark t))))
-    ;; Otherwise, running Emacs normally, load modus-vivendi-tinted
-    (load-theme 'modus-vivendi-tinted t)))
+  (cond
+   ;; On Linux
+   ((eq system-type 'gnu/linux)
+    (if (daemonp)
+        (add-hook 'after-make-frame-functions
+                  (lambda (frame)
+                    (with-selected-frame frame
+                      (load-theme 'ef-tritanopia-dark t))))
+      (load-theme 'modus-vivendi-tinted t)))
+   ;; On Windows
+   ((eq system-type 'windows-nt)
+    ;; Delay theme loading until after frame is initialized
+    (add-hook 'emacs-startup-hook
+              (lambda ()
+                (load-theme 'brin t))))))
 
 (use-package  doom-themes :straight t :ensure t :defer t)
 
