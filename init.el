@@ -28,15 +28,6 @@
 ;; either via github forking or mantaining
 ;; a local branch and an upstream branch
 
-;; Maximize screen on new frame:
-(add-hook 'after-make-frame-functions
-          (lambda (&optional frame)
-            (when frame
-              (set-frame-parameter frame 'fullscreen 'maximized))))
-
-;; Maximize the initial frame
-(set-frame-parameter nil 'fullscreen 'maximized)
-
 ;; switching to straight.el as feel it'll be a better way to manage forked packages
 
 ;; bootstrap straight.el
