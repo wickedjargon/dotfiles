@@ -645,7 +645,6 @@
       (evil-yank (point) (line-end-position) type register))
     (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-eol)
 
-
     ;; move by visual line
     (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
@@ -1485,3 +1484,4 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package posframe
   :straight (posframe :type git :host github :repo "tumashu/posframe")
   :ensure t)
+
