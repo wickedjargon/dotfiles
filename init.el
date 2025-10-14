@@ -1216,15 +1216,29 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setq graphviz-dot-indent-width 4))
 
 ;; always open urls in a new window, use chromium always.
-(use-package browse-url :ensure nil
+(use-package browse-url
+  :ensure nil
   :init
-  (setq browse-url-chromium-program "google-chrome")
+  (cond
+   ;; --- Windows ---
+   ((eq system-type 'windows-nt)
+    ;; Adjust this path if Edge is installed elsewhere
+    (setq browse-url-chromium-program
+          "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"))
+
+   ;; --- Linux ---
+   ((eq system-type 'gnu/linux)
+    (setq browse-url-chromium-program "google-chrome")))
+
   (defun browse-url-chromium-new-window (url &optional _new-window)
-    "Open URL in a new Chromium window."
+    "Open URL in a new Edge or Chrome window depending on OS."
     (interactive (browse-url-interactive-arg "URL: "))
-    (start-process (concat "google-chrome" url) nil
-                   browse-url-chromium-program "--new-window" url))
+    (start-process
+     "browser" nil
+     browse-url-chromium-program "--new-window" url))
+
   (setq browse-url-browser-function 'browse-url-chromium-new-window))
+
 
 ;; common lisp reference / doc lookup
 (use-package hyperspec :straight t :ensure t
