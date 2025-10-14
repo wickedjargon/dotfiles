@@ -703,7 +703,12 @@
   (add-hook 'sly-mrepl-mode-hook (lambda ()
                                    (define-key sly-mrepl-mode-map (kbd "C-p") 'comint-previous-input)
                                    (define-key sly-mrepl-mode-map (kbd "C-n") 'comint-next-input)))
-  (setq inferior-lisp-program "/usr/bin/sbcl")
+  (setq inferior-lisp-program
+        (if (eq system-type 'windows-nt)
+            "\"c:/Program Files/Steel Bank Common Lisp/sbcl.exe\""
+          "/usr/bin/sbcl"))
+
+
   :config
   (define-key lisp-mode-map (kbd "C-j") 'sly-eval-print-last-expression)
   (define-key lisp-mode-map (kbd "C-<return>") 'sly-eval-print-last-expression)
