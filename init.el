@@ -367,7 +367,7 @@
     ;; Delay theme loading until after frame is initialized
     (add-hook 'emacs-startup-hook
               (lambda ()
-                (load-theme 'brin t))))))
+                (load-theme 'fogus t))))))
 
 (use-package  doom-themes :straight t :ensure t :defer t)
 
