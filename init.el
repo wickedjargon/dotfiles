@@ -887,14 +887,18 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package emojify :straight t :ensure t :defer t)
 
-(use-package dired :ensure nil
-  :hook (dired-mode . auto-revert-mode)  ;; revert dired buffers, but not buffer list buffers
+(use-package dired
+  :ensure nil
+  :hook ((dired-mode . auto-revert-mode)
+         (dired-mode . dired-omit-mode))  ;; enable omit mode
   :init
-  (setq dired-listing-switches "-ahl --group-directories-first")  ;; group my directories and display size
+  (setq dired-listing-switches "-ahl --group-directories-first"
+        dired-omit-files "^\\.$")  ;; hide only "."
   :config
   (add-hook 'dired-mode-hook
             (lambda ()
               (dired-hide-details-mode))))
+
 
 (use-package switch-window :straight t :ensure t :defer t)
 
