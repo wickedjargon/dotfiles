@@ -963,7 +963,10 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :init
   (setq eglot-ignored-server-capabilities
         '(:inlayHintProvider
-          :documentHighlightProvider)))
+          :documentHighlightProvider))
+  :config
+  (add-to-list 'eglot-server-programs
+               '(csharp-mode . ("csharp-ls"))))
 
 (use-package macrostep :straight t :ensure t :defer t)
 
