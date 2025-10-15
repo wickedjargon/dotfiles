@@ -1269,7 +1269,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setq browse-url-browser-function 'browse-url-chromium-new-window))
 
 
-;; common lisp reference / doc lookup
+;; common lisp documentation
 (use-package hyperspec :straight t :ensure t
   :config
   (defun fff-hyperspec-lookup ()
