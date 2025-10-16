@@ -893,7 +893,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
          (dired-mode . dired-omit-mode))  ;; enable omit mode
   :init
   (setq dired-listing-switches "-ahl --group-directories-first"
-        dired-omit-files "^\\.$")  ;; hide only "."
+        dired-omit-files "^\\.$")
   :config
   (add-hook 'dired-mode-hook
             (lambda ()
@@ -1525,7 +1525,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :hook (eshell-mode . fff-eshell-clear-1-binding)
   :config
   (defun fff-eshell-clear-1-binding ()
-    "Bind C-c C-c to fff-eshell-clear-1 in eshell."
+    "Bind C-c c to fff-eshell-clear-1 in eshell."
     (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
 
 (use-package posframe
