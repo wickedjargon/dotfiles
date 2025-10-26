@@ -192,27 +192,20 @@
   (global-unset-key (kbd "M-<home>"))
   (global-unset-key (kbd "M-s M-."))
 
-  (setq hs-minor-mode-map (make-sparse-keymap))
-  (setq yas-minor-mode-map (make-sparse-keymap))
-  (setq erc-track-minor-mode-map (make-sparse-keymap))
-  (setq emacs-lisp-mode-map (make-sparse-keymap))
-  (setq lisp-interaction-mode-map (make-sparse-keymap))
-  (setq aggressive-indent-mode-map (make-sparse-keymap))
+  ;; TODO: nuke these keymaps.
+  ;; Major modes
+  ;; - emacs-lisp-mode-map
+  ;; - lisp-interaction-mode-map
 
-  (with-eval-after-load 'hideshow
-    (setq hs-minor-mode-map (make-sparse-keymap)))
+  ;; Minor modes
+  ;; - hs-minor-mode-map
+  ;; - yas-minor-mode-map
+  ;; - erc-track-minor-mode-map
+  ;; - aggressive-indent-mode-map
 
-  (with-eval-after-load 'yasnippet
-    (setq yas-minor-mode-map (make-sparse-keymap)))
-
-  (with-eval-after-load 'erc-track
-    (setq erc-track-minor-mode-map (make-sparse-keymap)))
-
-  (with-eval-after-load 'emacs-lisp-mode
-    (setq emacs-lisp-mode-map (make-sparse-keymap)))
-
-  (with-eval-after-load 'lisp-interaction-mode
-    (setq lisp-interaction-mode-map (make-sparse-keymap)))
+  ;; Special / debugging
+  ;; - edebug-mode-map
+  ;; - edebug-prefix-map
 
   ;; adding a few back that I actually might use:
   (global-set-key (kbd "C-x o") 'other-window)
