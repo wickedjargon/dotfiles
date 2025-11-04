@@ -91,7 +91,7 @@ Each value is a floating percentage 0–100."
          (load-parts (split-string (shell-command-to-string "cat /proc/loadavg") " " t))
          (uptime-secs (string-to-number (car (split-string (shell-command-to-string "cut -d ' ' -f1 /proc/uptime") " " t)))))
     ;; Correctly construct and return a plist
-    (list :tasks-total tasks-total 
+    (list :tasks-total tasks-total
           :tasks-running tasks-running
           :load1  (string-to-number (nth 0 load-parts))
           :load5  (string-to-number (nth 1 load-parts))
