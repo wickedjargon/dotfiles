@@ -24,12 +24,6 @@
 ;; - Wanderlust
 ;; - Notmuch
 
-;; TODO: implement my own method for customizing packages
-;; either via github forking or mantaining
-;; a local branch and an upstream branch
-
-;; switching to straight.el as feel it'll be a better way to manage forked packages
-
 ;; bootstrap straight.el
 (defvar bootstrap-version)
 (let ((bootstrap-file
@@ -583,7 +577,6 @@
     ;; Optional: enable Evil in all *-buffers
     (setq evil-buffer-regexps
           (append evil-buffer-regexps '(("^\\*EGLOT" . normal))))
-
 
     (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
