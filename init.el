@@ -288,7 +288,7 @@
   (setq vc-follow-symlinks t)                              ;; stop prompting me about whether I want to follow symlinks
   (pixel-scroll-precision-mode t)                          ;; better for scrolling
   (setq pixel-scroll-precision-use-momentum nil)           ;; but no momentum please
-  (setq warning-minimum-level :emergency)                  ;; Set the minimum level of warnings to display.
+  ;; (setq warning-minimum-level :emergency)                  ;; Set the minimum level of warnings to display.
   (setq initial-major-mode 'fundamental-mode)              ;; I prefer this as the mode for scratch buffers
   (setq require-final-newline nil)                         ;; don't add a new line to the bottom of the file
 
