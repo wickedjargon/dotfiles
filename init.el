@@ -1437,7 +1437,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :straight (:type git :host github :repo "hniksic/emacs-htmlize")
   :defer t)
 
-(use-package swiper :straight t :ensure t :defer t)
+;; ;; consult line works instead of this
+;; (use-package swiper :straight t :ensure t :defer t)
 
 (use-package insert-shebang :straight t :ensure t :defer t
   :hook (find-file-hook . insert-shebang))
