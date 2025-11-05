@@ -314,6 +314,7 @@
 
   ;; load my own config
   (with-eval-after-load 'evil
+    (load (expand-file-name "fff-lisp/htop-style-monitor.el" user-emacs-directory))
     (load (expand-file-name "fff-lisp/hide-comnt.el" user-emacs-directory))
     (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory)))
   (unless (display-graphic-p)
