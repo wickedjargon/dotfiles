@@ -900,10 +900,22 @@ in whole buffer.  With neither, delete comments on current line."
                            rgrep
                            deadgrep
                            swiper
+                           consult-line
+                           consult-line-multi
+                           consult-ripgrep
+                           consult-grep
+                           consult-find
+                           consult-locate
+                           consult-outline
+                           consult-imenu
                            ))
-         (selected-function (completing-read "Select a search function: " functions-list nil t)))
+         ;; Keep only commands that are actually defined
+         (available-functions (seq-filter #'fboundp functions-list))
+         (selected-function (completing-read "Select a search function: "
+                                             available-functions nil t)))
     (when selected-function
       (call-interactively (intern selected-function)))))
+
 
 (defun fff-menu-main ()
   "Select and run one of the fff-menu functions."
