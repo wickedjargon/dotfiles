@@ -1090,40 +1090,6 @@ Prompt for PACKAGE-NAME with completion."
           buffer)
       (message "No README file found for package: %s" package-name))))
 
-(defun fff-set-tmr-timer-for-time (time-string)
-  "Set a TMR timer for the specified TIME-STRING.
-TIME-STRING should be in the format \"hh:mm am/pm\"."
-  (interactive "sEnter time (e.g., 4:30 pm): ")
-  (let* ((current-time (current-time))
-         ;; Split the time from the period (am/pm).
-         (components (split-string time-string " "))
-         (time-part (car components))
-         (meridiem (downcase (cadr components)))
-         (parsed-time (parse-time-string time-part))
-         (hour (nth 2 parsed-time))
-
-         ;; Convert 12-hour format to 24-hour format if needed.
-         (hour (if (and (equal meridiem "pm") (< hour 12))
-                   (+ 12 hour)
-                 (if (and (equal meridiem "am") (= hour 12))
-                     0
-                   hour)))
-         (now (decode-time current-time))
-         (target-time (encode-time (nth 0 parsed-time)  ; seconds
-                                   (nth 1 parsed-time)  ; minutes
-                                   hour                 ; adjusted hour
-                                   (nth 3 now)          ; current day
-                                   (nth 4 now)          ; current month
-                                   (nth 5 now)          ; current year
-                                   (nth 8 now))))       ; current timezone
-    ;; Adjust if the target time is already passed for today.
-    (when (time-less-p target-time current-time)
-      (setq target-time (time-add target-time (days-to-time 1))))
-    (let ((seconds-until-target (float-time (time-subtract target-time current-time))))
-      (if (> seconds-until-target 0)
-          (tmr (number-to-string (/ seconds-until-target 60)))
-        (error "The specified time is invalid")))))
-
 (defun fff-maldev-academy-open-modules ()
   "Open a dired buffer with MalDev Academy modules sorted numerically, excluding directories."
   (interactive)
