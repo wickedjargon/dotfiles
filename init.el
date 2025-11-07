@@ -24,6 +24,8 @@
 ;; - Wanderlust
 ;; - Notmuch
 
+;; TODO: setup emacs as a clipboard manager with consult-yank-pop
+
 ;; bootstrap straight.el
 (defvar bootstrap-version)
 (let ((bootstrap-file
