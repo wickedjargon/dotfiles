@@ -329,7 +329,7 @@
     (interactive)
     (message "`package-install` is disabled. Use straight.el instead."))
 
-  ;; Optionally, prevent `package-list-packages` from running
+  ;; Prevent `package-list-packages` from running
   (defun package-list-packages (&rest args)
     "This has been overridden to do nothing because we use straight.el."
     (interactive)
