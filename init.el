@@ -1249,7 +1249,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   :config
   (setq ibuffer-formats
         '((mark modified read-only " "
-                (name 35 35 :left :elide) ; change: 35s were originally 18s
+                (name 35 35 :left :elide)
                 " "
                 (size 9 -1 :right)
                 " "
