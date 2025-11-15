@@ -1298,6 +1298,9 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 
 ;; common lisp documentation
 (use-package hyperspec :straight t :ensure t
+  :init
+  (setq common-lisp-hyperspec-root
+        "file:///home/ff/.local/share/HyperSpec/")
   :config
   (defun fff-hyperspec-lookup ()
     "Open the HyperSpec entry in EWW instead of the default browser."
