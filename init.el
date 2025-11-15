@@ -879,15 +879,13 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package dired
   :ensure nil
   :hook ((dired-mode . auto-revert-mode)
-         (dired-mode . dired-omit-mode))  ;; enable omit mode
+         (dired-mode . dired-omit-mode))
   :init
   (setq dired-listing-switches "-ahl --group-directories-first"
-        dired-omit-files "^\\.$")
+        dired-omit-files "^\\.$"
+        dired-omit-extensions nil)
   :config
-  (add-hook 'dired-mode-hook
-            (lambda ()
-              (dired-hide-details-mode))))
-
+  (add-hook 'dired-mode-hook #'dired-hide-details-mode))
 
 (use-package switch-window :straight t :ensure t :defer t)
 
