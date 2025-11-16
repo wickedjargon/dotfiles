@@ -986,8 +986,32 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (define-key embark-file-map (kbd "o") #'crux-open-with)
   (define-key embark-file-map (kbd "y") #'yt-dlp-play-current-entry)
 
-  ;; Set crux-open-with as the default action for files
-  (setf (alist-get 'file embark-default-action-overrides) #'crux-open-with))
+  ;; Brave browser defaults
+  (setq browse-url-browser-function #'browse-url-generic
+        browse-url-generic-program "brave-browser")
+
+  ;; FIXED: use "s" instead of "f" so URLs stay URLs
+  (defun my/open-in-brave (target)
+    (interactive "sOpen in Brave: ")
+    (start-process "brave" nil "brave-browser" "--new-window" target))
+
+  (define-key embark-url-map (kbd "b") #'my/open-in-brave)
+  (define-key embark-file-map (kbd "b") #'my/open-in-brave)
+
+  ;; Make Brave the default for .html
+  (defun my/embark-file-open (file)
+    (if (string-match-p "\\.html?\\'" file)
+        (my/open-in-brave file)
+      (crux-open-with file)))
+
+  (setf (alist-get 'file embark-default-action-overrides)
+        #'my/embark-file-open)
+
+  ;; Make Brave the default DWIM action for URLs
+  (setf (alist-get 'url embark-default-action-overrides)
+        #'my/open-in-brave))
+
+
 
 (use-package diminish :straight t :ensure t :defer t)
 

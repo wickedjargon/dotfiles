@@ -1573,3 +1573,9 @@ With prefix ARG = 0, print integers in extra formats (decimal, octal, hex, char)
     ;; restore point to the same column on that line (bounded by new line length)
     (goto-char (+ line-beg (min col (max 0 (length new-line)))))
     (message "%s" repr)))
+
+(defun fff-dired-open-in-brave ()
+  "Open the file at point in a new Brave window."
+  (interactive)
+  (let ((file (dired-get-file-for-visit)))
+    (start-process "brave-open" nil "brave-browser" "--new-window" (expand-file-name file))))
