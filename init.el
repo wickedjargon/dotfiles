@@ -834,7 +834,10 @@ With a prefix ARG always prompt for command to use."
                   "tsconfig.json" ".babelrc" ".prettierrc"
                   "CMakeLists.txt" ".project" "hugo.toml"))
     (add-to-list 'projectile-project-root-files file)
-    (add-to-list 'projectile-project-root-files-bottom-up file))
+    (add-to-list 'projectile-project-root-files-bottom-up file)
+    (add-to-list 'projectile-project-root-files-top-down-recurring file))
+
+  ;; these two functions allow find file find both directories and files
   (defun projectile--find-file-or-dir (invalidate-cache)
     "Jump to a project's file or directory using completion.
 With INVALIDATE-CACHE, invalidates the cache first."
