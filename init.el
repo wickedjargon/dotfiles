@@ -819,9 +819,7 @@ With a prefix ARG always prompt for command to use."
   (setq prescient-filter-method  '(literal regexp initialism))
   (vertico-prescient-mode +1))
 
-(use-package  savehist :straight t
-  :init
-  (savehist-mode))
+(use-package  savehist :straight t :init (savehist-mode))
 
 (use-package projectile :straight t :defer t :ensure t
   :config
@@ -870,9 +868,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package consult-projectile :straight t :ensure t)
 
-(use-package marginalia :straight t :defer t :ensure t
-  :init
-  (marginalia-mode))
+(use-package marginalia :straight t :defer t :ensure t :init (marginalia-mode))
 
 (use-package emojify :straight t :ensure t :defer t)
 
@@ -1292,7 +1288,6 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
      browse-url-program "--new-window" url))
 
   (setq browse-url-browser-function 'browse-url-new-window))
-
 
 ;; common lisp documentation
 (use-package hyperspec :straight t :ensure t
