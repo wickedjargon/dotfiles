@@ -1347,7 +1347,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 (use-package emacs-lisp-mode
   :ensure nil  ;; emacs-lisp-mode is built-in, so no need to install it
   :init
-  (defun my-emacs-lisp-mode-setup ()
+  (defun fff-emacs-lisp-mode-setup ()
     "Custom setup for `emacs-lisp-mode`."
     (setq imenu-generic-expression
           '(("Functions" "^\\s-*(\\(defun\\|defsubst\\|defalias\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
@@ -1367,7 +1367,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
             ("Autoloads" "^\\s-*(autoload\\s-+'\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
             (";;; Category Title" "^;;; \\(.*\\)$" 1)))
     (imenu-add-menubar-index))
-  :hook (emacs-lisp-mode . my-emacs-lisp-mode-setup))
+  :hook (emacs-lisp-mode . fff-emacs-lisp-mode-setup))
 
 (use-package pulsar :straight t :defer t :ensure t
   :hook (after-init . pulsar-global-mode)
