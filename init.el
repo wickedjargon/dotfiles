@@ -447,6 +447,9 @@
     (evil-leader/set-key "c c" 'compile)
     (evil-leader/set-key "v v" 'eval-expression)
 
+    ;; yasnippet
+    (evil-leader/set-key "c s" 'yas-insert-snippet)
+
     ;; paragraph navigation
     (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
     (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
