@@ -677,14 +677,6 @@
 
 (use-package expand-region :straight t :defer t :ensure t)
 
-(use-package lisp-mode :ensure nil
-  :init
-  (set-default 'auto-mode-alist
-               (append '(("\\.lisp$" . lisp-mode)
-                         ("\\.lsp$" . lisp-mode)
-                         ("\\.cl$" . lisp-mode))
-                       auto-mode-alist)))
-
 (use-package sly :straight t :defer t :ensure t
   :init
   (set-default 'auto-mode-alist
@@ -806,8 +798,6 @@ With a prefix ARG always prompt for command to use."
 
 (use-package gh-md :straight t :ensure t :defer t)
 
-(use-package go-mode :straight t :ensure t :defer t)
-
 (use-package vertico :straight t :defer t :ensure t
   :init
   (setq enable-recursive-minibuffers t)
@@ -893,8 +883,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package rainbow-mode :straight t :ensure t :defer t)
 
-(use-package vimrc-mode :straight t :ensure t :defer t)
-
 (use-package emmet-mode :straight t :ensure t :defer t
   :init
   (require 'emmet-mode)
@@ -928,8 +916,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package winner :straight t :ensure t :defer t
   :init (winner-mode +1))
 
-(use-package haskell-mode :straight t :ensure t :defer t)
-
 (use-package volatile-highlights :straight t :ensure t :defer t
   :init
   (volatile-highlights-mode t)
@@ -937,8 +923,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (vhl/define-extension 'evil 'evil-paste-after 'evil-paste-before
                         'evil-paste-pop 'evil-move)
   (vhl/install-extension 'evil))
-
-(use-package typescript-mode :straight t :ensure t :defer t)
 
 (use-package eglot
   :ensure nil
@@ -1080,8 +1064,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package git-timemachine :straight t :ensure t :defer t)
 
-(use-package clojure-mode :straight t :ensure t :defer t)
-
 (use-package cider :straight t :ensure t :defer t
   :config
   (define-key cider-repl-mode-map (kbd "C-c c") #'cider-repl-clear-buffer))
@@ -1116,18 +1098,12 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (global-evil-matchit-mode +1))
 
-(use-package zig-mode :straight t :ensure t :defer t)
-
 (use-package all-the-icons :straight t :ensure t
   :if (display-graphic-p))
 
 (use-package evil-iedit-state :straight t :ensure t :defer t
   :init
   (global-set-key (kbd "C-;") 'iedit-mode))
-
-(use-package scala-mode :straight t :ensure t :defer t
-  :interpreter
-  ("scala" . scala-mode))
 
 (use-package treesit-auto :straight t :ensure t
   :after emacs
@@ -1139,10 +1115,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
 
 (use-package projectile-ripgrep :straight t :ensure t)
-
-(use-package dockerfile-mode :straight t :ensure t)
-
-(use-package json-mode :straight t :ensure t)
 
 (use-package deadgrep :straight t :ensure t)
 
@@ -1169,17 +1141,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (setq gptel-model 'gpt-4o))
 
-(use-package sml-mode :straight t :ensure t)
-
 ;; common lisp hyperspec
 (use-package clhs :straight t :ensure t :defer t)
-
-(use-package d-mode :straight t :ensure t
-  :mode "\\.d\\'"
-  :config
-  (setq d-mode-indent-style 'k&r))
-
-(use-package svelte-mode :straight t :ensure t :mode "\\.svelte\\'")
 
 ;; sets indentation variables
 (use-package dtrt-indent :straight t :ensure t :defer nil
@@ -1210,28 +1173,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package eww :ensure nil
   :config
   (setq eww-search-prefix "https://wiby.me/?q="))
-
-(use-package asm-mode :ensure nil
-  :mode ("\\.s\\'" . asm-mode)
-  ("\\.asm\\'" . asm-mode)
-  :config
-  ;; remove indentation
-  (defun asm-indent-line ()
-    "Auto-indent the current line."
-    (interactive)
-    (indent-line-to 0))
-  (defun asm-calculate-indentation () 0)
-  (defun asm-colon ()
-    "Insert a colon without triggering indentation."
-    (interactive)
-    (let ((labelp nil))
-      (save-excursion
-        (skip-syntax-backward "w_")
-        (skip-syntax-backward " ")
-        (setq labelp (bolp)))
-      (call-interactively 'self-insert-command)
-      (when labelp
-        (delete-horizontal-space)))))
 
 (use-package tmr :straight t :ensure t :defer t
   :init
@@ -1283,17 +1224,11 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
                 (name 16 -1)
                 " " filename))))
 
-(use-package v-mode :straight t :ensure t :defer t)
-
 (use-package sly-macrostep :defer t :straight t
   :config
   (add-to-list 'sly-contribs 'sly-macrostep 'append))
 
 (use-package read-aloud :defer t :ensure t :straight t)
-
-(use-package graphviz-dot-mode :defer t :straight t :ensure t
-  :config
-  (setq graphviz-dot-indent-width 4))
 
 ;; always open urls in a new window.
 (use-package browse-url
@@ -1331,23 +1266,10 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
     (let ((browse-url-browser-function 'eww-browse-url))
       (hyperspec-lookup (thing-at-point 'symbol)))))
 
-(use-package rust-mode :straight t :ensure t)
-
 (use-package evil-mc :straight t :ensure t
   :after evil
   :config
   (global-evil-mc-mode 1))
-
-(use-package csharp-mode :ensure nil
-  :hook (csharp-mode . (lambda ()
-                         (setq imenu-create-index-function
-                               (lambda ()
-                                 (let ((imenu-generic-expression
-                                        '(("Variables" "^\\s-*[a-zA-Z0-9._ ]* \\([a-zA-Z0-9_]*\\)\\( = \\sw*\\|\\s-*\\);$" 1)
-                                          ("Functions" "^\\s-*[^/]* \\([a-zA-Z0-9_]+\\)(.*)\\(\\s-*.*\n\\|\\ *\\)\\s-*{" 1)
-                                          ("Classes" "^\\s-*\\(.*\\)class +\\([a-zA-Z0-9_]+\\)" 2)
-                                          ("Namespaces" "^namespace +\\([a-z0-9_]*\\)" 1))))
-                                   (imenu--generic-function imenu-generic-expression)))))))
 
 (use-package tab-bar :ensure nil
   :init
@@ -1368,31 +1290,6 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
     (tab-bar-close-tab)
     (when (= (length (tab-bar-tabs)) 1)
       (tab-bar-mode -1))))
-
-(use-package emacs-lisp-mode
-  :ensure nil  ;; emacs-lisp-mode is built-in, so no need to install it
-  :init
-  (defun fff-emacs-lisp-mode-setup ()
-    "Custom setup for `emacs-lisp-mode`."
-    (setq imenu-generic-expression
-          '(("Functions" "^\\s-*(\\(defun\\|defsubst\\|defalias\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
-            ("Macros" "^\\s-*(\\(defmacro\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
-            ("Variables" "^\\s-*(\\(defvar\\|defconst\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
-            ("Custom Variables" "^\\s-*(\\(defcustom\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
-            ("Set Variables" "^\\s-*(setq\\s-+(?\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Use Package" "^\\s-*(use-package\\s-+'?\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Advice" "^\\s-*(defadvice\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Add Advice" "^\\s-*(advice-add\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Faces" "^\\s-*(defface\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Derived Modes" "^\\s-*(define-derived-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Minor Modes" "^\\s-*(define-minor-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Generic Modes" "^\\s-*(define-generic-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Structs" "^\\s-*(cl-defstruct\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Evil Commands" "^\\s-*(evil-define-command\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Autoloads" "^\\s-*(autoload\\s-+'\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            (";;; Category Title" "^;;; \\(.*\\)$" 1)))
-    (imenu-add-menubar-index))
-  :hook (emacs-lisp-mode . fff-emacs-lisp-mode-setup))
 
 (use-package pulsar :straight t :defer t :ensure t
   :hook (after-init . pulsar-global-mode)
@@ -1455,15 +1352,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   :ensure t
   :straight (consult-erc :type git :host codeberg :repo "mekeor/consult-erc"))
 
-(use-package markdown-mode
-  :ensure nil
-  :hook (markdown-mode . visual-line-mode)
-  :config
-  (add-to-list 'markdown-code-lang-modes '("html" . web-mode)))
-
 (use-package edit-indirect :straight t :ensure t)
-
-(use-package haxe-mode :ensure t :straight t :defer t)
 
 ;; sticky header function/struct signature
 (use-package topsy
@@ -1499,9 +1388,6 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   :straight (:type git :host github :repo "hniksic/emacs-htmlize")
   :defer t)
 
-;; ;; consult line works instead of this
-;; (use-package swiper :straight t :ensure t :defer t)
-
 (use-package insert-shebang :straight t :ensure t :defer t
   :hook (find-file-hook . insert-shebang))
 
@@ -1518,6 +1404,10 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 
 (use-package realgud :straight t :defer t :ensure t)
 
+;;; language support modes and related packages
+
+;;; web dev related packages
+
 (use-package web-mode
   :ensure t
   :straight t
@@ -1532,6 +1422,11 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   (setq web-mode-enable-auto-pairing t)
   (setq web-mode-enable-auto-closing t))
 
+;; live server behavior of vs code
+(use-package simple-httpd :straight t)
+
+(use-package impatient-mode :straight t)
+
 (use-package emmet-mode :ensure t
   :straight t
   :hook (web-mode . emmet-mode) ; Enable emmet-mode in web-mode
@@ -1539,11 +1434,131 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   (setq emmet-expand-jsx-className? t)
   (define-key emmet-mode-keymap (kbd "C-j") 'emmet-expand-line))
 
+;;; end of web dev
+
+(use-package lisp-mode :ensure nil
+  :init
+  (set-default 'auto-mode-alist
+               (append '(("\\.lisp$" . lisp-mode)
+                         ("\\.lsp$" . lisp-mode)
+                         ("\\.cl$" . lisp-mode))
+                       auto-mode-alist)))
+
+(use-package go-mode :straight t :ensure t :defer t)
+
+(use-package vimrc-mode :straight t :ensure t :defer t)
+
+(use-package haskell-mode :straight t :ensure t :defer t)
+
+(use-package typescript-mode :straight t :ensure t :defer t)
+
+(use-package clojure-mode :straight t :ensure t :defer t)
+
+(use-package zig-mode :straight t :ensure t :defer t)
+
+(use-package scala-mode :straight t :ensure t :defer t
+  :interpreter
+  ("scala" . scala-mode))
+
+(use-package dockerfile-mode :straight t :ensure t)
+
+(use-package json-mode :straight t :ensure t)
+
 (use-package gitignore-mode
   :ensure t
   :straight (:host github :repo "magit/git-modes")
   :mode "\\.gitignore\\'"
   :defer t)
+
+(use-package sml-mode :straight t :ensure t)
+
+(use-package d-mode :straight t :ensure t
+  :mode "\\.d\\'"
+  :config
+  (setq d-mode-indent-style 'k&r))
+
+(use-package svelte-mode :straight t :ensure t :mode "\\.svelte\\'")
+
+(use-package asm-mode :ensure nil
+  :mode ("\\.s\\'" . asm-mode)
+  ("\\.asm\\'" . asm-mode)
+  :config
+  ;; remove indentation
+  (defun asm-indent-line ()
+    "Auto-indent the current line."
+    (interactive)
+    (indent-line-to 0))
+  (defun asm-calculate-indentation () 0)
+  (defun asm-colon ()
+    "Insert a colon without triggering indentation."
+    (interactive)
+    (let ((labelp nil))
+      (save-excursion
+        (skip-syntax-backward "w_")
+        (skip-syntax-backward " ")
+        (setq labelp (bolp)))
+      (call-interactively 'self-insert-command)
+      (when labelp
+        (delete-horizontal-space)))))
+
+(use-package v-mode :straight t :ensure t :defer t)
+
+(use-package graphviz-dot-mode :defer t :straight t :ensure t
+  :config
+  (setq graphviz-dot-indent-width 4))
+
+(use-package rust-mode :straight t :ensure t)
+
+(use-package csharp-mode :ensure nil
+  :hook (csharp-mode . (lambda ()
+                         (setq imenu-create-index-function
+                               (lambda ()
+                                 (let ((imenu-generic-expression
+                                        '(("Variables" "^\\s-*[a-zA-Z0-9._ ]* \\([a-zA-Z0-9_]*\\)\\( = \\sw*\\|\\s-*\\);$" 1)
+                                          ("Functions" "^\\s-*[^/]* \\([a-zA-Z0-9_]+\\)(.*)\\(\\s-*.*\n\\|\\ *\\)\\s-*{" 1)
+                                          ("Classes" "^\\s-*\\(.*\\)class +\\([a-zA-Z0-9_]+\\)" 2)
+                                          ("Namespaces" "^namespace +\\([a-z0-9_]*\\)" 1))))
+                                   (imenu--generic-function imenu-generic-expression)))))))
+
+(use-package emacs-lisp-mode
+  :ensure nil  ;; emacs-lisp-mode is built-in, so no need to install it
+  :init
+  (defun fff-emacs-lisp-mode-setup ()
+    "Custom setup for `emacs-lisp-mode`."
+    (setq imenu-generic-expression
+          '(("Functions" "^\\s-*(\\(defun\\|defsubst\\|defalias\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
+            ("Macros" "^\\s-*(\\(defmacro\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
+            ("Variables" "^\\s-*(\\(defvar\\|defconst\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
+            ("Custom Variables" "^\\s-*(\\(defcustom\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
+            ("Set Variables" "^\\s-*(setq\\s-+(?\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Use Package" "^\\s-*(use-package\\s-+'?\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Advice" "^\\s-*(defadvice\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Add Advice" "^\\s-*(advice-add\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Faces" "^\\s-*(defface\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Derived Modes" "^\\s-*(define-derived-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Minor Modes" "^\\s-*(define-minor-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Generic Modes" "^\\s-*(define-generic-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Structs" "^\\s-*(cl-defstruct\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Evil Commands" "^\\s-*(evil-define-command\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Autoloads" "^\\s-*(autoload\\s-+'\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            (";;; Category Title" "^;;; \\(.*\\)$" 1)))
+    (imenu-add-menubar-index))
+  :hook (emacs-lisp-mode . fff-emacs-lisp-mode-setup))
+
+(use-package markdown-mode
+  :ensure nil
+  :hook (markdown-mode . visual-line-mode)
+  :config
+  (add-to-list 'markdown-code-lang-modes '("html" . web-mode)))
+
+(use-package haxe-mode :ensure t :straight t :defer t)
+
+(use-package racket-mode
+  :ensure t
+  :straight t
+  :mode "\\.rkt\\'")
+
+;;; end of language support section
 
 (use-package aggressive-indent
   :straight t
@@ -1556,11 +1571,6 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   :straight t
   :config
   (add-hook 'python-base-mode-hook 'pet-mode -10))
-
-(use-package racket-mode
-  :ensure t
-  :straight t
-  :mode "\\.rkt\\'")
 
 (use-package yeetube
   :straight t
