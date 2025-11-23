@@ -524,7 +524,6 @@
     (evil-leader/set-key "K" 'fff-hydra-windsize/windsize-up)
 
     ;; search and replace
-    (evil-leader/set-key "a a" 'avy-goto-char)
     (evil-leader/set-key "r r" 'fff-evil-regex-search)
 
     ;; narrow
@@ -829,8 +828,6 @@
 ;; export a code file to html
 (use-package htmlize :ensure t :straight t :defer t)
 
-;; end of web dev
-
 ;;; org packages
 
 (use-package ob-racket
@@ -919,8 +916,6 @@
 (use-package sly-macrostep :defer t :straight t
   :config
   (add-to-list 'sly-contribs 'sly-macrostep 'append))
-
-;; end of common lisp config
 
 ;;; elisp packages
 
@@ -1135,8 +1130,6 @@
   :init
   (global-set-key [remap imenu] 'consult-imenu))
 
-(use-package embark-consult :straight t :ensure t :defer t)
-
 ;;; incremental completion tools > company
 
 (use-package company :straight t :defer t :ensure t
@@ -1206,6 +1199,8 @@
   ;; Make Brave the default DWIM action for URLs
   (setf (alist-get 'url embark-default-action-overrides)
         #'my/open-in-brave))
+
+(use-package embark-consult :straight t :ensure t :defer t)
 
 (use-package flimenu :ensure t :straight t
   :config
@@ -1555,6 +1550,11 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :init
   (global-so-long-mode +1))
 
+(use-package hl-todo :straight t :ensure t :defer t
+  :custom-face
+  (hl-todo ((t (:inherit hl-todo :italic t))))
+  :hook ((prog-mode . hl-todo-mode)))
+
 (use-package diminish :straight t :ensure t :defer t)
 
 ;;; general text/code editing / IDE / navigation / jumping
@@ -1584,11 +1584,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package expand-region :straight t :defer t :ensure t)
 
-(use-package hl-todo :straight t :ensure t :defer t
-  :custom-face
-  (hl-todo ((t (:inherit hl-todo :italic t))))
-  :hook ((prog-mode . hl-todo-mode)))
-
 ;; jump to definition without ctags in many supported languages
 (use-package dumb-jump :straight t :ensure t
   :init
@@ -1598,8 +1593,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :hook (find-file-hook . insert-shebang))
 
 (use-package edit-indirect :straight t :ensure t)
-
-(use-package avy :straight t :ensure t :defer t)
 
 (use-package treesit-auto :straight t :ensure t
   :after emacs
