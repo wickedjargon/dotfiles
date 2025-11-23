@@ -1482,7 +1482,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
     "Bind C-c c to fff-eshell-clear-1 in eshell."
     (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
 
-;;; other UI packages
+;;; UI packages
 
 (use-package all-the-icons :straight t :ensure t
   :if (display-graphic-p))
