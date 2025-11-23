@@ -1495,7 +1495,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 ;;; general text/code editing / IDE / navigation / jumping
 
-
 (use-package expand-region :straight t :defer t :ensure t)
 
 (use-package hl-todo :straight t :ensure t :defer t
