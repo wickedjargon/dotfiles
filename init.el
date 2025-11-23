@@ -341,16 +341,6 @@
 
 ;;; built in packages
 
-(use-package hippie-expand :ensure nil :defer t
-  :init
-  (setq hippie-expand-try-functions-list '(try-expand-dabbrev try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list  try-expand-line  try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
-
-(use-package Info :ensure nil :defer t
-  :init
-  (add-hook 'Info-mode-hook (lambda ()
-                              (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
-                              (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
-
 (use-package dired
   :ensure nil
   :hook ((dired-mode . auto-revert-mode)
@@ -477,81 +467,6 @@
 (use-package zenburn-theme :straight t :ensure t :defer t)
 
 (use-package standard-themes :straight t :ensure t)
-
-;;; other UI packages
-
-(use-package all-the-icons :straight t :ensure t
-  :if (display-graphic-p))
-
-(use-package emojify :straight t :ensure t :defer t)
-
-(use-package doom-modeline :ensure t :defer t :straight t
-  :config
-  (setq doom-modeline-hud t)
-  (setq doom-modeline-highlight-modified-buffer-name nil)
-  (setq doom-modeline-position-line-format '(""))
-  (setq doom-modeline-buffer-encoding nil)
-  (setq doom-modeline-percent-position '(""))
-  (setq doom-modeline-modal nil)
-  (setq doom-modeline-env-enable-rust nil)
-  (setq display-time-default-load-average nil)
-  (setq display-time-day-and-date t)
-  (setq doom-modeline-buffer-file-name-style 'relative-from-project)
-  (display-time)
-  :init
-  (doom-modeline-mode +1))
-
-(use-package pulsar :straight t :defer t :ensure t
-  :hook (after-init . pulsar-global-mode)
-  :config
-  (setq pulsar-pulse t)
-  (setq pulsar-delay 0.025)
-  (setq pulsar-iterations 10)
-  (setq pulsar-face 'evil-ex-lazy-highlight)
-  (add-to-list 'pulsar-pulse-functions 'evil-scroll-down)
-  (add-to-list 'pulsar-pulse-functions 'evil-scroll-up)
-  (add-to-list 'pulsar-pulse-functions 'flymake-goto-next-error)
-  (add-to-list 'pulsar-pulse-functions 'flymake-goto-prev-error)
-  (add-to-list 'pulsar-pulse-functions 'next-error)
-  (add-to-list 'pulsar-pulse-functions 'previous-error)
-  (add-to-list 'pulsar-pulse-functions 'evil-yank)
-  (add-to-list 'pulsar-pulse-functions 'evil-yank-line)
-  (add-to-list 'pulsar-pulse-functions 'evil-delete)
-  (add-to-list 'pulsar-pulse-functions 'evil-delete-line)
-  (add-to-list 'pulsar-pulse-functions 'evil-jump-item))
-
-(use-package volatile-highlights :straight t :ensure t :defer t
-  :init
-  (volatile-highlights-mode t)
-  :config
-  (vhl/define-extension 'evil 'evil-paste-after 'evil-paste-before
-                        'evil-paste-pop 'evil-move)
-  (vhl/install-extension 'evil))
-
-;; sticky header function/struct signature
-(use-package topsy
-  :straight (topsy :type git :host github :repo "alphapapa/topsy.el")
-  :hook
-  ((prog-mode . topsy-mode)
-   (magit-section-mode . topsy-mode)))
-
-(use-package keycast :straight t :ensure t :defer t)
-
-(use-package posframe
-  :straight (posframe :type git :host github :repo "tumashu/posframe")
-  :ensure t)
-
-(use-package rainbow-mode :straight t :ensure t :defer t)
-
-;; colorful parentheses
-(use-package rainbow-delimiters :straight t :defer t :ensure t
-  :hook (prog-mode . rainbow-delimiters-mode))
-
-(use-package so-long :defer t :ensure t :straight t
-  :init
-  (global-so-long-mode +1))
-
-(use-package diminish :straight t :ensure t :defer t)
 
 ;;; evil packages
 
@@ -1296,6 +1211,12 @@
   :config
   (flimenu-global-mode))
 
+;;; snippets
+
+(use-package hippie-expand :ensure nil :defer t
+  :init
+  (setq hippie-expand-try-functions-list '(try-expand-dabbrev try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list  try-expand-line  try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
+
 (use-package yasnippet :straight t :ensure t
   :init
   (add-hook 'prog-mode-hook #'yas-minor-mode)
@@ -1480,6 +1401,12 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 ;;; docs / lookup
 
+(use-package Info :ensure nil :defer t
+  :init
+  (add-hook 'Info-mode-hook (lambda ()
+                              (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
+                              (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
+
 (use-package devdocs :ensure t :straight t
   :init
   (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
@@ -1554,6 +1481,81 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (defun fff-eshell-clear-1-binding ()
     "Bind C-c c to fff-eshell-clear-1 in eshell."
     (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
+
+;;; other UI packages
+
+(use-package all-the-icons :straight t :ensure t
+  :if (display-graphic-p))
+
+(use-package emojify :straight t :ensure t :defer t)
+
+(use-package doom-modeline :ensure t :defer t :straight t
+  :config
+  (setq doom-modeline-hud t)
+  (setq doom-modeline-highlight-modified-buffer-name nil)
+  (setq doom-modeline-position-line-format '(""))
+  (setq doom-modeline-buffer-encoding nil)
+  (setq doom-modeline-percent-position '(""))
+  (setq doom-modeline-modal nil)
+  (setq doom-modeline-env-enable-rust nil)
+  (setq display-time-default-load-average nil)
+  (setq display-time-day-and-date t)
+  (setq doom-modeline-buffer-file-name-style 'relative-from-project)
+  (display-time)
+  :init
+  (doom-modeline-mode +1))
+
+(use-package pulsar :straight t :defer t :ensure t
+  :hook (after-init . pulsar-global-mode)
+  :config
+  (setq pulsar-pulse t)
+  (setq pulsar-delay 0.025)
+  (setq pulsar-iterations 10)
+  (setq pulsar-face 'evil-ex-lazy-highlight)
+  (add-to-list 'pulsar-pulse-functions 'evil-scroll-down)
+  (add-to-list 'pulsar-pulse-functions 'evil-scroll-up)
+  (add-to-list 'pulsar-pulse-functions 'flymake-goto-next-error)
+  (add-to-list 'pulsar-pulse-functions 'flymake-goto-prev-error)
+  (add-to-list 'pulsar-pulse-functions 'next-error)
+  (add-to-list 'pulsar-pulse-functions 'previous-error)
+  (add-to-list 'pulsar-pulse-functions 'evil-yank)
+  (add-to-list 'pulsar-pulse-functions 'evil-yank-line)
+  (add-to-list 'pulsar-pulse-functions 'evil-delete)
+  (add-to-list 'pulsar-pulse-functions 'evil-delete-line)
+  (add-to-list 'pulsar-pulse-functions 'evil-jump-item))
+
+(use-package volatile-highlights :straight t :ensure t :defer t
+  :init
+  (volatile-highlights-mode t)
+  :config
+  (vhl/define-extension 'evil 'evil-paste-after 'evil-paste-before
+                        'evil-paste-pop 'evil-move)
+  (vhl/install-extension 'evil))
+
+;; sticky header function/struct signature
+(use-package topsy
+  :straight (topsy :type git :host github :repo "alphapapa/topsy.el")
+  :hook
+  ((prog-mode . topsy-mode)
+   (magit-section-mode . topsy-mode)))
+
+(use-package keycast :straight t :ensure t :defer t)
+
+(use-package posframe
+  :straight (posframe :type git :host github :repo "tumashu/posframe")
+  :ensure t)
+
+(use-package rainbow-mode :straight t :ensure t :defer t)
+
+;; colorful parentheses
+(use-package rainbow-delimiters :straight t :defer t :ensure t
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package so-long :defer t :ensure t :straight t
+  :init
+  (global-so-long-mode +1))
+
+(use-package diminish :straight t :ensure t :defer t)
 
 ;;; general text/code editing / IDE / navigation / jumping
 
