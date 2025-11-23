@@ -1477,6 +1477,17 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package wgrep :straight t :ensure t :defer t)
 
+
+;;; docs / lookup
+
+(use-package devdocs :ensure t :straight t
+  :init
+  (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
+
+(use-package sicp :straight t :defer t :ensure t)
+
+(use-package mw-thesaurus :straight t :defer t :ensure t)
+
 ;;; indentation
 
 (use-package aggressive-indent
@@ -1585,14 +1596,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :hook (find-file-hook . insert-shebang))
 
 (use-package edit-indirect :straight t :ensure t)
-
-(use-package devdocs :ensure t :straight t
-  :init
-  (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
-
-(use-package sicp :straight t :defer t :ensure t)
-
-(use-package mw-thesaurus :straight t :defer t :ensure t)
 
 (use-package avy :straight t :ensure t :defer t)
 
