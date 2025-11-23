@@ -362,27 +362,6 @@
   :config
   (add-hook 'dired-mode-hook #'dired-hide-details-mode))
 
-(use-package eglot
-  :ensure nil
-  :hook ((rust-mode
-          rust-ts-mode
-          svelte-mode
-          c-ts-mode c++-ts-mode
-          csharp-mode
-          typescript-mode typescript-ts-mode
-          js-ts-mode javascript-mode
-          python-mode python-ts-mode
-          d-mode
-          go-mode
-          java-mode java-ts-mode) . eglot-ensure)
-  :init
-  (setq eglot-ignored-server-capabilities
-        '(:inlayHintProvider
-          :documentHighlightProvider))
-  :config
-  (add-to-list 'eglot-server-programs
-               '(csharp-mode . ("csharp-ls"))))
-
 (use-package newsticker
   :ensure nil
   :after evil-collection
@@ -396,7 +375,6 @@
     'normal
     'newsticker-treeview-mode-map
     "q" #'fff-newsticker-treeview-quit))
-
 
 (use-package eww :ensure nil
   :config
@@ -1459,6 +1437,39 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package wgrep :straight t :ensure t :defer t)
 
+;;; indentation
+
+(use-package aggressive-indent
+  :straight t
+  :ensure t
+  :hook
+  ((emacs-lisp-mode lisp-mode lisp-interaction-mode) . aggressive-indent-mode))
+
+;; sets indentation variables
+(use-package dtrt-indent :straight t :ensure t :defer nil
+  :config
+  (dtrt-indent-global-mode +1)
+  ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
+  (dolist (fn '(lsp-format-buffer
+                lsp-format-region
+                eglot-format-buffer
+                elgot-format-region
+                indent-region
+                tabify
+                untabify))
+    (advice-add fn :after (lambda (&rest _args)
+                            (when (called-interactively-p 'any)
+                              (dtrt-indent-try-set-offset))))))
+
+;;; window
+
+(use-package windsize :straight t :defer t :ensure t)
+
+(use-package switch-window :straight t :ensure t :defer t)
+
+(use-package winner :straight t :ensure t :defer t
+  :init (winner-mode +1))
+
 ;;; terminal / shell
 
 (use-package terminal-here
@@ -1495,6 +1506,29 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 ;;; general text/code editing / IDE / navigation / jumping
 
+(use-package eglot
+  :ensure nil
+  :hook ((rust-mode
+          rust-ts-mode
+          svelte-mode
+          c-ts-mode c++-ts-mode
+          csharp-mode
+          typescript-mode typescript-ts-mode
+          js-ts-mode javascript-mode
+          python-mode python-ts-mode
+          d-mode
+          go-mode
+          java-mode java-ts-mode) . eglot-ensure)
+  :init
+  (setq eglot-ignored-server-capabilities
+        '(:inlayHintProvider
+          :documentHighlightProvider))
+  :config
+  (add-to-list 'eglot-server-programs
+               '(csharp-mode . ("csharp-ls"))))
+
+(use-package saveplace :straight t :init (save-place-mode))
+
 (use-package expand-region :straight t :defer t :ensure t)
 
 (use-package hl-todo :straight t :ensure t :defer t
@@ -1502,46 +1536,15 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (hl-todo ((t (:inherit hl-todo :italic t))))
   :hook ((prog-mode . hl-todo-mode)))
 
-(use-package aggressive-indent
-  :straight t
-  :ensure t
-  :hook
-  ((emacs-lisp-mode lisp-mode lisp-interaction-mode) . aggressive-indent-mode))
-
 ;; jump to definition without ctags in many supported languages
 (use-package dumb-jump :straight t :ensure t
   :init
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
-(use-package windsize :straight t :defer t :ensure t)
-
-(use-package switch-window :straight t :ensure t :defer t)
-
-(use-package saveplace :straight t :init (save-place-mode))
-
-(use-package winner :straight t :ensure t :defer t
-  :init (winner-mode +1))
-
 (use-package insert-shebang :straight t :ensure t :defer t
   :hook (find-file-hook . insert-shebang))
 
 (use-package edit-indirect :straight t :ensure t)
-
-;; sets indentation variables
-(use-package dtrt-indent :straight t :ensure t :defer nil
-  :config
-  (dtrt-indent-global-mode +1)
-  ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
-  (dolist (fn '(lsp-format-buffer
-                lsp-format-region
-                eglot-format-buffer
-                elgot-format-region
-                indent-region
-                tabify
-                untabify))
-    (advice-add fn :after (lambda (&rest _args)
-                            (when (called-interactively-p 'any)
-                              (dtrt-indent-try-set-offset))))))
 
 (use-package devdocs :ensure t :straight t
   :init
