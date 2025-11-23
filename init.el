@@ -468,39 +468,6 @@
                        (unless (derived-mode-p 'emacs-lisp-mode)
                          (flymake-mode +1)))))
 
-;; irc client
-(use-package erc :ensure nil :defer t
-  :custom
-  (erc-join-buffer 'window) ;; Open a new window when joining channels.
-  (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
-  (erc-autojoin-channels-alist
-   '((".*\\.libera\\.chat"
-      "#programming"
-      "#emacs"
-      "#python"
-      "#javascript"
-      "#rust"
-      "#c"
-      "#haskell"
-      "#go-nuts"
-      "#linux"
-      "#archlinux"
-      "#debian"
-      "#latex")))
-  (erc-hide-timestamps t))
-
-(use-package consult-erc
-  :ensure t
-  :straight (consult-erc :type git :host codeberg :repo "mekeor/consult-erc"))
-
-(use-package eshell
-  :ensure nil
-  :hook (eshell-mode . fff-eshell-clear-1-binding)
-  :config
-  (defun fff-eshell-clear-1-binding ()
-    "Bind C-c c to fff-eshell-clear-1 in eshell."
-    (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
-
 ;;; themes
 
 (use-package modus-themes
@@ -575,6 +542,14 @@
   (add-to-list 'pulsar-pulse-functions 'evil-delete-line)
   (add-to-list 'pulsar-pulse-functions 'evil-jump-item))
 
+(use-package volatile-highlights :straight t :ensure t :defer t
+  :init
+  (volatile-highlights-mode t)
+  :config
+  (vhl/define-extension 'evil 'evil-paste-after 'evil-paste-before
+                        'evil-paste-pop 'evil-move)
+  (vhl/install-extension 'evil))
+
 ;; sticky header function/struct signature
 (use-package topsy
   :straight (topsy :type git :host github :repo "alphapapa/topsy.el")
@@ -582,9 +557,23 @@
   ((prog-mode . topsy-mode)
    (magit-section-mode . topsy-mode)))
 
+(use-package keycast :straight t :ensure t :defer t)
+
 (use-package posframe
   :straight (posframe :type git :host github :repo "tumashu/posframe")
   :ensure t)
+
+(use-package rainbow-mode :straight t :ensure t :defer t)
+
+;; colorful parentheses
+(use-package rainbow-delimiters :straight t :defer t :ensure t
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package so-long :defer t :ensure t :straight t
+  :init
+  (global-so-long-mode +1))
+
+(use-package diminish :straight t :ensure t :defer t)
 
 ;;; evil packages
 
@@ -944,9 +933,21 @@
   (setq emmet-expand-jsx-className? t)
   (define-key emmet-mode-keymap (kbd "C-j") #'emmet-expand-line))
 
+;; export a code file to html
+(use-package htmlize :ensure t :straight t :defer t)
+
 ;; end of web dev
 
 ;;; org packages
+
+(use-package ob-racket
+  :straight (ob-racket
+	         :type git :host github :repo "hasu/emacs-ob-racket"
+	         :files ("*.el" "*.rkt"))
+  :after org
+  :config
+  (add-hook 'ob-racket-pre-runtime-library-load-hook
+	        #'ob-racket-raco-make-runtime-library))
 
 (use-package org :ensure nil :defer t
   :hook (org-mode . visual-line-mode)
@@ -973,15 +974,6 @@
 (use-package org-download :straight t :ensure t
   :config
   (add-hook 'dired-mode-hook 'org-download-enable))
-
-(use-package ob-racket
-  :straight (ob-racket
-	         :type git :host github :repo "hasu/emacs-ob-racket"
-	         :files ("*.el" "*.rkt"))
-  :after org
-  :config
-  (add-hook 'ob-racket-pre-runtime-library-load-hook
-	        #'ob-racket-raco-make-runtime-library))
 
 ;;; common lisp
 
@@ -1028,6 +1020,8 @@
   (define-key lisp-mode-map (kbd "C-j") 'sly-eval-print-last-expression)
   (define-key lisp-mode-map (kbd "C-<return>") 'sly-eval-print-last-expression)
   (evil-set-initial-state 'sly-mrepl-mode 'normal))
+
+(use-package macrostep :straight t :ensure t :defer t)
 
 (use-package sly-macrostep :defer t :straight t
   :config
@@ -1179,6 +1173,12 @@
     (imenu-add-menubar-index))
   :hook (emacs-lisp-mode . fff-emacs-lisp-mode-setup))
 
+(use-package pyvenv :straight t :ensure t :defer t)
+
+(use-package realgud :straight t :defer t :ensure t)
+
+;;; markdown
+
 (use-package markdown-mode
   :ensure nil
   :hook (markdown-mode . visual-line-mode)
@@ -1188,12 +1188,29 @@
 ;; generate markdown toc
 (use-package markdown-toc :straight t :ensure t :defer t)
 
+(use-package gh-md :straight t :ensure t :defer t)
+
 (use-package haxe-mode :ensure t :straight t :defer t)
 
 (use-package racket-mode
   :ensure t
   :straight t
   :mode "\\.rkt\\'")
+
+;;; pdf / epub
+
+(use-package pdf-tools :straight t :ensure t  :defer t
+  :mode ("\\pdf\\'" . pdf-view-mode)
+  :init
+  (add-hook 'pdf-view-mode-hook (lambda ()
+                                  (define-key pdf-view-mode-map (kbd "<tab>") 'pdf-outline)
+                                  (pdf-view-themed-minor-mode)))
+  :config
+  (pdf-tools-install :no-query))
+
+(use-package nov :straight t :ensure t :defer t
+  :init
+  (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
 ;; end of language support section
 
@@ -1250,9 +1267,64 @@
 
 ;;; incremental completion tools > other
 
+;; TODO: use embark-target-finders to add a new type for youtube urls.
+(use-package embark
+  :straight t
+  :ensure t
+  :defer t
+  :bind*
+  (("C-c e" . embark-act)
+   ("C-h b" . embark-bindings))
+  :init
+  (setq prefix-help-command #'embark-prefix-help-command)
+  (setq embark-prompter #'embark-completing-read-prompter)
+  (setq embark-indicators '(embark--vertico-indicator))
+  :config
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none))))
+
+  ;; Add crux-open-with to the existing file map
+  (define-key embark-file-map (kbd "o") #'crux-open-with)
+  (define-key embark-file-map (kbd "y") #'yt-dlp-play-current-entry)
+
+  ;; Brave browser defaults
+  (setq browse-url-browser-function #'browse-url-generic
+        browse-url-generic-program "brave-browser")
+
+  ;; FIXED: use "s" instead of "f" so URLs stay URLs
+  (defun my/open-in-brave (target)
+    (interactive "sOpen in Brave: ")
+    (start-process "brave" nil "brave-browser" "--new-window" target))
+
+  (define-key embark-url-map (kbd "b") #'my/open-in-brave)
+  (define-key embark-file-map (kbd "b") #'my/open-in-brave)
+
+  ;; Make Brave the default for .html
+  (defun my/embark-file-open (file)
+    (if (string-match-p "\\.html?\\'" file)
+        (my/open-in-brave file)
+      (crux-open-with file)))
+
+  (setf (alist-get 'file embark-default-action-overrides)
+        #'my/embark-file-open)
+
+  ;; Make Brave the default DWIM action for URLs
+  (setf (alist-get 'url embark-default-action-overrides)
+        #'my/open-in-brave))
+
 (use-package flimenu :ensure t :straight t
   :config
   (flimenu-global-mode))
+
+(use-package yasnippet :straight t :ensure t
+  :init
+  (add-hook 'prog-mode-hook #'yas-minor-mode)
+  (add-hook 'org-mode-hook #'yas-minor-mode)
+  :config
+  (add-to-list #'yas-snippet-dirs (expand-file-name "snippets/" user-emacs-directory))
+  (yas-reload-all))
 
 ;; end of completion
 
@@ -1283,65 +1355,53 @@
   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
   (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 
-;;; unorganized pile
+;;; entertainment
 
-(use-package yasnippet :straight t :ensure t
-  :init
-  (add-hook 'prog-mode-hook #'yas-minor-mode)
-  (add-hook 'org-mode-hook #'yas-minor-mode)
-  :config
-  (add-to-list #'yas-snippet-dirs (expand-file-name "snippets/" user-emacs-directory))
-  (yas-reload-all))
+;; irc client
+(use-package erc :ensure nil :defer t
+  :custom
+  (erc-join-buffer 'window) ;; Open a new window when joining channels.
+  (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
+  (erc-autojoin-channels-alist
+   '((".*\\.libera\\.chat"
+      "#programming"
+      "#emacs"
+      "#python"
+      "#javascript"
+      "#rust"
+      "#c"
+      "#haskell"
+      "#go-nuts"
+      "#linux"
+      "#archlinux"
+      "#debian"
+      "#latex")))
+  (erc-hide-timestamps t))
 
-(use-package expand-region :straight t :defer t :ensure t)
-
-(use-package terminal-here
-  :straight t
-  :defer t
+(use-package consult-erc
   :ensure t
-  :init
-  (setq terminal-here-linux-terminal-command 'st)
-  (setq terminal-here-windows-terminal-command 'powershell)
+  :straight (consult-erc :type git :host codeberg :repo "mekeor/consult-erc"))
+
+;; audio / music payer
+(use-package emms :straight t :ensure t :defer t
+  :diminish emms-mode-line
   :config
-  (with-eval-after-load 'terminal-here
-    (add-to-list 'terminal-here-terminal-command-table
-                 (cons 'powershell
-                       '("cmd.exe" "/C" "start" "powershell.exe" "-NoExit" "-Command" "cd $PWD")))))
-
-(use-package so-long :defer t :ensure t :straight t
+  (setq emms-mode-line-format "")
+  (setq emms-mode-line-icon-enabled-p nil)
+  (setq emms-playing-time-display-format "")
   :init
-  (global-so-long-mode +1))
+  (emms-all)
+  (emms-default-players))
 
-(use-package windsize :straight t :defer t :ensure t)
-
-(use-package crux :straight t :defer t :ensure t
+(use-package yeetube
+  :straight t
+  :ensure t
   :config
-  (defun crux-open-with (arg)
-    "Open visited file in default external program.
-When in dired mode, open file under the cursor.
+  (setf yeetube-mpv-disable-video t)
+  ;; Set RET in normal state when in yeetube-mode
+  (evil-define-key 'normal yeetube-mode-map (kbd "RET") #'yeetube-play))
 
-With a prefix ARG always prompt for command to use."
-    (interactive "P")
-    (let* ((current-file-name
-            (if (derived-mode-p 'dired-mode)
-                (dired-get-file-for-visit)
-              buffer-file-name))
-           (open (pcase system-type
-                   (`darwin "open")
-                   ((or `gnu `gnu/linux `gnu/kfreebsd) "xdg-open")
-                   (`windows-nt "start")))
-           (program (if (or arg (not open))
-                        (read-shell-command "Open current file with: ")
-                      open)))
-      (if (string= program "start")
-          (shell-command (concat "start \"\" \"" current-file-name "\""))
-        (call-process program nil 0 nil current-file-name)))))
-
-(use-package mw-thesaurus :straight t :defer t :ensure t)
-
-(use-package sicp :straight t :defer t :ensure t)
-
-(use-package gh-md :straight t :ensure t :defer t)
+;;; project / search
 
 (use-package projectile :straight t :defer t :ensure t
   :config
@@ -1399,106 +1459,20 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package wgrep :straight t :ensure t :defer t)
 
-(use-package switch-window :straight t :ensure t :defer t)
+;;; terminal / shell
 
-(use-package rainbow-mode :straight t :ensure t :defer t)
-
-(use-package hl-todo :straight t :ensure t :defer t
-  :custom-face
-  (hl-todo ((t (:inherit hl-todo :italic t))))
-  :hook ((prog-mode . hl-todo-mode)))
-
-(use-package saveplace :straight t :init (save-place-mode))
-
-(use-package winner :straight t :ensure t :defer t
-  :init (winner-mode +1))
-
-(use-package volatile-highlights :straight t :ensure t :defer t
-  :init
-  (volatile-highlights-mode t)
-  :config
-  (vhl/define-extension 'evil 'evil-paste-after 'evil-paste-before
-                        'evil-paste-pop 'evil-move)
-  (vhl/install-extension 'evil))
-
-(use-package macrostep :straight t :ensure t :defer t)
-
-(use-package nov :straight t :ensure t :defer t
-  :init
-  (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
-
-;; TODO: use embark-target-finders to add a new type for youtube urls.
-(use-package embark
+(use-package terminal-here
   :straight t
-  :ensure t
   :defer t
-  :bind*
-  (("C-c e" . embark-act)
-   ("C-h b" . embark-bindings))
+  :ensure t
   :init
-  (setq prefix-help-command #'embark-prefix-help-command)
-  (setq embark-prompter #'embark-completing-read-prompter)
-  (setq embark-indicators '(embark--vertico-indicator))
+  (setq terminal-here-linux-terminal-command 'st)
+  (setq terminal-here-windows-terminal-command 'powershell)
   :config
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none))))
-
-  ;; Add crux-open-with to the existing file map
-  (define-key embark-file-map (kbd "o") #'crux-open-with)
-  (define-key embark-file-map (kbd "y") #'yt-dlp-play-current-entry)
-
-  ;; Brave browser defaults
-  (setq browse-url-browser-function #'browse-url-generic
-        browse-url-generic-program "brave-browser")
-
-  ;; FIXED: use "s" instead of "f" so URLs stay URLs
-  (defun my/open-in-brave (target)
-    (interactive "sOpen in Brave: ")
-    (start-process "brave" nil "brave-browser" "--new-window" target))
-
-  (define-key embark-url-map (kbd "b") #'my/open-in-brave)
-  (define-key embark-file-map (kbd "b") #'my/open-in-brave)
-
-  ;; Make Brave the default for .html
-  (defun my/embark-file-open (file)
-    (if (string-match-p "\\.html?\\'" file)
-        (my/open-in-brave file)
-      (crux-open-with file)))
-
-  (setf (alist-get 'file embark-default-action-overrides)
-        #'my/embark-file-open)
-
-  ;; Make Brave the default DWIM action for URLs
-  (setf (alist-get 'url embark-default-action-overrides)
-        #'my/open-in-brave))
-
-(use-package diminish :straight t :ensure t :defer t)
-
-(use-package avy :straight t :ensure t :defer t)
-
-(use-package pdf-tools :straight t :ensure t  :defer t
-  :mode ("\\pdf\\'" . pdf-view-mode)
-  :init
-  (add-hook 'pdf-view-mode-hook (lambda ()
-                                  (define-key pdf-view-mode-map (kbd "<tab>") 'pdf-outline)
-                                  (pdf-view-themed-minor-mode)))
-  :config
-  (pdf-tools-install :no-query))
-
-(use-package pyvenv :straight t :ensure t :defer t)
-
-(use-package keycast :straight t :ensure t :defer t)
-
-(use-package treesit-auto :straight t :ensure t
-  :after emacs
-  :config
-  (global-treesit-auto-mode t))
-
-(use-package devdocs :ensure t :straight t
-  :init
-  (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
+  (with-eval-after-load 'terminal-here
+    (add-to-list 'terminal-here-terminal-command-table
+                 (cons 'powershell
+                       '("cmd.exe" "/C" "start" "powershell.exe" "-NoExit" "-Command" "cd $PWD")))))
 
 (use-package exec-path-from-shell :straight t :ensure t
   :if (memq system-type '(darwin gnu/linux))
@@ -1506,20 +1480,53 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (exec-path-from-shell-initialize))
 
-(use-package gptel
+;; allow copy/paste when in terminal
+(use-package xclip :straight t :ensure t :defer t
+  :hook
+  (after-init . xclip-mode))
+
+(use-package eshell
+  :ensure nil
+  :hook (eshell-mode . fff-eshell-clear-1-binding)
+  :config
+  (defun fff-eshell-clear-1-binding ()
+    "Bind C-c c to fff-eshell-clear-1 in eshell."
+    (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
+
+;;; general text/code editing / IDE / navigation / jumping
+
+
+(use-package expand-region :straight t :defer t :ensure t)
+
+(use-package hl-todo :straight t :ensure t :defer t
+  :custom-face
+  (hl-todo ((t (:inherit hl-todo :italic t))))
+  :hook ((prog-mode . hl-todo-mode)))
+
+(use-package aggressive-indent
   :straight t
   :ensure t
+  :hook
+  ((emacs-lisp-mode lisp-mode lisp-interaction-mode) . aggressive-indent-mode))
+
+;; jump to definition without ctags in many supported languages
+(use-package dumb-jump :straight t :ensure t
   :init
-  (let ((key-file (expand-file-name ".secrets/chat_gpt_api_key" user-emacs-directory)))
-    (when (file-exists-p key-file)
-      (setq gptel-api-key
-            (string-trim
-             (with-temp-buffer
-               (insert-file-contents key-file)
-               (buffer-string))))))
-  (setq markdown-fontify-code-blocks-natively t)
-  :config
-  (setq gptel-model 'gpt-4o))
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+
+(use-package windsize :straight t :defer t :ensure t)
+
+(use-package switch-window :straight t :ensure t :defer t)
+
+(use-package saveplace :straight t :init (save-place-mode))
+
+(use-package winner :straight t :ensure t :defer t
+  :init (winner-mode +1))
+
+(use-package insert-shebang :straight t :ensure t :defer t
+  :hook (find-file-hook . insert-shebang))
+
+(use-package edit-indirect :straight t :ensure t)
 
 ;; sets indentation variables
 (use-package dtrt-indent :straight t :ensure t :defer nil
@@ -1536,6 +1543,61 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
     (advice-add fn :after (lambda (&rest _args)
                             (when (called-interactively-p 'any)
                               (dtrt-indent-try-set-offset))))))
+
+(use-package devdocs :ensure t :straight t
+  :init
+  (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
+
+(use-package sicp :straight t :defer t :ensure t)
+
+(use-package mw-thesaurus :straight t :defer t :ensure t)
+
+(use-package avy :straight t :ensure t :defer t)
+
+(use-package treesit-auto :straight t :ensure t
+  :after emacs
+  :config
+  (global-treesit-auto-mode t))
+
+(use-package gptel
+  :straight t
+  :ensure t
+  :init
+  (let ((key-file (expand-file-name ".secrets/chat_gpt_api_key" user-emacs-directory)))
+    (when (file-exists-p key-file)
+      (setq gptel-api-key
+            (string-trim
+             (with-temp-buffer
+               (insert-file-contents key-file)
+               (buffer-string))))))
+  (setq markdown-fontify-code-blocks-natively t)
+  :config
+  (setq gptel-model 'gpt-4o))
+
+(use-package crux :straight t :defer t :ensure t
+  :config
+  (defun crux-open-with (arg)
+    "Open visited file in default external program.
+When in dired mode, open file under the cursor.
+
+With a prefix ARG always prompt for command to use."
+    (interactive "P")
+    (let* ((current-file-name
+            (if (derived-mode-p 'dired-mode)
+                (dired-get-file-for-visit)
+              buffer-file-name))
+           (open (pcase system-type
+                   (`darwin "open")
+                   ((or `gnu `gnu/linux `gnu/kfreebsd) "xdg-open")
+                   (`windows-nt "start")))
+           (program (if (or arg (not open))
+                        (read-shell-command "Open current file with: ")
+                      open)))
+      (if (string= program "start")
+          (shell-command (concat "start \"\" \"" current-file-name "\""))
+        (call-process program nil 0 nil current-file-name)))))
+
+;;; other tools
 
 (use-package tmr :straight t :ensure t :defer t
   :init
@@ -1574,52 +1636,3 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
           (error "The specified time is invalid"))))))
 
 (use-package read-aloud :defer t :ensure t :straight t)
-
-;; colorful parentheses
-(use-package rainbow-delimiters :straight t :defer t :ensure t
-  :hook (prog-mode . rainbow-delimiters-mode))
-
-;; allow copy/paste when in terminal
-(use-package xclip :straight t :ensure t :defer t
-  :hook
-  (after-init . xclip-mode))
-
-(use-package edit-indirect :straight t :ensure t)
-
-;; jump to definition without ctags in many supported languages
-(use-package dumb-jump :straight t :ensure t
-  :init
-  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
-
-;; export a code file to html
-(use-package htmlize :ensure t :straight t :defer t)
-
-(use-package insert-shebang :straight t :ensure t :defer t
-  :hook (find-file-hook . insert-shebang))
-
-(use-package realgud :straight t :defer t :ensure t)
-
-(use-package aggressive-indent
-  :straight t
-  :ensure t
-  :hook
-  ((emacs-lisp-mode lisp-mode lisp-interaction-mode) . aggressive-indent-mode))
-
-;; audio / music payer
-(use-package emms :straight t :ensure t :defer t
-  :diminish emms-mode-line
-  :config
-  (setq emms-mode-line-format "")
-  (setq emms-mode-line-icon-enabled-p nil)
-  (setq emms-playing-time-display-format "")
-  :init
-  (emms-all)
-  (emms-default-players))
-
-(use-package yeetube
-  :straight t
-  :ensure t
-  :config
-  (setf yeetube-mpv-disable-video t)
-  ;; Set RET in normal state when in yeetube-mode
-  (evil-define-key 'normal yeetube-mode-map (kbd "RET") #'yeetube-play))
