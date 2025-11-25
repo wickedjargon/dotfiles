@@ -1336,6 +1336,8 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   ;; Set RET in normal state when in yeetube-mode
   (evil-define-key 'normal yeetube-mode-map (kbd "RET") #'yeetube-play))
 
+(use-package hacker-typer :straight t :ensure t :defer t)
+
 ;;; project / search
 
 (use-package projectile :straight t :defer t :ensure t
