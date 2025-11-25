@@ -1275,6 +1275,12 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 
 (use-package read-aloud :defer t :ensure t :straight t)
 
+(use-package gif-screencast
+  :straight (gif-screencast
+             :type git
+             :host gitlab
+             :repo "ambrevar/emacs-gif-screencast"))
+
 ;;; entertainment
 
 ;; irc client
