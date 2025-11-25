@@ -352,20 +352,6 @@
   :config
   (add-hook 'dired-mode-hook #'dired-hide-details-mode))
 
-(use-package newsticker
-  :ensure nil
-  :after evil-collection
-  :init
-  (setq newsticker-url-list-defaults nil)
-  (let ((rss-secret-file (expand-file-name ".secrets/rss-feeds.el" user-emacs-directory)))
-    (when (file-exists-p rss-secret-file)
-      (load-file rss-secret-file)))
-  :config
-  (evil-collection-define-key
-    'normal
-    'newsticker-treeview-mode-map
-    "q" #'fff-newsticker-treeview-quit))
-
 (use-package eww :ensure nil
   :config
   (setq eww-search-prefix "https://wiby.me/?q="))
@@ -1315,6 +1301,21 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 (use-package consult-erc
   :ensure t
   :straight (consult-erc :type git :host codeberg :repo "mekeor/consult-erc"))
+
+;; rss feed reader
+(use-package newsticker
+  :ensure nil
+  :after evil-collection
+  :init
+  (setq newsticker-url-list-defaults nil)
+  (let ((rss-secret-file (expand-file-name ".secrets/rss-feeds.el" user-emacs-directory)))
+    (when (file-exists-p rss-secret-file)
+      (load-file rss-secret-file)))
+  :config
+  (evil-collection-define-key
+    'normal
+    'newsticker-treeview-mode-map
+    "q" #'fff-newsticker-treeview-quit))
 
 ;; audio / music payer
 (use-package emms :straight t :ensure t :defer t
