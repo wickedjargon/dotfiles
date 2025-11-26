@@ -1603,7 +1603,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package insert-shebang :straight t :ensure t :defer t
   :hook (find-file-hook . insert-shebang))
 
-(use-package edit-indirect :straight t :ensure t)
+(use-package edit-indirect :straight t :ensure t :defer t)
 
 (use-package treesit-auto :straight t :ensure t
   :after emacs
