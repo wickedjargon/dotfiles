@@ -1276,6 +1276,8 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 (use-package read-aloud :defer t :ensure t :straight t)
 
 (use-package gif-screencast
+  :init
+  (setq gif-screencast-output-directory (expand-file-name "gif-screencast/" user-emacs-directory))
   :straight (gif-screencast
              :type git
              :host gitlab
