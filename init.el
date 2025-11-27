@@ -797,11 +797,16 @@
   (setq web-mode-enable-auto-closing t))
 
 ;; live server behavior of vs code
-(use-package simple-httpd :straight t)
 (use-package simple-httpd :straight t :defer t)
 
-(use-package impatient-mode :straight t)
 (use-package impatient-mode :straight t :defer t
+  :init
+  (defun fff-imp-open-preview ()
+    "Open current buffer in impatient-mode live preview."
+    (interactive)
+    (browse-url
+     (format "http://localhost:8080/imp/live/%s"
+             (buffer-name)))))
 
 (use-package emmet-mode
   :ensure t
