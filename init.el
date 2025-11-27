@@ -1412,7 +1412,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package wgrep :straight t :ensure t :defer t)
 
-
 ;;; docs / lookup
 
 (use-package Info :ensure nil :defer t
@@ -1453,7 +1452,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                             (when (called-interactively-p 'any)
                               (dtrt-indent-try-set-offset))))))
 
-;;; window
+;;; window / frames
 
 (use-package windsize :straight t :defer t :ensure t)
 
