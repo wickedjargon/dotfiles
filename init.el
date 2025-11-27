@@ -425,6 +425,7 @@
 ;;; themes
 
 (use-package modus-themes
+  :defer nil
   :ensure t
   :straight t
   :config
@@ -452,7 +453,7 @@
 
 (use-package zenburn-theme :straight t :ensure t :defer t)
 
-(use-package standard-themes :straight t :ensure t)
+(use-package standard-themes :straight t :ensure t :defer t)
 
 ;;; evil packages
 
@@ -797,8 +798,10 @@
 
 ;; live server behavior of vs code
 (use-package simple-httpd :straight t)
+(use-package simple-httpd :straight t :defer t)
 
 (use-package impatient-mode :straight t)
+(use-package impatient-mode :straight t :defer t
 
 (use-package emmet-mode
   :ensure t
@@ -847,7 +850,7 @@
      (C . t)
      (js . t))))
 
-(use-package org-download :straight t :ensure t
+(use-package org-download :straight t :ensure t :defer t
   :config
   (add-hook 'dired-mode-hook 'org-download-enable))
 
@@ -865,7 +868,7 @@
 (use-package clhs :straight t :ensure t :defer t)
 
 ;; common lisp documentation
-(use-package hyperspec :straight t :ensure t
+(use-package hyperspec :straight t :ensure t :defer nil
   :init
   (setq common-lisp-hyperspec-root
         "file:///home/ff/.local/share/HyperSpec/")
@@ -917,7 +920,7 @@
   (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
 
 ;; inline evaluation
-(use-package eros :straight t :ensure t :config (eros-mode +1))
+(use-package eros :defer nil :straight t :ensure t :config (eros-mode +1))
 
 ;;; other language support packages
 
@@ -1188,7 +1191,7 @@
 
 (use-package embark-consult :straight t :ensure t :defer t)
 
-(use-package flimenu :ensure t :straight t
+(use-package flimenu :ensure t :straight t :defer nil
   :config
   (flimenu-global-mode))
 
@@ -1413,7 +1416,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                               (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
                               (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
 
-(use-package devdocs :ensure t :straight t
+(use-package devdocs :ensure t :straight t :defer t
   :init
   (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
 
@@ -1613,6 +1616,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package gptel
   :straight t
   :ensure t
+  :defer t
   :init
   (let ((key-file (expand-file-name ".secrets/chat_gpt_api_key" user-emacs-directory)))
     (when (file-exists-p key-file)
