@@ -339,7 +339,7 @@
   (eval-after-load 'package
     '(defalias 'list-packages 'straight-list-packages)))
 
-;;; built in packages
+;;; buffer navigation
 
 (use-package dired
   :ensure nil
@@ -351,10 +351,6 @@
         dired-omit-extensions nil)
   :config
   (add-hook 'dired-mode-hook #'dired-hide-details-mode))
-
-(use-package eww :ensure nil
-  :config
-  (setq eww-search-prefix "https://wiby.me/?q="))
 
 (use-package ibuffer  :ensure nil
   :config
@@ -370,7 +366,28 @@
                 (name 16 -1)
                 " " filename))))
 
-;; always open urls in a new window.
+(use-package tab-bar :ensure nil
+  :init
+  (tab-bar-mode -1) ;; Off by default
+  :custom
+  (tab-bar-new-tab-to 'rightmost)
+  (tab-bar-new-tab-choice 'empty-buffer)
+  :bind
+  (("C-c w" . my-tab-bar-close-tab)
+   ("C-c n" . fff-tab-bar-new-tab)
+   ("C-c r" . tab-bar-rename-tab)
+   ("C-c h" . tab-bar-switch-to-prev-tab)
+   ("C-c l" . tab-bar-switch-to-next-tab))
+  :config
+  (defun my-tab-bar-close-tab ()
+    "Close the current tab. Disable tab-bar-mode if there's only one left."
+    (interactive)
+    (tab-bar-close-tab)
+    (when (= (length (tab-bar-tabs)) 1)
+      (tab-bar-mode -1))))
+
+;;; web browser
+
 (use-package browse-url
   :ensure nil
   :init
@@ -394,33 +411,10 @@
 
   (setq browse-url-browser-function 'browse-url-new-window))
 
-(use-package tab-bar :ensure nil
-  :init
-  (tab-bar-mode -1) ;; Off by default
-  :custom
-  (tab-bar-new-tab-to 'rightmost)
-  (tab-bar-new-tab-choice 'empty-buffer)
-  :bind
-  (("C-c w" . my-tab-bar-close-tab)
-   ("C-c n" . fff-tab-bar-new-tab)
-   ("C-c r" . tab-bar-rename-tab)
-   ("C-c h" . tab-bar-switch-to-prev-tab)
-   ("C-c l" . tab-bar-switch-to-next-tab))
-  :config
-  (defun my-tab-bar-close-tab ()
-    "Close the current tab. Disable tab-bar-mode if there's only one left."
-    (interactive)
-    (tab-bar-close-tab)
-    (when (= (length (tab-bar-tabs)) 1)
-      (tab-bar-mode -1))))
 
-(use-package flymake
-  :ensure nil
-  :defer t
-  ;; run this in all programming modes except emacs lisp mode
-  :hook (prog-mode . (lambda ()
-                       (unless (derived-mode-p 'emacs-lisp-mode)
-                         (flymake-mode +1)))))
+(use-package eww :ensure nil
+  :config
+  (setq eww-search-prefix "https://wiby.me/?q="))
 
 ;;; themes
 
@@ -905,6 +899,7 @@
   (define-key lisp-mode-map (kbd "C-<return>") 'sly-eval-print-last-expression)
   (evil-set-initial-state 'sly-mrepl-mode 'normal))
 
+;; actually used in elisp
 (use-package macrostep :straight t :ensure t :defer t)
 
 (use-package sly-macrostep :defer t :straight t
@@ -1576,6 +1571,14 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package diminish :straight t :ensure t :defer t)
 
 ;;; general text/code editing / IDE / navigation / jumping
+
+(use-package flymake
+  :ensure nil
+  :defer t
+  ;; run this in all programming modes except emacs lisp mode
+  :hook (prog-mode . (lambda ()
+                       (unless (derived-mode-p 'emacs-lisp-mode)
+                         (flymake-mode +1)))))
 
 (use-package eglot
   :ensure nil
