@@ -455,134 +455,132 @@
   :config
   (evil-collection-init))
 
-(use-package evil-leader :defer t :straight t
+(use-package evil-leader :defer nil :straight t
   :commands (evil-leader-mode)
   :ensure t
-  :init
-  (global-evil-leader-mode)
   :config
-  (progn
+  (global-evil-leader-mode)
 
-    (evil-leader/set-leader "<SPC>")
-    (evil-leader/set-key "<escape> <escape> <escape>" 'keyboard-escape-quit)
+  (evil-leader/set-leader "<SPC>")
+  (evil-leader/set-key "<escape> <escape> <escape>" 'keyboard-escape-quit)
 
-    ;; single key
-    (evil-leader/set-key "SPC" 'execute-extended-command)
-    (evil-leader/set-key "TAB" 'tab-bar-switch-to-tab)
-    (evil-leader/set-key "d" 'delete-blank-lines)
-    (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
-    (evil-leader/set-key "o" 'other-window)
-    (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
-    (evil-leader/set-key "w" 'save-buffer)
+  ;; single key
+  (evil-leader/set-key "SPC" 'execute-extended-command)
+  (evil-leader/set-key "TAB" 'tab-bar-switch-to-tab)
+  (evil-leader/set-key "d" 'delete-blank-lines)
+  (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
+  (evil-leader/set-key "o" 'other-window)
+  (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
+  (evil-leader/set-key "w" 'save-buffer)
 
-    ;; text scaling
-    (evil-leader/set-key "0" 'fff-set-scale-to-zero)
-    (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
-    (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
+  ;; text scaling
+  (evil-leader/set-key "0" 'fff-set-scale-to-zero)
+  (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
+  (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
 
-    ;; embark
-    (evil-leader/set-key "RET" 'embark-dwim)
-    (evil-leader/set-key "c e" 'embark-act)
+  ;; embark
+  (evil-leader/set-key "RET" 'embark-dwim)
+  (evil-leader/set-key "c e" 'embark-act)
 
-    ;; shell, compile, eval
-    (evil-leader/set-key "x x" 'shell-command)
-    (evil-leader/set-key "x X" 'async-shell-command)
-    (evil-leader/set-key "c c" 'compile)
-    (evil-leader/set-key "v v" 'eval-expression)
+  ;; shell, compile, eval
+  (evil-leader/set-key "x x" 'shell-command)
+  (evil-leader/set-key "x X" 'async-shell-command)
+  (evil-leader/set-key "c c" 'compile)
+  (evil-leader/set-key "v v" 'eval-expression)
 
-    ;; yasnippet
-    (evil-leader/set-key "c s" 'yas-insert-snippet)
+  ;; yasnippet
+  (evil-leader/set-key "c s" 'yas-insert-snippet)
 
-    ;; paragraph navigation
-    (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
-    (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
+  ;; paragraph navigation
+  (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
+  (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
 
-    ;; window size adjustment
-    (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
-    (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
-    (evil-leader/set-key "J" 'fff-hydra-windsize/windsize-down)
-    (evil-leader/set-key "K" 'fff-hydra-windsize/windsize-up)
+  ;; window size adjustment
+  (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
+  (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
+  (evil-leader/set-key "J" 'fff-hydra-windsize/windsize-down)
+  (evil-leader/set-key "K" 'fff-hydra-windsize/windsize-up)
 
-    ;; search and replace
-    (evil-leader/set-key "r r" 'fff-evil-regex-search)
+  ;; search and replace
+  (evil-leader/set-key "r r" 'fff-evil-regex-search)
 
-    ;; narrow
-    (evil-leader/set-key "n n" 'narrow-to-region)
-    (evil-leader/set-key "n N" 'widen)
+  ;; narrow
+  (evil-leader/set-key "n n" 'narrow-to-region)
+  (evil-leader/set-key "n N" 'widen)
 
-    ;; magit
-    (evil-leader/set-key "m m" 'magit)
+  ;; magit
+  (evil-leader/set-key "m m" 'magit)
 
-    ;; f: shortcut to file or dired buffer
-    (evil-leader/set-key "f b" 'fff-access-bookmarks)
-    (evil-leader/set-key "f B" 'fff-access-books)
-    (evil-leader/set-key "f h" 'fff-access-hosts)
+  ;; f: shortcut to file or dired buffer
+  (evil-leader/set-key "f b" 'fff-access-bookmarks)
+  (evil-leader/set-key "f B" 'fff-access-books)
+  (evil-leader/set-key "f h" 'fff-access-hosts)
 
-    ;; full screen
-    (evil-leader/set-key "f s" 'toggle-frame-fullscreen)
+  ;; full screen
+  (evil-leader/set-key "f s" 'toggle-frame-fullscreen)
 
-    ;; switch to scratch
-    (evil-leader/set-key "i i" 'fff-switch-to-scratch-buffer)
-    (evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
+  ;; switch to scratch
+  (evil-leader/set-key "i i" 'fff-switch-to-scratch-buffer)
+  (evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
 
-    ;; imenu
-    (evil-leader/set-key "i m" 'consult-imenu)
-    (evil-leader/set-key "i M" 'lsp-ui-imenu)
+  ;; imenu
+  (evil-leader/set-key "i m" 'consult-imenu)
+  (evil-leader/set-key "i M" 'lsp-ui-imenu)
 
-    ;; terminal
-    (evil-leader/set-key "t t" 'fff-switch-or-create-eshell)
-    (evil-leader/set-key "t T" 'fff-open-new-eshell)
-    (evil-leader/set-key "t p" 'terminal-here)
+  ;; terminal
+  (evil-leader/set-key "t t" 'fff-switch-or-create-eshell)
+  (evil-leader/set-key "t T" 'fff-open-new-eshell)
+  (evil-leader/set-key "t p" 'terminal-here)
 
-    ;; chatgpt
-    (evil-leader/set-key "g g" 'fff-switch-or-create-gptel)
-    (evil-leader/set-key "g G" 'fff-switch-to-new-gptel-buffer)
+  ;; chatgpt
+  (evil-leader/set-key "g g" 'fff-switch-or-create-gptel)
+  (evil-leader/set-key "g G" 'fff-switch-to-new-gptel-buffer)
 
-    ;; x: C-x prefixes
-    (evil-leader/set-key "x b" 'consult-buffer)
-    (evil-leader/set-key "x B" 'fff-project-switch-to-buffer)
-    (evil-leader/set-key "x 0" 'delete-window)
-    (evil-leader/set-key "x 1" 'delete-other-windows)
-    (evil-leader/set-key "x 2" 'split-window-below)
-    (evil-leader/set-key "x 3" 'split-window-right)
-    (evil-leader/set-key "x 4 4" 'other-window-prefix)
-    (evil-leader/set-key "x 4 1" 'same-window-prefix)
-    (evil-leader/set-key "x o" 'other-window)
-    (evil-leader/set-key "x k" 'bury-buffer)
-    (evil-leader/set-key "x K" 'kill-buffer)
-    (evil-leader/set-key "x D" 'make-directory)
-    (evil-leader/set-key "x f" 'find-file)
-    (evil-leader/set-key "x F" 'fff-find-file-in-project-root)
-    (evil-leader/set-key "x r" 'crux-recentf-find-file)
-    (evil-leader/set-key "x w" 'write-file)
-    (evil-leader/set-key "x SPC b" 'ibuffer)
-    (evil-leader/set-key "x SPC B" 'fff-project-ibuffer)
-    (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
+  ;; x: C-x prefixes
+  (evil-leader/set-key "x b" 'consult-buffer)
+  (evil-leader/set-key "x B" 'fff-project-switch-to-buffer)
+  (evil-leader/set-key "x 0" 'delete-window)
+  (evil-leader/set-key "x 1" 'delete-other-windows)
+  (evil-leader/set-key "x 2" 'split-window-below)
+  (evil-leader/set-key "x 3" 'split-window-right)
+  (evil-leader/set-key "x 4 4" 'other-window-prefix)
+  (evil-leader/set-key "x 4 1" 'same-window-prefix)
+  (evil-leader/set-key "x o" 'other-window)
+  (evil-leader/set-key "x k" 'bury-buffer)
+  (evil-leader/set-key "x K" 'kill-buffer)
+  (evil-leader/set-key "x D" 'make-directory)
+  (evil-leader/set-key "x f" 'find-file)
+  (evil-leader/set-key "x F" 'fff-find-file-in-project-root)
+  (evil-leader/set-key "x r" 'crux-recentf-find-file)
+  (evil-leader/set-key "x w" 'write-file)
+  (evil-leader/set-key "x SPC b" 'ibuffer)
+  (evil-leader/set-key "x SPC B" 'fff-project-ibuffer)
+  (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
 
-    ;; shortcut
-    (evil-leader/set-key "4 4" 'other-window-prefix)
-    (evil-leader/set-key "4 1" 'same-window-prefix)
+  ;; shortcut
+  (evil-leader/set-key "4 4" 'other-window-prefix)
+  (evil-leader/set-key "4 1" 'same-window-prefix)
 
-    ;; access dirs
-    ;; (evil-leader/set-key "x c" 'fff-access-config-dir)
-    (evil-leader/set-key "x m" 'fff-access-home-dir)
-    (evil-leader/set-key "x n" 'fff-open-file-in-notes)
-    (evil-leader/set-key "x p" 'fff-open-file-in-projects)
-    (evil-leader/set-key "x s" 'fff-find-file-ssh)
-    (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
-    (evil-leader/set-key "x /" 'fff-open-file-in-root-dir)
+  ;; access dirs
+  ;; (evil-leader/set-key "x c" 'fff-access-config-dir)
+  (evil-leader/set-key "x m" 'fff-access-home-dir)
+  (evil-leader/set-key "x n" 'fff-open-file-in-notes)
+  (evil-leader/set-key "x p" 'fff-open-file-in-projects)
+  (evil-leader/set-key "x s" 'fff-find-file-ssh)
+  (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
+  (evil-leader/set-key "x /" 'fff-open-file-in-root-dir)
 
-    ;; project root
-    (evil-leader/set-key "h k" 'fff-find-file-in-project-root)
-    (evil-leader/set-key "p r" 'fff-find-file-in-project-root)
-    (evil-leader/set-key "p p" 'project-find-file)
-    (evil-leader/set-key "p P" 'projectile-find-file-or-dir)
+  ;; project root
+  (evil-leader/set-key "h k" 'fff-find-file-in-project-root)
+  (evil-leader/set-key "p r" 'fff-find-file-in-project-root)
+  (evil-leader/set-key "p p" 'project-find-file)
+  (evil-leader/set-key "p P" 'projectile-find-file-or-dir)
 
-    ;; back to previous buffer commands
-    (evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
+  ;; back to previous buffer commands
+  (evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
 
-    ;; tooltip hover
-    (evil-leader/set-key "h h" 'fff-display-tooltip-at-point)))
+  ;; tooltip hover
+  (evil-leader/set-key "h h" 'fff-display-tooltip-at-point))
 
 (use-package evil :defer nil :ensure t :straight t
   :init
