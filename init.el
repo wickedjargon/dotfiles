@@ -1559,8 +1559,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package rainbow-delimiters :straight t :defer t :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
 
-(use-package so-long :defer t :ensure t :straight t
-  :init
+(use-package so-long :ensure nil
+  :config
   (global-so-long-mode +1))
 
 (use-package hl-todo :straight t :ensure t :defer t
