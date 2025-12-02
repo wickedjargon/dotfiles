@@ -809,27 +809,49 @@ in whole buffer.  With neither, delete comments on current line."
           (call-interactively 'find-file))
       (message "Not in a Projectile project"))))
 
-(defun fff-find-packages ()
-  "Find all package names used with `use-package` in `init.el` and display them in a new buffer."
+(defun fff-find-packages-with-categories ()
+  "Scan init.el and list category headers (;;; ...) and packages (use-package ...)
+   in the order they appear."
   (interactive)
-  (let ((file (expand-file-name "./init.el" user-emacs-directory))
-        (package-regexp "\\(use-package\\s-+\\w+\\)")
-        (result '())
-        (buffer-name "*Packages List*"))
+  (let* ((file (expand-file-name "./init.el" user-emacs-directory))
+         (category-regexp "^;;;\\s-+\\(.*\\)$")
+         (package-regexp "^(?use-package\\s-+\\([A-Za-z0-9-]+\\)")
+         (buffer-name "*Packages & Categories*")
+         (items '()))
+    
     (with-temp-buffer
       (insert-file-contents file)
       (goto-char (point-min))
-      (while (re-search-forward package-regexp nil t)
-        (let ((package-name (thing-at-point 'symbol)))
-          (when package-name
-            (add-to-list 'result package-name))))
-      (with-current-buffer (get-buffer-create buffer-name)
-        (erase-buffer)
-        (insert "Packages found:\n")
-        (dolist (pkg result)
-          (insert (format "%s\n" pkg)))
-        (goto-char (point-min)))
-      (pop-to-buffer (get-buffer-create buffer-name)))))
+
+      ;; walk through the file
+      (while (not (eobp))
+        (cond
+         ;; CATEGORY
+         ((looking-at category-regexp)
+          (let ((title (match-string 1)))
+            (push (list :type 'category :name title) items)))
+
+         ;; PACKAGE
+         ((looking-at package-regexp)
+          (let ((pkg (match-string 1)))
+            (push (list :type 'package :name pkg) items))))
+        (forward-line 1)))
+
+    ;; Output
+    (with-current-buffer (get-buffer-create buffer-name)
+      (erase-buffer)
+      (insert "Packages and categories found in init.el:\n\n")
+
+      (dolist (item (nreverse items))
+        (pcase item
+          (`(:type category :name ,name)
+           (insert (format "=== %s ===\n" name)))
+          (`(:type package :name ,pkg)
+           (insert (format "  %s\n" pkg)))))
+
+      (goto-char (point-min)))
+
+    (pop-to-buffer buffer-name)))
 
 (defun fff-connect-to-pi-tramp ()
   "Connect to the SSH server with predefined settings."
