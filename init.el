@@ -903,6 +903,31 @@
 
 ;;; elisp packages
 
+(use-package emacs-lisp-mode
+  :ensure nil  ;; emacs-lisp-mode is built-in, so no need to install it
+  :init
+  (defun fff-emacs-lisp-mode-setup ()
+    "Custom setup for `emacs-lisp-mode`."
+    (setq imenu-generic-expression
+          '(("Functions" "^\\s-*(\\(defun\\|defsubst\\|defalias\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
+            ("Macros" "^\\s-*(\\(defmacro\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
+            ("Variables" "^\\s-*(\\(defvar\\|defconst\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
+            ("Custom Variables" "^\\s-*(\\(defcustom\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
+            ("Set Variables" "^\\s-*(setq\\s-+(?\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Use Package" "^\\s-*(use-package\\s-+'?\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Advice" "^\\s-*(defadvice\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Add Advice" "^\\s-*(advice-add\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Faces" "^\\s-*(defface\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Derived Modes" "^\\s-*(define-derived-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Minor Modes" "^\\s-*(define-minor-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Generic Modes" "^\\s-*(define-generic-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Structs" "^\\s-*(cl-defstruct\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Evil Commands" "^\\s-*(evil-define-command\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            ("Autoloads" "^\\s-*(autoload\\s-+'\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
+            (";;; Category Title" "^;;; \\(.*\\)$" 1)))
+    (imenu-add-menubar-index))
+  :hook (emacs-lisp-mode . fff-emacs-lisp-mode-setup))
+
 (use-package helpful :straight t :ensure t :defer t
   :bind
   ([remap describe-key] . helpful-key)
@@ -1026,31 +1051,6 @@
                                           ("Classes" "^\\s-*\\(.*\\)class +\\([a-zA-Z0-9_]+\\)" 2)
                                           ("Namespaces" "^namespace +\\([a-z0-9_]*\\)" 1))))
                                    (imenu--generic-function imenu-generic-expression)))))))
-
-(use-package emacs-lisp-mode
-  :ensure nil  ;; emacs-lisp-mode is built-in, so no need to install it
-  :init
-  (defun fff-emacs-lisp-mode-setup ()
-    "Custom setup for `emacs-lisp-mode`."
-    (setq imenu-generic-expression
-          '(("Functions" "^\\s-*(\\(defun\\|defsubst\\|defalias\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
-            ("Macros" "^\\s-*(\\(defmacro\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
-            ("Variables" "^\\s-*(\\(defvar\\|defconst\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
-            ("Custom Variables" "^\\s-*(\\(defcustom\\)\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 2)
-            ("Set Variables" "^\\s-*(setq\\s-+(?\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Use Package" "^\\s-*(use-package\\s-+'?\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Advice" "^\\s-*(defadvice\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Add Advice" "^\\s-*(advice-add\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Faces" "^\\s-*(defface\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Derived Modes" "^\\s-*(define-derived-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Minor Modes" "^\\s-*(define-minor-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Generic Modes" "^\\s-*(define-generic-mode\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Structs" "^\\s-*(cl-defstruct\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Evil Commands" "^\\s-*(evil-define-command\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            ("Autoloads" "^\\s-*(autoload\\s-+'\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            (";;; Category Title" "^;;; \\(.*\\)$" 1)))
-    (imenu-add-menubar-index))
-  :hook (emacs-lisp-mode . fff-emacs-lisp-mode-setup))
 
 (use-package pyvenv :straight t :ensure t :defer t)
 
@@ -1206,10 +1206,6 @@
         #'my/open-in-brave))
 
 (use-package embark-consult :straight t :ensure t :defer t)
-
-(use-package flimenu :ensure t :straight t :defer nil
-  :config
-  (flimenu-global-mode))
 
 ;;; snippets
 
@@ -1615,6 +1611,10 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (add-to-list 'eglot-server-programs
                '(csharp-mode . ("csharp-ls"))))
+
+(use-package flimenu :ensure t :straight t :defer nil
+  :config
+  (flimenu-global-mode))
 
 (use-package saveplace :straight t :init (save-place-mode))
 
