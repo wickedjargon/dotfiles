@@ -1331,8 +1331,48 @@ Prompt for PACKAGE-NAME with completion."
   "Switch to a project buffer only if in a project."
   (interactive)
   (if (project-current)
-      (project-switch-to-buffer (project--read-project-buffer))
+      (project-switch-to-buffer (fff-project--read-project-buffer))
     (message "Not in a project")))
+
+(defun fff-project--read-project-buffer ()
+  (let* ((pr (project-current t))
+         (project-root (project-root pr))
+         (current-buffer (current-buffer))
+         (other-buffer (other-buffer current-buffer))
+         (other-name (buffer-name other-buffer))
+         (buffers (project-buffers pr))
+         (predicate
+          (lambda (buffer)
+            ;; BUFFER is (BUF-NAME . BUF-OBJ) from `Vbuffer_alist`.
+            (let ((buf (cdr buffer))
+                  (file (buffer-file-name (cdr buffer))))
+              (and
+               ;; must be one of the project's buffers
+               (memq buf buffers)
+
+               ;; must be a file-visiting buffer
+               file
+
+               ;; file must live under the project root
+               (file-in-directory-p file project-root)
+
+               ;; and not ignored by project ignore rules
+               (not (project--buffer-check
+                     buf project-ignore-buffer-conditions))))))
+
+         (buffer (read-buffer
+                  "Switch to buffer: "
+                  (when (funcall predicate (cons other-name other-buffer))
+                    other-name)
+                  nil
+                  predicate)))
+
+    ;; Keep Emacs’ original fallback logic
+    (if (or (get-buffer buffer)
+            (file-in-directory-p default-directory project-root))
+        buffer
+      (let ((default-directory project-root))
+        (get-buffer-create buffer)))))
 
 (defun fff-project-ibuffer ()
   "Open an IBuffer window showing all buffers in the current project."
