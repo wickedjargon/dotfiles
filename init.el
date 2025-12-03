@@ -719,7 +719,6 @@
   :init
   (global-set-key (kbd "C-;") 'iedit-mode))
 
-
 (use-package evil-mc :straight t :ensure t
   :after evil
   :config
@@ -767,7 +766,6 @@
   (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
     ( "h" previous-buffer)
     ( "l" next-buffer)))
-
 
 ;;; language support modes and related packages
 
@@ -1576,7 +1574,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :hook (prog-mode . (lambda ()
                        (unless (derived-mode-p 'emacs-lisp-mode)
                          (flymake-mode +1)))))
-
 (use-package eglot
   :ensure nil
   :hook ((rust-mode
