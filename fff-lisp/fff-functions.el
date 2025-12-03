@@ -818,7 +818,7 @@ in whole buffer.  With neither, delete comments on current line."
          (package-regexp "^(?use-package\\s-+\\([A-Za-z0-9-]+\\)")
          (buffer-name "*Packages & Categories*")
          (items '()))
-    
+
     (with-temp-buffer
       (insert-file-contents file)
       (goto-char (point-min))

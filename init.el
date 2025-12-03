@@ -24,7 +24,7 @@
 ;; - Wanderlust
 ;; - Notmuch
 
-;; TODO: setup emacs as a clipboard manager with consult-yank-pop
+;;; Initialization
 
 ;; bootstrap straight.el
 (defvar bootstrap-version)
@@ -1005,6 +1005,13 @@
 
 (use-package v-mode :straight t :ensure t :defer t)
 
+(use-package racket-mode
+  :ensure t
+  :straight t
+  :mode "\\.rkt\\'")
+
+(use-package haxe-mode :ensure t :straight t :defer t)
+
 (use-package graphviz-dot-mode :defer t :straight t :ensure t
   :config
   (setq graphviz-dot-indent-width 4))
@@ -1063,13 +1070,6 @@
 (use-package markdown-toc :straight t :ensure t :defer t)
 
 (use-package gh-md :straight t :ensure t :defer t)
-
-(use-package haxe-mode :ensure t :straight t :defer t)
-
-(use-package racket-mode
-  :ensure t
-  :straight t
-  :mode "\\.rkt\\'")
 
 ;;; pdf / epub
 
@@ -1208,7 +1208,7 @@
 
 ;; end of completion
 
-;;; version control / git
+;;; git
 
 (use-package magit :straight t :ensure t :defer t
   :init
