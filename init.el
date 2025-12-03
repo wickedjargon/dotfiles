@@ -1106,7 +1106,28 @@
 
 (use-package  savehist :straight t :init (savehist-mode))
 
-(use-package marginalia :straight t :defer t :ensure t :init (marginalia-mode))
+
+(use-package marginalia
+  :straight t
+  :init
+  (defun fff-marginalia-annotate-command-keybinding (cand)
+    "Return only the keybinding for command CAND, styled with a custom face."
+    (when-let ((cmd (intern-soft cand)))
+      (when (commandp cmd)
+        (let ((keys (where-is-internal cmd nil t)))
+          (when keys
+            (propertize
+             (format "   (%s)" (key-description keys))
+             'face 'font-lock-comment-face))))))
+
+  ;; Use our custom annotator for commands, keep others default
+  (setq marginalia-annotators
+        '((command fff-marginalia-annotate-command-keybinding)
+          (variable marginalia-annotate-variable)
+          (t nil)))
+  :config
+  (marginalia-mode +1))
+
 
 ;;; incremental completion tools > consult
 
