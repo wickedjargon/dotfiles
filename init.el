@@ -1482,15 +1482,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                             (when (called-interactively-p 'any)
                               (dtrt-indent-try-set-offset))))))
 
-;;; window / frames
-
-(use-package windsize :straight t :defer t :ensure t)
-
-(use-package switch-window :straight t :ensure t :defer t)
-
-(use-package winner :straight t :ensure t :defer t
-  :init (winner-mode +1))
-
 ;;; terminal / shell
 
 (use-package terminal-here
