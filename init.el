@@ -1152,34 +1152,31 @@
   :config
   (marginalia-mode +1))
 
-;;; incremental completion tools > consult
-
 (use-package consult :straight t :ensure t :defer t
   :init
   (global-set-key [remap imenu] 'consult-imenu))
 
-;;; incremental completion tools > company
-
-(use-package company :straight t :defer t :ensure t
+(use-package corfu
+  :straight t
   :init
-  (setq company-format-margin-function nil)
-  ;; (setq company-idle-delay 0.2)
-  (setq company-idle-delay 0)
-  (setq company-tooltip-limit 4)
-  (global-company-mode)
+  (setq corfu-auto t
+        corfu-auto-delay 0
+        corfu-auto-prefix 1
+        corfu-quit-no-match t
+        corfu-preview-current nil
+        corfu-count 5
+        )
   :config
-  (add-hook 'c-mode-common-hook
-            (lambda ()
-              (when (file-remote-p default-directory)
-                ;; Remove company-clang for remote files
-                (setq-local company-backends
-                            (remove 'company-clang company-backends))))))
-
-(use-package company-statistics :straight t :ensure t
-  :after company
-  :hook (after-init . company-statistics-mode))
-
-;;; incremental completion tools > other
+  (defun corfu-move-to-minibuffer ()
+    (interactive)
+    (pcase completion-in-region--data
+      (`(,beg ,end ,table ,pred ,extras)
+       (let ((completion-extra-properties extras)
+             completion-cycle-threshold completion-cycling)
+         (consult-completion-in-region beg end table pred)))))
+  (keymap-set corfu-map "C-c C-o" #'corfu-move-to-minibuffer)
+  (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer)
+  (global-corfu-mode))
 
 ;; TODO: use embark-target-finders to add a new type for youtube urls.
 (use-package embark
