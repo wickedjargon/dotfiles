@@ -1109,9 +1109,7 @@
   :init
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
-;; end of language support section
-
-;;; incremental completion tools > vetico
+;;; incremental completion tools
 
 (use-package vertico :straight t :defer t :ensure t
   :init
@@ -1240,8 +1238,6 @@
   :config
   (add-to-list #'yas-snippet-dirs (expand-file-name "snippets/" user-emacs-directory))
   (yas-reload-all))
-
-;; end of completion
 
 ;;; git
 
