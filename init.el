@@ -1116,7 +1116,7 @@
         (let ((keys (where-is-internal cmd nil t)))
           (when keys
             (propertize
-             (format "   (%s)" (key-description keys))
+             (format " (%s)" (key-description keys))
              'face 'font-lock-comment-face))))))
 
   ;; Use our custom annotator for commands, keep others default
