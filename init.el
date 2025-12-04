@@ -1106,7 +1106,6 @@
 
 (use-package  savehist :straight t :init (savehist-mode))
 
-
 (use-package marginalia
   :straight t
   :init
@@ -1127,7 +1126,6 @@
           (t nil)))
   :config
   (marginalia-mode +1))
-
 
 ;;; incremental completion tools > consult
 
