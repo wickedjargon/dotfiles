@@ -386,6 +386,31 @@
     (when (= (length (tab-bar-tabs)) 1)
       (tab-bar-mode -1))))
 
+(use-package popper
+  :straight t
+  :bind (("C-`"   . popper-toggle)
+         ("M-`"   . popper-cycle)
+         ("C-M-`" . popper-toggle-type))
+  :init
+  (setq popper-reference-buffers
+        '("\\*Messages\\*"
+          "Output\\*$"
+          "\\*Async Shell Command\\*"
+          "^\\*Flymake diagnostics"
+          help-mode
+          compilation-mode))
+  (popper-mode +1)
+  (popper-echo-mode +1))
+
+;;; window / frames
+
+(use-package windsize :straight t :defer t :ensure t)
+
+(use-package switch-window :straight t :ensure t :defer t)
+
+(use-package winner :straight t :ensure t :defer t
+  :init (winner-mode +1))
+
 ;;; web browser
 
 (use-package browse-url
