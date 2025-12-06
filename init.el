@@ -1130,7 +1130,7 @@
 
 (use-package smex :straight t :ensure t)
 
-(use-package  savehist :straight t :init (savehist-mode))
+(use-package  savehist :straight t :config (savehist-mode))
 
 (use-package marginalia
   :straight t
