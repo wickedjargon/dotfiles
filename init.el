@@ -393,12 +393,14 @@
          ("M-`"   . popper-cycle)
          ("C-M-`" . popper-toggle-type))
   :init
+  (setq popper-display-control 'user)
   (setq popper-reference-buffers
         '("\\*Messages\\*"
           "Output\\*$"
           "\\*Async Shell Command\\*"
           "^\\*Flymake diagnostics"
           help-mode
+          helpful-mode
           compilation-mode))
   (popper-mode +1)
   (popper-echo-mode +1))
