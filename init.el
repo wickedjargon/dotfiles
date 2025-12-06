@@ -1109,7 +1109,7 @@
   :init
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
-;;; incremental completion tools
+;;; incremental completion
 
 (use-package vertico :straight t :defer t :ensure t
   :init
@@ -1266,7 +1266,7 @@
   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
   (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 
-;;; other tools
+;;; tools
 
 (use-package tmr :straight t :ensure t :defer t
   :init
