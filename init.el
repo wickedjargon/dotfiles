@@ -92,7 +92,7 @@
   (global-unset-key (kbd "C-x C-c"))
   (global-unset-key (kbd "C-h h"))
   (global-unset-key (kbd "C-h C-a"))
-  (global-unset-key (kbd "C-h ?"))
+  (global-unset-key (kbd "C-h ?")) ;; this allows me to use embark for entering prefix + ? to find possible completions
   (global-unset-key (kbd "C-h C-h"))
   (global-unset-key (kbd "C-x"))
   (global-unset-key (kbd "M-s o"))
@@ -389,9 +389,6 @@
 
 (use-package popper
   :straight t
-  :bind (("C-`"   . popper-toggle)
-         ("M-`"   . popper-cycle)
-         ("C-M-`" . popper-toggle-type))
   :init
   (setq popper-display-control 'user)
   (setq popper-reference-buffers
@@ -494,12 +491,16 @@
 
   ;; single key
   (evil-leader/set-key "SPC" 'execute-extended-command)
-  (evil-leader/set-key "TAB" 'tab-bar-switch-to-tab)
   (evil-leader/set-key "d" 'delete-blank-lines)
   (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
   (evil-leader/set-key "o" 'other-window)
   (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
   (evil-leader/set-key "w" 'save-buffer)
+
+  ;; popper
+  (evil-leader/set-key "TAB TAB" 'popper-toggle)
+  (evil-leader/set-key "TAB t" 'popper-toggle-type)
+  (evil-leader/set-key "TAB c" 'fff-popper-cycle/popper-cycle)
 
   ;; text scaling
   (evil-leader/set-key "0" 'fff-set-scale-to-zero)
@@ -544,9 +545,6 @@
   (evil-leader/set-key "f B" 'fff-access-books)
   (evil-leader/set-key "f h" 'fff-access-hosts)
 
-  ;; full screen
-  (evil-leader/set-key "f s" 'toggle-frame-fullscreen)
-
   ;; switch to scratch
   (evil-leader/set-key "i i" 'fff-switch-to-scratch-buffer)
   (evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
@@ -555,7 +553,7 @@
   (evil-leader/set-key "i m" 'consult-imenu)
   (evil-leader/set-key "i M" 'lsp-ui-imenu)
 
-  ;; terminal
+  ;; terminal / shell
   (evil-leader/set-key "t t" 'fff-switch-or-create-eshell)
   (evil-leader/set-key "t T" 'fff-open-new-eshell)
   (evil-leader/set-key "t p" 'terminal-here)
@@ -578,31 +576,24 @@
   (evil-leader/set-key "x K" 'kill-buffer)
   (evil-leader/set-key "x D" 'make-directory)
   (evil-leader/set-key "x f" 'find-file)
-  (evil-leader/set-key "x F" 'fff-find-file-in-project-root)
   (evil-leader/set-key "x r" 'crux-recentf-find-file)
   (evil-leader/set-key "x w" 'write-file)
   (evil-leader/set-key "x SPC b" 'ibuffer)
   (evil-leader/set-key "x SPC B" 'fff-project-ibuffer)
   (evil-leader/set-key "X C" 'save-buffers-kill-terminal)
 
-  ;; shortcut
+  ;; window placement prefix
   (evil-leader/set-key "4 4" 'other-window-prefix)
   (evil-leader/set-key "4 1" 'same-window-prefix)
 
   ;; access dirs
-  ;; (evil-leader/set-key "x c" 'fff-access-config-dir)
   (evil-leader/set-key "x m" 'fff-access-home-dir)
   (evil-leader/set-key "x n" 'fff-open-file-in-notes)
   (evil-leader/set-key "x p" 'fff-open-file-in-projects)
   (evil-leader/set-key "x s" 'fff-find-file-ssh)
   (evil-leader/set-key "x t" 'fff-open-file-in-tmp)
   (evil-leader/set-key "x /" 'fff-open-file-in-root-dir)
-
-  ;; project root
-  (evil-leader/set-key "h k" 'fff-find-file-in-project-root)
-  (evil-leader/set-key "p r" 'fff-find-file-in-project-root)
-  (evil-leader/set-key "p p" 'project-find-file)
-  (evil-leader/set-key "p P" 'projectile-find-file-or-dir)
+  (evil-leader/set-key "x F" 'fff-find-file-in-project-root)
 
   ;; back to previous buffer commands
   (evil-leader/set-key "j j" 'evil-switch-to-windows-last-buffer)
