@@ -768,6 +768,13 @@
 (use-package hydra :straight t :defer t :ensure t :commands defhydra
   :config
 
+  ;; Only repeating hydra for cycling
+  (defhydra fff-popper-cycle (:pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
+    "Popper"
+    ("TAB" popper-toggle :exit t)
+    ("c" popper-cycle :exit nil)
+    ("t" popper-toggle-type :exit t))
+
   (defhydra fff-hydra-windsize (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
     ("H" windsize-left nil)
     ("L" windsize-right nil)
