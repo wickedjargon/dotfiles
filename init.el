@@ -611,14 +611,6 @@
   (setq evil-kill-on-visual-paste nil)
   (setq evil-leader/in-all-states t)  ;; Make the leader key available in all states.
 
-  ;; hitting C-n and C-p doesn't work for the company-mode pop-up
-  ;; after using C-h. The code below resolves this issue
-  (with-eval-after-load 'evil
-    (with-eval-after-load 'company
-      (define-key evil-insert-state-map (kbd "C-n") nil)
-      (define-key evil-insert-state-map (kbd "C-p") nil)
-      (evil-define-key nil company-active-map (kbd "C-n") #'company-select-next)
-      (evil-define-key nil company-active-map (kbd "C-p") #'company-select-previous)))
   :config
   (progn
 
@@ -905,9 +897,6 @@
                          ("\\.lsp$" . lisp-mode)
                          ("\\.cl$" . lisp-mode))
                        auto-mode-alist))
-  (add-hook 'sly-mrepl-mode-hook (lambda ()
-                                   (define-key sly-mrepl-mode-map (kbd "C-p") 'comint-previous-input)
-                                   (define-key sly-mrepl-mode-map (kbd "C-n") 'comint-next-input)))
   (setq inferior-lisp-program
         (if (eq system-type 'windows-nt)
             "\"c:/Program Files/Steel Bank Common Lisp/sbcl.exe\""
