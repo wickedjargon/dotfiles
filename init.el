@@ -390,7 +390,7 @@
 (use-package popper
   :straight t
   :init
-  (setq popper-display-control 'user)
+  (setq popper-display-control nil)
   (setq popper-reference-buffers
         '("\\*Messages\\*"
           "Output\\*$"
