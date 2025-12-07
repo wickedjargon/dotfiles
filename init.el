@@ -55,8 +55,7 @@
   ;; hooks
   (add-hook 'modus-themes-after-load-theme-hook #'pdf-view-themed-minor-mode)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
-  (add-hook 'prog-mode-hook (lambda ()
-                              (setq show-trailing-whitespace t)))
+  (add-hook 'prog-mode-hook (lambda () (setq show-trailing-whitespace t)))
   ;; (add-hook 'dired-mode-hook #'auto-revert-mode)          ;; revert dired buffers, but not buffer list buffers
   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
