@@ -339,7 +339,7 @@
   (eval-after-load 'package
     '(defalias 'list-packages 'straight-list-packages)))
 
-;;; buffer navigation
+;;; Buffer Navigation
 
 (use-package dired
   :ensure nil
@@ -401,7 +401,7 @@
   (popper-mode +1)
   (popper-echo-mode +1))
 
-;;; window / frames
+;;; Windows / Frames
 
 (use-package windsize :straight t :defer t :ensure t)
 
@@ -410,7 +410,7 @@
 (use-package winner :straight t :ensure t :defer t
   :init (winner-mode +1))
 
-;;; web browser
+;;; Web Browser
 
 (use-package browse-url
   :ensure nil
@@ -439,7 +439,7 @@
   :config
   (setq eww-search-prefix "https://wiby.me/?q="))
 
-;;; themes
+;;; Themes
 
 (use-package modus-themes
   :defer nil
@@ -472,7 +472,7 @@
 
 (use-package standard-themes :straight t :ensure t :defer t)
 
-;;; evil packages
+;;; Evil Packages
 
 (use-package evil-collection :straight t
   :after evil
@@ -745,7 +745,7 @@
 
 ;; end of evil packages
 
-;;; other key binding packages
+;;; Other Key Binding Packages
 
 (use-package hydra :straight t :defer t :ensure t :commands defhydra
   :config
@@ -784,9 +784,9 @@
     ( "h" previous-buffer)
     ( "l" next-buffer)))
 
-;;; language support modes and related packages
+;;; Language Support Modes And Related Packages
 
-;;; web dev related packages
+;;; Web Dev Related Packages
 
 (use-package web-mode
   :ensure t
@@ -828,7 +828,7 @@
 ;; export a code file to html
 (use-package htmlize :ensure t :straight t :defer t)
 
-;;; org packages
+;;; Org Packages
 
 (use-package ob-racket
   :straight (ob-racket
@@ -865,7 +865,7 @@
   :config
   (add-hook 'dired-mode-hook 'org-download-enable))
 
-;;; common lisp
+;;; Common Lisp
 
 (use-package lisp-mode :ensure nil
   :init
@@ -915,7 +915,7 @@
   :config
   (add-to-list 'sly-contribs 'sly-macrostep 'append))
 
-;;; elisp packages
+;;; Elisp Packages
 
 (use-package emacs-lisp-mode
   :ensure nil  ;; emacs-lisp-mode is built-in, so no need to install it
@@ -956,7 +956,7 @@
 ;; inline evaluation
 (use-package eros :defer nil :straight t :ensure t :config (eros-mode +1))
 
-;;; other language support packages
+;;; Other Language Support Packages
 
 (use-package ocen-mode
   :load-path (lambda () (expand-file-name "fff-lisp/ocen-mode" user-emacs-directory))
@@ -1070,7 +1070,7 @@
 
 (use-package realgud :straight t :defer t :ensure t)
 
-;;; markdown
+;;; Markdown
 
 (use-package markdown-mode
   :ensure nil
@@ -1083,7 +1083,7 @@
 
 (use-package gh-md :straight t :ensure t :defer t)
 
-;;; pdf / epub
+;;; PDF / EPUB
 
 (use-package pdf-tools :straight t :ensure t  :defer t
   :mode ("\\pdf\\'" . pdf-view-mode)
@@ -1098,7 +1098,7 @@
   :init
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
-;;; incremental completion
+;;; Incremental Completion
 
 (use-package vertico :straight t :defer t :ensure t
   :init
@@ -1214,7 +1214,7 @@
 
 (use-package embark-consult :straight t :ensure t :defer t)
 
-;;; snippets
+;;; Snippets
 
 (use-package hippie-expand :ensure nil :defer t
   :init
@@ -1228,7 +1228,7 @@
   (add-to-list #'yas-snippet-dirs (expand-file-name "snippets/" user-emacs-directory))
   (yas-reload-all))
 
-;;; git
+;;; Git
 
 (use-package magit :straight t :ensure t :defer t
   :init
@@ -1255,7 +1255,7 @@
   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
   (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 
-;;; tools
+;;; Tools
 
 (use-package tmr :straight t :ensure t :defer t
   :init
@@ -1303,7 +1303,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
              :host gitlab
              :repo "ambrevar/emacs-gif-screencast"))
 
-;;; entertainment
+;;; Entertainment
 
 ;; irc client
 (use-package erc :ensure nil :defer t
@@ -1366,7 +1366,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 
 (use-package hacker-typer :straight t :ensure t :defer t)
 
-;;; project / search
+;;; Project / Search
 
 (use-package projectile :straight t :defer t :ensure t
   :config
@@ -1424,7 +1424,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package wgrep :straight t :ensure t :defer t)
 
-;;; docs / lookup
+;;; Docs / Lookup
 
 (use-package Info :ensure nil :defer t
   :init
@@ -1440,7 +1440,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package mw-thesaurus :straight t :defer t :ensure t)
 
-;;; indentation
+;;; Indentation
 
 (use-package aggressive-indent
   :straight t
@@ -1464,7 +1464,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                             (when (called-interactively-p 'any)
                               (dtrt-indent-try-set-offset))))))
 
-;;; terminal / shell
+;;; Terminal / Shell
 
 (use-package terminal-here
   :straight t
@@ -1498,7 +1498,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
     "Bind C-c c to fff-eshell-clear-1 in eshell."
     (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
 
-;;; UI packages
+;;; UI Packages
 
 (use-package all-the-icons :straight t :ensure t
   :if (display-graphic-p))
@@ -1578,7 +1578,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package diminish :straight t :ensure t :defer t)
 
-;;; general text/code editing / IDE / navigation / jumping
+;;; General Text/Code Editing / IDE / Navigation / Jumping
 
 (use-package flymake
   :ensure nil
