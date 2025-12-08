@@ -398,8 +398,7 @@
           help-mode
           helpful-mode
           compilation-mode))
-  (popper-mode +1)
-  (popper-echo-mode +1))
+  (popper-mode +1))
 
 ;;; Windows / Frames
 
