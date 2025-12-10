@@ -435,7 +435,7 @@
   (setq browse-url-browser-function 'browse-url-new-window))
 
 (use-package eww :ensure nil
-  :config
+  :init
   (setq eww-search-prefix "https://wiby.me/?q="))
 
 ;;; Themes
