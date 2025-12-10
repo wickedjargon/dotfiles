@@ -1200,17 +1200,17 @@
         browse-url-generic-program "brave-browser")
 
   ;; FIXED: use "s" instead of "f" so URLs stay URLs
-  (defun my/open-in-brave (target)
-    (interactive "sOpen in Brave: ")
-    (start-process "brave" nil "brave-browser" "--new-window" target))
+  (defun fff-open-in-firefox (target)
+    (interactive "sOpen in Firefox: ")
+    (start-process "firefox" nil "firefox" "--new-window" target))
 
-  (define-key embark-url-map (kbd "b") #'my/open-in-brave)
-  (define-key embark-file-map (kbd "b") #'my/open-in-brave)
+  (define-key embark-url-map (kbd "b") #'fff-open-in-firefox)
+  (define-key embark-file-map (kbd "b") #'fff-open-in-firefox)
 
   ;; Make Brave the default for .html
   (defun my/embark-file-open (file)
     (if (string-match-p "\\.html?\\'" file)
-        (my/open-in-brave file)
+        (fff-open-in-firefox file)
       (crux-open-with file)))
 
   (setf (alist-get 'file embark-default-action-overrides)
@@ -1218,7 +1218,7 @@
 
   ;; Make Brave the default DWIM action for URLs
   (setf (alist-get 'url embark-default-action-overrides)
-        #'my/open-in-brave))
+        #'fff-open-in-firefox))
 
 (use-package embark-consult :straight t :ensure t :defer t)
 
