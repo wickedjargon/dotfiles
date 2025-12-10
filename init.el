@@ -473,10 +473,17 @@
 
 ;;; Evil Packages
 
-(use-package evil-collection :straight t
+(use-package evil-collection
+  :straight t
   :after evil
   :config
-  (evil-collection-init))
+  (evil-collection-init)
+
+  ;; Override PDF keybindings
+  (with-eval-after-load 'pdf-view
+    (evil-define-key 'normal pdf-view-mode-map
+      "d" 'pdf-view-scroll-up-or-next-page
+      "u" 'pdf-view-scroll-down-or-previous-page)))
 
 (use-package evil-leader :defer nil :straight t
   :commands (evil-leader-mode)
