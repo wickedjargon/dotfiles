@@ -314,7 +314,8 @@
                                                       wheatgrass whiteboard wombat)))
                             themes)))
 
-  ;; load `lisp' directory
+;; load `lisp' directory
+>>>>>>> 5b0ecd56c924a5a0894f76ec576c2dbb5af825ba
   (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 
   ;; Automatically load all .el files in that directory
