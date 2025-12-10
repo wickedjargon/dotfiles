@@ -797,7 +797,7 @@
   :config
 
   ;; Only repeating hydra for cycling
-  (defhydra fff-popper-cycle (:pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
+  (defhydra fff-popper (:pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
     "Popper"
     ("TAB" popper-toggle :exit t)
     ("c" popper-cycle :exit nil)
@@ -820,15 +820,7 @@
 
   (defhydra fff-hydra-paragraph-movement (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
     ("[" evil-backward-paragraph)
-    ("]" evil-forward-paragraph))
-
-  (defhydra fff-tabs (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-    ("l" tab-next)
-    ("h" tab-previous))
-
-  (defhydra fff-buffer-switch (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-    ( "h" previous-buffer)
-    ( "l" next-buffer)))
+    ("]" evil-forward-paragraph)))
 
 ;;; Language Support Modes And Related Packages
 
