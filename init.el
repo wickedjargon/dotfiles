@@ -339,7 +339,43 @@
 
   ;; Prevent package menu from displaying
   (eval-after-load 'package
-    '(defalias 'list-packages 'straight-list-packages)))
+    '(defalias 'list-packages 'straight-list-packages))
+
+  ;; when new window opens, move cursor there
+  (defun fff-focus-new-window-or-buffer (orig-fun &rest args)
+    "Call ORIG-FUN and focus any new window or the window displaying a returned buffer, only if called interactively."
+    (if (called-interactively-p 'any)
+        (let ((before-windows (window-list)))
+          (let ((result (apply orig-fun args)))
+            ;; 1. Focus window displaying returned buffer, if any
+            (when (bufferp result)
+              (when-let ((w (get-buffer-window result t)))
+                (select-window w)))
+            ;; 2. Otherwise, focus any new window created
+            (let ((new-windows (seq-filter
+                                (lambda (w)
+                                  (and (window-live-p w)
+                                       (not (minibuffer-window-active-p w))))
+                                (seq-difference (window-list) before-windows))))
+              (when new-windows
+                (select-window (car new-windows))))
+            result))
+      ;; If not interactive, just call normally
+      (apply orig-fun args)))
+
+  (dolist (cmd '(diff-buffer-with-file
+                 compile
+                 occur
+                 grep
+                 devdocs-lookup
+                 list-buffers
+                 split-window-below
+                 split-window-right
+                 switch-to-buffer-other-window
+                 display-buffer
+                 vc-region-history
+                 flymake-show-buffer-diagnostics))
+    (advice-add cmd :around #'fff-focus-new-window-or-buffer)))
 
 ;;; Buffer Navigation
 
