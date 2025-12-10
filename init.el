@@ -543,7 +543,7 @@
   ;; popper
   (evil-leader/set-key "TAB TAB" 'popper-toggle)
   (evil-leader/set-key "TAB t" 'popper-toggle-type)
-  (evil-leader/set-key "TAB c" 'fff-popper-cycle/popper-cycle)
+  (evil-leader/set-key "TAB c" 'fff-popper/popper-cycle)
 
   ;; text scaling
   (evil-leader/set-key "0" 'fff-set-scale-to-zero)
