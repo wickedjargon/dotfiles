@@ -1159,8 +1159,7 @@
         corfu-auto-prefix 1
         corfu-quit-no-match t
         corfu-preview-current nil
-        corfu-count 5
-        )
+        corfu-count 5)
   :config
   (defun corfu-move-to-minibuffer ()
     (interactive)
@@ -1226,7 +1225,13 @@
 
 (use-package hippie-expand :ensure nil :defer t
   :init
-  (setq hippie-expand-try-functions-list '(try-expand-dabbrev try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list  try-expand-line  try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
+  (setq hippie-expand-try-functions-list
+        '(try-expand-dabbrev
+          try-complete-file-name-partially
+          try-complete-file-name try-expand-all-abbrevs try-expand-list
+          try-expand-line try-expand-dabbrev-all-buffers
+          try-expand-dabbrev-from-kill
+          try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
 
 (use-package yasnippet :straight t :ensure t
   :init
