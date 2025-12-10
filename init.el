@@ -608,6 +608,8 @@
 
 (use-package evil :defer nil :ensure t :straight t
   :init
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-d-scroll t)
   (setq evil-insert-state-message nil)
   (setq evil-undo-system 'undo-fu)
   (setq evil-want-integration t)
