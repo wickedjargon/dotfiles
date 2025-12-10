@@ -1641,3 +1641,8 @@ With prefix ARG = 0, print integers in extra formats (decimal, octal, hex, char)
   (interactive)
   (let ((file (dired-get-file-for-visit)))
     (start-process "brave-open" nil "brave-browser" "--new-window" (expand-file-name file))))
+
+(defun yt-play (url)
+  "Play URL with `yeetube-mpv-play'."
+  (interactive "sURL: ")
+  (yeetube-mpv-play url))
