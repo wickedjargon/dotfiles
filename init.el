@@ -1064,27 +1064,16 @@
 
 (use-package svelte-mode :straight t :ensure t :mode "\\.svelte\\'")
 
-(use-package asm-mode :ensure nil
-  :mode ("\\.s\\'" . asm-mode)
-  ("\\.asm\\'" . asm-mode)
+(use-package asm-mode
+  :ensure nil
+  :mode ("\\.s\\'" "\\.asm\\'")
+  :hook (asm-mode . fff-no-indent-asm)
   :config
-  ;; remove indentation
-  (defun asm-indent-line ()
-    "Auto-indent the current line."
-    (interactive)
-    (indent-line-to 0))
-  (defun asm-calculate-indentation () 0)
-  (defun asm-colon ()
-    "Insert a colon without triggering indentation."
-    (interactive)
-    (let ((labelp nil))
-      (save-excursion
-        (skip-syntax-backward "w_")
-        (skip-syntax-backward " ")
-        (setq labelp (bolp)))
-      (call-interactively 'self-insert-command)
-      (when labelp
-        (delete-horizontal-space)))))
+  (defun fff-no-indent-asm ()
+    (setq-local indent-line-function #'ignore)
+    (setq-local indent-region-function #'ignore)
+    (setq-local electric-indent-inhibit t)
+    (electric-indent-local-mode -1)))
 
 (use-package v-mode :straight t :ensure t :defer t)
 
