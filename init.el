@@ -946,7 +946,7 @@
             ("Structs" "^\\s-*(cl-defstruct\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
             ("Evil Commands" "^\\s-*(evil-define-command\\s-+\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
             ("Autoloads" "^\\s-*(autoload\\s-+'\\([-A-Za-z0-9!$%^&*_=|~`@#<>/]+\\)" 1)
-            (";;; Category Title" "^;;; \\(.*\\)$" 1)))
+            ("Category Title" "^;;; \\(.*\\)$" 1)))
     (imenu-add-menubar-index))
   :hook (emacs-lisp-mode . fff-emacs-lisp-mode-setup))
 
