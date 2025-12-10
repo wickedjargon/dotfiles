@@ -534,32 +534,6 @@ in whole buffer.  With neither, delete comments on current line."
   (interactive)
   (insert "λ"))
 
-(evil-define-command fff-evil-open-below (count)
-  :suppress-operator t
-  (interactive "p")
-  (if (eq major-mode #'haskell-mode)
-      (progn
-        (unless (eq evil-want-fine-undo t)
-          (evil-start-undo-step))
-        (push (point) buffer-undo-list)
-        (end-of-line)
-        (haskell-indentation-newline-and-indent)
-        (evil-insert-state 1)
-        )
-    (evil-open-below 1)))
-
-(evil-define-command fff-evil-open-above (count)
-  (interactive "p")
-  (if (eq major-mode #'haskell-mode)
-      (progn
-        (unless (eq evil-want-fine-undo t)
-          (evil-start-undo-step))
-        (beginning-of-line)
-        (haskell-indentation-newline-and-indent)
-        (next-line -1)
-        (evil-insert-state 1))
-    (evil-open-above 1)))
-
 (defun fff-down-list-back ()
   (interactive)
   (down-list -1)

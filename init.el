@@ -315,10 +315,13 @@
                             themes)))
 
   ;; load my own config
-  (with-eval-after-load 'evil
-    (load (expand-file-name "fff-lisp/htop-style-monitor.el" user-emacs-directory))
-    (load (expand-file-name "fff-lisp/hide-comnt.el" user-emacs-directory))
-    (load (expand-file-name "fff-lisp/fff-functions.el" user-emacs-directory)))
+  ;; Add your personal lisp directory to load-path
+  (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+
+  ;; Automatically load all .el files in that directory
+  (dolist (file (directory-files (expand-file-name "lisp" user-emacs-directory) t "\\.el$"))
+    (load (file-name-sans-extension file)))
+
   (unless (display-graphic-p)
     (with-eval-after-load 'evil
       (define-key evil-insert-state-map (kbd "ESC ESC <escape>") 'evil-normal-state)))
