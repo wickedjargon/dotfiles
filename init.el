@@ -314,8 +314,7 @@
                                                       wheatgrass whiteboard wombat)))
                             themes)))
 
-  ;; load my own config
-  ;; Add your personal lisp directory to load-path
+  ;; load `lisp' directory
   (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 
   ;; Automatically load all .el files in that directory
