@@ -1122,8 +1122,6 @@
   (setq prescient-filter-method  '(literal regexp initialism))
   (vertico-prescient-mode +1))
 
-(use-package smex :straight t :ensure t)
-
 (use-package  savehist :straight t :config (savehist-mode))
 
 (use-package marginalia
