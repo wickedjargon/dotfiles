@@ -1211,11 +1211,6 @@
   (define-key embark-file-map (kbd "o") #'crux-open-with)
   (define-key embark-file-map (kbd "y") #'yt-dlp-play-current-entry)
 
-  ;; Brave browser defaults
-  (setq browse-url-browser-function #'browse-url-generic
-        browse-url-generic-program "brave-browser")
-
-  ;; FIXED: use "s" instead of "f" so URLs stay URLs
   (defun fff-open-in-firefox (target)
     (interactive "sOpen in Firefox: ")
     (start-process "firefox" nil "firefox" "--new-window" target))
