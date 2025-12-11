@@ -1220,18 +1220,35 @@
   (define-key embark-url-map (kbd "b") #'fff-open-in-firefox)
   (define-key embark-file-map (kbd "b") #'fff-open-in-firefox)
 
-  ;; Make Brave the default for .html
-  (defun my/embark-file-open (file)
-    (if (string-match-p "\\.html?\\'" file)
-        (fff-open-in-firefox file)
-      (crux-open-with file)))
+  ;; NEW: manual open-with program (final, fixed version)
+  (defun fff-open-with-program (file)
+    "Prompt for any program and open FILE with it.
+Supports arguments and GUI programs. Expands path to avoid doubling."
+    (interactive "fFile: ")
+    (let* ((file (expand-file-name file)) ;; <-- fix path here
+           (input (read-shell-command "Open with program: "))
+           (parts (split-string-and-unquote input))
+           (prog  (car parts))
+           (args  (cdr parts))
+           (exe   (executable-find prog)))
+      (unless exe
+        (user-error "Program not found: %s" prog))
+      ;; Add file at the end
+      (apply #'start-process prog nil exe (append args (list file)))))
 
+
+  ;; Add it under "p" in Embark file actions
+  (define-key embark-file-map (kbd "p") #'fff-open-with-program)
+
+  ;; DEFAULT DWIM ACTIONS
   (setf (alist-get 'file embark-default-action-overrides)
-        #'my/embark-file-open)
+        #'crux-open-with)
 
-  ;; Make Brave the default DWIM action for URLs
   (setf (alist-get 'url embark-default-action-overrides)
         #'fff-open-in-firefox))
+
+
+
 
 (use-package embark-consult :straight t :ensure t :defer t)
 
