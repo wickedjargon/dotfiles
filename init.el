@@ -1207,10 +1207,11 @@
                  nil
                  (window-parameters (mode-line-format . none))))
 
-  ;; Add crux-open-with to the existing file map
+  ;; Existing actions
   (define-key embark-file-map (kbd "o") #'crux-open-with)
   (define-key embark-file-map (kbd "y") #'yt-dlp-play-current-entry)
 
+  ;; Open in Firefox (URL or file)
   (defun fff-open-in-firefox (target)
     (interactive "sOpen in Firefox: ")
     (start-process "firefox" nil "firefox" "--new-window" target))
