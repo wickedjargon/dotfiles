@@ -726,13 +726,13 @@
     (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)
 
     ;; a new definition for Y that is consistant with K
-    (evil-define-operator my-evil-yank-to-eol (beg end type register)
+    (evil-define-operator fff-evil-yank-to-eol (beg end type register)
       "Yank from point to the end of the line into the kill-ring."
       :move-point nil
       :type inclusive
       (interactive "<x><y>")
       (evil-yank (point) (line-end-position) type register))
-    (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-eol)
+    (define-key evil-normal-state-map (kbd "Y") 'fff-evil-yank-to-eol)
 
     ;; move by visual line
     (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
