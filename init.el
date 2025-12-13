@@ -764,14 +764,17 @@
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys))
 
+;; use * / # to go to the next word under cursor
 (use-package evil-visualstar :straight t :ensure t :defer nil :straight t
   :config
   (global-evil-visualstar-mode))
 
+;; jump between html / xml tags like <div> and its match </div> using % key
 (use-package evil-matchit :straight t :ensure t :defer nil :straight t
   :config
   (global-evil-matchit-mode +1))
 
+;; edit all matches for region in document
 (use-package evil-iedit-state :straight t :ensure t :defer t
   :init
   (global-set-key (kbd "C-;") 'iedit-mode))
@@ -789,8 +792,6 @@
 
 ;; visual select inside generic brackets using `b', `vib'
 (use-package evil-textobj-anyblock :ensure t :straight t :defer t)
-
-;; end of evil packages
 
 ;;; Other Key Binding Packages
 
