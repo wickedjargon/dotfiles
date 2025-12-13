@@ -68,7 +68,7 @@
               (when (and buffer-file-name
                          (or (string-prefix-p (expand-file-name "elpa" user-emacs-directory) buffer-file-name)
                              (string-prefix-p (expand-file-name "straight" straight-base-dir) buffer-file-name)
-                             (string-prefix-p (expand-file-name "~/.cargo" straight-base-dir) buffer-file-name)
+                             (string-prefix-p (expand-file-name "~/.cargo") buffer-file-name)
                              (string-prefix-p (expand-file-name "~/.rustup") buffer-file-name)))
                 (read-only-mode 1))))
 
