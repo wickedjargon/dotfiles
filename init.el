@@ -553,7 +553,6 @@
   ;; embark
   (evil-leader/set-key "RET" 'embark-dwim)
   (evil-leader/set-key "c e" 'embark-act)
-  (evil-leader/set-key "e e" 'embark-act)
 
   ;; shell, compile, eval
   (evil-leader/set-key "x x" 'shell-command)
