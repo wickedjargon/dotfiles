@@ -1401,13 +1401,12 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
       ;; 'call-process' runs the command synchronously
       (call-process "pactl" nil nil nil "set-sink-volume" "@DEFAULT_SINK@" (format "%s%%" level))
       (message "Volume set to %d%%" level)))
-  :config
   (setq emms-volume-change-amount 5) ;; lower / raise volume in increments of 5 instead of 2.
   ;; because it takes too long to lower / raise volume with 2
   (setq emms-mode-line-format "")
   (setq emms-mode-line-icon-enabled-p nil)
   (setq emms-playing-time-display-format "")
-  :init
+  :config
   (emms-all)
   (emms-default-players))
 
