@@ -1595,6 +1595,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (setq gptel-model 'gpt-4o))
 
+;; see if we can remove this and use our own functions
 (use-package crux :straight t :defer t :ensure t
   :config
   (defun crux-open-with (arg)
