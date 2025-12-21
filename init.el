@@ -877,17 +877,6 @@
     (imenu-add-menubar-index))
   :hook (emacs-lisp-mode . fff-emacs-lisp-mode-setup))
 
-(use-package helpful :straight t :ensure t :defer t
-  :bind
-  ([remap describe-key] . helpful-key)
-  ([remap describe-command] . helpful-command)
-  ([remap describe-variable] . helpful-variable)
-  ([remap describe-function] . helpful-callable))
-
-(use-package elisp-demos :straight t :ensure t :defer t
-  :init
-  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
-
 ;; inline evaluation
 (use-package eros :defer nil :straight t :ensure t :config (eros-mode +1))
 
