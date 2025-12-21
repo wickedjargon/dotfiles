@@ -585,6 +585,7 @@
 
   ;; f: shortcut to file or dired buffer
   (evil-leader/set-key "f b" 'fff-access-bookmarks)
+  (evil-leader/set-key "f n" 'fff-access-notes)
   (evil-leader/set-key "f B" 'fff-access-books)
   (evil-leader/set-key "f h" 'fff-access-hosts)
 
