@@ -1452,8 +1452,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 (use-package emojify :straight t :ensure t :defer t)
 
-(use-package doom-modeline :ensure t :defer t :straight t
-  :config
+(use-package doom-modeline :ensure t :straight t
+  :init
   (setq doom-modeline-hud t)
   (setq doom-modeline-highlight-modified-buffer-name nil)
   (setq doom-modeline-position-line-format '(""))
@@ -1464,8 +1464,10 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setq display-time-default-load-average nil)
   (setq display-time-day-and-date t)
   (setq doom-modeline-buffer-file-name-style 'relative-from-project)
+  (setq doom-modeline-time-analogue-clock nil)
+  (setq doom-modeline-icon nil)
   (display-time)
-  :init
+  :config
   (doom-modeline-mode +1))
 
 (use-package pulsar :straight t :defer t :ensure t
