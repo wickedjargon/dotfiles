@@ -285,12 +285,6 @@ in whole buffer.  With neither, delete comments on current line."
      (line-end-position))
     (evil-delete-backward-char-and-join)))
 
-(defun fff-delete-till-beginning-of-line ()
-  "Delete from the current point to the beginning of the line."
-  (interactive)
-  (let ((start (point)))
-    (beginning-of-line)
-    (delete-region (point) start)))
 
 (defun fff-switch-to-previous-buffer ()
   (interactive)
@@ -1620,3 +1614,12 @@ With prefix ARG = 0, print integers in extra formats (decimal, octal, hex, char)
   "Play URL with `yeetube-mpv-play'."
   (interactive "sURL: ")
   (yeetube-mpv-play url))
+
+;; movement
+
+(defun fff-delete-till-beginning-of-line ()
+  "Delete from the current point to the beginning of the line."
+  (interactive)
+  (let ((start (point)))
+    (beginning-of-line)
+    (delete-region (point) start)))
