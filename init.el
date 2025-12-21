@@ -1371,10 +1371,6 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
       "#latex")))
   (erc-hide-timestamps t))
 
-(use-package consult-erc
-  :ensure t
-  :straight (consult-erc :type git :host codeberg :repo "mekeor/consult-erc"))
-
 ;; rss feed reader
 (use-package newsticker
   :ensure nil
