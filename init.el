@@ -1051,9 +1051,9 @@
   :config
   (marginalia-mode +1))
 
-(use-package consult :straight t :ensure t :defer t
-  :init
-  (global-set-key [remap imenu] 'consult-imenu))
+(use-package consult :straight t :ensure t :defer nil
+  :config
+  (require 'consult-imenu))
 
 (use-package corfu
   :straight t
