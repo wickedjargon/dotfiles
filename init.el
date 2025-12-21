@@ -909,6 +909,7 @@
                  '(ocen-mode . ("node" "/home/ff/.local/src/ocen-vscode/out/server/src/server.js" "--stdio")))))
 
 (use-package pet
+  :defer t
   :ensure t
   :straight t
   :config
@@ -936,7 +937,7 @@
 
 (use-package dockerfile-mode :straight t :ensure t)
 
-(use-package json-mode :straight t :ensure t)
+(use-package json-mode :straight t :ensure t :defer t)
 
 (use-package gitignore-mode
   :ensure t
@@ -979,7 +980,7 @@
 
 (use-package rust-mode :straight t :ensure t)
 
-(use-package csharp-mode :ensure nil
+(use-package csharp-mode :ensure nil :defer t
   :hook (csharp-mode . (lambda ()
                          (setq imenu-create-index-function
                                (lambda ()
@@ -1302,6 +1303,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   (emms-default-players))
 
 (use-package yeetube
+  :defer t
   :straight t
   :ensure t
   :config
