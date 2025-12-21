@@ -489,7 +489,7 @@
   (evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
 
   ;; imenu
-  (evil-leader/set-key "i m" 'consult-imenu)
+  (evil-leader/set-key "i m" 'imenu)
   (evil-leader/set-key "i M" 'lsp-ui-imenu)
 
   ;; terminal / shell
