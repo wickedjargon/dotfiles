@@ -1393,7 +1393,17 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 ;; audio / music payer
 (use-package emms :straight t :ensure t :defer t
   :diminish emms-mode-line
+  :init
+  (defun emms-volume-set (level)
+    "Set absolute volume directly using pactl (bypasses emms-volume-get)."
+    (interactive "nSet volume to (0-100): ")
+    (when (and (>= level 0) (<= level 100))
+      ;; 'call-process' runs the command synchronously
+      (call-process "pactl" nil nil nil "set-sink-volume" "@DEFAULT_SINK@" (format "%s%%" level))
+      (message "Volume set to %d%%" level)))
   :config
+  (setq emms-volume-change-amount 5) ;; lower / raise volume in increments of 5 instead of 2.
+  ;; because it takes too long to lower / raise volume with 2
   (setq emms-mode-line-format "")
   (setq emms-mode-line-icon-enabled-p nil)
   (setq emms-playing-time-display-format "")
