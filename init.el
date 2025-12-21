@@ -607,7 +607,7 @@
   (evil-leader/set-key "g G" 'fff-switch-to-new-gptel-buffer)
 
   ;; x: C-x prefixes
-  (evil-leader/set-key "x b" 'consult-buffer)
+  (evil-leader/set-key "x b" 'switch-to-buffer)
   (evil-leader/set-key "x B" 'fff-project-switch-to-buffer)
   (evil-leader/set-key "x 0" 'delete-window)
   (evil-leader/set-key "x 1" 'delete-other-windows)
@@ -620,7 +620,7 @@
   (evil-leader/set-key "x K" 'kill-buffer)
   (evil-leader/set-key "x D" 'make-directory)
   (evil-leader/set-key "x f" 'find-file)
-  (evil-leader/set-key "x r" 'crux-recentf-find-file)
+  (evil-leader/set-key "x r" 'recentf)
   (evil-leader/set-key "x w" 'write-file)
   (evil-leader/set-key "x SPC b" 'ibuffer)
   (evil-leader/set-key "x SPC B" 'fff-project-ibuffer)
