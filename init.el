@@ -1638,6 +1638,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
           rust-ts-mode
           svelte-mode
           c-ts-mode c++-ts-mode
+          c-mode
           csharp-mode
           typescript-mode typescript-ts-mode
           js-ts-mode javascript-mode
