@@ -435,6 +435,10 @@
   (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
   (evil-leader/set-key "w" 'save-buffer)
 
+  ;; eval
+  (evil-leader/set-key "e e" 'eval-last-sexp)
+  (evil-leader/set-key "e p" 'eval-print-last-sexp-as-comment)
+
   ;; popper
   (evil-leader/set-key "TAB TAB" 'popper-toggle)
   (evil-leader/set-key "TAB t" 'popper-toggle-type)
@@ -618,7 +622,7 @@
     (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-normal-state-map (kbd "<kp-left>") 'winner-undo)
     (define-key evil-normal-state-map (kbd "<kp-right>") 'winner-redo)
-    (evil-global-set-key 'normal (kbd "SPC e") 'eval-last-sexp)
+    ;; (evil-global-set-key 'normal (kbd "SPC e e") 'eval-last-sexp)
 
     ;; a new definition for Y that is consistant with K
     (evil-define-operator fff-evil-yank-to-eol (beg end type register)
