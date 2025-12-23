@@ -934,62 +934,41 @@
     (add-to-list 'eglot-server-programs
                  '(ocen-mode . ("node" "/home/ff/.local/src/ocen-vscode/out/server/src/server.js" "--stdio")))))
 
-(use-package pet
-  :defer t
-  :ensure t
-  :straight t
-  :config
-  (add-hook 'python-base-mode-hook 'pet-mode -10))
+;; (use-package pet
+;;   :defer t
+;;   :ensure t
+;;   :straight t
+;;   :config
+;;   (add-hook 'python-base-mode-hook 'pet-mode -10))
 
-(use-package go-mode :straight t :ensure t :defer t)
+;; (use-package go-mode :straight t :ensure t :defer t)
 
-(use-package vimrc-mode :straight t :ensure t :defer t)
+;; (use-package vimrc-mode :straight t :ensure t :defer t)
 
-(use-package haskell-mode :straight t :ensure t :defer t)
+;; (use-package haskell-mode :straight t :ensure t :defer t)
 
-(use-package typescript-mode :straight t :ensure t :defer t)
+;; (use-package clojure-mode :straight t :ensure t :defer t)
 
-(use-package clojure-mode :straight t :ensure t :defer t)
+;; (use-package cider :straight t :ensure t :defer t
+;;   :config
+;;   (define-key cider-repl-mode-map (kbd "C-c c") #'cider-repl-clear-buffer))
 
-(use-package cider :straight t :ensure t :defer t
-  :config
-  (define-key cider-repl-mode-map (kbd "C-c c") #'cider-repl-clear-buffer))
+;; (use-package zig-mode :straight t :ensure t :defer t)
 
-(use-package zig-mode :straight t :ensure t :defer t)
+;; (use-package scala-mode :straight t :ensure t :defer t
+;;   :interpreter
+;;   ("scala" . scala-mode))
 
-(use-package scala-mode :straight t :ensure t :defer t
-  :interpreter
-  ("scala" . scala-mode))
+;; (use-package dockerfile-mode :straight t :ensure t)
 
-(use-package dockerfile-mode :straight t :ensure t)
+;; (use-package json-mode :straight t :ensure t :defer t)
 
-(use-package json-mode :straight t :ensure t :defer t)
+;; (use-package sml-mode :straight t :ensure t)
 
-(use-package gitignore-mode
-  :ensure t
-  :straight (:host github :repo "magit/git-modes")
-  :mode "\\.gitignore\\'"
-  :defer t)
-
-(use-package sml-mode :straight t :ensure t)
-
-(use-package d-mode :straight t :ensure t
-  :mode "\\.d\\'"
-  :config
-  (setq d-mode-indent-style 'k&r))
-
-(use-package svelte-mode :straight t :ensure t :mode "\\.svelte\\'")
-
-(use-package asm-mode
-  :ensure nil
-  :mode ("\\.s\\'" "\\.asm\\'")
-  :hook (asm-mode . fff-no-indent-asm)
-  :config
-  (defun fff-no-indent-asm ()
-    (setq-local indent-line-function #'ignore)
-    (setq-local indent-region-function #'ignore)
-    (setq-local electric-indent-inhibit t)
-    (electric-indent-local-mode -1)))
+;; (use-package d-mode :straight t :ensure t
+;;   :mode "\\.d\\'"
+;;   :config
+;;   (setq d-mode-indent-style 'k&r))
 
 (use-package v-mode :straight t :ensure t :defer t)
 
@@ -1473,8 +1452,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 ;;; UI Packages
 
-(use-package all-the-icons :straight t :ensure t
-  :if (display-graphic-p))
+;; (use-package all-the-icons :straight t :ensure t
+;;   :if (display-graphic-p))
 
 (use-package emojify :straight t :ensure t :defer t)
 
