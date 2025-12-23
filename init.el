@@ -434,10 +434,11 @@
   (evil-leader/set-key "o" 'other-window)
   (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
   (evil-leader/set-key "w" 'save-buffer)
+  (evil-leader/set-key "p" 'consult-yank-from-kill-ring)
 
   ;; eval
   (evil-leader/set-key "e e" 'eval-last-sexp)
-  (evil-leader/set-key "e p" 'eval-print-last-sexp-as-comment)
+  (evil-leader/set-key "e p" 'fff-eval-print-last-sexp-as-comment)
 
   ;; popper
   (evil-leader/set-key "TAB TAB" 'popper-toggle)
