@@ -887,6 +887,23 @@
 
 ;;; Other Language Support Packages
 
+(use-package gitignore-mode
+  :ensure t
+  :straight (:host github :repo "magit/git-modes")
+  :mode "\\.gitignore\\'"
+  :defer t)
+
+(use-package asm-mode
+  :ensure nil
+  :mode ("\\.s\\'" "\\.asm\\'")
+  :hook (asm-mode . fff-no-indent-asm)
+  :config
+  (defun fff-no-indent-asm ()
+    (setq-local indent-line-function #'ignore)
+    (setq-local indent-region-function #'ignore)
+    (setq-local electric-indent-inhibit t)
+    (electric-indent-local-mode -1)))
+
 (use-package ocen-mode
   :load-path (lambda () (expand-file-name "fff-lisp/ocen-mode" user-emacs-directory))
   :mode "\\.oc\\'"
