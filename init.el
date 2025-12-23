@@ -742,6 +742,21 @@
   (setq web-mode-enable-auto-pairing t)
   (setq web-mode-enable-auto-closing t))
 
+(use-package typescript-mode :straight t :ensure t :defer t)
+
+(use-package svelte-mode :straight t :ensure t :mode "\\.svelte\\'")
+
+(use-package asm-mode
+  :ensure nil
+  :mode ("\\.s\\'" "\\.asm\\'")
+  :hook (asm-mode . fff-no-indent-asm)
+  :config
+  (defun fff-no-indent-asm ()
+    (setq-local indent-line-function #'ignore)
+    (setq-local indent-region-function #'ignore)
+    (setq-local electric-indent-inhibit t)
+    (electric-indent-local-mode -1)))
+
 ;; live server behavior of vs code
 (use-package simple-httpd :straight t :defer t)
 
