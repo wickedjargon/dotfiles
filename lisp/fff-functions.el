@@ -1569,7 +1569,7 @@ The DWIM behaviour of this command is as follows:
     (message "Wrote compile-command to %s" dir-locals-file)))
 
 
-(defun eval-print-last-sexp-as-comment (&optional arg)
+(defun fff-eval-print-last-sexp-as-comment (&optional arg)
   "Evaluate the sexp before point and append its printed value as a comment.
 
 With prefix ARG = 0, print integers in extra formats (decimal, octal, hex, char)."
