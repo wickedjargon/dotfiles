@@ -367,7 +367,7 @@
 
   (setq browse-url-browser-function 'browse-url-new-window))
 
-(use-package eww :ensure nil
+(use-package eww :ensure nil :defer t
   :init
   (setq eww-search-prefix "https://wiby.me/?q="))
 
@@ -971,7 +971,7 @@
   :config
   (setq graphviz-dot-indent-width 4))
 
-(use-package rust-mode :straight t :ensure t)
+(use-package rust-mode :straight t :ensure t :defer t)
 
 (use-package csharp-mode :ensure nil :defer t
   :hook (csharp-mode . (lambda ()
