@@ -1448,40 +1448,23 @@ The DWIM behaviour of this command is as follows:
     (message "Wrote compile-command to %s" dir-locals-file)))
 
 
-(defun fff-eval-print-last-sexp-as-comment (&optional arg)
-  "Evaluate the sexp before point and append its printed value as a comment.
-
-With prefix ARG = 0, print integers in extra formats (decimal, octal, hex, char)."
-  (interactive "p")
-  (let* ((orig-point (point))
-         (line-beg (line-beginning-position))
-         (col (- orig-point line-beg))
-         ;; obtain the sexp without moving point
-         (sexp (save-excursion
-                 (condition-case err
-                     (preceding-sexp)
-                   (error (user-error "No preceding sexp: %s" err)))))
-         ;; evaluate it (catch errors)
-         (val (condition-case err
-                  (eval sexp)
-                (error (format "Error: %s" err))))
-         ;; format representation (respecting prefix arg = 0 behavior)
-         (repr (if (and (integerp val) (eq arg 0))
-                   (let ((ch (if (and (>= val 32) (< val 127)) (format "'%c'" val) "<?>")))
-                     (format "%d 0%o 0x%x %s" val val val ch))
-                 (prin1-to-string val)))
-         ;; current line text and code-only portion (strip existing " ; => ..." if any)
-         (line (buffer-substring-no-properties line-beg (line-end-position)))
-         (code (replace-regexp-in-string "\\s-*;\\s-*=>.*\\'" "" line))
-         (new-line (concat code " ; => " repr)))
-    ;; replace only the current line's contents (preserve point manually)
-    (save-excursion
-      (goto-char line-beg)
-      (delete-region line-beg (line-end-position))
-      (insert new-line))
-    ;; restore point to the same column on that line (bounded by new line length)
-    (goto-char (+ line-beg (min col (max 0 (length new-line)))))
-    (message "%s" repr)))
+(defun fff-elisp-eval-and-print-last-sexp ()
+  "Evaluate and print expression before point like `eval-print-last-sexp'.
+Prepend a comment to the return value.  Also copy the return value to
+the `kill-ring' and set the mark to where point was before inserting the
+return value."
+  (declare (interactive-only t))
+  (interactive)
+  (if-let* ((string (thing-at-point 'sexp :no-properties))
+            (_ (not (string-prefix-p ";" string)))
+            (expression (read string)))
+      (let ((return-value (eval expression)))
+        (kill-new (format "%S" return-value))
+        (message "Copied: `%S'" return-value)
+        (push-mark (point))
+        (insert (format "\n%S\n" return-value))
+        (string-insert-rectangle (+ (mark) 1) (- (point) 1) ";; => "))
+    (user-error "No expression at point")))
 
 (defun fff-dired-open-in-brave ()
   "Open the file at point in a new Brave window."
