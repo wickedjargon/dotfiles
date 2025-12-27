@@ -970,18 +970,18 @@
 ;;   :config
 ;;   (setq d-mode-indent-style 'k&r))
 
-(use-package v-mode :straight t :ensure t :defer t)
+;; (use-package v-mode :straight t :ensure t :defer t)
 
-(use-package racket-mode
-  :ensure t
-  :straight t
-  :mode "\\.rkt\\'")
+;; (use-package racket-mode
+;;   :ensure t
+;;   :straight t
+;;   :mode "\\.rkt\\'")
 
-(use-package haxe-mode :ensure t :straight t :defer t)
+;; (use-package haxe-mode :ensure t :straight t :defer t)
 
-(use-package graphviz-dot-mode :defer t :straight t :ensure t
-  :config
-  (setq graphviz-dot-indent-width 4))
+;; (use-package graphviz-dot-mode :defer t :straight t :ensure t
+;;   :config
+;;   (setq graphviz-dot-indent-width 4))
 
 (use-package rust-mode :straight t :ensure t :defer t)
 
@@ -1388,8 +1388,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :init
   (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
 
-(use-package sicp :straight t :defer t :ensure t)
-
 (use-package mw-thesaurus :straight t :defer t :ensure t)
 
 ;;; Indentation
@@ -1455,7 +1453,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 ;; (use-package all-the-icons :straight t :ensure t
 ;;   :if (display-graphic-p))
 
-(use-package emojify :straight t :ensure t :defer t)
+;; (use-package emojify :straight t :ensure t :defer t)
 
 (use-package doom-modeline :ensure t :straight t
   :init
@@ -1586,21 +1584,21 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (global-treesit-auto-mode t))
 
-(use-package gptel
-  :straight t
-  :ensure t
-  :defer t
-  :init
-  (let ((key-file (expand-file-name ".secrets/chat_gpt_api_key" user-emacs-directory)))
-    (when (file-exists-p key-file)
-      (setq gptel-api-key
-            (string-trim
-             (with-temp-buffer
-               (insert-file-contents key-file)
-               (buffer-string))))))
-  (setq markdown-fontify-code-blocks-natively t)
-  :config
-  (setq gptel-model 'gpt-4o))
+;; (use-package gptel
+;;   :straight t
+;;   :ensure t
+;;   :defer t
+;;   :init
+;;   (let ((key-file (expand-file-name ".secrets/chat_gpt_api_key" user-emacs-directory)))
+;;     (when (file-exists-p key-file)
+;;       (setq gptel-api-key
+;;             (string-trim
+;;              (with-temp-buffer
+;;                (insert-file-contents key-file)
+;;                (buffer-string))))))
+;;   (setq markdown-fontify-code-blocks-natively t)
+;;   :config
+;;   (setq gptel-model 'gpt-4o))
 
 ;; see if we can remove this and use our own functions
 (use-package crux :straight t :defer t :ensure t
