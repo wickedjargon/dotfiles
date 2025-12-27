@@ -142,10 +142,6 @@
   (interactive)
   (find-file "~/d/books/"))
 
-(defun fff-access-books ()
-  (interactive)
-  (find-file "~/d/books/"))
-
 (defun fff-access-hosts ()
   (interactive)
   (find-file "/sudo:root@localhost:/etc/hosts"))
@@ -367,50 +363,10 @@ in whole buffer.  With neither, delete comments on current line."
       (goto-char (car bds))
       (insert function-name))))
 
-(defun fff-print-debug-line-python ()
-  (interactive)
-  (save-excursion
-    (setq expression (thing-at-point 'symbol))
-    (if (and transient-mark-mode mark-active)
-        (setq expression (fff-regions-content)))
-    (evil-open-below 1)
-    (insert expression)
-    (setq text-beg (concat "print(\"" expression " -->\", "))
-    (setq text-end ")  # ff-debug")
-    (evil-first-non-blank)
-    (insert text-beg)
-    (end-of-line)
-    (insert text-end)
-    (evil-normal-state)))
-
 (defun fff-regions-content ()
   "Return the selected region as a string."
   (if (use-region-p)
       (buffer-substring (region-beginning) (region-end))))
-
-(defun fff-print-debug-line-rust ()
-  (interactive)
-  (save-excursion
-    (setq expression (thing-at-point 'symbol))
-    (if (and transient-mark-mode mark-active)
-        (setq expression (fff-regions-content)))
-    (evil-open-below 1)
-    (insert (concat "dbg!(" expression ");  // ff-debug"))
-    (evil-normal-state)))
-
-(defun fff-delete-debug-lines-python ()
-  (interactive)
-  (replace-regexp-in-region ".*  # ff-debug$" "" (point-min) (point-max)))
-
-(defun fff-delete-debug-lines-rust ()
-  (interactive)
-  (replace-regexp-in-region ".*  // ff-debug$" "" (point-min) (point-max)))
-
-(defun fff-python-format ()
-  (interactive)
-  (fff-remove-blank-lines)
-  (elpy-yapf-fix-code)
-  (fff-run-blue))
 
 (defun fff-evil-paste-and-indent-after ()
   (interactive)
@@ -425,11 +381,6 @@ in whole buffer.  With neither, delete comments on current line."
     (progn
       (evil-paste-before 1)
       (evil-indent (evil-get-marker ?\[) (evil-get-marker ?\])))))
-
-(defun fff-display-python ()
-  (interactive)
-  (run-python (python-shell-calculate-command) nil nil)
-  (display-buffer-pop-up-window  (get-buffer-create "*Python*") nil))
 
 (defun fff-go-to-git-root-dir ()
   (interactive)
@@ -507,22 +458,6 @@ in whole buffer.  With neither, delete comments on current line."
 
     (message "Go project '%s' created successfully." project-name)))
 
-(defun fff-paste-history ()
-  (interactive)
-  (counsel-yank-pop))
-
-(defun fff-save-then-quickrun ()
-  (interactive)
-  (progn
-    (save-buffer)
-    (quickrun)))
-
-(defun fff-display-lsp-root ()
-  (interactive)
-  (message "LSP root: %s"
-           (lsp-find-session-folder (lsp-session)
-                                    (buffer-file-name))))
-
 (defun fff-insert-lambda-symbol ()
   "Insert λ."
   (interactive)
@@ -560,10 +495,6 @@ in whole buffer.  With neither, delete comments on current line."
   "Delete from point to the beginning of the line."
   (interactive)
   (delete-region (point-at-bol) (point)))
-
-(defun fff-delete-till-beginning ()
-	(interactive)
-	(delete-region (point) (line-beginning-position)))
 
 (defun fff-open-file-in-notes ()
   "Prompt for a filename and open it in the /projects"
@@ -606,14 +537,6 @@ in whole buffer.  With neither, delete comments on current line."
   (let ((default-directory "/ssh:"))
     (call-interactively 'find-file)))
 
-(defun fff-flymake-python-init ()
-	(let* ((temp-file (flymake-init-create-temp-buffer-copy
-                       'flymake-create-temp-inplace))
-           (local-file (file-relative-name
-						temp-file
-						(file-name-directory buffer-file-name))))
-      (list "mypy" (list local-file))))
-
 (defun fff-delete-window-and-bury-buffer ()
   "Delete the current window and bury the buffer."
   (interactive)
@@ -643,38 +566,10 @@ in whole buffer.  With neither, delete comments on current line."
  (eq evil-state 'normal))
 
 (defun move-cursor-to-next-line ()
- "Move the cursor to the beginning of the next line, creating a new line if necessary."
- (goto-char (line-beginning-position 2))
- (unless (= (point) (point-max))
- (newline)))
-
-(defun fff-cider-pprint-eval-last-sexp-to-comment-in-evil-normal-state ()
-  (interactive)
- "If the user is in Evil's normal state, move the cursor to the beginning of the next line, run `cider-pprint-eval-last-sexp-to-comment`, and then return the cursor to its original position."
- (if (user-is-in-evil-normal-state)
-    (save-excursion
-      (save-restriction
-        (move-cursor-to-next-line)
-        (call-interactively 'cider-pprint-eval-last-sexp-to-comment)))
-  (call-interactively 'cider-pprint-eval-last-sexp-to-comment)))
-
-(defun fff-open-new-vterm ()
-  "Open a new vterm buffer."
-  (interactive)
-  (vterm (generate-new-buffer-name "*vterm*")))
-
-(defun fff-switch-or-create-vterm ()
-  (interactive)
-  (let ((vterm-buffers (delq nil (mapcar (lambda (b)
-										   (when (string-match "\\*vterm\\*<\\([0-9]+\\)>" (buffer-name b))
-											 (cons (string-to-number (match-string 1 (buffer-name b))) b)))
-										 (buffer-list))))
-		(newest-buffer nil))
-	(if vterm-buffers
-		(progn
-		  (setq newest-buffer (cdr (cl-reduce (lambda (a b) (if (> (car a) (car b)) a b)) vterm-buffers)))
-		  (switch-to-buffer newest-buffer))
-	  (vterm))))
+  "Move the cursor to the beginning of the next line, creating a new line if necessary."
+  (goto-char (line-beginning-position 2))
+  (unless (= (point) (point-max))
+    (newline)))
 
 (defun fff-open-new-eshell ()
   "Open a new eshell buffer."
@@ -708,34 +603,18 @@ in whole buffer.  With neither, delete comments on current line."
     (set-face-attribute 'default nil :height (- current-height 10))
     (message "Font size decreased")))
 
-(defun fff-vterm-directory-sync ()
- "Synchronize current working directory."
- (interactive)
- (when vterm--process
-   (let* ((pid (process-id vterm--process))
-          (dir (file-truename (format "/proc/%d/cwd/" pid))))
-     (setq default-directory dir))))
-
 (defun fff-toggle-flymake-highlight ()
- "Toggle the highlighting of errors and warnings in Flymake."
- (interactive)
- (if (eq (face-attribute 'flymake-error :underline nil) nil)
-     (progn
-       (set-face-attribute 'flymake-error nil :underline t)
-       (set-face-attribute 'flymake-note nil :underline t)
-       (set-face-attribute 'flymake-warning nil :underline t))
-   (progn
-     (set-face-attribute 'flymake-error nil :underline nil)
-     (set-face-attribute 'flymake-note nil :underline nil)
-     (set-face-attribute 'flymake-warning nil :underline nil))))
-
-(defun fff-quickrun-command ()
-  "Execute a quickrun command."
+  "Toggle the highlighting of errors and warnings in Flymake."
   (interactive)
-  (let ((command (completing-read "Run quickrun command: " obarray 'commandp t "^quickrun-")))
-    (if (string= "" command)
-        (message "No command selected.")
-      (execute-extended-command (intern command)))))
+  (if (eq (face-attribute 'flymake-error :underline nil) nil)
+      (progn
+        (set-face-attribute 'flymake-error nil :underline t)
+        (set-face-attribute 'flymake-note nil :underline t)
+        (set-face-attribute 'flymake-warning nil :underline t))
+    (progn
+      (set-face-attribute 'flymake-error nil :underline nil)
+      (set-face-attribute 'flymake-note nil :underline nil)
+      (set-face-attribute 'flymake-warning nil :underline nil))))
 
 (defun fff-buffer-switch-pop ()
   (interactive)
@@ -995,7 +874,7 @@ but only if the buffer is read-only."
 
 (defun fff-filter-lines-with-regex-undo (regex)
   "just revert the buffer"
-  ("interactive")
+  (interactive)
   (revert-buffer))
 
 (defun fff-hide-lines-in-region (start end)
