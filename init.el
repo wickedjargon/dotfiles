@@ -438,7 +438,6 @@
 
   ;; eval
   (evil-leader/set-key "e e" 'eval-last-sexp)
-  (evil-leader/set-key "e p" 'fff-eval-print-last-sexp-as-comment)
 
   ;; popper
   (evil-leader/set-key "TAB TAB" 'popper-toggle)
