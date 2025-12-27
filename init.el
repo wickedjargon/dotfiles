@@ -83,21 +83,6 @@
   (global-unset-key (kbd "C-h ?")) ;; this allows me to use embark for entering prefix + ? to find possible completions
   (global-unset-key (kbd "M-ESC ESC"))
 
-  ;; TODO: nuke these keymaps.
-  ;; Major modes
-  ;; - emacs-lisp-mode-map
-  ;; - lisp-interaction-mode-map
-
-  ;; Minor modes
-  ;; - hs-minor-mode-map
-  ;; - yas-minor-mode-map
-  ;; - erc-track-minor-mode-map
-  ;; - aggressive-indent-mode-map
-
-  ;; Special / debugging
-  ;; - edebug-mode-map
-  ;; - edebug-prefix-map
-
   ;; adding a few back that I actually might use:
   (global-set-key (kbd "C-x o") 'other-window)
   (global-set-key (kbd "C-x u") 'undo)
@@ -435,8 +420,6 @@
   (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
   (evil-leader/set-key "w" 'save-buffer)
   (evil-leader/set-key "p" 'consult-yank-from-kill-ring)
-
-  ;; eval
   (evil-leader/set-key "e" 'eval-last-sexp)
   (evil-leader/set-key "/" 'fff-evil-regex-search-forward)
   (evil-leader/set-key "?" 'fff-evil-regex-search-backwards)
