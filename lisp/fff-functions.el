@@ -1494,7 +1494,7 @@ With prefix ARG = 0, print integers in extra formats (decimal, octal, hex, char)
   (interactive "sURL: ")
   (yeetube-mpv-play url))
 
-;; movement
+;;; movement
 
 (defun fff-delete-till-beginning-of-line ()
   "Delete from the current point to the beginning of the line."
