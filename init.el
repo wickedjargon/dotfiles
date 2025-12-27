@@ -1149,9 +1149,6 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   (setf (alist-get 'url embark-default-action-overrides)
         #'fff-open-in-firefox))
 
-
-
-
 (use-package embark-consult :straight t :ensure t :defer t)
 
 ;;; Snippets
