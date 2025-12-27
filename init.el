@@ -438,6 +438,8 @@
 
   ;; eval
   (evil-leader/set-key "e" 'eval-last-sexp)
+  (evil-leader/set-key "/" 'fff-evil-regex-search-forward)
+  (evil-leader/set-key "?" 'fff-evil-regex-search-backwards)
 
   ;; popper
   (evil-leader/set-key "TAB TAB" 'popper-toggle)
