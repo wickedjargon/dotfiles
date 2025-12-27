@@ -437,7 +437,7 @@
   (evil-leader/set-key "p" 'consult-yank-from-kill-ring)
 
   ;; eval
-  (evil-leader/set-key "e e" 'eval-last-sexp)
+  (evil-leader/set-key "e" 'eval-last-sexp)
 
   ;; popper
   (evil-leader/set-key "TAB TAB" 'popper-toggle)
