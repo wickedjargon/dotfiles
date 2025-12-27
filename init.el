@@ -1490,7 +1490,9 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (add-to-list 'pulsar-pulse-functions 'evil-yank-line)
   (add-to-list 'pulsar-pulse-functions 'evil-delete)
   (add-to-list 'pulsar-pulse-functions 'evil-delete-line)
-  (add-to-list 'pulsar-pulse-functions 'evil-jump-item))
+  (add-to-list 'pulsar-pulse-functions 'evil-jump-item)
+  (add-to-list 'pulsar-pulse-functions 'fff-delete-till-beginning-of-line)
+  (add-to-list 'pulsar-pulse-functions 'fff-evil-yank-to-eol))
 
 (use-package volatile-highlights :straight t :ensure t :defer t
   :init
