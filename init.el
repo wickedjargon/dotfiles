@@ -745,17 +745,6 @@
 
 (use-package svelte-mode :straight t :ensure t :mode "\\.svelte\\'")
 
-(use-package asm-mode
-  :ensure nil
-  :mode ("\\.s\\'" "\\.asm\\'")
-  :hook (asm-mode . fff-no-indent-asm)
-  :config
-  (defun fff-no-indent-asm ()
-    (setq-local indent-line-function #'ignore)
-    (setq-local indent-region-function #'ignore)
-    (setq-local electric-indent-inhibit t)
-    (electric-indent-local-mode -1)))
-
 ;; live server behavior of vs code
 (use-package simple-httpd :straight t :defer t)
 
@@ -871,8 +860,11 @@
 
 ;;; Elisp Packages
 
-(use-package emacs-lisp-mode
-  :ensure nil  ;; emacs-lisp-mode is built-in, so no need to install it
+(use-package elisp-mode
+  :ensure nil
+  ;; Define your binding specifically for the interaction mode (scratch buffer)
+  :bind (:map lisp-interaction-mode-map
+              ("C-j" . fff-elisp-eval-and-print-last-sexp))
   :init
   (defun fff-emacs-lisp-mode-setup ()
     "Custom setup for `emacs-lisp-mode`."
