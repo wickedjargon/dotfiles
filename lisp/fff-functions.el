@@ -1485,3 +1485,18 @@ return value."
   (let ((start (point)))
     (beginning-of-line)
     (delete-region (point) start)))
+
+
+(defun fff-evil-regex-search-forward ()
+  "Force a regex search using Evil's search engine, ignoring the global literal setting."
+  (interactive)
+  ;; We locally let-bind the variable to t (true) just for this command
+  (let ((evil-regexp-search t))
+    (call-interactively 'evil-search-forward)))
+
+(defun fff-evil-regex-search-backwards ()
+  "Force a regex search using Evil's search engine, ignoring the global literal setting."
+  (interactive)
+  ;; We locally let-bind the variable to t (true) just for this command
+  (let ((evil-regexp-search t))
+    (call-interactively 'evil-search-backward)))

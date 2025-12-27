@@ -530,6 +530,7 @@
 
 (use-package evil :defer nil :ensure t :straight t
   :init
+  (setq evil-regexp-search nil)
   (setq evil-want-C-u-scroll t)
   (setq evil-want-C-d-scroll t)
   (setq evil-insert-state-message nil)
