@@ -494,8 +494,7 @@
   (evil-leader/set-key "i I" 'fff-switch-to-new-scratch-buffer)
 
   ;; imenu
-  (evil-leader/set-key "i m" 'imenu)
-  (evil-leader/set-key "i M" 'lsp-ui-imenu)
+  (evil-leader/set-key "i m" 'consult-imenu)
 
   ;; terminal / shell
   (evil-leader/set-key "t t" 'fff-switch-or-create-eshell)
@@ -1068,8 +1067,9 @@
   (marginalia-mode +1))
 
 (use-package consult :straight t :ensure t :defer nil
-  :config
-  (require 'consult-imenu))
+  :init
+  (setq consult-preview-key nil)
+  (setq consult-preview-key "C-<return>"))
 
 (use-package corfu
   :straight t
