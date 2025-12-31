@@ -25,6 +25,12 @@
 ;; - Wanderlust
 ;; - Notmuch
 
+;; TODO: packages to consider
+;; - apheleia
+;; - editorconfig
+;; - smartparens
+;; - evil-snipe
+
 ;;; Initialization
 
 ;; bootstrap straight.el
@@ -1258,6 +1264,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 
 ;;; Project / Search
 
+;; TODO: switch to project.el
 (use-package projectile :straight t :defer t :ensure t
   :config
   (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod"
