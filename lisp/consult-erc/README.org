@@ -1,0 +1,41 @@
+#+title: =consult-erc= – ERC-related buffer candidate sources for consult-buffer
+#+options: toc:nil
+
+If you use [[https://www.gnu.org/software/emacs/][GNU Emacs]]' built-in IRC-client [[https://www.gnu.org/software/emacs/manual/html_node/erc/index.html][ERC]] as well as Daniel
+Mendler's [[https://github.com/minad/consult][Consult]] package, then you might enjoy this =consult-erc=
+package too.
+
+=consult-erc= is currently in early development stage. Namings and
+dependencies might change any time.
+
+* Features
+
+- Define several buffer candidate sources to be used by
+  ~consult-buffer~.
+- Define autoloaded command ~consult-erc~ which calls ~consult-buffer~
+  on these buffer candidate sources.  It allows you to switch to an
+  ERC-related buffer with previews and IRC-related, useful
+  annotations.
+- Define autoloaded command ~consult-erc-dwim~ which calls
+  ~consult-erc~ if ERC is running and otherwise starts ERC.
+
+* Usage
+
+Using your favorite Emacs package manager, install =consult-erc= from
+=https://codeberg.org/mekeor/emacs-consult-erc.git=, thus making sure
+it is locally saved in a folder that is member of your ~load-path~
+variable. Then you might want to bind a key:
+
+#+begin_src elisp
+(keymap-global-set "C-c i" #'consult-erc-dwim)
+#+end_src
+
+* Roadmap
+
+- Consider to not depend on Marginalia and using =:annotate= property
+  in Consult buffer source item instead. (See ~consult--multi~
+  documentation.)
+- Distribute via a package archive, e.g. MELPA.
+- Allow filtering by server? E.g. =L= for =libera.chat=.
+- Consider to support other IRC-clients like built-in RCIRC by
+  defining some generics (~cl-defgeneric~).
