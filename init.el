@@ -10,6 +10,7 @@
 ;; Lionyxemacs-kick https://github.com/LionyxML/emacs-kick
 ;; kickstart.emacs  https://github.com/MiniApollo/kickstart.emacs
 ;; venom-emacs      https://gitlab.com/dvrbs/venom-emacs
+;; prot's basic     https://protesilaos.com/codelog/2024-11-28-basic-emacs-configuration/
 
 ;; Common commands for Prot's Emacs
 ;; prot-simple.el
@@ -896,7 +897,7 @@
     (electric-indent-local-mode -1)))
 
 (use-package ocen-mode
-  :load-path (lambda () (expand-file-name "fff-lisp/ocen-mode" user-emacs-directory))
+  :load-path "lisp/ocen-mode"
   :mode "\\.oc\\'"
   :init
   ;; Enable Tree-sitter for syntax highlighting
