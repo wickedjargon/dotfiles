@@ -1021,6 +1021,12 @@
   (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer)
   (global-corfu-mode))
 
+(use-package cape
+  :straight t
+  :init
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file))
+
 ;; TODO: use embark-target-finders to add a new type for youtube urls.
 (use-package embark
   :straight t
