@@ -97,6 +97,7 @@
   (global-set-key [remap list-buffers] 'ibuffer)                       ;; ibuffer is superior
   (global-set-key [remap beginning-of-line] 'beginning-of-visual-line) ;; use visual line for beginning and end of line
   (global-set-key [remap end-of-line] 'end-of-visual-line)             ;; same here.
+  (global-set-key (kbd "C-j") 'fff-elisp-eval-and-print-last-sexp)
 
   ;; backup and auto save
   (setq version-control t)
