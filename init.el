@@ -1339,6 +1339,10 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 ;;; Docs / Lookup
 
+(use-package help-fns :ensure nil
+  :hook
+  (help-fns-describe-function-functions . shortdoc-help-fns-examples-function))
+
 (use-package Info :ensure nil :defer t
   :init
   (add-hook 'Info-mode-hook (lambda ()
