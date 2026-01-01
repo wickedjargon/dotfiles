@@ -274,6 +274,7 @@
   :init
   (setq dired-listing-switches "-ahl --group-directories-first"
         dired-omit-files "^\\.$"
+        dired-omit-verbose nil
         dired-omit-extensions nil)
   :config
   (add-hook 'dired-mode-hook #'dired-hide-details-mode))
