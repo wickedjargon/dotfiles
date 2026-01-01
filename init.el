@@ -1514,7 +1514,13 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 ;; jump to definition without ctags in many supported languages
 (use-package dumb-jump :straight t :ensure t
   :init
-  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+  (setq dumb-jump-force-searcher 'rg)
+  (setq dumb-jump-prefer-searcher 'rg)
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  :config
+  (setq dumb-jump-selector 'vertico) ;; or 'helm, or 'completing-read
+  ;; OPTIONAL: If you want dumb-jump to strictly use projectile's root:
+  )
 
 (use-package insert-shebang :straight t :ensure t :defer t
   :hook (find-file-hook . insert-shebang))
