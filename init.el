@@ -1516,10 +1516,25 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setq dumb-jump-force-searcher 'rg)
   (setq dumb-jump-prefer-searcher 'rg)
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  ;; Disable aggressive mode to prevent overly broad searches
+  (setq dumb-jump-aggressive nil)
   :config
-  (setq dumb-jump-selector 'vertico) ;; or 'helm, or 'completing-read
-  ;; OPTIONAL: If you want dumb-jump to strictly use projectile's root:
-  )
+  (setq dumb-jump-selector 'vertico)
+
+  ;; Custom function to limit search scope when not in a project
+  (defun fff-dumb-jump-get-project-root (orig-fun &rest args)
+    "Wrapper around dumb-jump project detection.
+If not in a project, return the directory containing the current file
+to limit the search scope to just that directory."
+    (or (and (fboundp 'projectile-project-root)
+             (condition-case nil
+                 (projectile-project-root)
+               (error nil)))
+        ;; If no project found, use the file's directory
+        (file-name-directory (or buffer-file-name default-directory))))
+
+  ;; Apply advice to dumb-jump's project detection
+  (advice-add 'dumb-jump-get-project-root :around #'fff-dumb-jump-get-project-root))
 
 (use-package insert-shebang :straight t :ensure t :defer t
   :hook (find-file-hook . insert-shebang))
