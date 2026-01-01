@@ -1012,7 +1012,7 @@
   :init
   (setq corfu-auto t
         corfu-auto-delay 0
-        corfu-auto-prefix 1
+        corfu-auto-prefix 3
         corfu-quit-no-match t
         corfu-preview-current nil
         corfu-count 5)
