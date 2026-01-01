@@ -206,7 +206,7 @@
   (add-to-list 'load-path (expand-file-name "fff-lisp" user-emacs-directory))
 
   ;; Automatically load all .el files in that directory
-  (dolist (file (directory-files (expand-file-name "lisp" user-emacs-directory) t "\\.el$"))
+  (dolist (file (directory-files (expand-file-name "fff-lisp" user-emacs-directory) t "\\.el$"))
     (load (file-name-sans-extension file)))
 
   (unless (display-graphic-p)
