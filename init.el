@@ -203,7 +203,7 @@
                             themes)))
 
   ;; load `lisp' directory
-  (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+  (add-to-list 'load-path (expand-file-name "fff-lisp" user-emacs-directory))
 
   ;; Automatically load all .el files in that directory
   (dolist (file (directory-files (expand-file-name "lisp" user-emacs-directory) t "\\.el$"))
@@ -903,7 +903,7 @@
     (electric-indent-local-mode -1)))
 
 (use-package ocen-mode
-  :load-path "lisp/ocen-mode"
+  :load-path "local-packages/ocen-mode"
   :mode "\\.oc\\'"
   :init
   ;; Enable Tree-sitter for syntax highlighting
