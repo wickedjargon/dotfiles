@@ -272,12 +272,27 @@
   :hook ((dired-mode . auto-revert-mode)
          (dired-mode . dired-omit-mode))
   :init
-  (setq dired-listing-switches "-ahl --group-directories-first"
-        dired-omit-files "^\\.$"
-        dired-omit-verbose nil
-        dired-omit-extensions nil)
+  (setq dired-listing-switches "-ahl --group-directories-first")
+  (setq dired-omit-files "^\\.$")
+  (setq dired-omit-verbose nil)
+  (setq dired-omit-extensions nil)
+  (setq dired-recursive-copies 'always)
+  (setq dired-recursive-deletes 'always)
   :config
   (add-hook 'dired-mode-hook #'dired-hide-details-mode))
+
+(use-package dired-subtree
+  :straight t
+  :ensure t
+  :after dired
+  :bind
+  ( :map dired-mode-map
+    ("<tab>" . dired-subtree-toggle)
+    ("TAB" . dired-subtree-toggle)
+    ("<backtab>" . dired-subtree-remove)
+    ("S-TAB" . dired-subtree-remove))
+  :config
+  (setq dired-subtree-use-backgrounds nil))
 
 (use-package ibuffer  :ensure nil
   :config
