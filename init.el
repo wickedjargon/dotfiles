@@ -1205,14 +1205,15 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
       "#haskell"
       "#go-nuts"
       "#linux"
-      "#archlinux"
       "#debian"
       "#latex")))
-  (erc-hide-timestamps t))
+  (erc-hide-timestamps t)
+  :config
+  (evil-leader/set-key-for-mode 'erc-mode "x B" 'consult-erc))
 
 (use-package consult-erc
   :ensure nil
-  :load-path "lisp/consult-erc"
+  :load-path "local-packages/consult-erc"
   :after (consult marginalia))
 
 ;; rss feed reader
