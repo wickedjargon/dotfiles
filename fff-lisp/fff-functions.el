@@ -1500,3 +1500,21 @@ return value."
   ;; We locally let-bind the variable to t (true) just for this command
   (let ((evil-regexp-search t))
     (call-interactively 'evil-search-backward)))
+
+(defun fff-capitalize-sentences (beg end)
+  "Capitalize the first letter of each sentence in the selected region.
+   Works by moving sentence-by-sentence and upcasing the first word character found."
+  (interactive "r")
+  (save-excursion
+    (save-restriction
+      ;; Narrow to the region so we don't accidentally modify outside it
+      (narrow-to-region beg end)
+      (goto-char (point-min))
+      (while (not (eobp))
+        ;; Skip non-word chars (like spaces, tabs, quotes, parens)
+        (skip-syntax-forward "^w")
+        ;; If we aren't at the end of the buffer, upcase the character
+        (unless (eobp)
+          (upcase-region (point) (1+ (point))))
+        ;; Jump to the end of the current sentence to prepare for the next loop
+        (forward-sentence)))))
