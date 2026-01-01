@@ -181,7 +181,7 @@
 
   ;; show startup time on launch
   (defun display-startup-echo-area-message ()
-    (message "(emacs-init-time) -> %s" (emacs-init-time)))
+    (message "Emacs launched in %.2f seconds" (string-to-number (emacs-init-time))))
 
   ;; recent files
   (setq recentf-max-menu-items 25)
