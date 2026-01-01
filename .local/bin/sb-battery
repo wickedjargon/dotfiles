@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Get actual battery device (BAT0)
+BAT=$(upower -e | grep 'battery_BAT0$')
+
+# Battery percentage (e.g. "0.363322%")
+RAW=$(upower -i "$BAT" | awk '/percentage/ {print $2}')
+
+# Remove % sign
+NUM=${RAW%\%}
+
+# If number < 1, force to 1%
+if awk "BEGIN { exit !($NUM < 1) }"; then
+    PERC="1%"
+else
+    PERC="$RAW"
+fi
+
+# Get AC adapter device
+AC=$(upower -e | grep 'line_power')
+ONLINE=$(upower -i "$AC" | awk '/online/ {print $2}')
+
+# Show ⚡ when AC plugged, 🔋 when not
+if [ "$ONLINE" = "yes" ]; then
+    echo "⚡ $PERC"
+else
+    echo "🔋 $PERC"
+fi

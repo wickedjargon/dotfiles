@@ -1,0 +1,21 @@
+set sandbox none
+set statusbar-h-padding 0
+set statusbar-v-padding 0
+set page-padding 1
+set selection-clipboard clipboard
+# set recolor true
+# set default-bg \#0d0e1c
+# set recolor-lightcolor \#0d0e1c
+
+map u scroll half-up
+map d scroll half-down
+map r reload
+map R rotate
+map = zoom in
+map - zoom out
+map ii recolor
+map q quit
+map gg goto top
+
+set font "monospace 11"
+set database "sqlite"

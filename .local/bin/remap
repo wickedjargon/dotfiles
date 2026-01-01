@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# Clear the current keymap
+xmodmap -e "clear Control"
+
+# Remap Caps Lock to Control
+xmodmap -e "remove Lock = Caps_Lock"
+xmodmap -e "keysym Caps_Lock = Control_R"
+xmodmap -e "add Control = Control_R"
+
+# Map Control to as an additional Escape
+xcape -e 'Control_R=Escape'
+xset -q | grep "Caps Lock:\s*on" && xdotool key Caps_Lock
+
+# set control and ptrsc to Super
+xmodmap -e 'keycode 107 = Super_R'
+xmodmap -e 'keycode 37 = Super_L'
+xmodmap -e 'keycode 135 = Super_R'
+
+# reduce the repeat delay
+xset r rate 300 50
+
+# turn off the auto monitor off
+xset -dpms
+xset s off
+xset s off -dpms
+xset -b

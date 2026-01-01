@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Get current brightness as a percentage
+BRIGHTNESS=$(brightnessctl get)
+MAX=$(brightnessctl max)
+PERCENT=$(( 100 * BRIGHTNESS / MAX ))
+
+echo "🌞 ${PERCENT}%"

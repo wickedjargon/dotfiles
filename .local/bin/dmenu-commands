@@ -1,0 +1,18 @@
+#!/bin/sh
+
+case "$(printf " connect-nothing
+ disconnect-nothing
+ connect-musicozy
+ disconnect-musicozy
+ connect-miniroll
+ disconnect-miniroll
+ remap" | dmenu -i -l 10 -p 'Run: ')" in
+    ' connect-nothing') connect-nothing ;;
+    ' disconnect-nothing') disconnect-nothing ;;
+    ' connect-musicozy') connect-musicozy ;;
+    ' disconnect-musicozy') disconnect-musicozy ;;
+    ' connect-miniroll') connect-miniroll ;;
+    ' disconnect-miniroll') disconnect-miniroll ;;
+    ' remap') remap ;;
+    *) exit 1 ;;
+esac

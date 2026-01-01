@@ -1,0 +1,14 @@
+#!/bin/sh
+
+MAC="10:94:97:3C:C4:41"
+
+# Check if the device is connected
+connected=$(bluetoothctl info "$MAC" | awk '/Connected:/ {print $2}')
+
+if [ "$connected" = "yes" ]; then
+    # Show an icon when connected
+    echo "🎧?%"
+else
+    # Don't show anything when not connected
+    echo ""
+fi

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+MAC="3C:B0:ED:A7:6A:88"
+
+# Check if the device is connected
+connected=$(bluetoothctl info "$MAC" | awk '/Connected:/ {print $2}')
+
+if [ "$connected" = "yes" ]; then
+    # Get battery percentage
+    battery=$(bluetoothctl info "$MAC" | grep "Battery Percentage" | grep -oP '\(\K[0-9]+')
+    if [ -n "$battery" ]; then
+        echo "🎧 ${battery}%"
+    else
+        echo "🎧 ?%"
+        sleep 1
+        pkill -RTMIN+3 dwmblocks
+    fi
+else
+    # Don't show anything when not connected
+    echo ""
+fi

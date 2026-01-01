@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Connect Musicozy headphones and set as default audio output
+
+MAC="41:42:AB:DD:51:37"
+SINK="bluez_sink.41_42_AB_DD_51_37.a2dp_sink"
+
+# Connect via bluetoothctl
+echo -e "connect $MAC\nexit" | bluetoothctl
+
+# Wait for the sink to appear
+for i in {1..10}; do
+    if pactl list short sinks | grep -q "$SINK"; then
+        break
+    fi
+    sleep 0.5
+done
+
+# Set default sink
+pactl set-default-sink "$SINK"
+
+# Move all current audio streams to headphones
+for stream in $(pactl list short sink-inputs | awk '{print $1}'); do
+    pactl move-sink-input "$stream" "$SINK"
+done
+
+echo "Musicozy headphones connected and set as default."
+
+sleep 0.5
+
+pkill -RTMIN+5 dwmblocks   # refresh headphones
+pkill -RTMIN+4 dwmblocks   # refresh volume

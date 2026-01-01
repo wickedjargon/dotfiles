@@ -1,0 +1,11 @@
+#!/bin/bash
+# logout.sh - logs out of dwm
+
+# Send SIGTERM to the X session
+# $DISPLAY is set for your current X session
+if [ -n "$DISPLAY" ]; then
+    echo "Logging out..."
+    pkill -KILL -u "$USER"
+else
+    echo "Not in an X session."
+fi

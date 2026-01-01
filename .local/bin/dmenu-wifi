@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+
+import subprocess
+import sys
+import re
+
+def notify(title, message):
+    """Send system notification and print to console."""
+    print(f"[NOTIFY] {title}: {message}")
+    subprocess.run(["notify-send", "-u", "normal", title, message])
+
+def run_cmd(cmd):
+    """Run command and return stdout, stderr, and return code."""
+    result = subprocess.run(
+        cmd,
+        shell=True,
+        capture_output=True,
+        text=True
+    )
+    return result.stdout.strip(), result.stderr.strip(), result.returncode
+
+def get_wifi_list():
+    """Get list of available WiFi networks."""
+    stdout, stderr, code = run_cmd("nmcli -t -f SSID,SIGNAL,SECURITY device wifi list")
+
+    if code != 0:
+        notify("WiFi Error", stderr or "Failed to get WiFi list")
+        sys.exit(1)
+
+    networks = []
+    seen_ssids = {}  # Track best signal for each SSID
+
+    for line in stdout.splitlines():
+        # Handle escaped colons in SSID
+        parts = line.rsplit(':', 2)
+        if len(parts) < 3:
+            continue
+
+        ssid = parts[0].replace(r'\:', ':').replace(r'\\', '\\')
+        signal = parts[1]
+        security = parts[2]
+
+        if not ssid:  # Skip empty SSIDs
+            continue
+
+        signal_int = int(signal) if signal.isdigit() else 0
+
+        # Keep only the strongest signal for each SSID
+        if ssid not in seen_ssids or signal_int > seen_ssids[ssid]['signal_int']:
+            seen_ssids[ssid] = {
+                'ssid': ssid,
+                'signal': signal,
+                'signal_int': signal_int,
+                'security': security,
+                'is_open': security == '--' or security == ''
+            }
+
+    # Convert back to list
+    for net in seen_ssids.values():
+        networks.append({
+            'ssid': net['ssid'],
+            'signal': net['signal'],
+            'security': net['security'],
+            'is_open': net['is_open']
+        })
+
+    return networks
+
+def show_dmenu(prompt, items):
+    """Show dmenu with given items and return selected item."""
+    proc = subprocess.Popen(
+        ["dmenu", "-i", "-l", "15", "-p", prompt],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True
+    )
+    choice, _ = proc.communicate("\n".join(items))
+    return choice.strip()
+
+def connect_to_network(ssid, password=None):
+    """Connect to a WiFi network using nmcli."""
+    # First, try to delete any existing connection with this SSID to avoid conflicts
+    run_cmd(f"nmcli connection delete '{ssid}' 2>/dev/null")
+
+    if password:
+        # For WPA/WPA2/WPA3 networks, let nmcli auto-detect the security
+        # Use --ask to bypass interactive mode issues
+        cmd = f"nmcli device wifi connect '{ssid}' password '{password}'"
+    else:
+        # For open networks
+        cmd = f"nmcli device wifi connect '{ssid}'"
+
+    stdout, stderr, code = run_cmd(cmd)
+    output = stdout or stderr
+
+    # Clean ANSI escape codes
+    output = re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', output)
+
+    return code == 0, output
+
+def main():
+    print("[DEBUG] Starting main()")
+
+    # Get available networks
+    networks = get_wifi_list()
+    print(f"[DEBUG] Found {len(networks)} networks")
+
+    if not networks:
+        notify("WiFi", "No networks found")
+        sys.exit(0)
+
+    # Calculate column widths for alignment
+    max_ssid = max(len(n['ssid']) for n in networks)
+    max_signal = max(len(n['signal']) for n in networks)
+    ssid_width = max_ssid + 5
+
+    # Build menu entries
+    menu_items = []
+    menu_map = {}
+
+    for net in networks:
+        # Format: SSID        SIGNAL%   SECURITY
+        display = f"{net['ssid'].ljust(ssid_width)} {net['signal'].rjust(max_signal)}%   {net['security']}"
+        menu_items.append(display)
+        # Store by SSID for easy lookup
+        menu_map[net['ssid']] = net
+
+    print(f"[DEBUG] Showing dmenu with {len(menu_items)} items")
+
+    # Show network selection menu
+    choice = show_dmenu("WiFi:", menu_items)
+
+    print(f"[DEBUG] User choice: '{choice}'")
+
+    if not choice:
+        print("[DEBUG] No choice made, exiting")
+        sys.exit(0)
+
+    # Extract SSID from the choice (it's the first part before the signal strength)
+    # The format is: "SSID        SIGNAL%   SECURITY"
+    ssid = choice[:ssid_width].strip()
+
+    print(f"[DEBUG] Extracted SSID: '{ssid}'")
+
+    if ssid not in menu_map:
+        print(f"[DEBUG] SSID not in menu_map, exiting")
+        notify("WiFi", "Selection error. Please try again.")
+        sys.exit(1)
+
+    selected = menu_map[ssid]
+    is_open = selected['is_open']
+
+    print(f"[DEBUG] Selected SSID: {ssid}, is_open: {is_open}")
+
+    # Get password if needed
+    password = None
+    if not is_open:
+        password = show_dmenu(f"Password for {ssid}:", [])
+        print(f"[DEBUG] Password entered: {'Yes' if password else 'No'}")
+        if not password:
+            sys.exit(0)
+
+    # Attempt connection
+    print(f"[DEBUG] Attempting to connect to {ssid}")
+    notify("WiFi", f"Connecting to {ssid}...")
+    success, output = connect_to_network(ssid, password)
+
+    print(f"[DEBUG] Connection success: {success}, output: {output}")
+
+    if success:
+        notify("WiFi", f"Connected to {ssid}")
+    else:
+        notify("WiFi", f"Failed to connect: {output}")
+
+if __name__ == "__main__":
+    main()
