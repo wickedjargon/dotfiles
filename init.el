@@ -429,8 +429,6 @@
   (evil-leader/set-key "w" 'save-buffer)
   (evil-leader/set-key "p" 'consult-yank-from-kill-ring)
   (evil-leader/set-key "e" 'eval-last-sexp)
-  (evil-leader/set-key "/" 'fff-evil-regex-search-forward)
-  (evil-leader/set-key "?" 'fff-evil-regex-search-backwards)
 
   ;; popper
   (evil-leader/set-key "TAB TAB" 'popper-toggle)
