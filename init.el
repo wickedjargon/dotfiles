@@ -278,6 +278,8 @@
   (setq dired-omit-extensions nil)
   (setq dired-recursive-copies 'always)
   (setq dired-recursive-deletes 'always)
+  (setq dired-dwim-target t)
+  (setq dired-clean-confirm-killing-deleted-buffers nil)
   :config
   (add-hook 'dired-mode-hook #'dired-hide-details-mode))
 
