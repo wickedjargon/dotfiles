@@ -325,6 +325,7 @@
           help-mode
           helpful-mode
           compilation-mode))
+  :config
   (popper-mode +1))
 
 ;;; Windows / Frames
