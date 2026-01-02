@@ -1,0 +1,53 @@
+# General utilities
+emacs                    # Extensible text editor
+neovim                   # Modern Vim-based text editor
+firefox-esr              # Extended support release web browser
+git                      # Version control system
+network-manager          # Network connection manager
+yt-dlp                   # YouTube and video downloader
+mpv                      # Minimalist media player
+feh                      # Lightweight image viewer
+qdirstat                 # Disk usage analyzer with GUI
+zathura                  # Minimalist document viewer
+zathura-pdf-poppler      # PDF support for zathura
+curl                     # Command-line data transfer tool
+htop                     # Interactive process viewer
+dunst                    # Lightweight notification daemon
+imagemagick              # Image manipulation suite
+unclutter                # Hide mouse cursor when idle
+slock                    # Simple X screen locker
+unzip                    # Archive extraction utility
+wget                     # Network downloader
+tree                     # Directory tree viewer
+bash-completion          # Enhanced bash tab completion
+fd-find                  # Fast find alternative
+bat                      # Cat with syntax highlighting
+jq                       # JSON processor
+ripgrep                  # Fast grep alternative
+
+# Networking & System Tools
+net-tools                # Network tools (ifconfig, netstat, etc)
+dnsutils                 # DNS utilities (dig, nslookup, etc)
+openssh-server           # SSH server for remote access
+
+# X11/Xorg packages
+xorg                     # X Window System meta-package
+xserver-xorg             # X server for graphical display
+xinit                    # X server initialization tool (startx)
+xdotool                  # Command-line X11 automation
+xclip                    # Command-line clipboard utility
+xcape                    # Remap modifier keys to other keys
+xwallpaper               # Wallpaper setting utility
+x11-xserver-utils        # X server utilities (xrandr, xset, etc)
+
+# Development Tools
+gdb                      # GNU debugger
+
+# Build dependencies
+build-essential          # Compilers and build tools (gcc, make, etc)
+libx11-dev               # X11 client library development files
+libxft-dev               # FreeType-based font rendering library
+libxinerama-dev          # Multi-monitor X extension library
+
+# Test packages
+fzf                      # Fuzzy finder for command line
