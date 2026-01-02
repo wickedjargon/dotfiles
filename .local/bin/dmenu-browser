@@ -1,7 +1,6 @@
 #!/bin/sh
 
-case "$(printf " Brave\n Firefox\n Tor Browser" | dmenu -i -p 'Open browser: ')" in
-    ' Brave') brave-browser ;;
+case "$(printf " Firefox\n Tor Browser" | dmenu -i -p 'Open browser: ')" in
     ' Firefox') firefox ;;
     ' Tor Browser') tor-browser ;;
     *) exit 1 ;;
