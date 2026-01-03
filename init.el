@@ -1011,6 +1011,7 @@
 
 (use-package corfu
   :straight t
+  :hook (prog-mode . corfu-mode)
   :init
   (setq corfu-auto t
         corfu-auto-delay 0
@@ -1027,8 +1028,7 @@
              completion-cycle-threshold completion-cycling)
          (consult-completion-in-region beg end table pred)))))
   (keymap-set corfu-map "C-c C-o" #'corfu-move-to-minibuffer)
-  (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer)
-  (global-corfu-mode))
+  (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer))
 
 (use-package cape
   :straight t
