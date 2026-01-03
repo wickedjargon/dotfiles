@@ -981,7 +981,7 @@
   (setq prescient-filter-method  '(literal regexp initialism))
   (vertico-prescient-mode +1))
 
-(use-package  savehist :straight t :config (savehist-mode))
+(use-package savehist :ensure nil :config (savehist-mode))
 
 (use-package marginalia
   :straight t
