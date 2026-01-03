@@ -835,11 +835,6 @@
 
 (use-package sly :straight t :defer t :ensure t
   :init
-  (set-default 'auto-mode-alist
-               (append '(("\\.lisp$" . lisp-mode)
-                         ("\\.lsp$" . lisp-mode)
-                         ("\\.cl$" . lisp-mode))
-                       auto-mode-alist))
   (setq inferior-lisp-program
         (if (eq system-type 'windows-nt)
             "\"c:/Program Files/Steel Bank Common Lisp/sbcl.exe\""
