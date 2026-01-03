@@ -939,7 +939,8 @@
 ;;; Markdown
 
 (use-package markdown-mode
-  :ensure nil
+  :ensure t
+  :straight (:host github :repo "jrblevin/markdown-mode")
   :hook (markdown-mode . visual-line-mode)
   :config
   (add-to-list 'markdown-code-lang-modes '("html" . web-mode)))
