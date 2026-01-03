@@ -663,12 +663,12 @@
   (evil-org-agenda-set-keys))
 
 ;; use * / # to go to the next word under cursor
-(use-package evil-visualstar :straight t :ensure t :defer nil :straight t
+(use-package evil-visualstar :straight t :ensure t :defer nil
   :config
   (global-evil-visualstar-mode))
 
 ;; jump between html / xml tags like <div> and its match </div> using % key
-(use-package evil-matchit :straight t :ensure t :defer nil :straight t
+(use-package evil-matchit :straight t :ensure t :defer nil
   :config
   (global-evil-matchit-mode +1))
 
