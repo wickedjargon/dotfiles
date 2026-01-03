@@ -1112,7 +1112,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   (add-hook 'org-mode-hook #'yas-minor-mode)
   :config
-  (add-to-list #'yas-snippet-dirs (expand-file-name "snippets/" user-emacs-directory))
+  (add-to-list 'yas-snippet-dirs (expand-file-name "snippets/" user-emacs-directory))
   (yas-reload-all))
 
 ;;; Git
