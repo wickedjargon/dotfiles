@@ -66,6 +66,34 @@ def get_wifi_list():
 
     return networks
 
+def has_saved_connection(ssid):
+    """Check if a NetworkManager connection profile exists for the given SSID.
+
+    Returns True if a connection profile exists (which likely has a saved password),
+    False otherwise.
+    """
+    # Get all connection profiles that match the SSID
+    # The -t flag makes output terse (machine-readable)
+    # We check the connection.id field to match the SSID
+    stdout, stderr, code = run_cmd(f"nmcli -t -f NAME connection show")
+
+    if code != 0:
+        # If we can't get connections, assume no saved connection
+        return False
+
+    # NetworkManager connection names often match SSIDs for WiFi
+    # Check if this SSID exists as a connection name
+    connections = stdout.splitlines()
+    for conn in connections:
+        if conn == ssid:
+            # Found a matching connection profile
+            # Verify it's a WiFi connection by checking its type
+            stdout_type, _, code_type = run_cmd(f"nmcli -t -f connection.type connection show '{ssid}'")
+            if code_type == 0 and '802-11-wireless' in stdout_type:
+                return True
+
+    return False
+
 def show_dmenu(prompt, items):
     """Show dmenu with given items and return selected item."""
     proc = subprocess.Popen(
@@ -154,7 +182,30 @@ def main():
 
     # Get password if needed
     password = None
+    has_saved = has_saved_connection(ssid)
+    print(f"[DEBUG] Has saved connection: {has_saved}")
+
     if not is_open:
+        if has_saved:
+            # Try to connect using the saved connection profile
+            print(f"[DEBUG] Using saved connection for {ssid}")
+            notify("WiFi", f"Connecting to {ssid} (using saved credentials)...")
+
+            # Use the connection profile instead of creating a new one
+            cmd = f"nmcli connection up '{ssid}'"
+            stdout, stderr, code = run_cmd(cmd)
+            output = stdout or stderr
+            output = re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', output)
+
+            if code == 0:
+                notify("WiFi", f"Connected to {ssid}")
+                sys.exit(0)
+            else:
+                # If saved connection failed, fall through to prompt for password
+                print(f"[DEBUG] Saved connection failed: {output}")
+                notify("WiFi", f"Saved connection failed, please enter password")
+
+        # Prompt for password (either no saved connection or saved connection failed)
         password = show_dmenu(f"Password for {ssid}:", [])
         print(f"[DEBUG] Password entered: {'Yes' if password else 'No'}")
         if not password:
