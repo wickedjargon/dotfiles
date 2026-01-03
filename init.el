@@ -1514,7 +1514,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (flimenu-global-mode))
 
-(use-package saveplace :straight t :init (save-place-mode))
+(use-package saveplace :ensure nil :init (save-place-mode))
 
 (use-package expand-region :straight t :defer t :ensure t)
 
