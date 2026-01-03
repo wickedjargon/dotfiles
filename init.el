@@ -566,10 +566,6 @@
 
   :config
   (progn
-
-    (setq evil-want-fine-undo t)
-    (setq evil-search-wrap nil)
-    (setq evil-kill-on-visual-paste nil)
     (evil-mode +2)
     ;; Force Evil mode in Eglot event buffers
     (add-hook 'eglot-managed-mode-hook
