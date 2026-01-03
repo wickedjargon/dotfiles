@@ -117,8 +117,7 @@
   (setq backup-directory-alist
         `(("." . ,(expand-file-name "backups/" user-emacs-directory))))
 
-  ;; evil undo
-  (setq evil-undo-system 'undo-fu)
+  ;; must be set before evil and evil-collection load
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
 
@@ -560,8 +559,6 @@
   (setq evil-want-C-d-scroll t)
   (setq evil-insert-state-message nil)
   (setq evil-undo-system 'undo-fu)
-  (setq evil-want-integration t)
-  (setq evil-want-keybinding nil)
   (setq evil-want-fine-undo t)
   (setq evil-search-wrap nil)
   (setq evil-kill-on-visual-paste nil)
@@ -570,9 +567,6 @@
   :config
   (progn
 
-    (setq evil-undo-system 'undo-fu)
-    (setq evil-want-integration t)
-    (setq evil-want-keybinding nil)
     (setq evil-want-fine-undo t)
     (setq evil-search-wrap nil)
     (setq evil-kill-on-visual-paste nil)
