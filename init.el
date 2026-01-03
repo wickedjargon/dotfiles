@@ -7,7 +7,6 @@
 
 ;; a few emacs kick starters:
 ;; emacs-kick       https://github.com/LionyxML/emacs-kick
-;; Lionyxemacs-kick https://github.com/LionyxML/emacs-kick
 ;; kickstart.emacs  https://github.com/MiniApollo/kickstart.emacs
 ;; venom-emacs      https://gitlab.com/dvrbs/venom-emacs
 ;; prot's basic     https://protesilaos.com/codelog/2024-11-28-basic-emacs-configuration/
