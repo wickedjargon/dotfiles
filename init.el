@@ -349,7 +349,7 @@
 
 (use-package switch-window :straight t :ensure t :defer t)
 
-(use-package winner :straight t :ensure t :defer t
+(use-package winner :ensure nil :defer t
   :init (winner-mode +1))
 
 ;;; Web Browser
