@@ -581,7 +581,7 @@
 
     (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
     (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-visual-state-map (kbd "<backpace>") 'delete-char)
+    (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
     (define-key evil-visual-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
     (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
