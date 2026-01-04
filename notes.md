@@ -71,4 +71,19 @@
 (use-package graphviz-dot-mode :defer t :straight t :ensure t
   :config
   (setq graphviz-dot-indent-width 4))
+  
+(use-package ocen-mode
+  :load-path "local-packages/ocen-mode"
+  :mode "\\.oc\\'"
+  :init
+  ;; Enable Tree-sitter for syntax highlighting
+  (add-hook 'ocen-mode-hook #'tree-sitter-mode)
+  (add-hook 'ocen-mode-hook #'tree-sitter-hl-mode)
+  ;; Start eglot when entering ocen-mode
+  (add-hook 'ocen-mode-hook #'eglot-ensure)
+  :config
+  ;; Tell eglot how to start the ocen language server
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs
+                 `(ocen-mode . ("node" ,(expand-file-name "~/.local/src/ocen-vscode/out/server/src/server.js") "--stdio")))))
 ```
