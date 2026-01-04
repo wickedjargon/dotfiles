@@ -599,7 +599,7 @@
 
   :config
   (progn
-    (evil-mode +2)
+    (evil-mode +1)
     ;; Force Evil mode in Eglot event buffers
     (add-hook 'eglot-managed-mode-hook
               (lambda ()
