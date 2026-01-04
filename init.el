@@ -944,11 +944,11 @@
 
 ;;; Incremental Completion
 
-(use-package vertico :straight t :defer t
+(use-package vertico :straight t :defer nil
   :init
   (setq enable-recursive-minibuffers t)
-  :config
   (vertico-mode +1)
+  :config
   (define-key vertico-map (kbd "C-c d") 'vertico-exit-input)
   (define-key vertico-map (kbd "C-<backspace>") 'vertico-directory-up)
   (define-key minibuffer-local-map (kbd "C-c C-o") 'embark-collect))
