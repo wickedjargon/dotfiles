@@ -13,6 +13,21 @@
 
 ;; Common commands for Prot's Emacs
 ;; prot-simple.el
+;; works with emacs version 30.1
+
+;; explore these packages:
+;; auctex, org
+;; writing studio (https://leanpub.com/emacswritingstudio)
+;; dired-kill-when-opening-new-dired-buffer
+
+;; a few emacs kick starters:
+;; emacs-kick       https://github.com/LionyxML/emacs-kick
+;; kickstart.emacs  https://github.com/MiniApollo/kickstart.emacs
+;; venom-emacs      https://gitlab.com/dvrbs/venom-emacs
+;; prot's basic     https://protesilaos.com/codelog/2024-11-28-basic-emacs-configuration/
+
+;; Common commands for Prot's Emacs
+;; prot-simple.el
 ;; https://protesilaos.com/emacs/dotemacs#h:5f78e837-0d27-4390-bd9a-6d0bca57fa50
 
 ;; TODO: start using email in emacs
@@ -283,7 +298,6 @@
 
 (use-package dired-subtree
   :straight t
-  :ensure t
   :after dired
   :bind
   ( :map dired-mode-map
@@ -345,9 +359,9 @@
 
 ;;; Windows / Frames
 
-(use-package windsize :straight t :defer t :ensure t)
+(use-package windsize :straight t :defer t)
 
-(use-package switch-window :straight t :ensure t :defer t)
+(use-package switch-window :straight t :defer t)
 
 (use-package winner :ensure nil :defer t
   :init (winner-mode +1))
@@ -385,7 +399,6 @@
 
 (use-package modus-themes
   :defer nil
-  :ensure t
   :straight t
   :config
   (cond
@@ -404,15 +417,15 @@
               (lambda ()
                 (load-theme 'fogus t))))))
 
-(use-package doom-themes :straight t :ensure t :defer t)
+(use-package doom-themes :straight t :defer t)
 
-(use-package ef-themes :straight t :ensure t :defer t)
+(use-package ef-themes :straight t :defer t)
 
-(use-package sublime-themes :straight t :ensure t :defer t)
+(use-package sublime-themes :straight t :defer t)
 
-(use-package zenburn-theme :straight t :ensure t :defer t)
+(use-package zenburn-theme :straight t :defer t)
 
-(use-package standard-themes :straight t :ensure t :defer t)
+(use-package standard-themes :straight t :defer t)
 
 ;;; Evil Packages
 
@@ -430,7 +443,6 @@
 
 (use-package evil-leader :defer nil :straight t
   :commands (evil-leader-mode)
-  :ensure t
   :config
   (global-evil-leader-mode)
 
@@ -551,7 +563,7 @@
   ;; tooltip hover
   (evil-leader/set-key "h h" 'fff-display-tooltip-at-point))
 
-(use-package evil :defer nil :ensure t :straight t
+(use-package evil :defer nil :straight t
   :init
   (setq evil-regexp-search nil)
   (setq evil-want-C-u-scroll t)
@@ -618,7 +630,6 @@
     (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
     (define-key evil-normal-state-map (kbd "ZZ") 'fff-save-and-bury-buffer)
     (define-key evil-normal-state-map (kbd "ZQ") 'fff-revert-and-bury-buffer)
-    (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
     (define-key evil-normal-state-map (kbd "<kp-left>") 'winner-undo)
     (define-key evil-normal-state-map (kbd "<kp-right>") 'winner-redo)
     ;; (evil-global-set-key 'normal (kbd "SPC e e") 'eval-last-sexp)
@@ -646,15 +657,15 @@
     (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
     (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)))
 
-(use-package undo-fu :straight t :defer t :ensure t)
+(use-package undo-fu :straight t :defer t)
 
-(use-package evil-surround :ensure t :straight t
+(use-package evil-surround :straight t
   :config
   (global-evil-surround-mode +1))
 
-(use-package evil-numbers :straight t :defer t :ensure t)
+(use-package evil-numbers :straight t :defer t)
 
-(use-package evil-org :straight t :ensure t
+(use-package evil-org :straight t
   :after org
   :hook (org-mode . (lambda () evil-org-mode))
   :config
@@ -663,37 +674,37 @@
   (evil-org-agenda-set-keys))
 
 ;; use * / # to go to the next word under cursor
-(use-package evil-visualstar :straight t :ensure t :defer nil
+(use-package evil-visualstar :straight t :defer nil
   :config
   (global-evil-visualstar-mode))
 
 ;; jump between html / xml tags like <div> and its match </div> using % key
-(use-package evil-matchit :straight t :ensure t :defer nil
+(use-package evil-matchit :straight t :defer nil
   :config
   (global-evil-matchit-mode +1))
 
 ;; edit all matches for region in document
-(use-package evil-iedit-state :straight t :ensure t :defer t
+(use-package evil-iedit-state :straight t :defer t
   :init
   (global-set-key (kbd "C-;") 'iedit-mode))
 
-(use-package evil-mc :straight t :ensure t
+(use-package evil-mc :straight t
   :after evil
   :config
   (global-evil-mc-mode 1))
 
 ;; search incremental count in minibuffer
-(use-package evil-anzu :straight t :ensure t :config (global-anzu-mode))
+(use-package evil-anzu :straight t :config (global-anzu-mode))
 
 ;; x object for editing html/xml tab attributes
-(use-package exato :straight t :ensure t :defer t)
+(use-package exato :straight t :defer t)
 
 ;; visual select inside generic brackets using `b', `vib'
-(use-package evil-textobj-anyblock :ensure t :straight t :defer t)
+(use-package evil-textobj-anyblock :straight t :defer t)
 
 ;;; Other Key Binding Packages
 
-(use-package hydra :straight t :defer t :ensure t :commands defhydra
+(use-package hydra :straight t :defer t :commands defhydra
   :config
 
   ;; Only repeating hydra for cycling
@@ -727,7 +738,6 @@
 ;;; Web Dev Related Packages
 
 (use-package web-mode
-  :ensure t
   :straight t
   :mode (("\\.html?\\'" . web-mode)
          ("\\.jinja\\'" . web-mode)
@@ -740,9 +750,9 @@
   (setq web-mode-enable-auto-pairing t)
   (setq web-mode-enable-auto-closing t))
 
-(use-package typescript-mode :straight t :ensure t :defer t)
+(use-package typescript-mode :straight t :defer t)
 
-(use-package svelte-mode :straight t :ensure t :mode "\\.svelte\\'")
+(use-package svelte-mode :straight t :mode "\\.svelte\\'")
 
 ;; live server behavior of vs code
 (use-package simple-httpd :straight t :defer t)
@@ -757,7 +767,6 @@
              (buffer-name)))))
 
 (use-package emmet-mode
-  :ensure t
   :straight t
   :defer t
   :hook ((web-mode . emmet-mode)
@@ -768,7 +777,7 @@
   (define-key emmet-mode-keymap (kbd "C-j") #'emmet-expand-line))
 
 ;; export a code file to html
-(use-package htmlize :ensure t :straight t :defer t)
+(use-package htmlize :straight t :defer t)
 
 ;;; Org Packages
 
@@ -818,10 +827,10 @@
                        auto-mode-alist)))
 
 ;; common lisp hyperspec
-(use-package clhs :straight t :ensure t :defer t)
+(use-package clhs :straight t :defer t)
 
 ;; common lisp documentation
-(use-package hyperspec :straight t :ensure t :defer nil
+(use-package hyperspec :straight t :defer nil
   :init
   (setq common-lisp-hyperspec-root
         "file:///home/ff/.local/share/HyperSpec/")
@@ -832,7 +841,7 @@
     (let ((browse-url-browser-function 'eww-browse-url))
       (hyperspec-lookup (thing-at-point 'symbol)))))
 
-(use-package sly :straight t :defer t :ensure t
+(use-package sly :straight t :defer t
   :init
   (setq inferior-lisp-program
         (if (eq system-type 'windows-nt)
@@ -846,7 +855,7 @@
   (evil-set-initial-state 'sly-mrepl-mode 'normal))
 
 ;; actually used in elisp
-(use-package macrostep :straight t :ensure t :defer t)
+(use-package macrostep :straight t :defer t)
 
 (use-package sly-macrostep :defer t :straight t
   :config
@@ -883,12 +892,11 @@
   :hook (emacs-lisp-mode . fff-emacs-lisp-mode-setup))
 
 ;; inline evaluation
-(use-package eros :defer nil :straight t :ensure t :config (eros-mode +1))
+(use-package eros :defer nil :straight t :config (eros-mode +1))
 
 ;;; Other Language Support Packages
 
 (use-package gitignore-mode
-  :ensure t
   :straight (:host github :repo "magit/git-modes")
   :mode "\\.gitignore\\'"
   :defer t)
@@ -919,7 +927,7 @@
     (add-to-list 'eglot-server-programs
                  '(ocen-mode . ("node" "/home/ff/.local/src/ocen-vscode/out/server/src/server.js" "--stdio")))))
 
-(use-package rust-mode :straight t :ensure t :defer t)
+(use-package rust-mode :straight t :defer t)
 
 (use-package csharp-mode :ensure nil :defer t
   :hook (csharp-mode . (lambda ()
@@ -932,27 +940,26 @@
                                           ("Namespaces" "^namespace +\\([a-z0-9_]*\\)" 1))))
                                    (imenu--generic-function imenu-generic-expression)))))))
 
-(use-package pyvenv :straight t :ensure t :defer t)
+(use-package pyvenv :straight t :defer t)
 
-(use-package realgud :straight t :defer t :ensure t)
+(use-package realgud :straight t :defer t)
 
 ;;; Markdown
 
 (use-package markdown-mode
-  :ensure t
   :straight (:host github :repo "jrblevin/markdown-mode")
   :hook (markdown-mode . visual-line-mode)
   :config
   (add-to-list 'markdown-code-lang-modes '("html" . web-mode)))
 
 ;; generate markdown toc
-(use-package markdown-toc :straight t :ensure t :defer t)
+(use-package markdown-toc :straight t :defer t)
 
-(use-package gh-md :straight t :ensure t :defer t)
+(use-package gh-md :straight t :defer t)
 
 ;;; PDF / EPUB
 
-(use-package pdf-tools :straight t :ensure t  :defer t
+(use-package pdf-tools :straight t :defer t
   :mode ("\\pdf\\'" . pdf-view-mode)
   :init
   (add-hook 'pdf-view-mode-hook (lambda ()
@@ -961,13 +968,13 @@
   :config
   (pdf-tools-install :no-query))
 
-(use-package nov :straight t :ensure t :defer t
+(use-package nov :straight t :defer t
   :init
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
 ;;; Incremental Completion
 
-(use-package vertico :straight t :defer t :ensure t
+(use-package vertico :straight t :defer t
   :init
   (setq enable-recursive-minibuffers t)
   :config
@@ -976,7 +983,7 @@
   (define-key vertico-map (kbd "C-<backspace>") 'vertico-directory-up)
   (define-key minibuffer-local-map (kbd "C-c C-o") 'embark-collect))
 
-(use-package vertico-prescient :straight t :ensure t
+(use-package vertico-prescient :straight t
   :config
   (setq prescient-filter-method  '(literal regexp initialism))
   (vertico-prescient-mode +1))
@@ -1004,7 +1011,7 @@
   :config
   (marginalia-mode +1))
 
-(use-package consult :straight t :ensure t :defer nil
+(use-package consult :straight t :defer nil
   :init
   (setq consult-preview-key nil)
   (setq consult-preview-key "C-<return>"))
@@ -1039,7 +1046,6 @@
 ;; TODO: use embark-target-finders to add a new type for youtube urls.
 (use-package embark
   :straight t
-  :ensure t
   :defer t
   :bind*
   (("C-c e" . embark-act)
@@ -1093,7 +1099,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   (setf (alist-get 'url embark-default-action-overrides)
         #'fff-open-in-firefox))
 
-(use-package embark-consult :straight t :ensure t :defer t)
+(use-package embark-consult :straight t :defer t)
 
 ;;; Snippets
 
@@ -1107,7 +1113,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
           try-expand-dabbrev-from-kill
           try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
 
-(use-package yasnippet :straight t :ensure t
+(use-package yasnippet :straight t
   :init
   (add-hook 'prog-mode-hook #'yas-minor-mode)
   (add-hook 'org-mode-hook #'yas-minor-mode)
@@ -1117,16 +1123,16 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
 
 ;;; Git
 
-(use-package magit :straight t :ensure t :defer t
+(use-package magit :straight t :defer t
   :init
   (setq magit-section-initial-visibility-alist
         '(([hunk file staged status] . hide)
           ([file unstaged status] . show)
           ([hunk file unstaged status] . hide))))
 
-(use-package git-timemachine :straight t :ensure t :defer t)
+(use-package git-timemachine :straight t :defer t)
 
-(use-package git-gutter :straight t :ensure t
+(use-package git-gutter :straight t
   :hook (prog-mode . git-gutter-mode)
   :config
   (setq git-gutter:update-interval 0.02)
@@ -1136,7 +1142,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
                          (tramp-tramp-file-p (or buffer-file-name "")))
                 (git-gutter-mode -1)))))
 
-(use-package git-gutter-fringe :straight t :ensure t
+(use-package git-gutter-fringe :straight t
   :config
   (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
@@ -1144,7 +1150,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
 
 ;;; Tools
 
-(use-package tmr :straight t :ensure t :defer t
+(use-package tmr :straight t :defer t
   :init
   (defun fff-set-tmr-timer-for-time (time-string)
     "Set a TMR timer for the specified TIME-STRING.
@@ -1180,7 +1186,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
             (tmr (number-to-string (/ seconds-until-target 60)))
           (error "The specified time is invalid"))))))
 
-(use-package read-aloud :defer t :ensure t :straight t)
+(use-package read-aloud :defer t :straight t)
 
 (use-package gif-screencast
   :init
@@ -1235,7 +1241,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
     "q" #'fff-newsticker-treeview-quit))
 
 ;; audio / music payer
-(use-package emms :straight t :ensure t :defer t
+(use-package emms :straight t :defer t
   :diminish emms-mode-line
   :init
   (defun emms-volume-set (level)
@@ -1257,18 +1263,17 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 (use-package yeetube
   :defer t
   :straight t
-  :ensure t
   :config
   (setf yeetube-mpv-disable-video t)
   ;; Set RET in normal state when in yeetube-mode
   (evil-define-key 'normal yeetube-mode-map (kbd "RET") #'yeetube-play))
 
-(use-package hacker-typer :straight t :ensure t :defer t)
+(use-package hacker-typer :straight t :defer t)
 
 ;;; Project / Search
 
 ;; TODO: switch to project.el
-(use-package projectile :straight t :defer t :ensure t
+(use-package projectile :straight t :defer t
   :config
   (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod"
                   "package.json" "Cargo.toml" "build.sh" "v.mod"
@@ -1316,13 +1321,13 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
     (define-key projectile-command-map (kbd "C-c p") nil)
     (define-key projectile-command-map (kbd "C-c P") nil)))
 
-(use-package projectile-ripgrep :straight t :ensure t)
+(use-package projectile-ripgrep :straight t)
 
-(use-package consult-projectile :straight t :ensure t)
+(use-package consult-projectile :straight t)
 
-(use-package deadgrep :straight t :ensure t)
+(use-package deadgrep :straight t)
 
-(use-package wgrep :straight t :ensure t :defer t)
+(use-package wgrep :straight t :defer t)
 
 ;;; Docs / Lookup
 
@@ -1336,22 +1341,21 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                               (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
                               (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
 
-(use-package devdocs :ensure t :straight t :defer t
+(use-package devdocs :straight t :defer t
   :init
   (add-hook 'devdocs-mode-hook (lambda () (visual-line-mode +1))))
 
-(use-package mw-thesaurus :straight t :defer t :ensure t)
+(use-package mw-thesaurus :straight t :defer t)
 
 ;;; Indentation
 
 (use-package aggressive-indent
   :straight t
-  :ensure t
   :hook
   ((emacs-lisp-mode lisp-mode lisp-interaction-mode) . aggressive-indent-mode))
 
 ;; sets indentation variables
-(use-package dtrt-indent :straight t :ensure t :defer nil
+(use-package dtrt-indent :straight t :defer nil
   :config
   (dtrt-indent-global-mode +1)
   ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
@@ -1371,7 +1375,6 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package terminal-here
   :straight t
   :defer t
-  :ensure t
   :init
   (setq terminal-here-linux-terminal-command 'st)
   (setq terminal-here-windows-terminal-command 'powershell)
@@ -1381,14 +1384,13 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
                  (cons 'powershell
                        '("cmd.exe" "/C" "start" "powershell.exe" "-NoExit" "-Command" "cd $PWD")))))
 
-(use-package exec-path-from-shell :straight t :ensure t
+(use-package exec-path-from-shell :straight t
   :if (memq system-type '(darwin gnu/linux))
-  :ensure t
   :config
   (exec-path-from-shell-initialize))
 
 ;; allow copy/paste when in terminal
-(use-package xclip :straight t :ensure t :defer t
+(use-package xclip :straight t :defer t
   :hook
   (after-init . xclip-mode))
 
@@ -1402,7 +1404,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 
 ;;; UI Packages
 
-(use-package doom-modeline :ensure t :straight t
+(use-package doom-modeline :straight t
   :init
   (setq doom-modeline-hud t)
   (setq doom-modeline-highlight-modified-buffer-name nil)
@@ -1420,7 +1422,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (doom-modeline-mode +1))
 
-(use-package pulsar :straight t :defer t :ensure t
+(use-package pulsar :straight t :defer t
   :hook (after-init . pulsar-global-mode)
   :config
   (setq pulsar-pulse t)
@@ -1441,7 +1443,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (add-to-list 'pulsar-pulse-functions 'fff-delete-till-beginning-of-line)
   (add-to-list 'pulsar-pulse-functions 'fff-evil-yank-to-eol))
 
-(use-package volatile-highlights :straight t :ensure t :defer t
+(use-package volatile-highlights :straight t :defer t
   :init
   (volatile-highlights-mode t)
   :config
@@ -1456,28 +1458,27 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   ((prog-mode . topsy-mode)
    (magit-section-mode . topsy-mode)))
 
-(use-package keycast :straight t :ensure t :defer t)
+(use-package keycast :straight t :defer t)
 
 (use-package posframe
-  :straight (posframe :type git :host github :repo "tumashu/posframe")
-  :ensure t)
+  :straight (posframe :type git :host github :repo "tumashu/posframe"))
 
-(use-package rainbow-mode :straight t :ensure t :defer t)
+(use-package rainbow-mode :straight t :defer t)
 
 ;; colorful parentheses
-(use-package rainbow-delimiters :straight t :defer t :ensure t
+(use-package rainbow-delimiters :straight t :defer t
   :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package so-long :ensure nil
   :config
   (global-so-long-mode +1))
 
-(use-package hl-todo :straight t :ensure t :defer t
+(use-package hl-todo :straight t :defer t
   :custom-face
   (hl-todo ((t (:inherit hl-todo :italic t))))
   :hook ((prog-mode . hl-todo-mode)))
 
-(use-package diminish :straight t :ensure t :defer t)
+(use-package diminish :straight t :defer t)
 
 ;;; General Text/Code Editing / IDE / Navigation / Jumping
 
@@ -1510,16 +1511,16 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (add-to-list 'eglot-server-programs
                '(csharp-mode . ("csharp-ls"))))
 
-(use-package flimenu :ensure t :straight t :defer nil
+(use-package flimenu :straight t :defer nil
   :config
   (flimenu-global-mode))
 
 (use-package saveplace :ensure nil :init (save-place-mode))
 
-(use-package expand-region :straight t :defer t :ensure t)
+(use-package expand-region :straight t :defer t)
 
 ;; jump to definition without ctags in many supported languages
-(use-package dumb-jump :straight t :ensure t
+(use-package dumb-jump :straight t
   :init
   (setq dumb-jump-force-searcher 'rg)
   (setq dumb-jump-prefer-searcher 'rg)
@@ -1544,18 +1545,18 @@ to limit the search scope to just that directory."
   ;; Apply advice to dumb-jump's project detection
   (advice-add 'dumb-jump-get-project-root :around #'fff-dumb-jump-get-project-root))
 
-(use-package insert-shebang :straight t :ensure t :defer t
+(use-package insert-shebang :straight t :defer t
   :hook (find-file-hook . insert-shebang))
 
-(use-package edit-indirect :straight t :ensure t :defer t)
+(use-package edit-indirect :straight t :defer t)
 
-(use-package treesit-auto :straight t :ensure t
+(use-package treesit-auto :straight t
   :after emacs
   :config
   (global-treesit-auto-mode t))
 
 ;; see if we can remove this and use our own functions
-(use-package crux :straight t :defer t :ensure t
+(use-package crux :straight t :defer t
   :config
   (defun crux-open-with (arg)
     "Open visited file in default external program.
