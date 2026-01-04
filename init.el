@@ -848,7 +848,8 @@
 (use-package clhs :straight t :defer t)
 
 ;; common lisp documentation
-(use-package hyperspec :straight t :defer nil
+(use-package hyperspec :straight t :defer t
+  :commands (hyperspec-lookup)
   :init
   (setq common-lisp-hyperspec-root
         (concat "file://" (expand-file-name "~/.local/share/HyperSpec/")))
