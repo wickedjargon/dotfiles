@@ -840,12 +840,9 @@
 ;;; Common Lisp
 
 (use-package lisp-mode :ensure nil
-  :init
-  (set-default 'auto-mode-alist
-               (append '(("\\.lisp$" . lisp-mode)
-                         ("\\.lsp$" . lisp-mode)
-                         ("\\.cl$" . lisp-mode))
-                       auto-mode-alist)))
+  :mode (("\\.lisp\\'" . lisp-mode)
+         ("\\.lsp\\'" . lisp-mode)
+         ("\\.cl\\'" . lisp-mode)))
 
 ;; common lisp hyperspec
 (use-package clhs :straight t :defer t)
