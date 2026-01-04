@@ -254,9 +254,6 @@
                  flymake-show-buffer-diagnostics))
     (advice-add cmd :around #'fff-focus-new-window-or-buffer)))
 
-
-;;; Built-in Modes
-
 (use-package delsel
   :ensure nil
   :hook (after-init . delete-selection-mode))
