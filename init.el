@@ -124,11 +124,7 @@
   (setq inhibit-startup-message t)                        ;; no splash screen
   (setq use-short-answers t)                              ;; just type `y`, not `yes`
   (blink-cursor-mode -1)                                  ;; don't blink my cursor
-  (setq auto-revert-verbose nil)
-  (global-auto-revert-mode +1)                            ;; auto revert files and buffers
-  (global-goto-address-mode +1)                           ;; make links/urls clickable
   (setq safe-local-variable-values '((checkdoc-minor-mode . t))) ;; make local variables safe
-  (delete-selection-mode +1)                              ;; delete selction when hitting backspace on region
   (set-default 'truncate-lines t)                         ;; don't wrap my text
   (setq custom-file (locate-user-emacs-file "custom.el")) ;; separate custom.el file
   (when (file-exists-p custom-file) (load custom-file))   ;; when it exists, load it
@@ -137,9 +133,7 @@
   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
   (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
-  (electric-pair-mode +1)                                 ;; automatically insert matching paren as well as auto indent on new line
-  (show-paren-mode -1)                                    ;; Disable show-paren-mode globally
-  (add-hook 'prog-mode-hook #'show-paren-local-mode)      ;; Enable show-paren-mode only in prog-mode
+
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell
   (setq sentence-end-double-space nil)                    ;; sentence ends with one space, not two
@@ -168,8 +162,8 @@
         '((checkdoc-package-keywords-flag)
           (checkdoc-minor-mode . t)))                      ;; don't prompt me about unsafe local variables
   (setq vc-follow-symlinks t)                              ;; stop prompting me about whether I want to follow symlinks
-  (pixel-scroll-precision-mode t)                          ;; better for scrolling
-  (setq pixel-scroll-precision-use-momentum nil)           ;; but no momentum please
+
+
   ;; (setq warning-minimum-level :emergency)                  ;; Set the minimum level of warnings to display.
   (setq initial-major-mode 'fundamental-mode)              ;; I prefer this as the mode for scratch buffers
   (setq require-final-newline nil)                         ;; don't add a new line to the bottom of the file
@@ -181,10 +175,7 @@
   (defun display-startup-echo-area-message ()
     (message "Emacs launched in %.2f seconds" (string-to-number (emacs-init-time))))
 
-  ;; recent files
-  (setq recentf-max-menu-items 25)
-  (setq recentf-max-saved-items 25)
-  (recentf-mode +1)
+
 
   ;; Do not allow the cursor in the minibuffer prompt
   (setq minibuffer-prompt-properties
@@ -262,6 +253,54 @@
                  vc-region-history
                  flymake-show-buffer-diagnostics))
     (advice-add cmd :around #'fff-focus-new-window-or-buffer)))
+
+
+;;; Built-in Modes
+
+(use-package delsel
+  :ensure nil
+  :hook (after-init . delete-selection-mode))
+
+(use-package autorevert
+  :ensure nil
+  :init
+  (setq auto-revert-verbose nil)
+  :hook (after-init . global-auto-revert-mode))
+
+(use-package goto-addr
+  :ensure nil
+  :hook (after-init . global-goto-address-mode))
+
+(use-package elec-pair
+  :ensure nil
+  :hook (after-init . electric-pair-mode))
+
+(use-package paren
+  :ensure nil
+  :init
+  (show-paren-mode -1)
+  :hook (prog-mode . show-paren-local-mode))
+
+(use-package recentf
+  :ensure nil
+  :init
+  (setq recentf-max-menu-items 25)
+  (setq recentf-max-saved-items 25)
+  :hook (after-init . recentf-mode))
+
+(use-package pixel-scroll
+  :ensure nil
+  :init
+  (setq pixel-scroll-precision-use-momentum nil)
+  :hook (after-init . pixel-scroll-precision-mode))
+
+(use-package time
+  :ensure nil
+  :init
+  (setq display-time-default-load-average nil)
+  (setq display-time-day-and-date t)
+  :config
+  (display-time))
 
 ;;; Buffer Navigation
 
@@ -1383,12 +1422,9 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (setq doom-modeline-percent-position '(""))
   (setq doom-modeline-modal nil)
   (setq doom-modeline-env-enable-rust nil)
-  (setq display-time-default-load-average nil)
-  (setq display-time-day-and-date t)
   (setq doom-modeline-buffer-file-name-style 'relative-from-project)
   (setq doom-modeline-time-analogue-clock nil)
   (setq doom-modeline-icon nil)
-  (display-time)
   :config
   (doom-modeline-mode +1))
 
