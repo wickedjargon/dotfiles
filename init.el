@@ -670,9 +670,9 @@
     (define-key evil-normal-state-map (kbd "k") #'evil-previous-visual-line)
     (define-key evil-visual-state-map (kbd "j") #'evil-next-visual-line)
     (define-key evil-visual-state-map (kbd "k") #'evil-previous-visual-line)
-    (define-key evil-normal-state-map (kbd "1") #'evil-beginning-of-visual-line)
+    (define-key evil-normal-state-map (kbd "0") #'evil-beginning-of-visual-line)
     (define-key evil-normal-state-map (kbd "$") #'evil-end-of-visual-line)
-    (define-key evil-visual-state-map (kbd "1") #'evil-beginning-of-visual-line)
+    (define-key evil-visual-state-map (kbd "0") #'evil-beginning-of-visual-line)
     (define-key evil-visual-state-map (kbd "$") #'evil-end-of-visual-line)
 
     ;; instead of `vi(' or `di[' use  `vib' or `dib' instead
