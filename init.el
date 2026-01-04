@@ -13,21 +13,6 @@
 
 ;; Common commands for Prot's Emacs
 ;; prot-simple.el
-;; works with emacs version 30.1
-
-;; explore these packages:
-;; auctex, org
-;; writing studio (https://leanpub.com/emacswritingstudio)
-;; dired-kill-when-opening-new-dired-buffer
-
-;; a few emacs kick starters:
-;; emacs-kick       https://github.com/LionyxML/emacs-kick
-;; kickstart.emacs  https://github.com/MiniApollo/kickstart.emacs
-;; venom-emacs      https://gitlab.com/dvrbs/venom-emacs
-;; prot's basic     https://protesilaos.com/codelog/2024-11-28-basic-emacs-configuration/
-
-;; Common commands for Prot's Emacs
-;; prot-simple.el
 ;; https://protesilaos.com/emacs/dotemacs#h:5f78e837-0d27-4390-bd9a-6d0bca57fa50
 
 ;; TODO: start using email in emacs
