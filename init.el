@@ -819,7 +819,7 @@
 (use-package hyperspec :straight t :defer nil
   :init
   (setq common-lisp-hyperspec-root
-        "file:///home/ff/.local/share/HyperSpec/")
+        (concat "file://" (expand-file-name "~/.local/share/HyperSpec/")))
   :config
   (defun fff-hyperspec-lookup ()
     "Open the HyperSpec entry in EWW instead of the default browser."
@@ -911,7 +911,7 @@
   ;; Tell eglot how to start the ocen language server
   (with-eval-after-load 'eglot
     (add-to-list 'eglot-server-programs
-                 '(ocen-mode . ("node" "/home/ff/.local/src/ocen-vscode/out/server/src/server.js" "--stdio")))))
+                 `(ocen-mode . ("node" ,(expand-file-name "~/.local/src/ocen-vscode/out/server/src/server.js") "--stdio")))))
 
 (use-package rust-mode :straight t :defer t)
 
@@ -1296,7 +1296,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
     (interactive "P")
     (projectile--find-file-or-dir invalidate-cache))
   :init
-  (setq projectile-ignored-projects '("/home/ff"))
+
   (defun fff-ignore-home-directory (dir)
     "Ignore the home directory as a project root."
     (let ((home (expand-file-name "~/")))
