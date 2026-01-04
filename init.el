@@ -1291,11 +1291,11 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
     (define-key projectile-command-map (kbd "C-c p") nil)
     (define-key projectile-command-map (kbd "C-c P") nil)))
 
-(use-package projectile-ripgrep :straight t)
+(use-package projectile-ripgrep :straight t :defer t)
 
-(use-package consult-projectile :straight t)
+(use-package consult-projectile :straight t :defer t)
 
-(use-package deadgrep :straight t)
+(use-package deadgrep :straight t :defer t)
 
 (use-package wgrep :straight t :defer t)
 
