@@ -799,8 +799,7 @@
      (js . t))))
 
 (use-package org-download :straight t :defer t
-  :config
-  (add-hook 'dired-mode-hook #'org-download-enable))
+  :hook (dired-mode . org-download-enable))
 
 ;;; Common Lisp
 
