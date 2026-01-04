@@ -94,19 +94,19 @@
   (global-unset-key (kbd "M-ESC ESC"))
 
   ;; adding a few back that I actually might use:
-  (global-set-key (kbd "C-x o") 'other-window)
-  (global-set-key (kbd "C-x u") 'undo)
-  (global-set-key (kbd "C-y") 'yank)
+  (global-set-key (kbd "C-x o") #'other-window)
+  (global-set-key (kbd "C-x u") #'undo)
+  (global-set-key (kbd "C-y") #'yank)
 
-  (global-set-key (kbd "M-ESC M-ESC") 'keyboard-escape-quit)           ;; I have to remap to this instead
-  (global-set-key (kbd "M-u") 'universal-argument)                     ;; C-u is bound to evil-scroll-up
-  (global-set-key (kbd "C-x k") 'bury-buffer)                          ;; kill buffers doesn't save memory
-  (global-set-key (kbd "C-c c") 'fff-clear-shell)
+  (global-set-key (kbd "M-ESC M-ESC") #'keyboard-escape-quit)           ;; I have to remap to this instead
+  (global-set-key (kbd "M-u") #'universal-argument)                     ;; C-u is bound to evil-scroll-up
+  (global-set-key (kbd "C-x k") #'bury-buffer)                          ;; kill buffers doesn't save memory
+  (global-set-key (kbd "C-c c") #'fff-clear-shell)
   (global-set-key (kbd "C-g")  #'fff-keyboard-quit-dwim)
-  (global-set-key [remap list-buffers] 'ibuffer)                       ;; ibuffer is superior
-  (global-set-key [remap beginning-of-line] 'beginning-of-visual-line) ;; use visual line for beginning and end of line
-  (global-set-key [remap end-of-line] 'end-of-visual-line)             ;; same here.
-  (global-set-key (kbd "C-j") 'fff-elisp-eval-and-print-last-sexp)
+  (global-set-key [remap list-buffers] #'ibuffer)                       ;; ibuffer is superior
+  (global-set-key [remap beginning-of-line] #'beginning-of-visual-line) ;; use visual line for beginning and end of line
+  (global-set-key [remap end-of-line] #'end-of-visual-line)             ;; same here.
+  (global-set-key (kbd "C-j") #'fff-elisp-eval-and-print-last-sexp)
 
   ;; backup and auto save
   (setq version-control t)
@@ -209,7 +209,7 @@
 
   (unless (display-graphic-p)
     (with-eval-after-load 'evil
-      (define-key evil-insert-state-map (kbd "ESC ESC <escape>") 'evil-normal-state)))
+      (define-key evil-insert-state-map (kbd "ESC ESC <escape>") #'evil-normal-state)))
 
   ;; Override `package-install` to do nothing
   (defun package-install (&rest args)
@@ -577,71 +577,71 @@
     (setq evil-buffer-regexps
           (append evil-buffer-regexps '(("^\\*EGLOT" . normal))))
 
-    (define-key evil-visual-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-visual-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-visual-state-map (kbd "<backspace>") 'delete-char)
-    (define-key evil-visual-state-map (kbd "C-/") 'fff-comment)
-    (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
-    (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
+    (define-key evil-visual-state-map (kbd "C-a") #'beginning-of-line)
+    (define-key evil-visual-state-map (kbd "C-e") #'move-end-of-line)
+    (define-key evil-visual-state-map (kbd "<backspace>") #'delete-char)
+    (define-key evil-visual-state-map (kbd "C-/") #'fff-comment)
+    (define-key evil-visual-state-map (kbd "j") #'evil-next-visual-line)
+    (define-key evil-visual-state-map (kbd "k") #'evil-previous-visual-line)
 
-    (define-key evil-insert-state-map (kbd "C-<backspace>") 'fff-delete-till-beginning-of-line)
-    (define-key evil-insert-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-insert-state-map (kbd "C-w") 'kill-region)
-    (define-key evil-insert-state-map (kbd "M-w") 'easy-kill)
-    (define-key evil-insert-state-map (kbd "C-y") 'yank)
-    (define-key evil-insert-state-map (kbd "M-y") 'yank-pop)
-    (define-key evil-insert-state-map (kbd "C-'") 'hippie-expand)
-    (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
-    (define-key evil-insert-state-map (kbd "C-/") 'fff-comment)
-    (define-key evil-insert-state-map (kbd "C-k") 'kill-line)
+    (define-key evil-insert-state-map (kbd "C-<backspace>") #'fff-delete-till-beginning-of-line)
+    (define-key evil-insert-state-map (kbd "C-a") #'beginning-of-line)
+    (define-key evil-insert-state-map (kbd "C-e") #'move-end-of-line)
+    (define-key evil-insert-state-map (kbd "C-w") #'kill-region)
+    (define-key evil-insert-state-map (kbd "M-w") #'easy-kill)
+    (define-key evil-insert-state-map (kbd "C-y") #'yank)
+    (define-key evil-insert-state-map (kbd "M-y") #'yank-pop)
+    (define-key evil-insert-state-map (kbd "C-'") #'hippie-expand)
+    (define-key evil-insert-state-map (kbd "C-d") #'delete-char)
+    (define-key evil-insert-state-map (kbd "C-/") #'fff-comment)
+    (define-key evil-insert-state-map (kbd "C-k") #'kill-line)
 
-    (define-key evil-normal-state-map (kbd "C-<backspace>") 'fff-delete-till-beginning-of-line)
-    (define-key evil-normal-state-map (kbd "C-a") 'beginning-of-line)
-    (define-key evil-normal-state-map (kbd "C-e") 'move-end-of-line)
-    (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
-    (define-key evil-normal-state-map (kbd "C-S-o") 'evil-jump-backward)
-    (define-key evil-normal-state-map (kbd "C-o") 'pop-to-mark-command)
-    (define-key evil-normal-state-map (kbd "M-o") 'evil-jump-forward)
-    (define-key evil-normal-state-map (kbd "gp") 'fff-evil-paste-and-indent-after)
-    (define-key evil-normal-state-map (kbd "gP") 'fff-evil-paste-and-indent-before)
-    (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
-    (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
-    (define-key evil-normal-state-map (kbd "C-/") 'fff-comment)
-    (define-key evil-normal-state-map (kbd "C-c a") 'evil-numbers/inc-at-pt)
-    (define-key evil-normal-state-map (kbd "C-c x") 'evil-numbers/dec-at-pt)
-    (define-key evil-normal-state-map (kbd "C-c g a") 'evil-numbers/inc-at-pt-incremental)
-    (define-key evil-normal-state-map (kbd "C-c g x") 'evil-numbers/dec-at-pt-incremental)
-    (define-key evil-normal-state-map (kbd "q") 'quit-window)
-    (define-key evil-normal-state-map (kbd "Q") 'evil-record-macro)
-    (define-key evil-normal-state-map (kbd "ZZ") 'fff-save-and-bury-buffer)
-    (define-key evil-normal-state-map (kbd "ZQ") 'fff-revert-and-bury-buffer)
-    (define-key evil-normal-state-map (kbd "<kp-left>") 'winner-undo)
-    (define-key evil-normal-state-map (kbd "<kp-right>") 'winner-redo)
+    (define-key evil-normal-state-map (kbd "C-<backspace>") #'fff-delete-till-beginning-of-line)
+    (define-key evil-normal-state-map (kbd "C-a") #'beginning-of-line)
+    (define-key evil-normal-state-map (kbd "C-e") #'move-end-of-line)
+    (define-key evil-normal-state-map (kbd "C-u") #'evil-scroll-up)
+    (define-key evil-normal-state-map (kbd "C-S-o") #'evil-jump-backward)
+    (define-key evil-normal-state-map (kbd "C-o") #'pop-to-mark-command)
+    (define-key evil-normal-state-map (kbd "M-o") #'evil-jump-forward)
+    (define-key evil-normal-state-map (kbd "gp") #'fff-evil-paste-and-indent-after)
+    (define-key evil-normal-state-map (kbd "gP") #'fff-evil-paste-and-indent-before)
+    (define-key evil-normal-state-map (kbd "j") #'evil-next-visual-line)
+    (define-key evil-normal-state-map (kbd "k") #'evil-previous-visual-line)
+    (define-key evil-normal-state-map (kbd "C-/") #'fff-comment)
+    (define-key evil-normal-state-map (kbd "C-c a") #'evil-numbers/inc-at-pt)
+    (define-key evil-normal-state-map (kbd "C-c x") #'evil-numbers/dec-at-pt)
+    (define-key evil-normal-state-map (kbd "C-c g a") #'evil-numbers/inc-at-pt-incremental)
+    (define-key evil-normal-state-map (kbd "C-c g x") #'evil-numbers/dec-at-pt-incremental)
+    (define-key evil-normal-state-map (kbd "q") #'quit-window)
+    (define-key evil-normal-state-map (kbd "Q") #'evil-record-macro)
+    (define-key evil-normal-state-map (kbd "ZZ") #'fff-save-and-bury-buffer)
+    (define-key evil-normal-state-map (kbd "ZQ") #'fff-revert-and-bury-buffer)
+    (define-key evil-normal-state-map (kbd "<kp-left>") #'winner-undo)
+    (define-key evil-normal-state-map (kbd "<kp-right>") #'winner-redo)
     ;; (evil-global-set-key 'normal (kbd "SPC e e") 'eval-last-sexp)
 
-    ;; a new definition for Y that is consistant with K
+    ;; a new definition for Y that is consistent with K
     (evil-define-operator fff-evil-yank-to-eol (beg end type register)
       "Yank from point to the end of the line into the kill-ring."
       :move-point nil
       :type inclusive
       (interactive "<x><y>")
       (evil-yank (point) (line-end-position) type register))
-    (define-key evil-normal-state-map (kbd "Y") 'fff-evil-yank-to-eol)
+    (define-key evil-normal-state-map (kbd "Y") #'fff-evil-yank-to-eol)
 
     ;; move by visual line
-    (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
-    (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
-    (define-key evil-visual-state-map (kbd "j") 'evil-next-visual-line)
-    (define-key evil-visual-state-map (kbd "k") 'evil-previous-visual-line)
-    (define-key evil-normal-state-map (kbd "1") 'evil-beginning-of-visual-line)
-    (define-key evil-normal-state-map (kbd "$") 'evil-end-of-visual-line)
-    (define-key evil-visual-state-map (kbd "1") 'evil-beginning-of-visual-line)
-    (define-key evil-visual-state-map (kbd "$") 'evil-end-of-visual-line)
+    (define-key evil-normal-state-map (kbd "j") #'evil-next-visual-line)
+    (define-key evil-normal-state-map (kbd "k") #'evil-previous-visual-line)
+    (define-key evil-visual-state-map (kbd "j") #'evil-next-visual-line)
+    (define-key evil-visual-state-map (kbd "k") #'evil-previous-visual-line)
+    (define-key evil-normal-state-map (kbd "1") #'evil-beginning-of-visual-line)
+    (define-key evil-normal-state-map (kbd "$") #'evil-end-of-visual-line)
+    (define-key evil-visual-state-map (kbd "1") #'evil-beginning-of-visual-line)
+    (define-key evil-visual-state-map (kbd "$") #'evil-end-of-visual-line)
 
     ;; instead of `vi(' or `di[' use  `vib' or `dib' instead
-    (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
-    (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)))
+    (define-key evil-inner-text-objects-map "b" #'evil-textobj-anyblock-inner-block)
+    (define-key evil-outer-text-objects-map "b" #'evil-textobj-anyblock-a-block)))
 
 (use-package undo-fu :straight t :defer t)
 
@@ -672,7 +672,7 @@
 ;; edit all matches for region in document
 (use-package evil-iedit-state :straight t :defer t
   :init
-  (global-set-key (kbd "C-;") 'iedit-mode))
+  (global-set-key (kbd "C-;") #'iedit-mode))
 
 (use-package evil-mc :straight t
   :after evil
@@ -800,7 +800,7 @@
 
 (use-package org-download :straight t :defer t
   :config
-  (add-hook 'dired-mode-hook 'org-download-enable))
+  (add-hook 'dired-mode-hook #'org-download-enable))
 
 ;;; Common Lisp
 
@@ -836,8 +836,8 @@
 
 
   :config
-  (define-key lisp-mode-map (kbd "C-j") 'sly-eval-print-last-expression)
-  (define-key lisp-mode-map (kbd "C-<return>") 'sly-eval-print-last-expression)
+  (define-key lisp-mode-map (kbd "C-j") #'sly-eval-print-last-expression)
+  (define-key lisp-mode-map (kbd "C-<return>") #'sly-eval-print-last-expression)
   (evil-set-initial-state 'sly-mrepl-mode 'normal))
 
 ;; actually used in elisp
@@ -1324,8 +1324,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
 (use-package Info :ensure nil :defer t
   :init
   (add-hook 'Info-mode-hook (lambda ()
-                              (define-key Info-mode-map  (kbd "M-n") 'Info-search-next)
-                              (define-key Info-mode-map (kbd "M-p") 'fff-Info-search-previous))))
+                              (define-key Info-mode-map  (kbd "M-n") #'Info-search-next)
+                              (define-key Info-mode-map (kbd "M-p") #'fff-Info-search-previous))))
 
 (use-package devdocs :straight t :defer t
   :init
