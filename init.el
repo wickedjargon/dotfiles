@@ -70,7 +70,7 @@
   (add-hook 'prog-mode-hook #'hs-minor-mode)              ;; let me toggle shrink and expansion of code blocks
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
-  (add-hook 'prog-mode-hook 'visual-line-mode)
+  (add-hook 'prog-mode-hook #'visual-line-mode)
 
   ;; make elpa and straight files read-only
   (add-hook 'find-file-hook
