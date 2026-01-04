@@ -798,7 +798,7 @@
      (C . t)
      (js . t))))
 
-(use-package org-download :straight t :ensure t :defer t
+(use-package org-download :straight t :defer t
   :config
   (add-hook 'dired-mode-hook 'org-download-enable))
 
