@@ -52,6 +52,10 @@
 (use-package emacs :ensure nil
   :config
 
+  ;; Must be set before evil and evil-collection load
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+
   ;; for youtube change it to this:
   ;; (set-face-attribute 'default nil :height 150)
 
@@ -115,10 +119,6 @@
         `((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
   (setq backup-directory-alist
         `(("." . ,(expand-file-name "backups/" user-emacs-directory))))
-
-  ;; must be set before evil and evil-collection load
-  (setq evil-want-integration t)
-  (setq evil-want-keybinding nil)
 
   (setq custom-safe-themes t)                             ;; make all themes safe
   (setq inhibit-startup-message t)                        ;; no splash screen
