@@ -550,6 +550,7 @@
 
 (use-package evil :defer nil :straight t
   :init
+  ;; Must be set before evil and evil-collection load
   (setq evil-regexp-search nil)
   (setq evil-want-C-u-scroll t)
   (setq evil-want-C-d-scroll t)
