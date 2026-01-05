@@ -1363,9 +1363,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   :config
   (dtrt-indent-global-mode +1)
   ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
-  (dolist (fn '(lsp-format-buffer
-                lsp-format-region
-                eglot-format-buffer
+  (dolist (fn '(eglot-format-buffer
                 elgot-format-region
                 indent-region
                 tabify
