@@ -1442,13 +1442,7 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
   (add-to-list 'pulsar-pulse-functions 'evil-delete-line)
   (add-to-list 'pulsar-pulse-functions 'evil-jump-item)
   (add-to-list 'pulsar-pulse-functions 'fff-delete-till-beginning-of-line)
-  (add-to-list 'pulsar-pulse-functions 'fff-evil-yank-to-eol)
-
-  ;; Pulse when Emacs automatically scrolls/recenters
-  (add-hook 'window-scroll-functions
-            (lambda (window _start)
-              (when (eq window (selected-window))
-                (pulsar-pulse-line)))))
+  (add-to-list 'pulsar-pulse-functions 'fff-evil-yank-to-eol))
 
 (use-package volatile-highlights :straight t :defer t
   :init
