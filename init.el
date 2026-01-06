@@ -1292,13 +1292,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
           "Gemfile" ".ruby-version" "composer.json" ".env"
           "README.md" "README.txt" "README.org" ".eslint.js"
           "tsconfig.json" ".babelrc" ".prettierrc"
-          "CMakeLists.txt" ".project" "hugo.toml"))
-
-  ;; NOTE: project.el's `project-find-file` already works well with
-  ;; completion frameworks like vertico/consult and doesn't need
-  ;; a custom find-file-or-dir implementation.
-  )
-
+          "CMakeLists.txt" ".project" "hugo.toml")))
 
 (use-package deadgrep :straight t :defer t)
 
