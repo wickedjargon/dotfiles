@@ -1276,58 +1276,29 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
 
 ;;; Project / Search
 
-;; TODO: switch to project.el
-(use-package projectile :straight t :defer t
+(use-package project
+  :ensure nil
+  :defer t
   :config
-  (dolist (file '(".venv/" "venv/" "manage.py" ".git/" "go.mod"
-                  "package.json" "Cargo.toml" "build.sh" "v.mod"
-                  "make.bat" "Makefile" "Dockerfile" ".editorconfig"
-                  ".gitignore" ".svn" ".hg" ".bzr" "Pipfile" "tox.ini"
-                  "requirements.txt" "pom.xml" "build.gradle"
-                  "Cargo.lock" "yarn.lock" "webpack.config.js"
-                  "Gemfile" ".ruby-version" "composer.json" ".env"
-                  "README.md" "README.txt" "README.org" ".eslint.js"
-                  "tsconfig.json" ".babelrc" ".prettierrc"
-                  "CMakeLists.txt" ".project" "hugo.toml"))
-    (add-to-list 'projectile-project-root-files file)
-    (add-to-list 'projectile-project-root-files-bottom-up file)
-    (add-to-list 'projectile-project-root-files-top-down-recurring file))
+  ;; Add custom project root markers
+  ;; project.el looks for .git by default, but we can add more markers
+  (setq project-vc-extra-root-markers
+        '(".venv" "venv" "manage.py" "go.mod"
+          "package.json" "Cargo.toml" "build.sh" "v.mod"
+          "make.bat" "Makefile" "Dockerfile" ".editorconfig"
+          ".gitignore" ".svn" ".hg" ".bzr" "Pipfile" "tox.ini"
+          "requirements.txt" "pom.xml" "build.gradle"
+          "Cargo.lock" "yarn.lock" "webpack.config.js"
+          "Gemfile" ".ruby-version" "composer.json" ".env"
+          "README.md" "README.txt" "README.org" ".eslint.js"
+          "tsconfig.json" ".babelrc" ".prettierrc"
+          "CMakeLists.txt" ".project" "hugo.toml"))
 
-  ;; these two functions allow find file find both directories and files
-  (defun projectile--find-file-or-dir (invalidate-cache)
-    "Jump to a project's file or directory using completion.
-With INVALIDATE-CACHE, invalidates the cache first."
-    (projectile-maybe-invalidate-cache invalidate-cache)
-    (let* ((project (projectile-acquire-root))
-           (all-entries (projectile-project-files project))
-           (dir-entries (projectile-project-dirs project))
-           (candidates (append all-entries dir-entries))
-           (selection (projectile-completing-read "Find file or directory: " candidates)))
-      (if (member selection dir-entries)
-          (dired (expand-file-name selection project))
-        (find-file (expand-file-name selection project)))
-      (run-hooks 'projectile-find-file-hook)))
+  ;; NOTE: project.el's `project-find-file` already works well with
+  ;; completion frameworks like vertico/consult and doesn't need
+  ;; a custom find-file-or-dir implementation.
+  )
 
-  (defun projectile-find-file-or-dir (&optional invalidate-cache)
-    "Jump to a project's file or directory using completion.
-With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
-    (interactive "P")
-    (projectile--find-file-or-dir invalidate-cache))
-  :init
-
-  (defun fff-ignore-home-directory (dir)
-    "Ignore the home directory as a project root."
-    (let ((home (expand-file-name "~/")))
-      (string= (expand-file-name dir) home)))
-  (setq projectile-ignored-project-function #'fff-ignore-home-directory)
-  (projectile-mode +1)
-  (with-eval-after-load 'projectile
-    (define-key projectile-command-map (kbd "C-c p") nil)
-    (define-key projectile-command-map (kbd "C-c P") nil)))
-
-(use-package projectile-ripgrep :straight t :defer t)
-
-(use-package consult-projectile :straight t :defer t)
 
 (use-package deadgrep :straight t :defer t)
 
@@ -1534,10 +1505,8 @@ With a prefix arg INVALIDATE-CACHE, invalidates the cache first."
     "Wrapper around dumb-jump project detection.
 If not in a project, return the directory containing the current file
 to limit the search scope to just that directory."
-    (or (and (fboundp 'projectile-project-root)
-             (condition-case nil
-                 (projectile-project-root)
-               (error nil)))
+    (or (when-let ((proj (project-current nil)))
+          (project-root proj))
         ;; If no project found, use the file's directory
         (file-name-directory (or buffer-file-name default-directory))))
 
