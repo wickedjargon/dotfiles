@@ -387,11 +387,11 @@ in whole buffer.  With neither, delete comments on current line."
   (dired (locate-dominating-file default-directory ".git")))
 
 (defun fff-go-to-git-root-dir-interactive ()
- (interactive)
- (let ((default-directory (locate-dominating-file default-directory ".git")))
-   (if default-directory
-       (call-interactively 'find-file)
-     (message "Not in a git repository"))))
+  (interactive)
+  (let ((default-directory (locate-dominating-file default-directory ".git")))
+    (if default-directory
+        (call-interactively 'find-file)
+      (message "Not in a git repository"))))
 
 (defun fff-kill-entire-buffer-list ()
   (interactive)
@@ -562,8 +562,8 @@ in whole buffer.  With neither, delete comments on current line."
     (indent-region (point-min) (point-max) nil)))
 
 (defun user-is-in-evil-normal-state ()
- "Check if the user is in Evil's normal state."
- (eq evil-state 'normal))
+  "Check if the user is in Evil's normal state."
+  (eq evil-state 'normal))
 
 (defun move-cursor-to-next-line ()
   "Move the cursor to the beginning of the next line, creating a new line if necessary."
@@ -643,18 +643,19 @@ in whole buffer.  With neither, delete comments on current line."
    "browser-sync --watch"))
 
 (defun fff-display-project-root ()
-  "Display the current Projectile project root."
+  "Display the current project root."
   (interactive)
-  (message "Projectile project root: %s" (projectile-project-root)))
+  (if-let ((proj (project-current)))
+      (message "Project root: %s" (project-root proj))
+    (message "Not in a project")))
 
 (defun fff-find-file-in-project-root ()
-  "Find a file within the current Projectile project root."
+  "Find a file within the current project root."
   (interactive)
-  (let ((project-root (projectile-project-root)))
-    (if project-root
-        (let ((default-directory project-root))
-          (call-interactively 'find-file))
-      (message "Not in a Projectile project"))))
+  (if-let ((proj (project-current)))
+      (let ((default-directory (project-root proj)))
+        (call-interactively 'find-file))
+    (message "Not in a project")))
 
 (defun fff-find-packages-with-categories ()
   "Scan init.el and list category headers (;;; ...) and packages (use-package ...)
@@ -977,13 +978,15 @@ Prompt for PACKAGE-NAME with completion."
     ;; Open dired with sorted files
     (dired (cons modules-dir file-names))))
 
-(defun fff-projectile-ibuffer-for-current-project ()
+(defun fff-project-ibuffer-for-current-project ()
   "Open an IBuffer window showing all buffers in the current project."
   (interactive)
-  (let ((project-root (projectile-project-root)))
-    (if project-root
-        (projectile-ibuffer-by-project project-root)
-      (message "Not in a projectile project."))))
+  (if-let ((proj (project-current)))
+      (let ((project-root (project-root proj))
+            (project-buffers (project-buffers proj)))
+        (ibuffer nil "*project-ibuffer*"
+                 `((predicate . (member (current-buffer) ',project-buffers)))))
+    (message "Not in a project.")))
 
 (defun fff-swap-left-and-right-windows ()
   "Swap the buffers between the left and right windows."
@@ -1046,15 +1049,15 @@ Prompt for PACKAGE-NAME with completion."
       '((t :inherit default :height 1.5))  ; Adjust the :height value to change the font size
       "Face for tooltip text in posframe."))
   (posframe-show
-    "*fff-centered-tooltip*"
-    :string (propertize text 'face 'fff-tooltip-face)
-    :position (point)
-    :poshandler (lambda (info)
-                  (cons (/ (- (plist-get info :parent-frame-width)
-                              (plist-get info :posframe-width))
+   "*fff-centered-tooltip*"
+   :string (propertize text 'face 'fff-tooltip-face)
+   :position (point)
+   :poshandler (lambda (info)
+                 (cons (/ (- (plist-get info :parent-frame-width)
+                             (plist-get info :posframe-width))
                           2)
-                        0))
-    :timeout 10))
+                       0))
+   :timeout 10))
 
 (defun fff-help-sym-short-doc (sym)
   "Return short documentation for symbol SYM."
@@ -1090,25 +1093,25 @@ Prompt for PACKAGE-NAME with completion."
          (full-command (concat command " " (shell-quote-argument file))))
     (start-process-shell-command "dired-open-with-command" nil full-command)))
 
-(defun fff-consult-projectile-open-project ()
-  "Select an open Projectile project using Consult."
+(defun fff-consult-open-projects ()
+  "Select an open project using Consult."
   (interactive)
   (require 'consult)
-  (require 'projectile)
   (let ((source
-         `(:name     "Open Projectile Projects"
-           :narrow   ?p
-           :category project
-           :items    ,(lambda ()
-                        (delete-dups
-                         (mapcar #'projectile-project-root
-                                 (delq nil
-                                       (mapcar (lambda (buf)
-                                                 (when-let ((proj (projectile-project-p (buffer-file-name buf))))
-                                                   proj))
-                                               (buffer-list))))))
-           :action   ,(lambda (project)
-                        (projectile-switch-project-by-name project)))))
+         `(:name     "Open Projects"
+                     :narrow   ?p
+                     :category project
+                     :items    ,(lambda ()
+                                  (delete-dups
+                                   (delq nil
+                                         (mapcar (lambda (buf)
+                                                   (when-let ((proj (with-current-buffer buf
+                                                                      (project-current nil))))
+                                                     (project-root proj)))
+                                                 (buffer-list)))))
+                     :action   ,(lambda (project)
+                                  (let ((default-directory project))
+                                    (project-find-file))))))
     (consult--multi (list source)
                     :prompt "Switch to open project: "
                     :sort nil
@@ -1224,8 +1227,11 @@ Prompt for PACKAGE-NAME with completion."
 (defun fff-project-ibuffer ()
   "Open an IBuffer window showing all buffers in the current project."
   (interactive)
-  (if-let ((project (project-current)))
-      (projectile-ibuffer-by-project (project-root project))
+  (if-let ((proj (project-current)))
+      (let ((project-root (project-root proj))
+            (project-buffers (project-buffers proj)))
+        (ibuffer nil "*project-ibuffer*"
+                 `((predicate . (member (current-buffer) ',project-buffers)))))
     (message "Not in a project")))
 
 ;; switch to buffer functions
@@ -1235,26 +1241,26 @@ Prompt for PACKAGE-NAME with completion."
   (let ((current-buffer-name (buffer-name))
         max-number
         max-buffer)
-      (progn
-        (dolist (buf (buffer-list))
-          (when (string-match "\\*scratch\\*<\\([0-9]+\\)>" (buffer-name buf))
-            (let ((num (string-to-number (match-string 1 (buffer-name buf)))))
-              (unless max-number
-                (setq max-number num
-                      max-buffer buf))
-              (when (> num max-number)
-                (setq max-number num
-                      max-buffer buf)))))
-        (if max-buffer
-            (switch-to-buffer max-buffer)
-          (progn
-            (switch-to-buffer (get-buffer-create "*scratch*"))
-            (fundamental-mode))))))
+    (progn
+      (dolist (buf (buffer-list))
+        (when (string-match "\\*scratch\\*<\\([0-9]+\\)>" (buffer-name buf))
+          (let ((num (string-to-number (match-string 1 (buffer-name buf)))))
+            (unless max-number
+              (setq max-number num
+                    max-buffer buf))
+            (when (> num max-number)
+              (setq max-number num
+                    max-buffer buf)))))
+      (if max-buffer
+          (switch-to-buffer max-buffer)
+        (progn
+          (switch-to-buffer (get-buffer-create "*scratch*"))
+          (fundamental-mode))))))
 
 (defun fff-switch-to-new-scratch-buffer ()
- (interactive)
- (let ((new-buffer-name (generate-new-buffer-name "*scratch*")))
-   (switch-to-buffer new-buffer-name)))
+  (interactive)
+  (let ((new-buffer-name (generate-new-buffer-name "*scratch*")))
+    (switch-to-buffer new-buffer-name)))
 
 (defun fff-switch-or-create-gptel ()
   "Switch to the ChatGPT buffer or switch to the last buffer if already in ChatGPT buffer."
@@ -1262,21 +1268,21 @@ Prompt for PACKAGE-NAME with completion."
   (let ((current-buffer-name (buffer-name))
         max-number
         max-buffer)
-      (progn
-        (dolist (buf (buffer-list))
-          (when (string-match "\\*ChatGPT\\*<\\([0-9]+\\)>" (buffer-name buf))
-            (let ((num (string-to-number (match-string 1 (buffer-name buf)))))
-              (unless max-number
-                (setq max-number num
-                      max-buffer buf))
-              (when (> num max-number)
-                (setq max-number num
-                      max-buffer buf)))))
-        (if max-buffer
-            (switch-to-buffer max-buffer)
-          (progn
-            (gptel "*ChatGPT*")
-            (switch-to-buffer "*ChatGPT*"))))))
+    (progn
+      (dolist (buf (buffer-list))
+        (when (string-match "\\*ChatGPT\\*<\\([0-9]+\\)>" (buffer-name buf))
+          (let ((num (string-to-number (match-string 1 (buffer-name buf)))))
+            (unless max-number
+              (setq max-number num
+                    max-buffer buf))
+            (when (> num max-number)
+              (setq max-number num
+                    max-buffer buf)))))
+      (if max-buffer
+          (switch-to-buffer max-buffer)
+        (progn
+          (gptel "*ChatGPT*")
+          (switch-to-buffer "*ChatGPT*"))))))
 
 (defun fff-switch-to-new-gptel-buffer ()
   "Create and switch to a new ChatGPT buffer."
@@ -1343,14 +1349,14 @@ The DWIM behaviour of this command is as follows:
 - In every other case use the regular `keyboard-quit'."
   (interactive)
   (cond
-    ((region-active-p)
-      (keyboard-quit))
-    ((derived-mode-p  'completion-list-mode)
-      (delete-completion-window))
-    ((>  ( minibuffer-depth)  0)
-      (abort-recursive-edit))
-    (t
-      (keyboard-quit))))
+   ((region-active-p)
+    (keyboard-quit))
+   ((derived-mode-p  'completion-list-mode)
+    (delete-completion-window))
+   ((>  ( minibuffer-depth)  0)
+    (abort-recursive-edit))
+   (t
+    (keyboard-quit))))
 
 (defun fff-easy-hugo-menu-functions ()
   "Select and run an Easy Hugo function."
