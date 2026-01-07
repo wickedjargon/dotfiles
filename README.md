@@ -1,6 +1,6 @@
-my dot files
+# My Dot Files
 
-deploy my dotfiles and packages to a new debian system using:
+Deploy my dotfiles and install packages to a new debian system using:
 
 ```bash
 su -
