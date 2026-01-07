@@ -27,6 +27,7 @@ ripgrep                  # Fast grep alternative
 brightnessctl            # Control backlight brightness
 libnotify-bin            # Desktop notifications (notify-send)
 xfce4-appfinder          # Application finder for Xfce4
+xfce4-screenshooter      # Screenshot utility
 
 # Networking & System Tools
 net-tools                # Network tools (ifconfig, netstat, etc)
