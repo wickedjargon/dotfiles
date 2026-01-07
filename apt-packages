@@ -1,56 +1,56 @@
 # General utilities
-# emacs                    # Extensible text editor
-# neovim                   # Modern Vim-based text editor
-# firefox-esr              # Extended support release web browser
-# git                      # Version control system
-# network-manager          # Network connection manager
-# yt-dlp                   # YouTube and video downloader
-# mpv                      # Minimalist media player
-# feh                      # Lightweight image viewer
-# qdirstat                 # Disk usage analyzer with GUI
-# zathura                  # Minimalist document viewer
-# zathura-pdf-poppler      # PDF support for zathura
-# curl                     # Command-line data transfer tool
-# htop                     # Interactive process viewer
-# dunst                    # Lightweight notification daemon
-# imagemagick              # Image manipulation suite
-# unclutter                # Hide mouse cursor when idle
-# slock                    # Simple X screen locker
-# unzip                    # Archive extraction utility
-# wget                     # Network downloader
-# tree                     # Directory tree viewer
-# bash-completion          # Enhanced bash tab completion
-# fd-find                  # Fast find alternative
-# bat                      # Cat with syntax highlighting
-# jq                       # JSON processor
-# ripgrep                  # Fast grep alternative
-# brightnessctl            # Control backlight brightness
-# libnotify-bin            # Desktop notifications (notify-send)
-# xfce4-appfinder          # Application finder for Xfce4
-# xfce4-screenshooter      # Screenshot utility
-# xfce4-settings           # XFCE settings manager (appearance, display, etc)
-# nm-connection-editor     # NetworkManager connection editor
-# cheese                   # Webcam photo and video tool
-# libreoffice              # Office productivity suite
+emacs                    # Extensible text editor
+neovim                   # Modern Vim-based text editor
+firefox-esr              # Extended support release web browser
+git                      # Version control system
+network-manager          # Network connection manager
+yt-dlp                   # YouTube and video downloader
+mpv                      # Minimalist media player
+feh                      # Lightweight image viewer
+qdirstat                 # Disk usage analyzer with GUI
+zathura                  # Minimalist document viewer
+zathura-pdf-poppler      # PDF support for zathura
+curl                     # Command-line data transfer tool
+htop                     # Interactive process viewer
+dunst                    # Lightweight notification daemon
+imagemagick              # Image manipulation suite
+unclutter                # Hide mouse cursor when idle
+slock                    # Simple X screen locker
+unzip                    # Archive extraction utility
+wget                     # Network downloader
+tree                     # Directory tree viewer
+bash-completion          # Enhanced bash tab completion
+fd-find                  # Fast find alternative
+bat                      # Cat with syntax highlighting
+jq                       # JSON processor
+ripgrep                  # Fast grep alternative
+brightnessctl            # Control backlight brightness
+libnotify-bin            # Desktop notifications (notify-send)
+xfce4-appfinder          # Application finder for Xfce4
+xfce4-screenshooter      # Screenshot utility
+xfce4-settings           # XFCE settings manager (appearance, display, etc)
+nm-connection-editor     # NetworkManager connection editor
+cheese                   # Webcam photo and video tool
+libreoffice              # Office productivity suite
 
-# # Networking & System Tools
-# net-tools                # Network tools (ifconfig, netstat, etc)
-# dnsutils                 # DNS utilities (dig, nslookup, etc)
-# openssh-server           # SSH server for remote access
+# Networking & System Tools
+net-tools                # Network tools (ifconfig, netstat, etc)
+dnsutils                 # DNS utilities (dig, nslookup, etc)
+openssh-server           # SSH server for remote access
 
-# # Audio
-# pulseaudio               # PulseAudio sound server
-# pulseaudio-utils         # PulseAudio command-line tools (pactl)
-# pulseaudio-module-bluetooth  # Bluetooth audio support for PulseAudio
-# pavucontrol              # PulseAudio Volume Control GUI
-# alsa-utils               # ALSA utilities (alsamixer, aplay, etc)
-# alsa-topology-conf       # ALSA topology configuration files
-# alsa-ucm-conf            # ALSA Use Case Manager configuration
-# mpc                      # Command-line MPD client
-# ncmpcpp                  # Ncurses-based MPD client
+# Audio
+pulseaudio               # PulseAudio sound server
+pulseaudio-utils         # PulseAudio command-line tools (pactl)
+pulseaudio-module-bluetooth  # Bluetooth audio support for PulseAudio
+pavucontrol              # PulseAudio Volume Control GUI
+alsa-utils               # ALSA utilities (alsamixer, aplay, etc)
+alsa-topology-conf       # ALSA topology configuration files
+alsa-ucm-conf            # ALSA Use Case Manager configuration
+mpc                      # Command-line MPD client
+ncmpcpp                  # Ncurses-based MPD client
 
-# # Bluetooth
-# bluez                    # Bluetooth tools and daemons
+# Bluetooth
+bluez                    # Bluetooth tools and daemons
 
 # X11/Xorg packages
 xorg                     # X Window System meta-package
