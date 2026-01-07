@@ -1207,6 +1207,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   :custom
   (erc-join-buffer 'window) ;; Open a new window when joining channels.
   (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
+  (doom-modeline-irc nil)
   (erc-autojoin-channels-alist
    '((".*\\.libera\\.chat"
       "#programming"
