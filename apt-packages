@@ -30,6 +30,15 @@ net-tools                # Network tools (ifconfig, netstat, etc)
 dnsutils                 # DNS utilities (dig, nslookup, etc)
 openssh-server           # SSH server for remote access
 
+# Audio
+pulseaudio               # PulseAudio sound server
+pulseaudio-utils         # PulseAudio command-line tools (pactl)
+pulseaudio-module-bluetooth  # Bluetooth audio support for PulseAudio
+pavucontrol              # PulseAudio Volume Control GUI
+alsa-utils               # ALSA utilities (alsamixer, aplay, etc)
+alsa-topology-conf       # ALSA topology configuration files
+alsa-ucm-conf            # ALSA Use Case Manager configuration
+
 # X11/Xorg packages
 xorg                     # X Window System meta-package
 xserver-xorg             # X server for graphical display
