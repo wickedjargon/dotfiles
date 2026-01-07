@@ -52,27 +52,27 @@
 # # Bluetooth
 # bluez                    # Bluetooth tools and daemons
 
-# # X11/Xorg packages
-# xorg                     # X Window System meta-package
-# xserver-xorg             # X server for graphical display
-# xinit                    # X server initialization tool (startx)
-# xdotool                  # Command-line X11 automation
-# xclip                    # Command-line clipboard utility
-# xcape                    # Remap modifier keys to other keys
-# xwallpaper               # Wallpaper setting utility
-# x11-xserver-utils        # X server utilities (xrandr, xset, etc)
+# X11/Xorg packages
+xorg                     # X Window System meta-package
+xserver-xorg             # X server for graphical display
+xinit                    # X server initialization tool (startx)
+xdotool                  # Command-line X11 automation
+xclip                    # Command-line clipboard utility
+xcape                    # Remap modifier keys to other keys
+xwallpaper               # Wallpaper setting utility
+x11-xserver-utils        # X server utilities (xrandr, xset, etc)
 
-# # Fonts
-# fonts-noto-color-emoji   # Color emoji font from Google
+# Fonts
+fonts-noto-color-emoji   # Color emoji font from Google
 
-# # Development Tools
-# gdb                      # GNU debugger
+# Development Tools
+gdb                      # GNU debugger
 
-# # Build dependencies
-# build-essential          # Compilers and build tools (gcc, make, etc)
-# libx11-dev               # X11 client library development files
-# libxft-dev               # FreeType-based font rendering library
-# libxinerama-dev          # Multi-monitor X extension library
+# Build dependencies
+build-essential          # Compilers and build tools (gcc, make, etc)
+libx11-dev               # X11 client library development files
+libxft-dev               # FreeType-based font rendering library
+libxinerama-dev          # Multi-monitor X extension library
 
 # Test packages
 fzf                      # Fuzzy finder for command line
