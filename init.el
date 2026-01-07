@@ -55,6 +55,7 @@
   ;; Must be set before evil and evil-collection load
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
+  (setq evil-undo-system 'undo-fu)
 
   ;; for youtube change it to this:
   ;; (set-face-attribute 'default nil :height 150)
@@ -591,7 +592,6 @@
   (setq evil-want-C-u-scroll t)
   (setq evil-want-C-d-scroll t)
   (setq evil-insert-state-message nil)
-  (setq evil-undo-system 'undo-fu)
   (setq evil-want-fine-undo t)
   (setq evil-search-wrap nil)
   (setq evil-kill-on-visual-paste nil)
