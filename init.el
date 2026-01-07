@@ -1137,8 +1137,8 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
 (use-package git-timemachine :straight t :defer t)
 
 (use-package git-gutter :straight t
-  :hook (prog-mode . git-gutter-mode)
   :config
+  (global-git-gutter-mode +1)
   (setq git-gutter:update-interval 0.02)
   (add-hook 'find-file-hook
             (lambda ()
