@@ -32,6 +32,8 @@ xfce4-settings           # XFCE settings manager (appearance, display, etc)
 nm-connection-editor     # NetworkManager connection editor
 cheese                   # Webcam photo and video tool
 libreoffice              # Office productivity suite
+acpid                    # ACPI event daemon (for battery monitoring)
+upower                   # Power management tool (battery status)
 
 # Networking & System Tools
 net-tools                # Network tools (ifconfig, netstat, etc)
@@ -67,6 +69,15 @@ fonts-noto-color-emoji   # Color emoji font from Google
 
 # Development Tools
 gdb                      # GNU debugger
+
+# Emacs package dependencies
+libpoppler-glib-dev      # PDF rendering library for pdf-tools
+libpng-dev               # PNG library for pdf-tools
+sbcl                     # Steel Bank Common Lisp for sly package
+sqlite3                  # SQLite database for org-roam and other packages
+
+# Language servers for eglot
+clangd                   # C/C++ language server
 
 # Build dependencies
 build-essential          # Compilers and build tools (gcc, make, etc)

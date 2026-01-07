@@ -3,11 +3,11 @@ my dot files
 deploy my dotfiles and packages to a new debian system using:
 
 ```bash
-# clone the repo
+su -
+apt update && apt upgrade -y
+apt install -y git python3
 git clone https://github.com/wickedjargon/dotfiles.git
 cd dotfiles
-
-# run the deployment script
-sudo python3 deploy.py
+python3 deploy.py
 ```
 
