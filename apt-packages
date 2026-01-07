@@ -24,6 +24,9 @@ fd-find                  # Fast find alternative
 bat                      # Cat with syntax highlighting
 jq                       # JSON processor
 ripgrep                  # Fast grep alternative
+brightnessctl            # Control backlight brightness
+libnotify-bin            # Desktop notifications (notify-send)
+xfce4-appfinder          # Application finder for Xfce4
 
 # Networking & System Tools
 net-tools                # Network tools (ifconfig, netstat, etc)
@@ -38,6 +41,11 @@ pavucontrol              # PulseAudio Volume Control GUI
 alsa-utils               # ALSA utilities (alsamixer, aplay, etc)
 alsa-topology-conf       # ALSA topology configuration files
 alsa-ucm-conf            # ALSA Use Case Manager configuration
+mpc                      # Command-line MPD client
+ncmpcpp                  # Ncurses-based MPD client
+
+# Bluetooth
+bluez                    # Bluetooth tools and daemons
 
 # X11/Xorg packages
 xorg                     # X Window System meta-package
@@ -48,6 +56,9 @@ xclip                    # Command-line clipboard utility
 xcape                    # Remap modifier keys to other keys
 xwallpaper               # Wallpaper setting utility
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
+
+# Fonts
+fonts-noto-color-emoji   # Color emoji font from Google
 
 # Development Tools
 gdb                      # GNU debugger
