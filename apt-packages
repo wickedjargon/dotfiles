@@ -18,6 +18,7 @@ unclutter                # Hide mouse cursor when idle
 slock                    # Simple X screen locker
 unzip                    # Archive extraction utility
 wget                     # Network downloader
+sudo                     # Super User Do
 tree                     # Directory tree viewer
 bash-completion          # Enhanced bash tab completion
 fd-find                  # Fast find alternative
@@ -84,6 +85,3 @@ build-essential          # Compilers and build tools (gcc, make, etc)
 libx11-dev               # X11 client library development files
 libxft-dev               # FreeType-based font rendering library
 libxinerama-dev          # Multi-monitor X extension library
-
-# Test packages
-fzf                      # Fuzzy finder for command line
