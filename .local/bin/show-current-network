@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Get the current SSID.
+# 2>/dev/null hides errors if no wireless interface is found.
+ssid=$(iwgetid -r 2>/dev/null)
+
+if [ -z "$ssid" ]; then
+    notify-send "Network" "Not connected"
+else
+    notify-send "Network" "$ssid"
+fi

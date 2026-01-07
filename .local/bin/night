@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Set brightness to 5% (night mode)
+brightnessctl set 5%
+pkill -RTMIN+6 dwmblocks
