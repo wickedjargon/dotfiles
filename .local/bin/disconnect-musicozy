@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 MAC="41:42:AB:DD:51:37"
 
 # Ask bluez to disconnect

@@ -1,0 +1,4 @@
+# This file contains settings to be added to /etc/systemd/logind.conf
+# The deploy script will handle merging these settings into the system file
+
+HandleLidSwitch=hibernate

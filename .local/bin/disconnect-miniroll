@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 MAC="10:94:97:3C:C4:41"
 
 # Ask bluez to disconnect (use the bluetoothctl subcommand directly)

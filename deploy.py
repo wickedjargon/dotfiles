@@ -545,6 +545,13 @@ def deploy_dotfiles(username, script_dir):
     if bin_src.exists():
         deployments.append(('~/.local/bin', bin_src, bin_dst))
 
+    # Deploy .mozilla directory (Firefox policies)
+    mozilla_src = script_dir / '.mozilla'
+    mozilla_dst = home_dir / '.mozilla'
+    if mozilla_src.exists():
+        deployments.append(('~/.mozilla', mozilla_src, mozilla_dst))
+
+
     # Deploy dotfiles to home directory (e.g., ~/.bashrc, ~/.xinitrc)
     dotfiles_to_deploy = ['.bashrc', '.xinitrc', '.gtkrc-2.0']
     for dotfile_name in dotfiles_to_deploy:
@@ -599,6 +606,100 @@ def deploy_dotfiles(username, script_dir):
             pass  # Continue even if chown fails
 
     return True, None, backup_dir, backed_up_items
+
+
+def deploy_system_configs(script_dir):
+    """Deploy system configuration files to their appropriate system locations
+
+    Returns: (success, error_message)
+    """
+    system_configs_dir = script_dir / 'system-configs'
+
+    if not system_configs_dir.exists():
+        return True, None  # No system configs to deploy, not an error
+
+    deployed_files = []
+    failed_files = []
+
+    # Walk through system-configs directory
+    for root, dirs, files in os.walk(system_configs_dir):
+        for file in files:
+            src_file = Path(root) / file
+
+            # Calculate destination path by removing 'system-configs' prefix
+            relative_path = src_file.relative_to(system_configs_dir)
+
+            # Special handling for .patch files
+            if file.endswith('.patch'):
+                # Handle patching existing config files
+                dest_file = Path('/') / relative_path.parent / file.replace('.patch', '')
+
+                try:
+                    # Read patch content
+                    with open(src_file, 'r') as f:
+                        patch_lines = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+
+                    if dest_file.exists():
+                        # Read existing config
+                        with open(dest_file, 'r') as f:
+                            existing_content = f.read()
+
+                        # Check if patch lines already exist
+                        needs_update = False
+                        for patch_line in patch_lines:
+                            if patch_line not in existing_content:
+                                needs_update = True
+                                break
+
+                        if needs_update:
+                            # Backup original
+                            backup_path = Path(str(dest_file) + '.bak')
+                            shutil.copy2(dest_file, backup_path)
+
+                            # Append patch content
+                            with open(dest_file, 'a') as f:
+                                f.write('\n# Added by dotfiles deployment\n')
+                                for patch_line in patch_lines:
+                                    f.write(patch_line + '\n')
+
+                            deployed_files.append(str(relative_path))
+                    else:
+                        # Create new file with patch content
+                        dest_file.parent.mkdir(parents=True, exist_ok=True)
+                        with open(dest_file, 'w') as f:
+                            for patch_line in patch_lines:
+                                f.write(patch_line + '\n')
+                        deployed_files.append(str(relative_path))
+
+                except (IOError, OSError) as e:
+                    failed_files.append((str(relative_path), str(e)))
+                    continue
+            else:
+                # Regular file - direct copy
+                dest_file = Path('/') / relative_path
+
+                try:
+                    # Create parent directories if needed
+                    dest_file.parent.mkdir(parents=True, exist_ok=True)
+
+                    # Copy file
+                    shutil.copy2(src_file, dest_file)
+
+                    # Make scripts executable
+                    if dest_file.suffix == '.sh' or 'bin' in dest_file.parts or 'dispatcher.d' in dest_file.parts or 'system-sleep' in dest_file.parts:
+                        os.chmod(dest_file, 0o755)
+
+                    deployed_files.append(str(relative_path))
+
+                except (IOError, OSError) as e:
+                    failed_files.append((str(relative_path), str(e)))
+                    continue
+
+    if failed_files:
+        error_msg = f"Failed to deploy: {', '.join([f[0] for f in failed_files])}"
+        return False, error_msg
+
+    return True, None
 
 
 def main_tui(stdscr):
@@ -811,6 +912,25 @@ def main_tui(stdscr):
             if chr(response).lower() != 'y':
                 return
             row += 3
+
+    # Deploy system configurations
+    tui.show_progress(row, "Deploying system configurations...", success=None)
+    tui.stdscr.refresh()
+
+    success, error = deploy_system_configs(script_dir)
+
+    if not success:
+        tui.show_progress(row, "Deploying system configurations...", success=False)
+        tui.show_message(row + 1, 4, f"Error: {error}", color_pair=3)
+        tui.show_message(row + 2, 4, "Continue anyway? (y/n): ", color_pair=4)
+        tui.stdscr.refresh()
+        response = stdscr.getch()
+        if chr(response).lower() != 'y':
+            return
+        row += 4
+    else:
+        tui.show_progress(row, "Deploying system configurations...", success=True)
+        row += 1
 
     # Final message
     row += 2

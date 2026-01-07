@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Connect Nothing Headphone (1) and set as default audio output
 

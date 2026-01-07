@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Connect Musicozy headphones and set as default audio output
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # logout.sh - logs out of dwm
 
 # Send SIGTERM to the X session
