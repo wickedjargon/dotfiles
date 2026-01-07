@@ -28,6 +28,10 @@ brightnessctl            # Control backlight brightness
 libnotify-bin            # Desktop notifications (notify-send)
 xfce4-appfinder          # Application finder for Xfce4
 xfce4-screenshooter      # Screenshot utility
+xfce4-settings           # XFCE settings manager (appearance, display, etc)
+nm-connection-editor     # NetworkManager connection editor
+cheese                   # Webcam photo and video tool
+libreoffice              # Office productivity suite
 
 # Networking & System Tools
 net-tools                # Network tools (ifconfig, netstat, etc)
