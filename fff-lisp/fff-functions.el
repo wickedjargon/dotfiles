@@ -171,7 +171,7 @@
   "Put the current file path on the clipboard"
   (interactive)
   (let ((filename (if (equal major-mode 'dired-mode)
-                      default-directory
+                      (dired-get-filename nil t)
                     (buffer-file-name))))
     (when filename
       (with-temp-buffer
