@@ -545,13 +545,6 @@ def deploy_dotfiles(username, script_dir):
     if bin_src.exists():
         deployments.append(('~/.local/bin', bin_src, bin_dst))
 
-    # Deploy .mozilla directory (Firefox policies)
-    mozilla_src = script_dir / '.mozilla'
-    mozilla_dst = home_dir / '.mozilla'
-    if mozilla_src.exists():
-        deployments.append(('~/.mozilla', mozilla_src, mozilla_dst))
-
-
     # Deploy dotfiles to home directory (e.g., ~/.bashrc, ~/.xinitrc)
     dotfiles_to_deploy = ['.bashrc', '.xinitrc', '.gtkrc-2.0']
     for dotfile_name in dotfiles_to_deploy:
