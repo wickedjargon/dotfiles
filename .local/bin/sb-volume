@@ -3,15 +3,9 @@
 # Get the default sink
 SINK=@DEFAULT_SINK@
 
-# Check if PulseAudio is running and sink exists
-if ! pactl get-sink-volume "$SINK" &>/dev/null; then
-    echo ""
-    exit 0
-fi
-
 # Get the current volume and mute status
-VOLUME=$(pactl get-sink-volume "$SINK" 2>/dev/null | awk '{print $5}' | head -n1)
-MUTED=$(pactl get-sink-mute "$SINK" 2>/dev/null | awk '{print $2}')
+VOLUME=$(pactl get-sink-volume "$SINK" | awk '{print $5}' | head -n1)
+MUTED=$(pactl get-sink-mute "$SINK" | awk '{print $2}')
 
 if [ "$MUTED" = "yes" ]; then
     echo "🔇 $VOLUME"
