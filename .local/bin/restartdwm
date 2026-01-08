@@ -1,11 +1,9 @@
 #!/bin/sh
 
-dwm_pids=($(pgrep dwm))
-
 # iterate through each dwm instance and restart it
-for dwm_pid in "${dwm_pids[@]}"; do
+pgrep dwm | while read -r dwm_pid; do
     # kill the current dwm process
-    kill -hup "$dwm_pid"
+    kill -HUP "$dwm_pid"
 done
 
 # start a new instance of dwm
