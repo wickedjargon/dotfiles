@@ -1,18 +1,32 @@
 #!/bin/sh
 
 # Get first Wi-Fi interface
-WIFI_DEV=$(ls -d /sys/class/net/w* 2>/dev/null | grep -E '/sys/class/net/w.*' | head -n1 | xargs basename)
-if [ -n "$WIFI_DEV" ] && [ "$(cat /sys/class/net/$WIFI_DEV/operstate)" = "up" ]; then
-    WIFI_SIGNAL=$(awk -v dev="$WIFI_DEV" '$1 ~ dev { print int($3 * 100 / 70) }' /proc/net/wireless)
-    WIFI_ICON="📶 $WIFI_SIGNAL%"
+WIFI_PATH=$(ls -d /sys/class/net/w* 2>/dev/null | grep -E '/sys/class/net/w.*' | head -n1)
+if [ -n "$WIFI_PATH" ]; then
+    WIFI_DEV=$(basename "$WIFI_PATH")
+    if [ "$(cat /sys/class/net/$WIFI_DEV/operstate 2>/dev/null)" = "up" ]; then
+        WIFI_SIGNAL=$(awk -v dev="$WIFI_DEV" '$1 ~ dev { print int($3 * 100 / 70) }' /proc/net/wireless 2>/dev/null)
+        if [ -n "$WIFI_SIGNAL" ]; then
+            WIFI_ICON="📶 $WIFI_SIGNAL%"
+        else
+            WIFI_ICON="📶"
+        fi
+    else
+        WIFI_ICON=""
+    fi
 else
     WIFI_ICON=""
 fi
 
 # Get first Ethernet interface
-ETH_DEV=$(ls -d /sys/class/net/e* 2>/dev/null | grep -E '/sys/class/net/e.*' | head -n1 | xargs basename)
-if [ -n "$ETH_DEV" ] && [ "$(cat /sys/class/net/$ETH_DEV/operstate)" = "up" ]; then
-    ETH_ICON="🌐 ETH"
+ETH_PATH=$(ls -d /sys/class/net/e* 2>/dev/null | grep -E '/sys/class/net/e.*' | head -n1)
+if [ -n "$ETH_PATH" ]; then
+    ETH_DEV=$(basename "$ETH_PATH")
+    if [ "$(cat /sys/class/net/$ETH_DEV/operstate 2>/dev/null)" = "up" ]; then
+        ETH_ICON="🌐 ETH"
+    else
+        ETH_ICON=""
+    fi
 else
     ETH_ICON=""
 fi

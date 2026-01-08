@@ -2,18 +2,16 @@
 
 MAC="3C:B0:ED:A7:6A:88"
 
-# Check if the device is connected
-connected=$(bluetoothctl info "$MAC" | awk '/Connected:/ {print $2}')
+# Check if the device is connected (with timeout)
+connected=$(timeout 2 bluetoothctl info "$MAC" 2>/dev/null | awk '/Connected:/ {print $2}')
 
 if [ "$connected" = "yes" ]; then
-    # Get battery percentage
-    battery=$(bluetoothctl info "$MAC" | grep "Battery Percentage" | grep -oP '\(\K[0-9]+')
+    # Get battery percentage (with timeout)
+    battery=$(timeout 2 bluetoothctl info "$MAC" 2>/dev/null | grep "Battery Percentage" | grep -oP '\(\K[0-9]+')
     if [ -n "$battery" ]; then
         echo "🎧 ${battery}%"
     else
-        echo "🎧 ?%"
-        sleep 1
-        pkill -RTMIN+3 dwmblocks
+        echo "🎧 --"
     fi
 else
     # Don't show anything when not connected

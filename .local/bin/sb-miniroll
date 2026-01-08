@@ -2,8 +2,8 @@
 
 MAC="10:94:97:3C:C4:41"
 
-# Check if the device is connected
-connected=$(bluetoothctl info "$MAC" | awk '/Connected:/ {print $2}')
+# Check if the device is connected (with timeout)
+connected=$(timeout 2 bluetoothctl info "$MAC" 2>/dev/null | awk '/Connected:/ {print $2}')
 
 if [ "$connected" = "yes" ]; then
     # Show an icon when connected
