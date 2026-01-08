@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # Exit silently if no brightness control (desktop systems)
-if ! brightnessctl get &>/dev/null; then
+# Check if any backlight device exists
+if [ ! -d /sys/class/backlight ] || [ -z "$(ls -A /sys/class/backlight 2>/dev/null)" ]; then
     exit 0
 fi
 
