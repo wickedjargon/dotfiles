@@ -28,8 +28,9 @@ export OCEN_ROOT=/home/ff/.local/src/ocen
 export JAVA_HOME=/usr/lib/jvm/default
 export ZED_ALLOW_EMULATED_GPU=1
 
-# Qt theme - use GTK theme (Arc-Dark)
-export QT_QPA_PLATFORMTHEME=gtk3
+# qt theme
+export QT_QPA_PLATFORMTHEME=qt5ct
+export QT_QPA_PLATFORMTHEME_QT6=qt6ct
 
 # PATH env variable
 paths=(
