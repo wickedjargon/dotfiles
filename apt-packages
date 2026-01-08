@@ -64,6 +64,7 @@ xclip                    # Command-line clipboard utility
 xcape                    # Remap modifier keys to other keys
 xwallpaper               # Wallpaper setting utility
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
+arc-theme                # Arc Dark GTK theme
 
 # Fonts
 fonts-noto-color-emoji   # Color emoji font from Google
