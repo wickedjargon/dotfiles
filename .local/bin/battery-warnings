@@ -4,6 +4,11 @@
 BATTERY_PATH="/sys/class/power_supply/BAT0"
 SOUND_FILE="/usr/share/sounds/freedesktop/stereo/suspend-error.oga"
 
+# Exit early if no battery (desktop system)
+if [ ! -d "$BATTERY_PATH" ]; then
+    exit 0
+fi
+
 # Flags
 SENT_20=false
 SENT_10=false
