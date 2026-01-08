@@ -65,6 +65,7 @@ xcape                    # Remap modifier keys to other keys
 xwallpaper               # Wallpaper setting utility
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
 arc-theme                # Arc Dark GTK theme
+qt5-gtk-platformtheme    # Qt5 GTK theme integration
 
 # Fonts
 fonts-noto-color-emoji   # Color emoji font from Google
