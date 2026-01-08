@@ -1,6 +1,6 @@
 # My Dot Files
 
-Deploy my dotfiles and install packages to a new debian system using:
+Deploy my dotfiles and install packages to a new Debian system:
 
 ```bash
 su -
@@ -11,3 +11,27 @@ cd dotfiles
 python3 deploy.py
 ```
 
+## Post-Install
+
+- **Firefox extensions** (install manually from [addons.mozilla.org](https://addons.mozilla.org)):
+  - Dark Reader - dark mode for websites
+  - uBlock Origin - ad blocker
+  - Vimium - keyboard navigation
+  - SponsorBlock - skip YouTube sponsors
+  - I Still Don't Care About Cookies - remove cookie banners
+  - Read Aloud - text-to-speech
+  - Defund Wikipedia - remove donation banners
+- Turn off Firefox hardware acceleration for PCs on older Sandy Bridge CPUs
+- make firefox compact 
+- make firefox use sidebar for tabs
+- set up qt theme
+
+## Possible Future Wayland Migration
+
+If switching to Wayland, transition to:
+- **dwl** – graphical environment (dwm replacement)
+- **foot** – terminal (st replacement)
+- **keyd** – keyboard remapping daemon
+- **dwlb + someblocks** – statusbar (dwmblocks replacement)
+- **bemenu/wmenu** – dropdown menu (dmenu replacement)
+- **swayimg** – image viewer
