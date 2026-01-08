@@ -13,7 +13,7 @@ fi
 SENT_20=false
 SENT_10=false
 
-if ! command -v acpi_listen &> /dev/null; then
+if ! command -v acpi_listen >/dev/null 2>&1; then
     notify-send "Battery Monitor" "Error: acpi_listen not found. Install 'acpid'."
     exit 1
 fi
