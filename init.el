@@ -1454,6 +1454,7 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   :hook (prog-mode . (lambda ()
                        (unless (derived-mode-p 'emacs-lisp-mode)
                          (flymake-mode +1)))))
+
 (use-package eglot
   :ensure nil
   :hook ((rust-mode
