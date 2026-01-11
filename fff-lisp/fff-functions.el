@@ -1524,3 +1524,37 @@ return value."
           (upcase-region (point) (1+ (point))))
         ;; Jump to the end of the current sentence to prepare for the next loop
         (forward-sentence)))))
+
+(defun fff-publish-region-online ()
+  "Publish the current region to 0x0.st and return the URL.
+The URL is copied to the kill ring and displayed in the minibuffer."
+  (interactive)
+  (if (not (use-region-p))
+      (message "No region selected!")
+    (let* ((url "https://0x0.st") ;; URL is now defined locally here
+           (text (buffer-substring-no-properties (region-beginning) (region-end)))
+           (boundary (format "----EmacsFormBoundary%s" (format-time-string "%s")))
+           (url-request-method "POST")
+           (url-request-extra-headers
+            `(("Content-Type" . ,(format "multipart/form-data; boundary=%s" boundary))))
+           (url-request-data
+            (encode-coding-string
+             (concat
+              "--" boundary "\r\n"
+              "Content-Disposition: form-data; name=\"file\"; filename=\"snippet.txt\"\r\n"
+              "Content-Type: text/plain\r\n"
+              "\r\n"
+              text "\r\n"
+              "--" boundary "--\r\n")
+             'utf-8)))
+      (url-retrieve
+       url
+       (lambda (status)
+         (if (plist-get status :error)
+             (message "Error uploading to 0x0.st: %s" (plist-get status :error))
+           (goto-char (point-min))
+           (re-search-forward "^$")
+           (let ((result-url (string-trim (buffer-substring (point) (point-max)))))
+             (kill-new result-url)
+             (message "Uploaded to 0x0.st: %s (URL copied to clipboard)" result-url))))
+       nil t t))))
