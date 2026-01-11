@@ -1483,8 +1483,6 @@ return value."
   (interactive "sURL: ")
   (yeetube-mpv-play url))
 
-;;; movement
-
 (defun fff-delete-till-beginning-of-line ()
   "Delete from the current point to the beginning of the line."
   (interactive)
