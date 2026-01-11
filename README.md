@@ -25,3 +25,9 @@ python3 deploy.py
 - make firefox compact 
 - make firefox use sidebar for tabs
 - set up qt theme
+- bluetooth
+
+# Features to be added to script
+
+- setup bluetooth
+- setup firefox extensions
