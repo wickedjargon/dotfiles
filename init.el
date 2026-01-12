@@ -1519,3 +1519,7 @@ With a prefix ARG always prompt for command to use."
           (shell-command (concat "start \"\" \"" current-file-name "\""))
         (call-process program nil 0 nil current-file-name)))))
 
+(use-package editorconfig
+  :ensure nil
+  :config
+  (editorconfig-mode 1))
