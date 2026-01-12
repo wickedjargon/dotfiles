@@ -724,6 +724,16 @@
 ;; visual select inside generic brackets using `b', `vib'
 (use-package evil-textobj-anyblock :straight t :defer t)
 
+(use-package evil-snipe
+  :straight t
+  :diminish evil-snipe-local-mode
+  :config
+  ;; Enable evil-snipe globally
+  (evil-snipe-mode +1)
+  ;; Override evil's default f/F/t/T behavior
+  ;; This allows you to snipe with 2 characters using f/t
+  (evil-snipe-override-mode +1))
+
 ;;; Other Key Binding Packages
 
 (use-package hydra :straight t :defer t :commands defhydra
