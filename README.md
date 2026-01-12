@@ -13,7 +13,7 @@ python3 deploy.py
 
 ## Post-Install
 
-- **Firefox extensions** (install manually from [addons.mozilla.org](https://addons.mozilla.org)):
+- **Firefox extensions** (automatically installed via `firefox-extensions.sh`):
   - Dark Reader - dark mode for websites
   - uBlock Origin - ad blocker
   - Vimium - keyboard navigation
@@ -30,4 +30,3 @@ python3 deploy.py
 # Features to be added to script
 
 - setup bluetooth
-- setup firefox extensions

@@ -695,6 +695,36 @@ def deploy_system_configs(script_dir):
     return True, None
 
 
+def install_firefox_extensions(script_dir):
+    """Install Firefox extensions via Enterprise Policies
+
+    Returns: (success, error_message)
+    """
+    firefox_script = script_dir / 'firefox-extensions.sh'
+
+    if not firefox_script.exists():
+        return True, None  # No script to run, not an error
+
+    try:
+        # Make script executable
+        os.chmod(firefox_script, 0o755)
+
+        # Run the script
+        result = subprocess.run(
+            [str(firefox_script)],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        return True, None
+
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
+        error_msg = f"Failed to install Firefox extensions: {str(e)}"
+        return False, error_msg
+
+
 def main_tui(stdscr):
     """Main TUI application"""
     tui = DeploymentTUI(stdscr)
@@ -923,6 +953,25 @@ def main_tui(stdscr):
         row += 4
     else:
         tui.show_progress(row, "Deploying system configurations...", success=True)
+        row += 1
+
+    # Install Firefox extensions
+    tui.show_progress(row, "Installing Firefox extensions...", success=None)
+    tui.stdscr.refresh()
+
+    success, error = install_firefox_extensions(script_dir)
+
+    if not success:
+        tui.show_progress(row, "Installing Firefox extensions...", success=False)
+        tui.show_message(row + 1, 4, f"Error: {error}", color_pair=3)
+        tui.show_message(row + 2, 4, "Continue anyway? (y/n): ", color_pair=4)
+        tui.stdscr.refresh()
+        response = stdscr.getch()
+        if chr(response).lower() != 'y':
+            return
+        row += 4
+    else:
+        tui.show_progress(row, "Installing Firefox extensions...", success=True)
         row += 1
 
     # Final message
