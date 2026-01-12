@@ -1490,7 +1490,6 @@ return value."
     (beginning-of-line)
     (delete-region (point) start)))
 
-
 (defun fff-evil-regex-search-forward ()
   "Force a regex search using Evil's search engine, ignoring the global literal setting."
   (interactive)
