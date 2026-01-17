@@ -374,7 +374,6 @@
           "\\*Async Shell Command\\*"
           "^\\*Flymake diagnostics"
           help-mode
-          helpful-mode
           compilation-mode))
   :config
   (popper-mode +1))
