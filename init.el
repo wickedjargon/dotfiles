@@ -1277,7 +1277,9 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
 
 ;;; Docs / Lookup
 
-(use-package help-fns :ensure nil
+(use-package help :ensure nil
+  :custom
+  (help-window-select t)   ; Focus the help window immediately
   :hook
   (help-fns-describe-function-functions . shortdoc-help-fns-examples-function))
 
