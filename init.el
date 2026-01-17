@@ -155,7 +155,6 @@
       (display-battery-mode +1)))                           ;; conditionally check if file exists before displaying battery mode
 
   (setq frame-resize-pixelwise t)                         ;; cover the whole screen when maximized
-  (setq help-window-select t)  ; Switch to help buffers automatically
   (setq use-dialog-box nil)
   (setq fill-column 100)
   (setq suggest-key-bindings nil)                         ;; don't display key bindings suggestions when I run M-x commands
