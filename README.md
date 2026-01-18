@@ -29,4 +29,5 @@ python3 deploy.py
 
 # Features to be added to script
 
+- go to about:policies in firefox to trigger extension installation
 - setup bluetooth
