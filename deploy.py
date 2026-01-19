@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Auto-deploy script for my dotfiles
-Creates user, sets up home directory, and deploys dotfiles
+Creates user, sets up home directory, deploys dotfiles, installs packages
 """
 
 import curses
