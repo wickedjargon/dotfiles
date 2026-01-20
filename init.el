@@ -291,14 +291,6 @@
   (setq pixel-scroll-precision-use-momentum nil)
   :hook (after-init . pixel-scroll-precision-mode))
 
-(use-package time
-  :ensure nil
-  :init
-  (setq display-time-default-load-average nil)
-  (setq display-time-day-and-date t)
-  :config
-  (display-time))
-
 ;;; Buffer Navigation
 
 (use-package dired
@@ -1362,6 +1354,14 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   (setq doom-modeline-icon nil)
   :config
   (doom-modeline-mode +1))
+
+(use-package time
+  :ensure nil
+  :init
+  (setq display-time-default-load-average nil)
+  (setq display-time-day-and-date t)
+  :config
+  (display-time))
 
 (use-package pulsar :straight t :defer t
   :hook (after-init . pulsar-global-mode)
