@@ -13,14 +13,6 @@ python3 deploy.py
 
 ## Post-Install
 
-- **Firefox extensions** (automatically installed via `firefox-extensions.sh`):
-  - Dark Reader - dark mode for websites
-  - uBlock Origin - ad blocker
-  - Vimium - keyboard navigation
-  - SponsorBlock - skip YouTube sponsors
-  - I Still Don't Care About Cookies - remove cookie banners
-  - Read Aloud - text-to-speech
-  - Defund Wikipedia - remove donation banners
 - Turn off Firefox hardware acceleration for PCs on older Sandy Bridge CPUs
 - make firefox compact 
 - make firefox use sidebar for tabs
@@ -29,5 +21,12 @@ python3 deploy.py
 
 # Features to be added to script
 
-- go to about:policies in firefox to trigger extension installation
+- these firefox extensions are included in `firefox-extensions.sh`. Go to about:policies in firefox to trigger their installation:
+  - Dark Reader - dark mode for websites
+  - uBlock Origin - ad blocker
+  - Vimium - keyboard navigation
+  - SponsorBlock - skip YouTube sponsors
+  - I Still Don't Care About Cookies - remove cookie banners
+  - Read Aloud - text-to-speech
+  - Defund Wikipedia - remove donation banners
 - setup bluetooth
