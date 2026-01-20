@@ -1336,7 +1336,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   :config
   (defun fff-eshell-clear-1-binding ()
     "Bind C-c c to fff-eshell-clear-1 in eshell."
-    (local-set-key (kbd "C-c c") 'fff-eshell-clear-1)))
+    (local-set-key (kbd "C-c c") #'fff-eshell-clear-1)))
 
 ;;; UI Packages
 
