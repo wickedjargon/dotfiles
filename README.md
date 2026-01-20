@@ -16,12 +16,7 @@ python3 deploy.py
 - Turn off Firefox hardware acceleration for PCs on older Sandy Bridge CPUs
 - make firefox compact 
 - make firefox use sidebar for tabs
-- set up qt theme
-- bluetooth
-
-# Features to be added to script
-
-- these firefox extensions are included in `firefox-extensions.sh`. Go to about:policies in firefox to trigger their installation:
+- These firefox extensions are included in `firefox-extensions.sh`. Go to about:policies in firefox to trigger their installation:
   - Dark Reader - dark mode for websites
   - uBlock Origin - ad blocker
   - Vimium - keyboard navigation
@@ -29,4 +24,9 @@ python3 deploy.py
   - I Still Don't Care About Cookies - remove cookie banners
   - Read Aloud - text-to-speech
   - Defund Wikipedia - remove donation banners
+- set up qt theme
+- setup bluetooth
+
+# Features to be added to script
+
 - setup bluetooth
