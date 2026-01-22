@@ -1523,5 +1523,3 @@ With a prefix ARG always prompt for command to use."
   :ensure nil
   :config
   (editorconfig-mode 1))
-
-;; test
