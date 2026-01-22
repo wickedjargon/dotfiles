@@ -15,7 +15,9 @@ htop                     # Interactive process viewer
 dunst                    # Lightweight notification daemon
 imagemagick              # Image manipulation suite
 unclutter                # Hide mouse cursor when idle
-slock                    # Simple X screen locker
+suckless-tools           # Suckless utilities (includes slock, dmenu, etc)
+sxiv                     # Simple X Image Viewer (scriptable)
+vis                      # Modal text editor combining vim and sam ideas
 unzip                    # Archive extraction utility
 wget                     # Network downloader
 sudo                     # Super User Do

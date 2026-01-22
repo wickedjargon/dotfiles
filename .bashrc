@@ -21,9 +21,9 @@ PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
 [ -r /usr/share/bash-completion/bash_completion ] && . /usr/share/bash-completion/bash_completion
 
 # exports
-export EDITOR="nvim"
-export BROWSER="chromium"
-export SUDO_EDITOR="nvim"
+export EDITOR="vis"
+export BROWSER="firefox"
+export SUDO_EDITOR="vis"
 export OCEN_ROOT=/home/ff/.local/src/ocen
 export JAVA_HOME=/usr/lib/jvm/default
 export ZED_ALLOW_EMULATED_GPU=1
