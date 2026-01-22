@@ -93,18 +93,3 @@ task-spooler               # Job queue for commands and downloads
 suckless-tools             # Suckless utilities (slock, dmenu, etc.)
 tesseract-ocr              # OCR engine for text recognition
 tesseract-ocr-eng          # English language pack for Tesseract
-
-# Notes:
-# - Most packages have same/similar names as Arch
-# - exfat-utils -> exfatprogs or exfat-fuse
-# - tesseract -> tesseract-ocr
-# - simple-mtpfs -> jmtpfs or go-mtpfs
-# - zathura-pdf-mupdf -> zathura-pdf-poppler
-# - slock is included in suckless-tools
-#
-# NOT available in Debian (AUR or Arch-specific):
-# - zsh-fast-syntax-highlighting-git
-# - gtk-theme-arc-gruvbox-git
-# - librewolf-bin + extensions
-# - arkenfox-user.js
-# - mutt-wizard-git
