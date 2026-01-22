@@ -145,7 +145,9 @@ Each value is a floating percentage 0–100."
          (mem-plist (htop-style-monitor-parse-free))
          (tasks-plist (htop-style-monitor-get-tasks-load-uptime)))
     (with-current-buffer (get-buffer-create htop-style-monitor-buffer)
-      (let ((inhibit-read-only t))
+      ;; Save cursor position (line number)
+      (let ((saved-line (line-number-at-pos (point)))
+            (inhibit-read-only t))
         (erase-buffer)
         ;; render CPU per core
         (insert "CPU per-core:\n")
@@ -163,7 +165,9 @@ Each value is a floating percentage 0–100."
                   (format " (%d/%d MB)\n" sused stot)))
         ;; right side info
         (insert "\n" (htop-style-monitor-format-right-info tasks-plist) "\n")
+        ;; Restore cursor position
         (goto-char (point-min))
+        (forward-line (1- saved-line))
         (read-only-mode 1)))))
 
 ;;;###autoload
