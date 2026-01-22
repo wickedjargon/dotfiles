@@ -1,0 +1,81 @@
+# Packages in debian-packages-to-consider NOT in apt-packages
+
+## X11/Xorg
+- `x11-utils` - X11 utilities (xwininfo, xprop, etc.)
+
+## Fonts
+- `fonts-libertinus` - Libertinus sans and serif fonts
+- `fonts-font-awesome` - Iconic font with extended glyph support
+- `fonts-dejavu` - DejaVu fonts for emoji display
+- `fonts-noto` - Expansive Noto font package
+
+## File Management & Utilities
+- `lf` - Extensive terminal file manager
+- `ueberzug` - Preview images in terminal (for lf)
+- `bc` - Mathematics calculator language
+- `dosfstools` - MS-DOS FAT filesystem utilities
+- `exfatprogs` - exFAT filesystem utilities
+- `atool` - Archive manager and information tool
+- `fzf` - Fuzzy finder for files and selection
+- `moreutils` - Collection of useful Unix utilities
+- `socat` - Multipurpose relay for data transfer
+
+## Display & Graphics
+- `xcompmgr` - X compositor for transparency and effects
+- `arandr` - Visual front-end for XRandR monitor setup
+- `nsxiv` - Neo Simple X Image Viewer (fork of sxiv)
+- `maim` - Screenshot utility
+- `xbacklight` - Control screen brightness levels
+
+## Notifications & Desktop
+- `gnome-keyring` - System keyring for credentials
+
+## Themes
+- `python3-qdarkstyle` - Dark Qt theme for Python applications
+
+## Multimedia
+- `ffmpeg` - Video/audio recording and conversion
+- `ffmpegthumbnailer` - Video thumbnail generator
+- `mpd` - Music Player Daemon
+- `mediainfo` - Audio/video file information tool
+
+## Audio
+- `wireplumber` - PipeWire session/policy manager
+- `pipewire-pulse` - PipeWire PulseAudio compatibility
+- `pulsemixer` - Terminal audio controller for PulseAudio
+
+## Editors & Productivity
+- `calcurse` - Terminal calendar and todo manager
+- `abook` - Terminal address book for email
+- `sc-im` - Terminal spreadsheet with vim keybindings
+
+## System & Documentation
+- `man-db` - Manual page reader
+
+## Internet & Communication
+- `newsboat` - Terminal RSS feed reader
+- `lynx` - Terminal web browser
+
+## Filesystem Support
+- `ntfs-3g` - NTFS filesystem driver
+- `jmtpfs` - MTP device mounting (for phones)
+
+## Document Viewers
+- `poppler-utils` - PDF manipulation utilities
+
+## Advanced Tools
+- `task-spooler` - Job queue for commands and downloads
+- `tesseract-ocr` - OCR engine for text recognition
+- `tesseract-ocr-eng` - English language pack for Tesseract
+
+---
+
+## Summary
+**Total missing packages: 42**
+
+### Notes
+- You already have `xorg` (meta-package) which may include `x11-utils`
+- You already have `sxiv`, so `nsxiv` might be redundant
+- You have PulseAudio but are considering PipeWire replacements
+- You have `brightnessctl` instead of `xbacklight`
+- You have `xfce4-screenshooter` instead of `maim`
