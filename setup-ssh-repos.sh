@@ -65,13 +65,12 @@ echo ""
 REPOS_CONVERTED=0
 REPOS_SKIPPED=0
 
-# Wickedjargon repos we're looking for
-WICKEDJARGON_REPOS=("emacs" "dwm" "dmenu" "dwmblocks")
+# Wickedjargon repos we're looking for (exact directory names)
+WICKEDJARGON_REPOS=("dwm" "dwmblocks" "dmenu" "st" ".emacs.d")
 
 # Search locations
 SEARCH_PATHS=(
     ~/.local/src
-    ~/.config
     ~/
 )
 
@@ -123,14 +122,8 @@ for search_path in "${SEARCH_PATHS[@]}"; do
     fi
     
     for repo_name in "${WICKEDJARGON_REPOS[@]}"; do
-        # Try direct path
         if [ -d "$search_path/$repo_name" ]; then
             convert_repo "$search_path/$repo_name"
-        fi
-        
-        # Try with dot prefix (e.g., .emacs.d)
-        if [ -d "$search_path/.$repo_name.d" ]; then
-            convert_repo "$search_path/.$repo_name.d"
         fi
     done
 done
