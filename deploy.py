@@ -176,11 +176,11 @@ def is_safe_dest_path(dest_path):
     return True
 
 
-def read_git_dotfiles_home_file(script_dir):
-    """Read git repository URLs from git-dotfiles-home file
+def read_git_dotfiles_file(script_dir):
+    """Read git repository URLs from git-dotfiles file
     Format: repo-url destination-directory
     """
-    packages_file = script_dir / 'git-dotfiles-home'
+    packages_file = script_dir / 'git-dotfiles'
     if not packages_file.exists():
         return []
 
@@ -960,7 +960,7 @@ def main_tui(stdscr):
         return
 
     # Clone dotfile repos to home directory (before package installation)
-    dotfiles_repos = read_git_dotfiles_home_file(script_dir)
+    dotfiles_repos = read_git_dotfiles_file(script_dir)
     if dotfiles_repos:
         tui.show_message(row, 4, f"Cloning dotfile repositories ({len(dotfiles_repos)} total):",
                         color_pair=1, bold=True)
