@@ -1589,3 +1589,9 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
       (if (> seconds-until-target 0)
           (tmr (number-to-string (/ seconds-until-target 60)))
         (error "The specified time is invalid")))))
+
+(defun fff-toggle-evil-regexp-search ()
+  "Toggle the value of evil-regexp-search and message the new state."
+  (interactive)
+  (setq evil-regexp-search (not evil-regexp-search))
+  (message "evil-regexp-search is now %s" (if evil-regexp-search "enabled" "disabled")))
