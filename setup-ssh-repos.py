@@ -2,6 +2,7 @@
 """
 Post-deployment script to convert wickedjargon repos to SSH remotes.
 Run this as a regular user (NOT with sudo) after deploy.py completes.
+Ensure you've copied your SSH keys to the new system before running this script.
 """
 
 import os
