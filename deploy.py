@@ -460,6 +460,96 @@ def is_package_installed(package_name):
         return False
 
 
+def read_third_party_packages_file(script_dir):
+    """Read third-party package repository configurations
+    Format: package_name | key_url | repo_line
+    Returns list of tuples: (package_name, key_url, repo_line)
+    """
+    packages_file = script_dir / 'third-party-apt-packages'
+    if not packages_file.exists():
+        return []
+
+    repos = []
+    with open(packages_file, 'r') as f:
+        for line_num, line in enumerate(f, 1):
+            line = line.strip()
+            # Skip empty lines and comments
+            if not line or line.startswith('#'):
+                continue
+
+            # Parse the line
+            parts = [part.strip() for part in line.split('|')]
+            if len(parts) != 3:
+                print(f"Warning: Skipping invalid line {line_num} in third-party-apt-packages", file=sys.stderr)
+                continue
+
+            package_name, key_url, repo_line = parts
+            repos.append((package_name, key_url, repo_line))
+
+    return repos
+
+
+def setup_third_party_repos(repos, tui, start_row):
+    """Setup third-party APT repositories"""
+    if not repos:
+        return True, None, start_row
+
+    tui.show_progress(start_row, "Setting up third-party repositories...", success=None)
+    tui.stdscr.refresh()
+
+    keyrings_dir = Path('/etc/apt/keyrings')
+    sources_dir = Path('/etc/apt/sources.list.d')
+
+    # Create keyrings directory if it doesn't exist
+    try:
+        keyrings_dir.mkdir(parents=True, exist_ok=True)
+    except (OSError, IOError) as e:
+        tui.show_progress(start_row, "Setting up third-party repositories...", success=False)
+        return False, f"Failed to create keyrings directory: {e}", start_row + 1
+
+    failed_repos = []
+
+    for package_name, key_url, repo_line in repos:
+        try:
+            # Download and install GPG key
+            key_filename = f"{package_name}-repo-key.gpg"
+            key_path = keyrings_dir / key_filename
+
+            # Download key
+            result = subprocess.run(
+                ['curl', '-fsSL', key_url],
+                capture_output=True,
+                check=True,
+                timeout=30
+            )
+
+            # Dearmor and save key
+            subprocess.run(
+                ['gpg', '--dearmor', '--yes', '-o', str(key_path)],
+                input=result.stdout,
+                check=True,
+                timeout=10
+            )
+
+            # Add repository to sources.list.d
+            sources_file = sources_dir / f"{package_name}.list"
+            with open(sources_file, 'w') as f:
+                f.write(f"{repo_line}\n")
+
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, IOError) as e:
+            failed_repos.append(package_name)
+            # Log error but continue with other repos
+            with open('/tmp/dotfiles-deploy.log', 'a') as f:
+                f.write(f"\nFailed to setup repository for {package_name}: {str(e)}\n")
+
+    if failed_repos:
+        tui.show_progress(start_row, "Setting up third-party repositories...", success=False)
+        return False, failed_repos, start_row + 1
+
+    tui.show_progress(start_row, "Setting up third-party repositories...", success=True)
+    return True, None, start_row + 1
+
+
 def install_packages(packages, tui, start_row):
     """Install packages using apt, showing progress for each one"""
     if not packages:
@@ -862,15 +952,44 @@ def main_tui(stdscr):
                 return
             row += 3
 
-    # Install packages
-    packages = read_packages_file(script_dir)
-    if packages:
-        tui.show_message(row, 4, f"Installing packages ({len(packages)} total):",
+    # Setup third-party repositories
+    third_party_repos = read_third_party_packages_file(script_dir)
+    third_party_package_names = []
+    if third_party_repos:
+        tui.show_message(row, 4, f"Setting up third-party repositories ({len(third_party_repos)} total):",
                         color_pair=1, bold=True)
         row += 1
         tui.stdscr.refresh()
 
-        success, result, row = install_packages(packages, tui, row)
+        success, result, row = setup_third_party_repos(third_party_repos, tui, row)
+
+        if success:
+            # Extract package names to install later
+            third_party_package_names = [name for name, _, _ in third_party_repos]
+            row += 1
+        else:
+            failed_repos = result
+            row += 1
+            tui.show_message(row, 4, f"Failed to setup repos: {', '.join(failed_repos)}",
+                           color_pair=3)
+            tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
+            tui.stdscr.refresh()
+            response = stdscr.getch()
+            if chr(response).lower() != 'y':
+                return
+            row += 3
+
+    # Install packages
+    packages = read_packages_file(script_dir)
+    # Add third-party package names to the installation list
+    all_packages = packages + third_party_package_names
+    if all_packages:
+        tui.show_message(row, 4, f"Installing packages ({len(all_packages)} total):",
+                        color_pair=1, bold=True)
+        row += 1
+        tui.stdscr.refresh()
+
+        success, result, row = install_packages(all_packages, tui, row)
 
         if success:
             # Success - continue to dotfiles
