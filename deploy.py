@@ -900,18 +900,6 @@ def main_tui(stdscr):
                 tui.show_message(row + 1, 4, "Press any key to exit...", color_pair=3)
                 stdscr.getch()
                 return
-
-            # Add to sudo group
-            tui.show_progress(row, "Adding to sudo group...", success=None)
-            tui.stdscr.refresh()
-            if add_user_to_sudo(username):
-                tui.show_progress(row, "Adding to sudo group...", success=True)
-                row += 1
-            else:
-                tui.show_progress(row, "Adding to sudo group...", success=False)
-                tui.show_message(row + 1, 4, "Press any key to exit...", color_pair=3)
-                stdscr.getch()
-                return
         else:
             tui.show_progress(row, f"Creating user '{username}'...", success=False)
             if error_msg:
@@ -920,6 +908,18 @@ def main_tui(stdscr):
             tui.show_message(row + 1, 4, "Press any key to exit...", color_pair=3)
             stdscr.getch()
             return
+
+    # Add to sudo group (for both new and existing users)
+    tui.show_progress(row, "Adding to sudo group...", success=None)
+    tui.stdscr.refresh()
+    if add_user_to_sudo(username):
+        tui.show_progress(row, "Adding to sudo group...", success=True)
+        row += 1
+    else:
+        tui.show_progress(row, "Adding to sudo group...", success=False)
+        tui.show_message(row + 1, 4, "Press any key to exit...", color_pair=3)
+        stdscr.getch()
+        return
 
     # Clone dotfile repos to home directory (before package installation)
     dotfiles_repos = read_git_dotfiles_home_file(script_dir)
