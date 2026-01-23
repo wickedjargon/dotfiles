@@ -251,7 +251,7 @@ def clone_and_build_repos(repos, username, tui, start_row):
         try:
             # Clone the repository
             if not repo_path.exists():
-                result = subprocess.run(
+                subprocess.run(
                     ['git', 'clone', repo_url, str(repo_path)],
                     check=True,
                     capture_output=True,
@@ -278,7 +278,7 @@ def clone_and_build_repos(repos, username, tui, start_row):
                 raise FileNotFoundError(f"No Makefile found in {repo_path}")
 
             # Build with make
-            result = subprocess.run(
+            subprocess.run(
                 ['make'],
                 cwd=str(repo_path),
                 check=True,
@@ -288,7 +288,7 @@ def clone_and_build_repos(repos, username, tui, start_row):
             )
 
             # Install with sudo make install
-            result = subprocess.run(
+            subprocess.run(
                 ['make', 'install'],
                 cwd=str(repo_path),
                 check=True,
@@ -369,7 +369,7 @@ def clone_dotfiles_home(repos, username, tui, start_row):
                 backed_up_items.append(dest_dir)
 
             # Clone the repository
-            result = subprocess.run(
+            subprocess.run(
                 ['git', 'clone', repo_url, str(repo_path)],
                 check=True,
                 capture_output=True,
@@ -838,7 +838,7 @@ def install_firefox_extensions(script_dir):
         os.chmod(firefox_script, 0o755)
 
         # Run the script
-        result = subprocess.run(
+        subprocess.run(
             [str(firefox_script)],
             check=True,
             capture_output=True,
