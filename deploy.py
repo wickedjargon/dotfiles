@@ -446,6 +446,42 @@ def read_packages_file(script_dir):
     return packages
 
 
+def read_copy_these_file(script_dir):
+    """Read dotfile paths from copy-these file
+    Format: Files/directories to copy, one per line (e.g., /.bashrc, /.config/)
+    Leading / is removed to get path relative to repo
+    """
+    copy_these_file = script_dir / 'copy-these'
+    if not copy_these_file.exists():
+        return []
+
+    paths = []
+    with open(copy_these_file, 'r') as f:
+        for line_num, line in enumerate(f, 1):
+            line = line.strip()
+            # Skip empty lines and full-line comments
+            if not line or line.startswith('#'):
+                continue
+
+            # Handle inline comments
+            if '#' in line:
+                line = line.split('#')[0].strip()
+
+            if line:
+                # Remove leading / to get relative path
+                if line.startswith('/'):
+                    line = line[1:]
+
+                # Validate path safety
+                if not is_safe_dest_path(line):
+                    print(f"Warning: Skipping unsafe path at line {line_num}: {line}", file=sys.stderr)
+                    continue
+
+                paths.append(line)
+
+    return paths
+
+
 def is_package_installed(package_name):
     """Check if a package is already installed"""
     try:
@@ -623,24 +659,26 @@ def deploy_dotfiles(username, script_dir):
 
     deployments = []
 
-    # Deploy .config directory
-    config_src = script_dir / '.config'
-    config_dst = home_dir / '.config'
-    if config_src.exists():
-        deployments.append(('~/.config', config_src, config_dst))
+    # Read dotfiles to deploy from copy-these file
+    dotfiles_to_deploy = read_copy_these_file(script_dir)
 
-    # Deploy .local/bin directory
-    bin_src = script_dir / '.local' / 'bin'
-    bin_dst = home_dir / '.local' / 'bin'
-    if bin_src.exists():
-        deployments.append(('~/.local/bin', bin_src, bin_dst))
+    # Build deployment list from copy-these entries
+    for relative_path in dotfiles_to_deploy:
+        src = script_dir / relative_path
+        dst = home_dir / relative_path
 
-    # Deploy dotfiles to home directory (e.g., ~/.bashrc, ~/.xinitrc)
-    dotfiles_to_deploy = ['.bashrc', '.xinitrc', '.gtkrc-2.0']
-    for dotfile_name in dotfiles_to_deploy:
-        dotfile_src = script_dir / dotfile_name
-        if dotfile_src.exists():
-            deployments.append((dotfile_name, dotfile_src, home_dir / dotfile_name))
+        # Skip if source doesn't exist
+        if not src.exists():
+            print(f"Warning: Source path doesn't exist: {relative_path}", file=sys.stderr)
+            continue
+
+        # Create display name (with ~/ for home directory paths)
+        if relative_path.startswith('.'):
+            display_name = f'~/{relative_path}'
+        else:
+            display_name = relative_path
+
+        deployments.append((display_name, src, dst))
 
     backup_dir = None
     backed_up_items = []
