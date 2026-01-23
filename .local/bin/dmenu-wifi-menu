@@ -1,7 +1,8 @@
 #!/bin/sh
 
-case "$(printf "dmenu-wifi\nshow-current-network" | dmenu -i -p 'Run: ')" in
+case "$(printf "dmenu-wifi\nshow-current-network\nrescan-wifi" | dmenu -i -p 'Run: ')" in
     'dmenu-wifi') dmenu-wifi ;;
     'show-current-network') show-current-network ;;
+    'rescan-wifi') rescan-wifi ;;
     *) exit 1 ;;
 esac
