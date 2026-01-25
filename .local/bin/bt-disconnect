@@ -1,39 +1,111 @@
-#!/bin/sh
+#!/usr/bin/env python3
+"""Bluetooth device disconnection script."""
 
-# Usage: bt-disconnect MAC SIGNAL NAME
-# Example: bt-disconnect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)"
+import subprocess
+import sys
+import time
+import re
 
-if [ $# -ne 3 ]; then
-    echo "Usage: $0 MAC SIGNAL NAME"
-    echo "Example: $0 '3C:B0:ED:A7:6A:88' 3 'Nothing Headphone (1)'"
-    exit 1
-fi
 
-MAC="$1"
-SIGNAL="$2"
-NAME="$3"
+def run_command(cmd, timeout=5):
+    """Run a shell command and return output."""
+    try:
+        result = subprocess.run(
+            cmd,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        return result.stdout, result.stderr, result.returncode
+    except subprocess.TimeoutExpired:
+        return "", "Command timed out", 1
 
-echo "Disconnecting $NAME..."
 
-# Ask bluez to disconnect
-bluetoothctl disconnect "$MAC"
+def notify(title, message, urgency="normal"):
+    """Send desktop notification."""
+    run_command(f'notify-send -u {urgency} "{title}" "{message}"')
 
-# Wait (with timeout) for bluez to report Connected: no
-TIMEOUT=10   # seconds
-WAITED=0
-INTERVAL=0.2
 
-while bluetoothctl info "$MAC" 2>/dev/null | grep -q "Connected: yes"; do
-    sleep $INTERVAL
-    WAITED=$(awk "BEGIN {print $WAITED + $INTERVAL}")
-    if (( $(echo "$WAITED >= $TIMEOUT" | bc -l) )); then
-        echo "Timeout waiting for $NAME to disconnect"
-        break
-    fi
-done
+def bluetoothctl_disconnect(mac):
+    """Send disconnect command to bluetoothctl."""
+    cmd = f'bluetoothctl disconnect "{mac}"'
+    stdout, stderr, code = run_command(cmd)
+    return code == 0
 
-echo "$NAME disconnected."
 
-# Refresh dwmblocks
-pkill -RTMIN+"$SIGNAL" dwmblocks
-pkill -RTMIN+4 dwmblocks
+def check_disconnected(mac, max_attempts=50, interval=0.2):
+    """Poll bluetoothctl to verify device is disconnected."""
+    for attempt in range(max_attempts):
+        stdout, _, _ = run_command(f'bluetoothctl info "{mac}"', timeout=3)
+        
+        match = re.search(r'Connected:\s+(\w+)', stdout)
+        if not match or match.group(1).lower() == 'no':
+            return True
+        
+        if attempt < max_attempts - 1:
+            time.sleep(interval)
+    
+    return False
+
+
+def check_sink_gone(mac, max_attempts=20, interval=0.5):
+    """Poll to verify PulseAudio/PipeWire sink has been removed."""
+    sink_part = mac.replace(':', '_')
+    
+    for attempt in range(max_attempts):
+        stdout, _, _ = run_command('pactl list short sinks', timeout=3)
+        
+        # Check if sink is still present
+        if sink_part not in stdout:
+            return True
+        
+        if attempt < max_attempts - 1:
+            time.sleep(interval)
+    
+    return False
+
+
+def refresh_dwmblocks(signal):
+    """Refresh dwmblocks status bar."""
+    run_command(f'pkill -RTMIN+{signal} dwmblocks')
+    run_command('pkill -RTMIN+4 dwmblocks')
+
+
+def main():
+    if len(sys.argv) != 4:
+        print("Usage: bt-disconnect MAC SIGNAL NAME")
+        print("Example: bt-disconnect '3C:B0:ED:A7:6A:88' 3 'Nothing Headphone (1)'")
+        sys.exit(1)
+    
+    mac = sys.argv[1]
+    signal = sys.argv[2]
+    name = sys.argv[3]
+    
+    print(f"Disconnecting {name}...")
+    
+    # Step 1: Send disconnect command
+    bluetoothctl_disconnect(mac)
+    
+    # Step 2: Verify Bluetooth disconnection (max 10 seconds)
+    if not check_disconnected(mac):
+        print(f"Warning: Timeout waiting for Bluetooth disconnection")
+    
+    # Step 3: Wait for sink to disappear (max 10 seconds)
+    # This is critical - ensures PulseAudio has cleaned up before we report success
+    print("Waiting for audio sink cleanup...", end='', flush=True)
+    if check_sink_gone(mac):
+        print(" OK")
+    else:
+        print(" TIMEOUT")
+        print(f"Warning: Audio sink may still be present")
+    
+    print(f"✓ {name} disconnected")
+    notify("Bluetooth Disconnected", name, "normal")
+    
+    # Refresh status bar
+    refresh_dwmblocks(signal)
+
+
+if __name__ == "__main__":
+    main()
