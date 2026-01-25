@@ -13,8 +13,19 @@ fi
 connected=$(timeout 2 bluetoothctl info "$MAC" 2>/dev/null | awk '/Connected:/ {print $2}')
 
 if [ "$connected" = "yes" ]; then
-    # Get battery percentage (with timeout)
-    battery=$(timeout 2 bluetoothctl info "$MAC" 2>/dev/null | grep "Battery Percentage" | grep -oP '\(\K[0-9]+')
+    # Try to get battery percentage with retries
+    battery=""
+    max_attempts=5
+    attempt=0
+    
+    while [ $attempt -lt $max_attempts ] && [ -z "$battery" ]; do
+        battery=$(timeout 2 bluetoothctl info "$MAC" 2>/dev/null | grep "Battery Percentage" | grep -oP '\(\K[0-9]+')
+        if [ -z "$battery" ]; then
+            attempt=$((attempt + 1))
+            [ $attempt -lt $max_attempts ] && sleep 0.3
+        fi
+    done
+    
     if [ -n "$battery" ]; then
         echo "🎧 ${battery}%"
     else
