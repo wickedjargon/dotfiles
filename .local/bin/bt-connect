@@ -38,33 +38,33 @@ def check_connected(mac, max_attempts=6, interval=0.5):
     """Poll bluetoothctl to verify device is connected."""
     for attempt in range(max_attempts):
         stdout, _, _ = run_command(f'bluetoothctl info "{mac}"', timeout=3)
-        
+
         match = re.search(r'Connected:\s+(\w+)', stdout)
         if match and match.group(1).lower() == 'yes':
             return True
-        
+
         if attempt < max_attempts - 1:
             time.sleep(interval)
-    
+
     return False
 
 
 def find_sink(mac, max_attempts=6, interval=0.5):
     """Poll for PulseAudio/PipeWire sink to appear."""
     sink_part = mac.replace(':', '_')
-    
+
     for attempt in range(max_attempts):
         stdout, _, _ = run_command('pactl list short sinks', timeout=3)
-        
+
         for line in stdout.split('\n'):
             if sink_part in line:
                 parts = line.split()
                 if len(parts) >= 2:
                     return parts[1]
-        
+
         if attempt < max_attempts - 1:
             time.sleep(interval)
-    
+
     return None
 
 
@@ -73,13 +73,13 @@ def set_default_sink(sink_name):
     _, _, code = run_command(f'pactl set-default-sink "{sink_name}"')
     if code != 0:
         return False
-    
+
     stdout, _, _ = run_command('pactl list short sink-inputs')
     for line in stdout.split('\n'):
         if line.strip():
             stream_id = line.split()[0]
             run_command(f'pactl move-sink-input {stream_id} "{sink_name}"')
-    
+
     return True
 
 
@@ -94,23 +94,23 @@ def main():
         print("Usage: bt-connect MAC SIGNAL NAME")
         print("Example: bt-connect '3C:B0:ED:A7:6A:88' 3 'Nothing Headphone (1)'")
         sys.exit(1)
-    
+
     mac = sys.argv[1]
     signal = sys.argv[2]
     name = sys.argv[3]
-    
+
     print(f"Connecting to {name}...")
-    
+
     # Step 1: Send connect command
     bluetoothctl_connect(mac)
-    
+
     # Step 2: Verify connection (max 3 seconds)
     if not check_connected(mac):
         msg = f"Failed to connect to {name}"
         print(f"Error: {msg}")
         notify("Bluetooth Connection Failed", msg)
         sys.exit(1)
-    
+
     # Step 3: Wait for audio sink (max 3 seconds)
     sink = find_sink(mac)
     if not sink:
@@ -118,17 +118,17 @@ def main():
         print(f"Error: {msg}")
         notify("Bluetooth Sink Error", msg)
         sys.exit(1)
-    
+
     # Step 4: Set as default
     if not set_default_sink(sink):
         msg = f"Failed to set {name} as default sink"
         print(f"Error: {msg}")
         notify("Bluetooth Sink Error", msg)
         sys.exit(1)
-    
+
     print(f"✓ {name} connected")
     notify("Bluetooth Connected", name, "normal")
-    
+
     # Refresh status bar
     refresh_dwmblocks(signal)
 
