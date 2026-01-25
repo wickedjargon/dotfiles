@@ -46,8 +46,7 @@ python3 setup-ssh-repos.py
 
 ### Step 5: Setup firefox extensions
 
-- launch firefox
-- go to about:policies to trigger extension installation
+- launch firefox to trigger extension installation
 
 ## Post-Install
 
@@ -56,8 +55,10 @@ python3 setup-ssh-repos.py
 - make firefox use sidebar for tabs
 - set up qt theme
 - setup bluetooth
+- pair bluetooth devices
 
 ## TODOs
 
 - [ ] automated bluetooth setup
 - [x] allow extensions in private browser
+- [ ] pairing bluetooth instructions
