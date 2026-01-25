@@ -56,3 +56,8 @@ python3 setup-ssh-repos.py
 - make firefox use sidebar for tabs
 - set up qt theme
 - setup bluetooth
+
+## TODOs
+
+- [ ] automated bluetooth setup
+- [ ] allow extensions in private browser
