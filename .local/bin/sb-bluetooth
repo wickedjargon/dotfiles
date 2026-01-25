@@ -1,6 +1,13 @@
 #!/bin/sh
 
-MAC="41:42:AB:DD:51:37"
+# Usage: sb-bluetooth MAC
+# Example: sb-bluetooth "3C:B0:ED:A7:6A:88"
+
+MAC="${1:-}"
+
+if [ -z "$MAC" ]; then
+    exit 0
+fi
 
 # Check if the device is connected (with timeout)
 connected=$(timeout 2 bluetoothctl info "$MAC" 2>/dev/null | awk '/Connected:/ {print $2}')
