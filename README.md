@@ -60,4 +60,4 @@ python3 setup-ssh-repos.py
 ## TODOs
 
 - [ ] automated bluetooth setup
-- [ ] allow extensions in private browser
+- [x] allow extensions in private browser
