@@ -14,31 +14,38 @@ cat > /etc/firefox/policies/policies.json << 'EOF'
     "ExtensionSettings": {
       "uBlock0@raymondhill.net": {
         "installation_mode": "normal_installed",
-        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi",
+        "private_browsing": true
       },
       "{82ac2b38-ddfa-4cb5-b2f1-c39e1beb95bd}": {
         "installation_mode": "normal_installed",
-        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi"
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi",
+        "private_browsing": true
       },
       "{d7742d87-e61d-4b78-b8a1-b469842139fa}": {
         "installation_mode": "normal_installed",
-        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/vimium-ff/latest.xpi"
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/vimium-ff/latest.xpi",
+        "private_browsing": true
       },
       "sponsorBlocker@ajay.app": {
         "installation_mode": "normal_installed",
-        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/sponsorblock/latest.xpi"
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/sponsorblock/latest.xpi",
+        "private_browsing": true
       },
       "idcac-pub@guus.ninja": {
         "installation_mode": "normal_installed",
-        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/istilldontcareaboutcookies/latest.xpi"
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/istilldontcareaboutcookies/latest.xpi",
+        "private_browsing": true
       },
       "read-aloud@ken.loomis.org": {
         "installation_mode": "normal_installed",
-        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/read-aloud/latest.xpi"
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/read-aloud/latest.xpi",
+        "private_browsing": true
       },
       "{ea2673bc-51ef-48a0-b81e-6b73e4f08cb5}": {
         "installation_mode": "normal_installed",
-        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/defund-wikipedia/latest.xpi"
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/defund-wikipedia/latest.xpi",
+        "private_browsing": true
       }
     }
   }
