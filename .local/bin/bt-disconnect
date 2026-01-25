@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Usage: bt-disconnect MAC SIGNAL NAME
+# Example: bt-disconnect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)"
+
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 MAC SIGNAL NAME"
+    echo "Example: $0 '3C:B0:ED:A7:6A:88' 3 'Nothing Headphone (1)'"
+    exit 1
+fi
+
+MAC="$1"
+SIGNAL="$2"
+NAME="$3"
+
+echo "Disconnecting $NAME..."
+
+# Ask bluez to disconnect
+bluetoothctl disconnect "$MAC"
+
+# Wait (with timeout) for bluez to report Connected: no
+TIMEOUT=10   # seconds
+WAITED=0
+INTERVAL=0.2
+
+while bluetoothctl info "$MAC" 2>/dev/null | grep -q "Connected: yes"; do
+    sleep $INTERVAL
+    WAITED=$(awk "BEGIN {print $WAITED + $INTERVAL}")
+    if (( $(echo "$WAITED >= $TIMEOUT" | bc -l) )); then
+        echo "Timeout waiting for $NAME to disconnect"
+        break
+    fi
+done
+
+echo "$NAME disconnected."
+
+# Refresh dwmblocks
+pkill -RTMIN+"$SIGNAL" dwmblocks
+pkill -RTMIN+4 dwmblocks

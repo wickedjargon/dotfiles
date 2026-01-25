@@ -7,12 +7,12 @@ case "$(printf " connect-nothing
  connect-miniroll
  disconnect-miniroll
  remap" | dmenu -i -l 10 -p 'Run: ')" in
-    ' connect-nothing') connect-nothing ;;
-    ' disconnect-nothing') disconnect-nothing ;;
-    ' connect-musicozy') connect-musicozy ;;
-    ' disconnect-musicozy') disconnect-musicozy ;;
-    ' connect-miniroll') connect-miniroll ;;
-    ' disconnect-miniroll') disconnect-miniroll ;;
+    ' connect-nothing') bt-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" ;;
+    ' disconnect-nothing') bt-disconnect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" ;;
+    ' connect-musicozy') bt-connect "41:42:AB:DD:51:37" 5 "Musicozy" ;;
+    ' disconnect-musicozy') bt-disconnect "41:42:AB:DD:51:37" 5 "Musicozy" ;;
+    ' connect-miniroll') bt-connect "10:94:97:3C:C4:41" 8 "Miniroll" ;;
+    ' disconnect-miniroll') bt-disconnect "10:94:97:3C:C4:41" 8 "Miniroll" ;;
     ' remap') remap ;;
     *) exit 1 ;;
 esac

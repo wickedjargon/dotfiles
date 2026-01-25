@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# Usage: bt-connect MAC SIGNAL NAME
+# Example: bt-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)"
+
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 MAC SIGNAL NAME"
+    echo "Example: $0 '3C:B0:ED:A7:6A:88' 3 'Nothing Headphone (1)'"
+    exit 1
+fi
+
+MAC="$1"
+SIGNAL="$2"
+NAME="$3"
+
+# Convert MAC colons to underscores for the PulseAudio Sink Name
+SINK_PART=$(echo "$MAC" | tr ':' '_')
+
+echo "Connecting to $NAME..."
+printf "connect %s\nexit\n" "$MAC" | bluetoothctl
+
+# Wait for the sink to appear (Max 5 seconds)
+for i in $(seq 1 10); do
+    SINK=$(pactl list short sinks | grep "$SINK_PART" | awk '{print $2}' | head -n 1)
+    if [ -n "$SINK" ]; then
+        break
+    fi
+    sleep 0.5
+done
+
+if [ -z "$SINK" ]; then
+    echo "Error: Sink for $NAME not found."
+    exit 1
+fi
+
+# Set default sink and move existing streams
+pactl set-default-sink "$SINK"
+for stream in $(pactl list short sink-inputs | awk '{print $1}'); do
+    pactl move-sink-input "$stream" "$SINK"
+done
+
+echo "$NAME connected and set as default."
+
+# Refresh dwmblocks (Signal +4 is volume, Signal +$SIGNAL is the device icon)
+pkill -RTMIN+"$SIGNAL" dwmblocks
+pkill -RTMIN+4 dwmblocks
