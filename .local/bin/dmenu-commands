@@ -7,11 +7,8 @@ case "$(printf " connect-nothing
  connect-miniroll
  disconnect-miniroll
  remap" | dmenu -i -l 10 -p 'Run: ')" in
-    # This line is updated to retry on failure
-    ' connect-nothing')
-        bt-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" || \
-        { sleep 0.5; bt-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)"; }
-        ;;
+    # Runs the connect command; if it fails, runs it again immediately
+    ' connect-nothing') bt-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" || bt-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" ;;
     ' disconnect-nothing') bt-disconnect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" ;;
     ' connect-musicozy') bt-connect "41:42:AB:DD:51:37" 5 "Musicozy" ;;
     ' disconnect-musicozy') bt-disconnect "41:42:AB:DD:51:37" 5 "Musicozy" ;;
