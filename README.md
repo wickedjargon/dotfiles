@@ -62,3 +62,8 @@ python3 setup-ssh-repos.py
 - [ ] automated bluetooth setup
 - [x] allow extensions in private browser
 - [ ] pairing bluetooth instructions
+- [ ] add unit tests for `deploy.py` and `setup-ssh-repos.py`
+- [x] replace hardcoded paths with `$HOME` in scripts (e.g., `dmenu-virtual-machines`)
+- [ ] add `--dry-run` flag to `deploy.py`
+- [ ] add error recovery/resume capability to `deploy.py`
+- [ ] create `backup.py` script to export current system configs back to dotfiles repo
