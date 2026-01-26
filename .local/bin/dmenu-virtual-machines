@@ -1,0 +1,23 @@
+#!/bin/sh
+
+case "$(printf " Debian (x86_64)\n ARM Debian (aarch64)" | dmenu -i -p 'VM: ')" in
+    ' Debian (x86_64)')
+        qemu-system-x86_64 -enable-kvm -m 1G -hda /home/ff/virtual-machines/debian.qcow2 \
+            -net user,hostfwd=tcp::2222-:22 -net nic \
+            -display gtk,zoom-to-fit=on ;;
+    ' ARM Debian (aarch64)')
+        qemu-system-aarch64 \
+            -machine virt \
+            -cpu cortex-a57 \
+            -m 1G \
+            -drive file=/home/ff/d/projects/armv8-a-64-bit/arm64.qcow2,format=qcow2,if=virtio \
+            -net user,hostfwd=tcp::2223-:22 \
+            -net nic,model=virtio \
+            -display gtk,zoom-to-fit=on \
+            -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
+            -device virtio-gpu-pci \
+            -device qemu-xhci \
+            -device usb-kbd \
+            -device usb-mouse ;;
+    *) exit 1 ;;
+esac
