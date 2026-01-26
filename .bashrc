@@ -24,7 +24,7 @@ PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
 export EDITOR="vis"
 export BROWSER="firefox"
 export SUDO_EDITOR="vis"
-export OCEN_ROOT=/home/ff/.local/src/ocen
+export OCEN_ROOT=$HOME/.local/src/ocen
 export JAVA_HOME=/usr/lib/jvm/default
 export ZED_ALLOW_EMULATED_GPU=1
 

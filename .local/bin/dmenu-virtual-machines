@@ -1,8 +1,10 @@
 #!/bin/sh
 
+VM_DIR="$HOME/virtual-machines"
+
 case "$(printf " Debian (x86_64)\n ARM Debian (aarch64)" | dmenu -i -p 'VM: ')" in
     ' Debian (x86_64)')
-        qemu-system-x86_64 -enable-kvm -m 1G -hda /home/ff/virtual-machines/debian.qcow2 \
+        qemu-system-x86_64 -enable-kvm -m 1G -hda "$VM_DIR/debian.qcow2" \
             -net user,hostfwd=tcp::2222-:22 -net nic \
             -display gtk,zoom-to-fit=on ;;
     ' ARM Debian (aarch64)')
@@ -10,7 +12,7 @@ case "$(printf " Debian (x86_64)\n ARM Debian (aarch64)" | dmenu -i -p 'VM: ')" 
             -machine virt \
             -cpu cortex-a57 \
             -m 1G \
-            -drive file=/home/ff/virtual-machines/arm64.qcow2,format=qcow2,if=virtio \
+            -drive file="$VM_DIR/arm64.qcow2",format=qcow2,if=virtio \
             -net user,hostfwd=tcp::2223-:22 \
             -net nic,model=virtio \
             -display gtk,zoom-to-fit=on \
