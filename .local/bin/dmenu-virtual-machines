@@ -10,7 +10,7 @@ case "$(printf " Debian (x86_64)\n ARM Debian (aarch64)" | dmenu -i -p 'VM: ')" 
             -machine virt \
             -cpu cortex-a57 \
             -m 1G \
-            -drive file=/home/ff/d/projects/armv8-a-64-bit/arm64.qcow2,format=qcow2,if=virtio \
+            -drive file=/home/ff/virtual-machines/arm64.qcow2,format=qcow2,if=virtio \
             -net user,hostfwd=tcp::2223-:22 \
             -net nic,model=virtio \
             -display gtk,zoom-to-fit=on \
