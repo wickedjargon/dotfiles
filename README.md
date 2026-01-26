@@ -66,4 +66,3 @@ python3 setup-ssh-repos.py
 - [x] replace hardcoded paths with `$HOME` in scripts (e.g., `dmenu-virtual-machines`)
 - [ ] add `--dry-run` flag to `deploy.py`
 - [ ] add error recovery/resume capability to `deploy.py`
-- [ ] create `backup.py` script to export current system configs back to dotfiles repo
