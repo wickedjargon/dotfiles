@@ -4,8 +4,13 @@ This directory contains system-level configuration files that need to be deploye
 
 ## Files Included:
 
-### `/etc/acpi/power-adapter.sh`
+### `/etc/acpi/power-adapter`
 ACPI event handler that refreshes the dwmblocks battery status indicator when the power adapter is plugged/unplugged.
+
+### `/etc/acpi/events/power-adapter`
+ACPI event trigger file that tells `acpid` when to run the power-adapter script.
+
+> **Note:** The `event=ac_adapter.*` syntax uses **regex**, not shell globs. The pattern `ac_adapter.*` means "ac_adapter followed by anything" (`.` = any char, `*` = zero or more). This matches all AC adapter events regardless of device name or status values.
 
 ### `/etc/NetworkManager/dispatcher.d/99-dwmblocks-network`
 NetworkManager dispatcher script that refreshes the dwmblocks network status indicator when network state changes (connect, disconnect, DHCP changes, etc).
