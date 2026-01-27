@@ -926,10 +926,15 @@
   :hook (asm-mode . fff-no-indent-asm)
   :config
   (defun fff-no-indent-asm ()
+    ;; 1. Your existing settings (keep these to stop TAB/RET indentation)
     (setq-local indent-line-function #'ignore)
     (setq-local indent-region-function #'ignore)
     (setq-local electric-indent-inhibit t)
-    (electric-indent-local-mode -1)))
+    (electric-indent-local-mode -1)
+
+    ;; 2. THE FIX: Stop ':' from triggering asm-colon logic
+    (local-set-key (kbd ":") #'self-insert-command)
+    (local-set-key (kbd ";") #'self-insert-command)))
 
 (use-package rust-mode :straight t :defer t)
 
@@ -1171,7 +1176,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
 ;; irc client
 (use-package erc :ensure nil :defer t
   :custom
-  (erc-join-buffer 'window) ;; Open a new window when joining channels.
+  (erc-join-buffer 'window)
   (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
   (doom-modeline-irc nil)
   (erc-autojoin-channels-alist
@@ -1188,6 +1193,9 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
       "#debian"
       "#latex")))
   (erc-hide-timestamps t)
+  (erc-server-auto-reconnect t)
+  (erc-server-reconnect-attempts 5)
+  (erc-server-reconnect-timeout 3)
   :config
   (evil-leader/set-key-for-mode 'erc-mode "x B" 'consult-erc))
 
