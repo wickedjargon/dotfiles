@@ -870,6 +870,36 @@ def install_firefox_extensions(script_dir):
         return False, error_msg
 
 
+def install_tor_browser(username, script_dir, tui, row):
+    """Install Tor Browser for the target user
+
+    Runs the install-tor-browser script as the target user to ensure
+    correct ownership of ~/.local/src/tor-browser and symlink.
+    """
+    install_script = script_dir / 'install-tor-browser'
+
+    if not install_script.exists():
+        return True, None, row  # Script not present, skip silently
+
+    tui.show_progress(row, "Installing Tor Browser...", success=None)
+    tui.stdscr.refresh()
+
+    try:
+        # Run as target user to avoid permission issues
+        subprocess.run(
+            ['su', '-c', f'bash {install_script}', username],
+            check=True,
+            capture_output=True,
+            timeout=600  # 10 minute timeout for download
+        )
+        tui.show_progress(row, "Installing Tor Browser...", success=True)
+        return True, None, row + 1
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        error_msg = e.stderr.decode() if hasattr(e, 'stderr') and e.stderr else str(e)
+        tui.show_progress(row, "Installing Tor Browser...", success=False)
+        return False, error_msg, row + 1
+
+
 def main_tui(stdscr):
     """Main TUI application"""
     tui = DeploymentTUI(stdscr)
@@ -1109,6 +1139,17 @@ def main_tui(stdscr):
             if chr(response).lower() != 'y':
                 return
             row += 3
+
+    # Install Tor Browser
+    success, error, row = install_tor_browser(username, script_dir, tui, row)
+    if not success:
+        tui.show_message(row, 4, f"Error: {error[:50] if error else 'Unknown'}...", color_pair=3)
+        tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
+        tui.stdscr.refresh()
+        response = stdscr.getch()
+        if chr(response).lower() != 'y':
+            return
+        row += 3
 
     # Deploy system configurations
     tui.show_progress(row, "Deploying system configurations...", success=None)
