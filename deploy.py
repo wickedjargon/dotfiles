@@ -807,6 +807,11 @@ def deploy_system_configs(script_dir):
                     shutil.copy2(src_file, dest_file)
 
                     # Make scripts executable
+                    # TODO: Refactor to preserve source file permissions instead of path-based logic:
+                    #   src_mode = os.stat(src_file).st_mode
+                    #   os.chmod(dest_file, src_mode)
+                    # Then chmod +x the actual script files in system-configs/ (not config files like events/power-adapter)
+                    # Test on real laptop before deploying this change.
                     if dest_file.suffix == '.sh' or 'bin' in dest_file.parts or 'dispatcher.d' in dest_file.parts or 'system-sleep' in dest_file.parts or 'acpi' in dest_file.parts:
                         os.chmod(dest_file, 0o755)
 
