@@ -885,9 +885,15 @@ def install_tor_browser(username, script_dir, tui, row):
     tui.stdscr.refresh()
 
     try:
-        # Run as target user to avoid permission issues
+        # Read script content as root (who can access the dotfiles dir)
+        # and pipe it to bash running as the target user
+        with open(install_script, 'r') as f:
+            script_content = f.read()
+
+        # Run as target user, passing script via stdin
         subprocess.run(
-            ['su', '-c', f'bash {install_script}', username],
+            ['su', '-c', 'bash -s', username],
+            input=script_content.encode(),
             check=True,
             capture_output=True,
             timeout=600  # 10 minute timeout for download
@@ -896,6 +902,18 @@ def install_tor_browser(username, script_dir, tui, row):
         return True, None, row + 1
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         error_msg = e.stderr.decode() if hasattr(e, 'stderr') and e.stderr else str(e)
+        stdout_msg = e.stdout.decode() if hasattr(e, 'stdout') and e.stdout else ''
+        # Log full error details to /tmp for debugging
+        with open('/tmp/deploy_tor_errors.log', 'a') as f:
+            f.write(f"\n{'='*60}\n")
+            f.write(f"Tor Browser Installation Error\n")
+            f.write(f"Script: {install_script}\n")
+            f.write(f"User: {username}\n")
+            f.write(f"Exception type: {type(e).__name__}\n")
+            f.write(f"Return code: {getattr(e, 'returncode', 'N/A')}\n")
+            f.write(f"\nSTDOUT:\n{stdout_msg}\n")
+            f.write(f"\nSTDERR:\n{error_msg}\n")
+            f.write(f"{'='*60}\n")
         tui.show_progress(row, "Installing Tor Browser...", success=False)
         return False, error_msg, row + 1
 
