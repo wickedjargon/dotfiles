@@ -1,6 +1,10 @@
 #!/bin/sh
 
-pkill -RTMIN+1 dwmblocks
-pkill -RTMIN+2 dwmblocks
-pkill -RTMIN+3 dwmblocks
-pkill -RTMIN+4 dwmblocks
+pkill -RTMIN+1 dwmblocks  # clock
+pkill -RTMIN+2 dwmblocks  # battery
+pkill -RTMIN+3 dwmblocks  # bluetooth 1
+pkill -RTMIN+4 dwmblocks  # volume
+pkill -RTMIN+5 dwmblocks  # bluetooth 2
+pkill -RTMIN+6 dwmblocks  # brightness
+pkill -RTMIN+7 dwmblocks  # network
+pkill -RTMIN+8 dwmblocks  # bluetooth 3
