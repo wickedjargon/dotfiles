@@ -34,8 +34,8 @@ The deployment script:
 If you need to manually deploy these files:
 
 ```bash
-sudo cp system-configs/etc/acpi/power-adapter.sh /etc/acpi/power-adapter.sh
-sudo chmod 755 /etc/acpi/power-adapter.sh
+sudo cp system-configs/etc/acpi/power-adapter /etc/acpi/power-adapter
+sudo chmod 755 /etc/acpi/power-adapter
 
 sudo cp system-configs/etc/NetworkManager/dispatcher.d/99-dwmblocks-network /etc/NetworkManager/dispatcher.d/99-dwmblocks-network
 sudo chmod 755 /etc/NetworkManager/dispatcher.d/99-dwmblocks-network
