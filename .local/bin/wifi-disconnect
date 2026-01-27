@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""Disconnect from the current WiFi network."""
+
+import subprocess
+import sys
+
+def notify(title, message):
+    """Send system notification and print to console."""
+    print(f"[NOTIFY] {title}: {message}")
+    subprocess.run(["notify-send", "-u", "normal", title, message])
+
+def run_cmd(cmd):
+    """Run command and return stdout, stderr, and return code."""
+    result = subprocess.run(
+        cmd,
+        shell=True,
+        capture_output=True,
+        text=True
+    )
+    return result.stdout.strip(), result.stderr.strip(), result.returncode
+
+def get_active_wifi_connection():
+    """Get the name of the active WiFi connection, if any."""
+    stdout, stderr, code = run_cmd(
+        "nmcli -t -f NAME,TYPE,DEVICE connection show --active"
+    )
+    
+    if code != 0:
+        return None
+    
+    for line in stdout.splitlines():
+        parts = line.split(':')
+        if len(parts) >= 3:
+            name, conn_type, device = parts[0], parts[1], parts[2]
+            # Check if it's a WiFi connection (802-11-wireless)
+            if '802-11-wireless' in conn_type or device.startswith('wl'):
+                return name
+    
+    return None
+
+def disconnect_wifi(connection_name):
+    """Disconnect from the specified WiFi connection."""
+    stdout, stderr, code = run_cmd(f"nmcli connection down '{connection_name}'")
+    return code == 0, stdout or stderr
+
+def main():
+    connection = get_active_wifi_connection()
+    
+    if not connection:
+        notify("WiFi", "No active WiFi connection")
+        sys.exit(0)
+    
+    notify("WiFi", f"Disconnecting from {connection}...")
+    success, output = disconnect_wifi(connection)
+    
+    if success:
+        notify("WiFi", f"Disconnected from {connection}")
+    else:
+        notify("WiFi", f"Failed to disconnect: {output}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
