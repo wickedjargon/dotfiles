@@ -807,7 +807,7 @@ def deploy_system_configs(script_dir):
                     shutil.copy2(src_file, dest_file)
 
                     # Make scripts executable
-                    if dest_file.suffix == '.sh' or 'bin' in dest_file.parts or 'dispatcher.d' in dest_file.parts or 'system-sleep' in dest_file.parts:
+                    if dest_file.suffix == '.sh' or 'bin' in dest_file.parts or 'dispatcher.d' in dest_file.parts or 'system-sleep' in dest_file.parts or 'acpi' in dest_file.parts:
                         os.chmod(dest_file, 0o755)
 
                     deployed_files.append(str(relative_path))
