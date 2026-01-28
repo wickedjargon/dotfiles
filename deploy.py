@@ -33,10 +33,20 @@ class DeploymentTUI:
 
     def show_message(self, y, x, message, color_pair=0, bold=False):
         """Display a message at given coordinates"""
+        # Bounds checking to prevent curses errors
+        if y >= self.height - 1 or y < 0 or x >= self.width or x < 0:
+            return
+        # Truncate message if it would extend past the screen
+        max_len = self.width - x - 1
+        if len(message) > max_len:
+            message = message[:max_len]
         attr = curses.color_pair(color_pair)
         if bold:
             attr |= curses.A_BOLD
-        self.stdscr.addstr(y, x, message, attr)
+        try:
+            self.stdscr.addstr(y, x, message, attr)
+        except curses.error:
+            pass  # Silently ignore any remaining curses errors
 
     def get_input(self, prompt, y, x):
         """Get user input with prompt"""
