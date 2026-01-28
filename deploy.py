@@ -815,10 +815,10 @@ def deploy_system_configs(script_dir):
                     #        src_mode = os.stat(src_file).st_mode
                     #        os.chmod(dest_file, src_mode)
                     #   2. Run these chmod commands in the repo:
-                    #        chmod +x system-configs/etc/acpi/power-adapter
-                    #        chmod +x system-configs/etc/NetworkManager/dispatcher.d/99-dwmblocks-network
+                    #        chmod +x system-configs/etc/acpi/power-adapter.sh
+                    #        chmod +x system-configs/etc/NetworkManager/dispatcher.d/99-dwmblocks-network.sh
                     #        chmod +x system-configs/usr/local/bin/refresh-dwmblocks
-                    #        chmod +x system-configs/usr/lib/systemd/system-sleep/dwmblocks-refresh
+                    #        chmod +x system-configs/usr/lib/systemd/system-sleep/dwmblocks-refresh.sh
                     #   3. Do NOT chmod +x these (they are config files, not scripts):
                     #        system-configs/etc/acpi/events/power-adapter
                     #   4. Delete the if-statement and just keep os.chmod(dest_file, src_mode)
