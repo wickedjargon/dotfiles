@@ -1217,10 +1217,12 @@ def main_tui(stdscr):
         tui.show_progress(row, "Installing Firefox extensions...", success=True)
         row += 1
 
-    # Final message
+    # Final message - ensure it's visible even if row exceeds terminal height
     row += 2
-    tui.show_message(row, 4, "Deployment complete!", color_pair=2, bold=True)
-    tui.show_message(row + 1, 4, "Press any key to exit...")
+    final_row = min(row, tui.height - 3)  # Leave room for both messages
+    tui.show_message(final_row, 4, "Deployment complete!", color_pair=2, bold=True)
+    tui.show_message(final_row + 1, 4, "Press any key to exit...")
+    stdscr.refresh()
     stdscr.getch()
 
 
