@@ -13,7 +13,7 @@ get_external_partitions() {
             if [ -n "$mount" ]; then
                 status="mounted"
             else
-                status="unmounted"dr
+                status="unmounted"
             fi
             label_display="${label:-no-label}"
             printf "%s  %s  %s  [%s]\n" "$name" "$size" "$label_display" "$status"
