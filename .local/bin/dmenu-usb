@@ -1,0 +1,116 @@
+#!/bin/sh
+
+# dmenu-usb - Mount/unmount external USB drives via dmenu
+# Uses udisks2 for non-root mounting (mounts to /run/media/$USER/)
+
+# Get external/removable drives (excluding internal drives)
+# Shows only partitions, not whole disks
+get_external_partitions() {
+    lsblk -lnpo NAME,TYPE,MOUNTPOINT,SIZE,LABEL,RM | while read -r name type mount size label removable; do
+        # Only partitions (not disks), only removable (RM=1)
+        if [ "$type" = "part" ] && [ "$removable" = "1" ]; then
+            # Format: /dev/sdX1 [SIZE] [LABEL] [mounted/unmounted]
+            if [ -n "$mount" ]; then
+                status="mounted"
+            else
+                status="unmounted"dr
+            fi
+            label_display="${label:-no-label}"
+            printf "%s  %s  %s  [%s]\n" "$name" "$size" "$label_display" "$status"
+        fi
+    done
+}
+
+# Get just the device path from a selection line
+get_device_from_selection() {
+    echo "$1" | awk '{print $1}'
+}
+
+# Check if device is mounted
+is_mounted() {
+    lsblk -lnpo NAME,MOUNTPOINT | grep "^$1 " | awk '{print $2}' | grep -q .
+}
+
+# Get mount point of device
+get_mountpoint() {
+    lsblk -lnpo NAME,MOUNTPOINT | grep "^$1 " | awk '{print $2}'
+}
+
+# Mount a device
+mount_device() {
+    device="$1"
+    if udisksctl mount -b "$device" 2>&1; then
+        mountpoint=$(get_mountpoint "$device")
+        notify-send "USB" "Mounted $device at $mountpoint"
+    else
+        notify-send "USB" "Failed to mount $device"
+    fi
+}
+
+# Unmount a device
+unmount_device() {
+    device="$1"
+    if udisksctl unmount -b "$device" 2>&1; then
+        notify-send "USB" "Unmounted $device"
+    else
+        notify-send "USB" "Failed to unmount $device"
+    fi
+}
+
+# Open mounted drive in file manager
+open_drive() {
+    device="$1"
+    mountpoint=$(get_mountpoint "$device")
+    if [ -n "$mountpoint" ]; then
+        if command -v xdg-open >/dev/null 2>&1; then
+            xdg-open "$mountpoint"
+        elif command -v $TERMINAL >/dev/null 2>&1; then
+            $TERMINAL -e sh -c "cd '$mountpoint' && $SHELL"
+        fi
+    else
+        notify-send "USB" "Drive not mounted"
+    fi
+}
+
+# Main logic
+main() {
+    # Check for udisksctl
+    if ! command -v udisksctl >/dev/null 2>&1; then
+        notify-send "USB" "udisks2 not installed. Install with: sudo apt install udisks2"
+        exit 1
+    fi
+
+    # Get external partitions
+    partitions=$(get_external_partitions)
+
+    if [ -z "$partitions" ]; then
+        notify-send "USB" "No external drives detected"
+        exit 0
+    fi
+
+    # Select a drive
+    selected=$(printf "%s" "$partitions" | dmenu -i -l 10 -p "Select drive:")
+    [ -z "$selected" ] && exit 0
+
+    device=$(get_device_from_selection "$selected")
+
+    # Build action menu based on mount status
+    if is_mounted "$device"; then
+        actions="⏏ Unmount
+📂 Open in file manager"
+    else
+        actions="📂 Mount"
+    fi
+
+    action=$(printf "%s" "$actions" | dmenu -i -p "Action for $(basename "$device"):")
+    [ -z "$action" ] && exit 0
+
+    case "$action" in
+        *"Mount"*)   mount_device "$device" ;;
+        *"Unmount"*) unmount_device "$device" ;;
+        *"Open"*)    open_drive "$device" ;;
+        *)           exit 1 ;;
+    esac
+}
+
+main

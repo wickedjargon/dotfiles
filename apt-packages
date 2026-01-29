@@ -38,6 +38,7 @@ cheese                   # Webcam photo and video tool
 libreoffice              # Office productivity suite
 acpid                    # ACPI event daemon (for battery monitoring)
 upower                   # Power management tool (battery status)
+udisks2                  # Disk management daemon (non-root mounting)
 
 # Networking & System Tools
 net-tools                # Network tools (ifconfig, netstat, etc)
