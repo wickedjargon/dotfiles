@@ -1,0 +1,11 @@
+#!/bin/sh
+if [ "$#" -ne 2 ]; then
+    echo "Usage: bt-set-profile MAC PROFILE"
+    exit 1
+fi
+
+MAC=$1
+PROFILE=$2
+CARD="bluez_card.$(echo "$MAC" | tr ':' '_')"
+
+pactl set-card-profile "$CARD" "$PROFILE"
