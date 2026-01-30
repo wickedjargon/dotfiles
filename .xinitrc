@@ -5,6 +5,7 @@ xset -dpms
 xset s off
 xset s off -dpms
 xset -b
+xsetroot -cursor_name left_ptr
 
 # # set background
 # feh --bg-scale ~/d/fakeimages/rms01.png
