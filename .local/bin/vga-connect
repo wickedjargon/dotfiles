@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if xrandr | grep "VGA-1 connected"; then
+    # --auto lets the system pick the best common resolution
+    xrandr --output VGA-1 --auto --same-as LVDS-1
+else
+    xrandr --output VGA-1 --off --output LVDS-1 --auto
+fi

@@ -45,7 +45,7 @@ super + r
 
 # Preselect split direction
 super + {Left,Down,Up,Right}
-    bspc node -p {west,south,north,east}
+    bspwm-smart-arrow {west,south,north,east}
 
 # Cancel preselection
 super + shift + {Left,Down,Up,Right}
@@ -82,7 +82,7 @@ super + l
 
 # Terminal (DWM: Mod+Return)
 super + Return
-    st
+    alacritty
 
 # Dmenu run (DWM: Mod+d)
 super + d

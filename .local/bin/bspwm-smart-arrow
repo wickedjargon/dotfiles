@@ -1,0 +1,32 @@
+#!/bin/sh
+
+direction=$1
+
+if [ -z "$direction" ]; then
+    echo "Usage: $0 <direction>"
+    exit 1
+fi
+
+# Get count of visible tiled windows on current desktop
+count=$(bspc query -N -d focused -n .leaf.!hidden.window | wc -l)
+
+if [ "$count" -le 1 ]; then
+    # SINGLE WINDOW (or empty): Prepare for splitting
+    
+    # 1. If fullscreen, toggle it off
+    if bspc query -N -n focused.fullscreen > /dev/null; then
+        bspc node focused -t \~fullscreen
+    fi
+
+    # 2. Ensure Tiled
+    bspc desktop -l tiled
+
+    # 3. Perform the detailed action (preselection)
+    # Only if there is a window to split
+    if [ "$count" -eq 1 ]; then
+        bspc node -p "$direction"
+    fi
+else
+    # MULTIPLE WINDOWS: Notify user, do nothing else
+    notify-send "Smart Arrow" "Multiple windows detected - no action taken."
+fi

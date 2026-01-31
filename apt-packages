@@ -89,9 +89,15 @@ clangd                   # C/C++ language server
 # Build dependencies
 build-essential          # Compilers and build tools (gcc, make, etc)
 libx11-dev               # X11 client library development files
-libx11-xcb-dev           # X11 XCB library development files (for dwm)
-libxcb-res0-dev          # XCB RES extension library (for dwm)
+
 libxft-dev               # FreeType-based font rendering library
 libxinerama-dev          # Multi-monitor X extension library
-libharfbuzz-dev          # HarfBuzz text shaping library (for st)
+
 libxfixes-dev            # X11 Xfixes extension library (for clipmenu)
+
+# Window Manager & Terminal (BSPWM + Alacritty)
+bspwm                    # Binary space partitioning window manager
+sxhkd                    # Simple X hotkey daemon
+polybar                  # Status bar
+alacritty                # GPU-accelerated terminal emulator
+fonts-liberation         # Liberation fonts (contains Liberation Mono)
