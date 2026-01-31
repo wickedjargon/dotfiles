@@ -1055,6 +1055,20 @@ def main_tui(stdscr):
                 return
             row += 3
 
+    # Ensure dependencies for adding repositories (curl, gpg) are installed
+    # These are needed for setup_third_party_repos below
+    tui.show_progress(row, "Checking prerequisite packages...", success=None)
+    tui.stdscr.refresh()
+    try:
+        subprocess.run(['apt-get', 'install', '-y', 'curl', 'gpg'],
+                      check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        tui.show_progress(row, "Checking prerequisite packages...", success=True)
+        row += 1
+    except subprocess.CalledProcessError:
+        tui.show_progress(row, "Checking prerequisite packages...", success=False)
+        tui.show_message(row + 1, 4, "Failed to install curl/gpg. Third-party repos may fail.", color_pair=3)
+        row += 2
+
     # Setup third-party repositories
     third_party_repos = read_third_party_packages_file(script_dir)
     third_party_package_names = []
