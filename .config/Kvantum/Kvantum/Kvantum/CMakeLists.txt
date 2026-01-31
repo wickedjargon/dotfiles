@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.10.0)
+project(kvantum)
+set(CMAKE_BUILD_TYPE Release)
+add_definitions (-Wall)
+
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "/usr")
+endif()
+
+option(ENABLE_QT4 "Building Qt4 plugin." OFF)
+option(ENABLE_QT5 "Building Qt5 plugin." OFF)
+option(WITHOUT_KF "Compiling without KDE Frameworks..." OFF)
+
+add_subdirectory(style)
+if(NOT ENABLE_QT4)
+  if(NOT ENABLE_QT5)
+    add_subdirectory(kvantumpreview)
+    add_subdirectory(kvantummanager)
+    add_subdirectory(themes)
+  endif()
+endif()

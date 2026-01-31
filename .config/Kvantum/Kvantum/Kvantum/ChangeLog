@@ -1,0 +1,1217 @@
+V1.1.6
+---------
+ * Workaround for the translucency of Kvantum Manager's window on changing the theme under Wayland.
+ * Removed the obsolete variables and keys related to GTK DEs.
+ * Fixed an old issue in KvGnomeDark, and added a workaround to KvGray for Qt6.
+
+V1.1.5
+---------
+ * Wrapped forward declarations within `QT_NAMESPACE` (→ https://wiki.qt.io/Qt_In_Namespace).
+ * Silenced Qt's debug messages about the animations of Kvantum Manager.
+ * Removed an old workaround about translations, which prevented some languages from being loaded due to a recent change in Qt.
+ * Disabled kinetic scrolling completely because Qt doesn't want to fix it.
+
+V1.1.4
+---------
+ * Support regular expressions in Kvantum Manager's Application Themes.
+ * Exclude the opaque list from blurring of hard-coded translucency.
+ * Use a translucent background in "PE_Widget" if needed and existing.
+ * Disable and re-enable blurring if `windowOpacity` switches between 0 and 1 respectively.
+ * Corrected a minor, old mistake in calculating the text size of a default push-button.
+ * Fixed the workaround for forced background colors of editable comboboxes.
+ * Added a workaround for a weird bug in Qt 6.8 that creates gaps between SVG menu elements when the scale factor is more than 1 and the painter opacity is less than 1.
+ * Added a workaround for a nasty regression in Qt 6.8.2 that messes with drawing of some widgets when an applied stylesheet has nothing to do with them.
+ * Changed the default value of "layout_margin" from 4 to 6.
+ * Added position animations to the explanatory notes of Kvantum Manager for encouraging users to read them.
+
+V1.1.3
+---------
+ * Draw dragged tabs of Qt ≥ 6.6 as single tabs (like they were drawn with Qt < 6.6).
+ * Workaround for the translucency bug of Qt 6.8, which may create artifacts in translucent windows/popups under Wayland.
+ * Cleaned up the code and removed some old codes about GTK DEs.
+ * Bumped the minimum required version of Qt6 to 6.6.
+ * Separated the source files of Qt5 from those of Qt6.
+ * Said goodbye to KF5. Since the current version, the Qt5 plugin is compiled without it.
+ * Replaced `QLatin1String` with `QLatin1StringView`.
+
+V1.1.2
+---------
+ * Workaround for an inconsistency in Qt, where a persistent editor can be opened for an item view without setting the flag "ItemIsEditable".
+ * Follow Qt 6.7 by giving the available space to the text rectangle of a view item (this extends the workaround which was added to V1.1.1).
+
+V1.1.1
+---------
+ * The support for qmake is back without KWindowSystem and without being advertised.
+ * Added a workaround for a backward incompatible change in how Qt 6.7 draws item views.
+ * Fixed an old issue in drawing radio buttons under mouse cursor without animation.
+
+V1.1.0
+---------
+ * Made the default compilation be against Qt6. (For Qt5, set "ENABLE_QT5" to "ON", as in `cmake .. -DENABLE_QT5=ON`.)
+ * Removed the support for qmake (because KF6 doesn't support it).
+ * Made it possible to reduce only the opacity of inactive windows with negative values of the relevant setting (in Kvantum Manager).
+ * Added a workaround for a bug in Qt 6.6, because of which, translucent menus on a non-primary screen might be drawn with their minimum sizes and without contents after being moved.
+ * Ensure an opaque base color for combo popups on toolbars.
+ * Use the standard palette when restoring the text colors on an unstyled toolbar.
+ * Added a workaround for tiny overlaps between tree branch lines with translucent light/dark colors.
+ * Added a toolbar, containing a date-time editor with popup and a progress-bar, below the top toolbars of kvantumpreview.
+ * Added a workaround for a crashing bug in KDE's plasma-settings.
+
+V1.0.10
+---------
+ * Support editable comboboxes not derived from `QComboBox`.
+ * Clean drawing of `QDateTimeEdit` with calendar widget (Qt badly draws a lineedit over a combobox).
+ * Allow rounded buttons, comboboxes and lineedits for LibreOffice.
+ * Fill the whole rectangle of a colored view-item.
+ * Allow compilation without KDE Frameworks (KWin's blur effect will be enabled only under X11 and the contrast effect will be disabled).
+ * Removed Openbox themes (Openbox's development stopped years ago).
+ * Ensure enough contrast for texts of menubar corner widgets.
+ * Fixed positioning of panel menus under Wayland and removed an old workaround about menu positioning with multi-screen setups.
+
+V1.0.9
+---------
+ * Fixed a regression that caused crashes in QML apps and LibreOffice when the widget animation was disabled.
+ * Workaround for bad codes that give an enormous contents size to item-views.
+
+V1.0.8
+---------
+ * Fixed dragging of inactive windows of multi-window apps under Wayland.
+ * Fixed a miscalculation about setting menu-item height in a rare case.
+ * Improved the workaround for Qt's hover bug in combo-boxes (especially under Wayland).
+ * Workaround for Qt's hover bug in header views (especially under Wayland).
+ * Support combo menu icons whose widths are greater than the small icon size.
+ * Limited the extra vertical margins of menu-item icons to 1px.
+ * Smaller text-icon spacing for editable comboboxes that are drawn as lineedits.
+ * Added vertical text margins of lineedits to their heights.
+ * Also animate busy progressbars without `QWidget` (like "indeterminate" QML progressbars).
+
+V1.0.7
+---------
+ * Don't rely on the (undocumented) "Destroy" event to remove destroyed widgets from lists. In this way, the cause of a rare crash is removed.
+ * Better guarantee for the lack of scrollbars in the config page of Kvantum Manager when it's visited for the first time.
+
+V1.0.6
+---------
+ * Added a workaround for Kate's new status-bar and side-pane buttons, which still have wrong style codes.
+ * Added some Qt6 parameters.
+ * Silenced the compilation warnings with Qt 6.4.
+
+V1.0.5
+---------
+ * Added a workaround for wrong app codes that don't give the required info to CT_MenuItem.
+ * Added a workaround for wrong app codes that don't give the required space to tabbar scroll arrows.
+ * Added a workaround for a new bug in Krita 5.1.0. A buggy code in the jungle of Krita's source causes a freeze when CT_ProgressBar gives a height greater than that of the contents size.
+ * Added a condition for window dragging under Wayland, especially for dragging from buttons (the parent window is checked).
+ * Simplified finding of Qt modules with cmake.
+
+V1.0.4
+---------
+ * Added a workaround for Qt6's double click problem with window dragging.
+ * Added a workaround for Qt6's window dragging when the cursor is outside the widget after the drag is finished (previously, its hover state would persist).
+ * Don't start window dragging if a popup menu is shown and closed quickly (may happen very rarely).
+ * Added 1px to button arrow margin.
+ * Considered more details in drawing menu arrows of buttons (especially when QToolButton is null).
+ * Removed button contents shift (it was useless and inconsistent).
+ * Added a pushbutton with menu to kvantumpreview.
+ * To find the sunken button that has triggered a menu, check whether that menu really belongs to it.
+ * Improved the workaround for Qt's hover bug in buttons.
+ * Made menu shortcuts a little paler than menu texts.
+ * Added a workaround for LibreOffice's header view.
+ * Removed the old HDPI workaround.
+
+V1.0.3
+---------
+ * Workaround for a rare case of stylesheet interference in spinboxes.
+ * Disabled "ChangeSelectionColor" in all KDE color schemes because of its buggy behavior.
+ * Respect lack of `scaledContents` in `QLabel` with large pixmaps (don't scale down large label images when they aren't supposed to be scaled).
+ * Don't try to animate frameless scroll-areas.
+ * Changed the default layout spacing to 3px.
+ * Don't enforce minimum height of spinbox (tolerate bad layouts like that of Qt Designer's view items).
+ * Ignore the key "text.margin" with group-boxes.
+ * Set the minimum contents height of tabs to 16px.
+
+V1.0.2
+---------
+ * Added "widgets" to "style.pro" for Qt ≥ 6.2.4.
+ * Don't set the active/inactive palettes of item views (when they are shown/activated/deactivated) if the inactive state is ignored.
+ * Force palettes (of item views) on event filtering only if needed.
+ * Apply blurring to the whole rectangles of menus/tooltips that aren't drawn by Kvantum.
+ * Workarounds for issues in LibreOffice's Qt skin (guarantee opaque backgrounds for LibreOffice's spin-boxes and editable combo-boxes, work around bugs in tab positions, and give enough space to tabs and spinboxes).
+ * Allow translucency in Qt widgets with LibreOffice.
+ * Added a workaround for QML tool buttons.
+ * Added a warning dialog that shows up when the user enables kinetic scrolling.
+
+V1.0.1
+---------
+ * Added a workaround for the wrong style code of "KisDoubleSliderSpinBox" in Krita 5.0.0.
+ * Fixed drawing of separate arrow indicators on tool buttons in rare cases.
+ * Give 16px to the width of vertical spinbox buttons.
+ * Don't change the palette of a menu because of its toolbar parent. (This is mostly for Qt6. For some reason, no problem happened without it in Qt5.)
+ * Never assign a separate theme to Kvantum manager and kvantumpreview.
+ * Added options (to Kvantum Manager) for setting corner radii when blurring translucent menus and tooltips with rounded corners.
+ * To find the sunken button that has triggered a menu, check whether it really has a menu (in addition to checking of its sunken state).
+ * Don't enforce window size grip without layout (which is possible in very rare cases).
+ * Bumped the minimum required version of Qt to 5.15.0 and that of KF5 to 5.82.0.
+
+V1.0.0
+---------
+ * Enabled experimental compilation of Kvantum's plugin against Qt6. With cmake, "ENABLE_QT5" should be set to "OFF" (as in `cmake .. -DENABLE_QT5=OFF`) — it's "ON" by default.
+ * A little more precise calculation of sizes of buttons with bold texts.
+ * Take "ToolButtonFollowStyle" into account when getting the style from the toolbutton itself (a logical consideration with no effect).
+ * Added a workaround for missing panels and frames of LibreOffice's input fields.
+ * Made Kvantum Manager a little more keyboard friendly.
+ * Ensure that the left mouse button is pressed on starting window dragging (it may not be pressed in very rare cases, where a popup is shown after moving the cursor and closed before dragging).
+ * Added a variant of KvCurves3d with light selection color.
+ * Derive the disabled highlighted text color from the active highlighted text color.
+ * Consider the mouseover state for icons of check boxes and radio buttons if relevant.
+ * Added an example of progress-bar inside view-item to kvantumpreview.
+ * Added a workaround for KWin-Wayland's menus and tooltips (they're polished before the platform name is set to "wayland").
+ * Added an option (to Kvantum Manager) for not blurring inactive windows.
+ * Removed the workaround fo the fixed Qt5 bug QTBUG-47043 but added another workaround for a similar Qt6 bug.
+ * Limit the transparency of PCManFM-Qt's view to its main window.
+
+V0.20.2
+---------
+ * Allow opening of the user config file from Kvantum Manager.
+ * Respect KDE's scrollbar click behavior by default.
+ * Elide push button text if there isn't enough space for it.
+ * Better eliding of multiline texts.
+ * Added LibreOffice to the black list of window dragging (as a workaround for issues related to its Qt5 skin under Wayland).
+
+V0.20.1
+---------
+ * In the case of bad hard-coded styles, ignore non-base background colors of line-edits if their saturations are small enough.
+ * Blacklisted QQuickWidget with window dragging.
+
+V0.20.0
+---------
+ * Dropped the support for Qt5 < 5.12.
+ * Added two themes (KvDark and KvSimplicityDarkLight).
+ * Better colors for texts and symbolic icons of disabled toggled buttons.
+ * Use frame sizes of "ScrollbarTransientSlider" if existing.
+ * Decreased the combo box width by 2*PM_FocusFrameHMargin, which was added before drawing view-items inside Kvantum.
+ * A little more compact busy indicator for ordinary progressbars.
+ * Removed the key about KCapacityBar. It's a redundant KDE widget that should always be drawn as a progressbar.
+ * Added a key for always centering normal tabs (in contrast to those in the document mode).
+ * Disable kinetic scrolling inside subwindows.
+ * Guarantee that the width hint of an icon-only button isn't smaller than its height hint.
+ * Fixed a case of underlined shortcuts in tray menus without Alt being pressed.
+ * Added an option (to Kvantum Manager) for styling vertical toolbars. It's disabled by default and also when "single_top_toolbar" is "true".
+ * Improved the workaround for Qt's hover bug.
+ * Don't sharpen the round corners of a colorized line-edit (only fill its contents rectangle).
+ * More precise calculations for finding the widest spinbox text.
+ * Don't consider the tab overlap in drawing the tabbar frame (as with the tab widget frame).
+ * Allowed toolbar_separator_thickness to be set to a value less than toolbar indicator size, without changing its default value (the maximum of toolbar indicator size and 4). The minimum value is 2.
+ * Fixed drawing of view-items with right-aligned decorations.
+ * Used version check for KWindowSystem because of method deprecations.
+
+V0.19.0
+---------
+ * Allow dragging from some disabled widgets.
+ * Added an option (to Kvantum Manager) for setting the toolbar icon size to the font height if possible.
+ * Don't style vertical toolbars because, otherwise, they might look ugly.
+ * Always check if the drag manager is deleted after it sends mouse events (to prevent any crash).
+ * Increased the drag distance and delay when dragging is done from buttons.
+ * Try to do less calculations to get widget sizes by not consulting QCommonStyle as far as possible.
+ * Draw view-items independently of QCommonStyle to apply all size settings correctly.
+ * Always reserve the vertical space for a single-line text in view-items. QCommonStyle is inconsistent in this regard and may create a tiny item editor when the text is empty. Qt doesn't give enough info to QStyle for knowing whether the editor is active.
+ * Ignore a view-item's custom brush when it's selected (as QCommonStyle does).
+ * Cleaned up the code of transient scrollbar animation (and fixed a rare case, where a transient scrollbar might not disappear after app startup — as in kcharselect).
+ * Fixed a small problem in (Krita's) KisSliderSpinBox.
+
+V0.18.0
+---------
+ * Use PE_FrameStatusBarItem with Qt ≥ 5.13.0 and return from it.
+ * Made toolbars unmovable by default.
+ * Added some effects to the labels of Kvantum Manager's About dialog.
+ * Don't let the width of a push button that has text be smaller than 80px (although the minimum width may be greater because it depends on the font).
+ * Replace text tabs with spaces when calculating label sizes (because text tabs aren't expanded when labels are drawn).
+ * Always draw the tab text in a single line.
+ * Horizontally smaller menus when they have accelerators.
+ * Respect the key "no_inactiveness" with all widgets.
+ * Get tooltip shadow dimensions only once if compositing is available.
+ * Draw the icon of the menubar item instead of its text if it's given.
+ * Fixed the field growth policy of centered form layouts.
+ * A better window dragging code (x11drag) with Qt ≥ 5.15, that works under X11 and Wayland alike by calling the window manager.
+ * Added an option (to Kvantum Manager) for dragging windows from buttons.
+ * Considered a rare case of window type change for window translucency and dragging.
+ * Removed the scroll jump workaround. It interfered with animations and cluttered the code to partially compensate for Qt's scroll jumps that appeared with mouse gestures.
+
+V0.17.0
+---------
+ * Also, take care of widgets without interior SVG elements on a menu that has a high contrast with the window (a possible scenario that hasn't happened with any theme so far).
+ * A workaround for a rare problem in QWidgetAction when menus have a high contrast with windows.
+ * Fixed the text color of thin progressbars inside stylable toolbars of dark-and-light themes.
+ * More accurate calculation of spinbox width under special circumstances.
+ * Distinguish popup indicators from other button indicators on mouseover.
+
+V0.16.1
+---------
+ * Consider a toolbar stylable if it contains a tabbar that isn't inside the same window.
+ * Be more explicit about the color group when getting colors from the standard palette.
+
+V0.16.0
+---------
+ * Set the scroll indicator size of tabs to that of toolbar buttons.
+ * Fixed a rare issue in the frame size of grouped elements.
+ * Added an option to Kvantum Manager for enabling window translucency with non-integer scale factors after showing a warning.
+ * A workaround for a rare case of Qt's contradicting QStyle in drawing spin boxes.
+ * Fixed the height of combo menu separators.
+ * Reset widget palettes on changing style from and to Kvantum. This fixes several problems with on-the-fly style changes, so that an app restart won't be needed in most cases.
+ * Updated the code for Qt 5.15.
+ * Added a workaround for a regression in Qt 5.15, which results in QStyleOptionTab reporting an incorrect tab position.
+
+V0.15.3
+---------
+ * A better calculation of the part of a progressbar's internal text which is inside the indicator (this also fixes a small offset in KisSliderSpinBox).
+ * Don't draw a progressbar's busy indicator if it's wider than the progressbar (although that never happens in practice).
+ * Added a workaround for a new but small bug in the toolbar timer of Audacious 4.0.
+ * Align a menu-item's text with others' if its icon isn't null but its pixmap is.
+ * Removed Qt4 related stuff with the default installation, at last.
+
+V0.15.2
+---------
+ * Restyle Kvantum Manager when tooltip delay is changed.
+ * When compensating for menu shadows, consider the cursor position as the last resort.
+ * Consider RTL in QCommandLinkButton (although Qt doesn't).
+
+V0.15.1
+---------
+ * Added some dialog button icons for Qt ≥ 5.14.
+ * Fixed a missing case of checking null style option in styleHint().
+
+V0.15.0
+---------
+ * Set the clear icons of Kvantum Manager's combo boxes because the default icons don't follow the color palette when the theme is changed.
+ * Added a workaround for bad codes that change a line-edit's base color (like that of Kate or Konsole).
+ * Don't remove text shadow if widget text colors aren't specified.
+ * Fixed a potential issue in translations.
+ * Added an option (to Kvantum Manager) for centered forms.
+ * Don't set "WA_NoSystemBackground" with hard-coded translucency. (This solves the problem of Konsole's transparent menubar.)
+ * Milder gradient for menus of the default theme.
+ * Fixed the enabled/disabled states of the buttons "Use this theme" and "Delete this theme" in Kvantum Manager.
+ * Try to handle the device pixel ratio more locally.
+ * Added KvMojaveMixed, a dark-and-light version of KvMojave.
+
+V0.14.1
+---------
+ * Enforce contrast between symbolic clear icon and background of toolbar lineedits in dark-and-light themes if possible.
+ * Consider the size of lineedit clear icons to be PM_SmallIconSize.
+
+V0.14.0
+---------
+ * Prevent toolbar arrow on showing kvantumpreview.
+ * Guarantee correct symbolic icon colors for combos inside toolbars.
+ * Don't let combo menus have a greater height that ordinary menus (Qt increases their height).
+ * Never change the palette of toolbar buttons/combos/line-edits that are within a separate window.
+ * Allow custom elements for focus rectangles of some widgets.
+ * Removed the redundant key "no_focus_rect".
+ * Safeguard against a badly edited kvconfig file when writing to it with Kvantum Manager.
+ * Added a (temporary) workaround for a nasty bug about text translucency in Qt 5.14.0.
+ * Handle PlaceholderText with Qt ≥ 5.12.
+
+V0.13.0
+---------
+ * In tab size calculation, consider the actual tab icon size instead of PM_TabBarIconSize if it exists.
+ * Don't decrease the minimum size of a spinbox if it's more than enough for its text.
+ * Don't avoid elided texts in task buttons of LXQt Panel.
+ * Added a key for the thickness of toolbar separators.
+ * Ensure correct menu blurring if the compositor starts with a short delay.
+ * Prevent menus from switching to another screen with a multi-screen setup.
+ * Avoid scrollbars in the third page of Kvantum Manager the first time it's shown.
+ * Put menubar MDI buttons inside menubar frame.
+ * Don't show the arrow of a tool button with instant popup.
+ * Fixed an old problem in toolbars of dark-and-light themes.
+ * A safeguard against buggy Qt plugins that don't handle the tool-button style correctly. (So far, only qt5ct has had bugs.)
+
+V0.12.1
+---------
+ * Added a hacking option for kinetic scrolling to Kvantum Manager. Although Qt's kinetic scrolling has bugs, it doesn't cause crashes with Qt ≥ 5.13.1.
+ * Fixed problems in updating the GUI of Kvantum Manager on theme change.
+
+V0.12.0
+---------
+ * Basic support for FreeBSD.
+ * Added a new option for the click behavior with 3 values for following the current DE or using single or double click (and removed the old click option).
+ * A workaround for the bug in Qt 5.13.1 → QWidget::setAttribute(), when the app style is changed.
+ * Ignore the disabled state of tree expanders (because some apps, like Dolphin, don't set the state to enabled).
+ * Removed the wayland menu translucency workaround for Qt ≥ 5.12.
+ * When giving a transparent background to QComboBoxPrivateContainer with combo menus, create the transparency by setting the alpha of the real background color to zero. This works around the problem in Lyx's combo menu.
+ * Milder gradient for the default theme's tab frame interior.
+ * A workaround for a Qt bug that causes drawing problems with non-integer scale factors. They can be seen with Fusion too but become intense with window SVG gradient and/or translucency.
+ * Avoid ugly backgrounds behind menu scroller arrows.
+ * Forcefully prevent stylesheets from ruining combo menus.
+
+V0.11.2
+---------
+ * Use native file dialog in Kvantum Manager.
+ * Fixed toolbar horizontal extension indicator with HDPI.
+ * Added a low-contrast theme (KvBlender) inspired by Blender.
+ * Added a key to remove extra generic frames that some apps may draw.
+ * Also consider the "disabled" state when drawing rounded frames with separate expanded frame elements (it's used by progressbar indicator).
+ * Exclude toolbars whose appearances are modified by stylesheets from stylable toolbars.
+ * Don't animate the state change of generic frames if there is no top focused frame (to prevent probable flashes).
+ * When removing translucency from the base color in special cases, also consider the window color behind it.
+ * Make the alternate base color opaque by applying it over the base color because some apps may ignore its translucency.
+ * No disabled state for toolbars because, otherwise, it would be both ugly and useless.
+ * Prevent tiny busy indicators with rounded progressbars.
+ * More precise calculations related to shadows and blurring of menus/tooltips, especially for preventing 1-px blurred strips outside menu/tooltip borders.
+ * Replaced the Qt methods that were deprecated by Qt 5.13.
+ * Added a key (to Kvantum Manager) for removing all focus rectangles.
+ * Disable the context menu for transient scrollbars (because of the hover bug in Qt5).
+
+V0.11.1
+---------
+ * Added a key for removing Kvantum shadows from composited menus and tooltips (under DEs that give them shadow).
+ * Fill opaque combo menus with the window color (because transparency is enforced on combo menus while polishing them).
+ * When spreading menuitems across menus, do it for non-composited menus too.
+ * Always integrate the drop-down part of a combo box if it's drawn as a lineedit.
+ * Keep (partial) frame expansion as far as possible (previously, it was removed in all special cases).
+ * Remember whether some elements exist in the SVG file, instead of searching for them again and again.
+ * Imported QCommonStyle's combo width calculation (with no change in the final result).
+ * Don't force bold or italic font on combo or menu-item texts (because finding longest texts of combos isn't CPU-friendly and combos can have menu popups).
+ * Ignore window frame with dragging (less calculation for Qt and no jump under Enlightenment).
+ * Set QStyle's standard palette to the Kvantum theme palette and make use of it instead of app palette (because app palette may not be reliable with some apps, like Qt Designer).
+ * An effective way of finding menus that aren't drawn by Kvantum (for excluding them from compensating for shadows). It works with Qt ≥ 5.12.
+ * Removed redundant computations after showing a menu. Their results are remembered instead.
+ * Added the missing disabled state of dials.
+ * Since HDPI is supported by KDE's blur effect with Qt ≥ 5.12, disable Kvantum's workaround for those versions.
+ * Explicitly set the minimum Qt version to 5.9.0.
+ * Use QStringLiteral with DATADIR (otherwise, some compilers might get confused).
+
+V0.11.0
+---------
+ * Paint QCommandLinkButton completely in the code (panel + icon + texts) to remove discrepancies between it and other kinds of buttons.
+ * Don't rotate the toolbar handle on vertical toolbars if it's centered.
+ * No separator between toggled and pressed grouped toolbuttons.
+ * Don't enforce window size grip with fixed size layouts.
+
+V0.10.10
+---------
+ * Don't move a menu that isn't drawn by Kvantum (when a menu is drawn by a stylesheet, Qt lets QStyle polish it; hence the problem).
+ * Reversed the above-mentioned workaround for now because, unfortunately, Qt doesn't provide a reliable way of distinguishing stylesheet menus at the moment they're shown.
+ * Don't move detached menus when they're shown.
+ * Support LibreOffice's new Qt5 skin (that's much better than the old Qt4 skin).
+ * Also check the active action of active popup when determining whether a submenu is going to be shown.
+ * Added a key for drawing the spinbox separator also with inline indicators.
+ * Changed KvGnome and KvGnomeDark for them to match the latest default GTK+ theme.
+ * Changed the drag cursor from drag-move to open-hand.
+ * Don't draw title-bar icons on subwindow menu if there isn't enough contrast.
+ * Always integrate the drop-down part of a tool button (not only when it has frame expansion).
+ * Fixed the text alignment of QCommandLinkButton and added a workaround for the color Qt gave to its text.
+
+V0.10.9
+---------
+ * Group libfm-qt's path buttons when they aren't on a toolbar and make them follow group_toolbar_buttons on toolbars.
+ * Style the split view of pcmanfm-qt appropriately when its view is transparent.
+ * Fixed QToolBox with HDPI.
+ * Don't let the text of an ordinary progressbar intersect its frame.
+ * Don't draw the left or right frame of a toolbar that is attached to the menubar but doesn't have the same width.
+ * Don't remove the frame expansion of view-items only because they are grouped together.
+ * Don't make windows translucent or blurry if they have partial masks.
+ * Fixed toolbar/menubar extension arrows with HDPI.
+ * Fixed a bug that prevented active tab overlapping when tab separators existed but "no_active_tab_separator" was "true".
+ * Added the key "center_scrollbar_indicator" for having a scrollbar-slider grip with the same width and height.
+ * Fixed a flaw in size calculations related to thin progressbars.
+ * Take care of thin progressbars with an expanding vertical policy.
+ * KvYaru is added and KvCommunitheme is removed.
+ * Fixed Dock specific close and restore buttons.
+ * Made dock splitters like other ones (by setting PM_DockWidgetSeparatorExtent) and dealt with too tall splitters.
+ * Optional separators for toggled buttons in grouped toolbar buttons.
+ * Fixed an old bug in text shadows.
+ * Added a key for spreading menuitems across left and right menu frames.
+ * Added KvMojave and KvMojaveLight.
+ * No toggled state for progress bars.
+ * Made the X11 drag independent of X11 by using the QWindow method "setFramePosition()". The reason was a new bug in X11 codes of Qt5.11, which had damaged the X11 drag.
+ * Support non-integer scale factors with HDPI.
+ * If the current theme is customized, go to its root version after it's removed by Kvantum Manager.
+ * Depend on KWindowSystem (KWindowEffects) with Qt >= 5.11 to support the blur effect under Wayland too.
+ * Maximum precision in drawing tree branch lines.
+ * Show menus of menubar items exactly below them, without a gap.
+ * Removed text shadow depths > 1 until Qt supports a better way of adding text shadows with QPainter.
+ * Added a workaround for Qt scroll jump with mouse gestures (as a hacking option in Kvantum Manager).
+ * Animation for tab close buttons.
+ * Added an option (to Kvantum Manager) for setting the dialog button layout.
+ * Made big menus scrollable by default.
+ * Support the KDE contrast effect with Qt ≥ 5.11 for windows that support the blur effect (the KDE blur effect itself can be disabled).
+ * Consider active_tab_overlap in drawing tab-bar frames (because the active tab interior should be opaque when there's an overlap).
+ * Don't give too much space to text shadows.
+ * Added SVG symbolic icons to Kvantum Manager because the system symbolic icons didn't change their color when the theme was changed from light to dark or conversely.
+ * 3-px margin for centered toolbar handles.
+ * Fixed a mistake in calculating combo box widths (the existence of icons wasn't considered correctly).
+ * Enforce the menu-item text color on font combo popups when needed.
+ * Fixed drawing of buttonless spin-boxes.
+ * Use QStringLiteral when appropriate.
+ * When blurring backgrounds of unusual tooltips, don't exclude the tooltip shadow width if they inherit QFrame.
+ * Check the widget mask in BlurHelper too and disable blurring if it isn't the widget rectangle. The reason is that the mask can be set after polishing.
+ * Align texts vertically centered when they aren't drawn by Kvantum directly.
+ * Don't move a menu twice to compensate for its shadow width (it happens with LXQt main menu after a style change).
+ * Dropped QDesktopWidget.
+ * No redundant space for groupboxes without text/checkbox.
+ * Left mouse button sets slider position (middle button was a bad default).
+
+V0.10.8
+---------
+ * Try to support translucent base colors, knowing that it isn't possible in all cases.
+ * Changed old-style casts to C++ ones.
+ * When searching for a stylable toolbar container, search only in the direct children of the widget's window (for optimization).
+ * Find exact heights of multi-line texts for all kinds of fonts by finding their bounding rectangles and without resorting to any "magic constant".
+ * Added the key "spread_header" for making simple headers. Also, RTL headers are fixed.
+ * Added "inactive.alt.base.color" because alternate rows are drawn by Kvantum now.
+ * Corrected RTL for QToolBox (a bug in QCommonStyle).
+ * Consider inactiveness in setting scrollbar background.
+ * If a combo isn't styled by Kvantum anymore, don't restore its item delegate (otherwise, a rare crash might happen).
+ * Fixed the header icon position with RTL layouts.
+ * Merge the background of a header with that of its parent view, if any.
+ * Fill the menu interior with the window background color if there isn't an interior SVG element.
+ * Gave meaning to min_height/min_width under Window and Dialog sections by making them the minimum height/width of the background (interior) SVG element (useful with gradients).
+
+V0.10.7
+---------
+ * Removed the workaround for Gwenview's scrollbar issue because it was potentially dangerous (actually, just in one case). Anyhow, Gwenview's bug was fixed a long time ago.
+ * Cover a very rare case, where the special text of a spinbox is set when its value is minimum (which means a bad code).
+ * Center menubar-item texts horizontally (they were left-aligned before).
+ * Added a workaround for an old Qt bug which, sometimes, prevents updating of inactive widgets when the active and inactive highlight colors are the same.
+ * Handle multi-line combo-box menu-items by drawing them on a single line.
+ * Optional sections for line-edits and combo-boxes inside toolbars.
+ * Don't enforce vertically centered labels for comboboxes and line-edits.
+ * Consider the top and bottom label spacings when drawing some indicators.
+ * Smoother movement of dial handle.
+ * Added the optional section ScrollbarTransientSlider.
+ * Compensate for a change in the vertical positioning of submenus with Qt 5.11.
+ * Added a key for menu separator height.
+ * Added a key (to Kvantum manager) for ignoring the inactive state.
+ * For an exact vertical centering, give an even height to the bounding rectangle of the text and the icon beside it.
+ * Consider special fonts for menu-items (some apps may use them to show different things).
+ * Added a key (to Kvantum Manager) for removing (text) color translucency.
+ * Vertically center textless slim (horizontal) progressbars.
+ * Split "Kvantum.cpp" logically.
+ * Added a key (to Kvantum manager) for reducing menu opacity.
+ * Added command-line options to kvantummanager.
+ * Enable window translucency under Wayland because Qt >= 5.11 supports it.
+
+V0.10.6
+---------
+ * Distinguish between a real tooltip and a window with the tooltip flag on unpolishing.
+ * Fixed the minW key with line-edits.
+ * Don't make a window translucent if the FramelessWindowHint or X11BypassWindowManagerHint flag is set for it after it's created but before it's polished.
+ * Prevent redundant flashes with focus-in/out animations.
+ * Fixed the focus rectangles of tabbar scroll buttons.
+ * No space between the tab contents and a nonexistent tabbar.
+ * Added a hacking key (to Kvantum Manager) for the middle-click scroll jump (with the left-click jump as the default).
+ * Handle the CMP0071 policy of CMAKE >= 3.10 (let AUTOMOC and AUTOUIC process GENERATED files).
+ * Make combo_focus_rect use the normal panel to draw a combo box with the keyboard focus.
+ * A workaround for a Qt5 mess in painting the "clear" button of line-edits (the issue is visible in Fusion too).
+ * Remove "foreach" with Qt5.
+ * Don't add the icon size to the size of check boxes or radio buttons when there's no icon.
+ * Replaced QRegExp with QRegularExpression.
+ * Support the global config files "$XDG_CONFIG_DIRS/Kvantum/kvantum.kvconfig". (For distros.)
+ * Fixed an old miscalculation in drawing tab labels.
+ * Major enhancements and simplifications in the state change animation code through "QStyleOption::styleObject()". As a result, faulty animations are fixed and some missing animations are added, especially for all kinds of buttons.
+ * Fixed the disabled text color of auto-raised toolbuttons in dark-and-light themes.
+ * Don't draw the interior of the focus rectangle but allow complete focus elements on the whole widget (button like widgets, tabs, group boxes and sliders are supported), so that if their names exist in the config file, their elements will be drawn instead of the focus rectangle.
+ * Don't rotate a rounded frame unless it has a top expanded (or border) element.
+ * Added a key for an extra margin between tab frame and tab button.
+ * Added a 3px spacing between the top text of a groupbox and its top frame.
+ * Added optional icon/arrow separators for comboboxes in edit mode.
+ * Added a key for square arrow buttons in editable combo boxes. It also removes the combo panel behind the icon.
+ * Put the texts of thin progressbars above them as far as possible. If there isn't enough space above a thin progressbar, put its the text in front of it.
+ * Fixed inactive states of nonstandard buttons.
+ * A workaround for badly designed progressbars (as in pavucontrol-qt -- I didn't fix pavucontrol-qt because other developers might make the same mistake).
+ * Reverse the new default behavior of Qt5 submenus, due to which, submenus are closed when the cursor leaves all menus.
+ * Handle disabled icons independently so that they're dim everywhere (even with KDE icon engine, which doesn't call generatedIconPixmap() with SVG symbolic icons).
+ * Added a workaround for "selectable disabled view items" (Qt Creator can have such items with cmake projects).
+ * Limit the menu check/radio box size to the small icon size and not to what QCommonStyle returns.
+ * Added a key for bold active tab text.
+ * Added a key for the degree of boldness (from 1 to 5; 3 means normally bold).
+ * An optional "-tickless" element for the slider handle when the slider has no tick marks.
+ * Optionally separate checkboxes in view-items.
+ * Updated RTL header drawing because of a recent change (or issue?) in Qt5.
+ * Standardized the color contrast calculation according to "Web Content Accessibility Guidelines".
+
+V0.10.5
+---------
+ * Don't draw the groove of a transient scrollbar.
+ * Reduced the selection tint to 20%.
+ * No repeating pattern for menu separators.
+ * Removed "Attached active tab..." from Kvantum Manager because it may spoil the theme.
+ * Added keys for scrollbar extent and toolbar grouping to Kvantum Manager.
+ * Ensure total transparency for the last frame of the transient scrollbar animation.
+ * Don't let transient scrollbars overlap the frames of their views.
+ * Localization.
+ * Changed the keys "size.minwidth" and "size.minheight" to "min_width" and "min_height" respectively and added support for setting their values in terms of app font height and also as increments.
+ * Ability to set frame expansion in terms of app font height (for total roundness to be independent of font size).
+ * Ability to set active_tab_overlap in terms of app font height.
+ * Suppressed GCC7 compilation warnings about "-Wimplicit-fallthrough=". (Red Hat again! Do they think people are stupid?)
+ * Added optional toggle and press text colors for menu(-bar) items. The fallback is focus color.
+ * Added a key for a 25% translucent background for transient scrollbars when needed.
+ * Compensated for menu shadows when positioning menus (thanks to Craig Drummond).
+ * Give viewitem top and bottom margins (frame width + text margin) to combo popup items and make their background transparent.
+ * Made the combo menu (popup as menu) exactly like a menu.
+ * A key for removing checkboxes from combo menus.
+ * Set the QObject property "menu_shadow", which is a QList<int> containing left, top, right and bottom menu shadow thicknesses in that order.
+ * If needed, set the window text color of menus to the normal menuitem text color because some apps may do weird things with menus.
+ * Added a key (to Kvantum manager) to reduce window translucency or set it in themes that don't have a translucent SVG background for windows.
+ * Added a key for "embedded" tabs, which are half embedded in their widgets.
+ * Separated the Qt4 code from the Qt5 one.
+ * Defined a few standard Qt icons.
+ * Fixed the size of tool buttons with just an arrow.
+ * A key for transparent arrow (tool) buttons.
+ * If the widget has no interior, check whether it has a high contrast with its container.
+ * Group tabbar scroll buttons together and remove their states.
+ * Optionally separate titlebar buttons for dock widgets.
+ * Make titlebars match the theme according to its lightness or darkness under GTK DEs like Gnome (by Craig Drummond). Now, the suffix "Dark" can have a practical meaning in the theme name.
+ * Accept dark themes inside light theme directories.
+ * Editable theme combobox in Kvantum Manager for finding installed themes by typing.
+ * Put the progress text in front of the bar when "progressbar_thickness" is less than the text (font) height.
+
+V0.10.4
+---------
+ * Better coverage of menu/tooltip translucency and/or shadow.
+ * Fixed the states of header arrows.
+ * A safe, simple and elegant solution to all Qt5 translucency problems :)
+ * Workaround for Qt5 submenu timeout bug.
+ * Don't draw normal states of flat default buttons.
+ * A key is added (to Kvantum Manager) for not drawing window/dialog tiling patterns. As an example, an overlay pattern is added to KvCurves3d's translucent window and the key in question is used to disable it by default.
+ * Added support for transient scrollbars :)
+ * Don't make a window translucent if it has a stylesheet containing "background".
+ * Really clean up in "unpolish(QApplication*)" (QupZilla's translucency problem is fixed by this).
+ * Don't crash on wayland (preparation for wayland).
+ * Handle floating frames as well as windows with the ToolTip flag.
+ * No frame for flat groupboxes.
+ * Always center tab text (also the text position is corrected, especially for RTL).
+ * Added focus rectangle to all themes (also a variable is added for combo boxes without focus rectangle).
+ * Update the small rectangles below attached tabs (when tab rectangles are moved by tab scroll buttons). This was needed because Kvantum attaches tabs to their tab widgets in a way different from (and better than) how other style engines do.
+ * Added Arch PKGBUILD files (because Arch has the best way of making installable packages).
+
+V0.10.3
+---------
+ * Choose the correct arrow for toolbar and menubar extension buttons. Unfortunately, the arrows can have no state other than normal and disabled (a Qt bug).
+ * No state other than normal is needed for toolbutton flat arrows.
+ * Added yet another toolbutton size workaround when the button text is too long.
+ * Added the hacking key "no_selection_tint" to Kvantum Manager.
+ * Support shadow for groupbox label.
+ * Added support for blurring any hard-coded translucency (and not just Konsole) with kwin.
+ * Added support for app specific themes (to Kvantum Manager).
+ * Added a dark variant of KvArc (KvArcDark).
+ * Added a key for overlapping the active tab.
+ * Added a key to disable frame expansion for inactive tabs.
+ * Added a key for scrollable menus (to Kvantum Manager).
+ * Draw all toolbuttons auto-raised inside toolbars.
+ * Add hover effect only selectively.
+ * Added CMake support (while qmake is kept).
+ * Added two keys for toolbar spacing.
+ * Added a key for submenu delay (to Kvantum Manager). It can be used to show submenus only by clicking.
+
+V0.10.2
+---------
+ * Added a key for drawing scrollbars inside the view frame (thanks to Craig Drummond).
+ * Draw the background of scrollbar and scroll corner area appropriately when the scrollbar is inside the view frame.
+ * Consider digiKam's DAbstractSliderSpinBox as a KisSliderSpinBox.
+ * Added a key for drawing combo popups as menu popups (thanks to Craig).
+ * Expand x11drag option to allow finer control (thanks to Craig).
+ * Allow bold and italic GroupBox titles (thanks to Craig).
+ * Added an Arc like theme.
+ * Added a key for drawing tree branch lines (to Kvantum Manager).
+ * Added a key for setting the width of horizontal spin buttons (to Kvantum Manager).
+ * Global minimum width for push buttons.
+ * Center text+icon in push buttons.
+ * Added a key for layout margins (thanks to Craig).
+ * Support monochrome icon sets that reverse the color of selected icons.
+ * Added a hacking key for not tinting selected icons.
+ * Added a key for frame patterns.
+ * Added support for focus rectangle to comboboxes.
+ * Added a key to respect some DE settings (thanks to Craig).
+ * Added a theme inspired by Ubuntu's Ambiance.
+ * Added a fair copy of Ubuntu's Ambiance.
+ * Added an optional section for styling toolbar buttons.
+ * Added an optional key for distinguishing between expanded and usual frames.
+
+V0.10.1
+---------
+ * No label spacing for checkboxes and radiobuttons that have neither text nor icon.
+ * Added a dark cyan theme.
+ * State change animation for line-edits and also for spin and combo boxes when they're drawn as line-edits.
+ * Quietened compiler warnings with Qt-5.7.
+ * Use "const char*" instead of "QString" wherever appropriate.
+ * Don't draw the panel of a dock title button twice.
+ * Fixed RTL view items.
+ * Draw text based on its direction, not based on the layout direction.
+
+V0.10.0
+---------
+ * Added optional state change animation for buttons and non-editable comboboxes.
+ * Draw flat pushbuttons like auto-raised toolbuttons.
+ * A workaround for QtWebEngine's selection text issue.
+ * Added an Oxygen-like theme.
+ * Don't force size grip on a dialog that doesn't have a layout or its layout has a size constraint of "SetFixedSize" or "SetNoConstraint".
+
+V0.9.8
+---------
+ * Consider QML anchoring, because of which, some widgets can't have frame expansion, tiling pattern or even interior gradient.
+ * No interior and frame expansion when the label of a group box is drawn on its top frame.
+ * Added support for expanded frame sizes.
+ * Remember theme specifications instead of getting theme repeatedly! This can save considerable CPU usage when a GUI is being updated quickly and continuously.
+ * Added two themes to the collection.
+
+V0.9.7
+---------
+ * Deal with QML peculiarities.
+ * Added support for separate checkboxes and radiobuttons on menus.
+ * Fall back to the normal state if an object for another state isn't found.
+ * Draw the focus frame around widgets with keyboard focus if it's enabled in the theme (it's disabled in the default theme).
+ * Added a key for disabling pushbutton contents shift.
+ * Simplified the logic for tab separators and removed "joined_active_tab".
+ * Added a hacking key for merging PCManFM-Qt's folder-view with its surroundings (to Kvantum Manager).
+ * Added a dark version of KvSimplicity (KvSimplicityDark).
+
+V0.9.6
+---------
+ * Added support for default button interior.
+ * Show menu titles in the toggled and not pressed state.
+ * Added an option for putting the group-box label above the frame.
+ * Removed scrollbar add-line and sub-line frame and interior.
+ * Add a key to join the active tab to its (inactive) adjacent tab(s). Also added support for tab separators.
+ * Added a key for drawing spin indicators inside the spin line-edit.
+ * When toolbar buttons are grouped and one of the buttons is shown or hidden, update the toolbar.
+ * Corrections to the states of toolbuttons with menu arrow.
+ * Corrected blurring with HDPI because the HDPI translucency bug is fixed in Qt-5.6. Also tried to correct icon sizes for odd DPRs.
+ * Set tab horizontal and vertical spaces according to tab frame thickness (which results in an appropriate space between close button and right frame).
+ * Added an experimental hacking key for setting the icon size of LXQT's main menu when it isn't styled by LXQT.
+ * Added "What's This?" to Kvantum Manager.
+ * Added a workaround for a Qt5 bug (QTBUG-47043), because of which, _NET_WM_WINDOW_TYPE is set to _NET_WM_WINDOW_TYPE_NORMAL instead of _NET_WM_WINDOW_TYPE_DROPDOWN_MENU or _NET_WM_WINDOW_TYPE_POPUP_MENU for QMenu.
+ * Added a key for always centering tabs in the document mode.
+ * Don't preserve permission mode when installing theme directories (Ark may give silly permissions to folders when extracting GitHub's zipped source).
+
+V0.9.5
+---------
+ * Added Openbox themes for use with the included Kvantum themes (under LXQT).
+ * Added three extra themes (KvSimplicity, KvGnomeDark and KvFlatRed), polished some themes and modified KvDarkRed.
+ * At last a workaround for the Qt5 "hover bug", because of which, comboboxes and buttons remain in the mouseover state after their menus are closed and without the cursor being over them.
+ * Use the pressed state for focused non-editable comboboxes.
+ * Don't enforce darkness on text editors.
+ * Moved the Kvantum icon to the standard hicolor directory.
+ * Made the submenu overlap accurate. (As a result, a hidden mistake in the calculation of menu/tooltip shadow thickness is fixed too.)
+ * A workaround for Qt's messy RTL submenu positioning.
+
+V0.9.4
+---------
+ * Added a hacking key for not styling any toolbar other than the top one.
+ * Added a hacking key for tinting label icons on mouseover.
+ * Added a hacking key for setting the opacity of disabled icons.
+ * Draw each spinbox indicator only once.
+ * Draw framed spin buttons vertically if a null widget is fed into the related methods.
+ * Show all menu-items in the case of too big menus.
+ * A little overlap for submenus.
+ * Fixes for tabbar base panel.
+ * Added KvGnome, with a Gnome like look and feel, to the extra themes.
+ * The interior used in partial frame expansion should have the frame name.
+ * Workaround for bad hard-coded slider styling.
+ * Swap left and right text margins in RTL.
+ * Added a general key for submenu overlap with -1 (automatic) as default.
+ * Take frame vertical asymmetry into account when drawing labels of push buttons and comboboxes.
+
+V0.9.3
+---------
+ * Support high DPI displays (when QT_DEVICE_PIXEL_RATIO > 1 and even when AA_UseHighDpiPixmaps isn't set).
+ * Draw subwindow titlebar buttons on menubars exactly as on MDI titlebars.
+ * Workaround for a Qt5 bug, which gives wrong heights for fonts like Noto Sans.
+ * Corrected a typo in SE_TabWidgetRightCorner.
+ * Force progressbar roundness on KCapacityBar in all circumstances.
+ * Always show text in KisSliderSpinBox.
+ * Removed the redundant key "textless_progressbar".
+ * Group toolbar buttons based on their heights (not their iconlessness).
+
+V0.9.2
+---------
+ * Added '$DATADIR/themes/$THEME_NAME/Kvantum/', '~/.themes/$THEME_NAME/Kvantum/' and '~/.local/share/themes/$THEME_NAME/Kvantum/' to the installation paths but with lower priority (the second directory has priority over the third one).
+ * Added a hacking key for not using bold font for the text of a default push button (to Kvantum Manager).
+ * Added a general key for layout spacing, with a value between 2 and 10px (to Kvantum Manager).
+ * Added two other extra themes (KvCurves3d and KvCurvesLight).
+ * Used a more reliable Boolean for determining whether a slider is horizontal.
+ * Support the #RRGGBBAA format for color names.
+ * Use the combobox indicator element if its normal state exists.
+ * Respect darkness only when the window color is dark enough.
+ * Don't group toolbar buttons on a vertical toolbar because they wouldn't look elegant, especially with frame expansion.
+ * Don't rotate toolbar buttons by 90 degrees on a vertical toolbar.
+
+V0.9.1
+---------
+ * A workaround for the rare occasion when the background of a Qt5 composited tooltip is filled by the window background color.
+ * In the case of menus and tooltips, check compositing at the moment of their creation (this fixes shadowless menus of KF5 desktop and panel).
+ * Always show text in KCapacityBar.
+ * Added a general key for setting tooltip display delay.
+ * Consider the possibility of color gradients in the case of view-items with hard-coded backgrounds when setting their texts.
+ * Gave priority to the new location of kdeglobals.
+
+V0.9.0
+---------
+ * Added two extra themes (KvDarkRed and KvBeige).
+ * Minor modifications to Kvantum Manager (to recognize KF5 and LXQT more).
+
+V0.8.25
+---------
+ * Added a key for drawing editable comboboxes as lineedits.
+ * Use the generic frame for combo menus.
+ * Check iconlessness when grouping toolbar buttons.
+ * Added a hacking key for merging PCManFM-qt's sidepane with its surroundings (to Kvantum Manager).
+ * It's time to have a decent icon for Kvantum.
+
+V0.8.24
+---------
+ * Added some of my themes, that don't need special titlebars, to the project for Kvantum to have extra themes by default. They're installed as root with Qt5 installation.
+ * Fixed Kvantum Managers's comment tooltip for root themes.
+ * Fixed a miscalculation when the text has shadow.
+ * Took care of buttonless spinboxes.
+ * Don't move the cursor out of the window and back for x11 dragging with Qt5. This workaround not only isn't needed anymore but also creates artifacts with Openbox.
+
+V0.8.23
+---------
+ * Added two new sections for opaque and translucent dialogs. The fallbacks are the sections "WindowTranslucent" and "Window".
+ * Added KF5 system and user color scheme paths to "style.pro" and "KvantumManager.cpp", respectively. The system path is used with the Qt5 compilation.
+ * Added a hacking key for removing the icons of pushbuttons as far as possible.
+ * Another hacking key for removing menu icons.
+ * A lot of subtle changes that together guarantee a more logical look under unusual circumstances.
+ * Corrected some miscalculations.
+ * When calculating spinbox size, consider the case where only QAbstractSpinBox is subclassed.
+ * Fixed a compilation error with Qt5-5.5.0.
+ * Took care of textless menuitems.
+ * Forced KCalcDisplay's text color.
+ * Let the size grip be just an indicator and added one to the default theme.
+ * Draw the size grip relative to the corner.
+ * Don't allow windows to have custom background colors if they have different window and base colors. As for their text color, it's the responsibility of developers to use QStyle correctly.
+ * Another criterion for giving shadow/translucency to menus.
+ * Changed the toggled and pressed buttons of the default theme.
+ * To get the spinbox maximum-length text, use the real width of the text, not the number of its characters.
+
+V0.8.22
+---------
+ * Added an experimental hacking key to force size grips of dialogs and statusbars.
+ * Partially rounded view-items (in some places) and headers.
+ * How did I forget namespace in such a program?!
+ * Take care of transparent line-edits in comboboxes (I've seen them only in Qt5 Cantata).
+ * Added a key for the minimum scrollbar extent and gave a 1px space to scrollbars of very thin widgets.
+ * Set lower/upper limits for some integer keys.
+ * If "mirror_doc_tabs" is false, don't mirror tabs when "attach_active_tab" is also false.
+
+V0.8.21
+---------
+ * If the interior element of the "expand-" objects exists, make borders rounded even when the widget height is greater than the value of frame expansion.
+ * Now it's possible to have clean borders with maximally rounded corners (without a new key and when the "border-" elements exist).
+ * Added a configuration section for distinguishing between opaque and translucent window backgrounds if needed.
+ * Added a key for not mirroring the top/left tab shape to draw the bottom/right tab in the document mode.
+ * Set the pressed state for a combobox if its line-edit has focus.
+ * Compile kvantumpreview and kventummanager against Qt5 by default.
+ * Workaround for the nasty behavior of Qt5 QSettings, which reorders keys on writing.
+ * A little more space for centered toolbar handles.
+
+V0.8.20
+---------
+ * Added a key for removing scrollbar arrows as far as possible.
+ * Simplified transformations between horizontal and vertical elements.
+ * Changed the config page layout of Kvantum Manager.
+ * Added a key for assigning a separate color to that part of the progress text, which is inside the progress indicator. (Useful when there isn't enough contrast between the progress text and indicator.)
+ * Added a key for setting the maximum thickness of progressbars.
+ * Increased text margins of the default theme (because of size changes in v0.8.18).
+ * Fit adjacent header sections together.
+ * To know about RTL, ask the widget, not the app.
+ * Take into account all exceptional situations with Kvantum Manager.
+ * No need to normal and disabled menuitem panels.
+ * Improved "Theme-Making.pdf", especially its Indicators section.
+ * Added SMPlayer's screen to the whitelist of draggable widgets.
+ * Increased the thickness of the clickable rectangle of sliders to the slider thickness.
+
+V0.8.19
+---------
+ * Eliminate any possibility of getting caught in infinite loops when forcing text colors of (tool-)buttons.
+ * Draw the toolbutton frame and interior together (at PE_PanelButtonTool).
+ * Draw the line-edit frame and interior together (at PE_PanelLineEdit).
+ * Better handling of busy progressbars.
+ * Better look for KisSliderSpinBox, especially when progressbar corners are maximally rounded.
+ * Better handling of Konqueror's extra icon inside its URL combobox.
+ * Don't force text color on buttons that are drawn in the standard way.
+ * Workarounds for KMultiTabBarTab (a pushbutton drawn as a toolbutton).
+ * Don't draw a toolbar containing a tab-bar (as in Kaffeine).
+ * Fixes for LibreOffice with dark-and-light themes.
+ * Give combobox text colors to its label if there is one.
+ * No pale background for disabled menubar-items.
+ * Correct length for spinboxes with negative and/or double values and also for date-time-edits.
+
+V0.8.18
+---------
+ * Now it's possible to have completely rounded corners (and more).
+ * Elide the progressbar text when there isn't space (as in Dolphin's space info).
+ * Added missing corner widgets for vertical tabs.
+ * A better way of calculating spinbox sizes.
+ * Added a key for tooltip background color.
+ * Use minW and minH as far as possible.
+ * Better size calculation for some widgets (to align them horizontally if possible).
+ * Force the minimum sizes of Qt5 spinboxes (workaround for a probable Qt5 bug).
+ * Get the theme specification only once because the XLib function XGetSelectionOwner() is used instead of QX11Info::isCompositingManagerRunning() for Qt5.
+ * Added keys for icons sizes (KDE setting has priority).
+ * A key for filling the rubber-band rectangle.
+ * Solved the problem of rounding drop-down tool-buttons.
+ * Better size calculation for menubar and better placement of its items.
+ * Integrate the arrow part of a non-editable combobox with it.
+ * Better size calculation for comboboxes.
+ * Removed the useless StatusBar section. Also removed the focus state of TabBarFrame.
+ * Force text color in line-edits when needed (as in KNotes' font comboboxes).
+ * Clean-up.
+
+V0.8.17
+---------
+ * Added a key for drawing adjacent menu and tool bars as a whole.
+ * Fill the whole menubar (and not just its empty area) with its SVG element.
+ * Fit adjacent view-items together.
+ * Replaced the ugly default box frame with a simple one.
+ * A workaround for the problem of Dolphin's view-items with QSvgRenderer.
+
+V0.8.16
+---------
+ * A new key for drawing spin indicators vertically inside the spin line-edit.
+ * The left (or right for RTL) text margin of menuitems also includes their checkboxes and radiobuttons now.
+ * Removed the 2-px frame thickness limit from menus and tooltips without compositing.
+ * Allow different thicknesses for horizontal and vertical menu frames.
+ * Added a hacking variable for drawing KDE capacity bars as progressbars.
+ * Fixed Konsole's color scheme editing dialog.
+ * Set PM_LargeIconSize and PM_IconViewIconSize to the KDE value for dialog icon size.
+ * Prevent drawing pushbuttons as toolbuttons (as in QupZilla and KNotes).
+ * Don't draw the interior and frame of sizegrip if its window has a custom background color (as in KNotes).
+ * Don't draw the interior of a window with custom background color (as in KNotes).
+
+V0.8.15
+---------
+ * Added the possibility of having high contrast between the colors of buttons, toolbars and menubars, on the one hand, and generic containers, on the other hand.
+ * Fixed the text color of K3b's location bar when there's a high contrast between the window and toolbar text colors.
+ * Yet another workaround when there isn't enough space for icon-only toolbuttons with menu.
+ * Added optional floating tabs (see Theme-Making.pdf).
+ * Workaround for lack of space in spinboxes.
+ * Don't give the button text colors to those plasma toolbuttons that pretend to have only icons but have texts.
+ * Use Plasma foreground color for Plasma toolbutton text.
+ * Set limits on lineedit frame size when needed.
+ * Set limits on pushbutton sizes inside a view-item.
+ * A better criterion for deciding if a widget belongs to Plasma.
+ * Force the (push and tool) button text colors.
+ * Don't set the text color of Plasma menu titles to that of their menus when they aren't transparent.
+ * Use gray values of colors for checking their contrast.
+ * Force view-item text colors when item text is added as a label (as in VLC).
+ * Always return to qApp colors when no valid color is defined.
+ * Distinguish between the toggled and pressed arrow states if a toggled down arrow element exists.
+ * Solved the problem of styled toolbuttons that have no panel and aren't auto-raised.
+
+V0.8.14
+---------
+ * Distinguish between the focus and normal states of generic frames only if the frame focus elements exist.
+ * Consider blurring for Qt5 Konsole.
+ * Made Kvantum Manager see commas in the theme comment.
+
+V0.8.13
+---------
+ * Use transformations inside the SVG image to reduce memory footprint.
+ * Set limits on combobox sizes where there isn't enough space.
+ * Fixed combobox focus state.
+ * In Kvantum Manager, enable the popup blurring checkbox when both translucency and composite checkboxes are unchecked.
+ * When blurring, don't go to the next ancestor window.
+
+V0.8.12
+---------
+ * Added optional tab widget junctions for attaching active tabs.
+ * Draw disabled active tabs correctly.
+ * Don't try to attach empty tabs (as in Kdenlive's track widget).
+ * Try to attach the active tab to its tab widget even when the QStyle option of the tab widget frame doesn't exist (as in GoldenDict).
+ * Force blurring for Yakuake too if it's forced for Konsole.
+ * Put the check/radio button on the left side of the menu item. Fixed the menu item size too.
+
+V0.8.11
+---------
+ * Ignore frame width for toolbuttons with just an arrow as icon.
+ * Toolbuttons with popup menus were too wide.
+ * Set limits on toolbutton frame sizes where there isn't enough space.
+ * Set limits on frame and indicator sizes of toolbutton dropdown indicators where there isn't enough space.
+ * Always limit indicator size to its bounding rectangle.
+ * Translucency doesn't need internalWinId (only blurring does).
+
+V0.8.10
+---------
+ * Added a hacking variable for (KDE) menu titles.
+ * Fixed the outline and titlebar buttons of MDI subwindows.
+ * Slim toolbars by default.
+ * Added a separate key for blurring the regions behind (translucent) menus and tooltips.
+ * Improved Kvantum Manager's config page.
+ * Who needs frame pattern?
+ * Allow tiling over the interior background with a separate (translucent) pattern object.
+ * Remove toolbutton text margins when there isn't enough space (as in Qupzilla's bookmark toolbar).
+ * Elide tab text when needed.
+
+V0.8.9
+---------
+ * Added a workaround for menu paddings inherited from parent stylesheets (as in the context menu of VLC's playlist search lineedit).
+ * No shadow for tooltips/menus that are already translucent (and keep track of those made translucent).
+ * Added a key for double-click.
+ * Blur the regions behind translucent menus/tooltips appropriately if blurring is enabled.
+ * Fixed the positioning of bottom tab labels.
+ * Check for internalWinId before deleting blur atom.
+
+V0.8.8
+---------
+ * Changed the layout of the config page of Kvantum Manager.
+ * Removed custom icons, except those for MDI titlebars (Kvantum isn't an icon theme after all).
+ * Added a key for slim toolbars.
+ * Fixed the appearance of Konqueror's security icon on the right of its URL bar.
+ * Enable/disable the compositing items of Kvantum Manager's config page correctly.
+
+V0.8.7
+---------
+ * Added a key and an option for textless progressbars.
+ * Added a key and an option for disabling menubar mouse tracking.
+ * Font boldness can be set separately for most widget groups now.
+ * Fixed LibreOffice's spinboxes.
+ * Respect the MenuItem indicator name for right/left arrows and only if the SVG elements aren't found, use the IndicatorArrow name.
+ * Added a key for centering toolbar handle instead of scaling it vertically.
+ * Don't draw toolbars in KAboutDialog (KAboutPerson).
+ * Added the root installation path $PREFIX/share/Kvantum. The user installation has priority.
+ * Fixed menubar item states for Qt5 and made them like that of Qt4.
+ * Take button icons from icon theme if there is no SVG element for them.
+ * Don't force icon sizes.
+ * Added a key for toolbutton style.
+ * Don't draw scroll area corner panels.
+ * Added a toggled state for progressbars (when they are inside selected view items).
+ * Got rid of Qt's "standardbutton-no-16.png" as far as possible.
+
+V0.8.6
+---------
+ * Another method for making Qt5 windows translucent (got rid of private headers).
+ * Kvantum Manager: Allow spaces in the theme path (but not in the theme name) when installing.
+ * Prevent a crash on quitting in apps using QtWebKit when translucency is enabled.
+ * Fixed a rare KMix crash on log-out when blurring was enabled and the style was changed from and to Kvantum.
+
+V0.8.5
+---------
+ * Ignore Plasma text margins only for push and tool buttons and menubars.
+ * Don't go to parent config for pressed text color.
+ * Do delayed update only for top-level windows when blurring.
+
+V0.8.4
+---------
+ * Blur the screen area behind translucent windows under KDE if possible.
+ * Added a hacking variable to force blurring for Konsole.
+ * Fixed line-edits inside translucent dialogs.
+ * Polish palettes inside polish(QApplication*) because that may be needed outside KDE and with Qt4.
+ * Process all pending events before setting the style of Kvantum Manager if the config file is created.
+
+V0.8.3
+---------
+ * Use drawTiledPixmap() and QPixmapCache to render patterns. In this way, windows can have texture too.
+
+V0.8.2
+---------
+ * Added support for translucent windows and dialogs.
+ * Made changes to Kvantum Manager (to cover window translucency).
+ * Workaround for a Qt4 positioning bug (taken from QtCurve).
+
+V0.8.1
+---------
+ * Force Dolphin's view to recognize the base color.
+ * Added a hacking variable to force text contrast in apps that don't respect dark themes.
+ * Added a configuration page to Kvantum Manager.
+ * Added a theme deleting button to Kvantum Manager.
+
+V0.8
+---------
+ * Added support for right to left layouts as far as needed.
+ * Start kvantumpreview from Kvantum Manager.
+ * Added Qt5 support.
+
+V0.7.4
+---------
+ * Don't duplicate the field (line-edit) of a spinbox.
+ * When drawing the interior and frame of an editable combobox, don't cover its line-edit area.
+
+V0.7.3
+---------
+ * Mostly rely on own colors defined under the GeneralColors section.
+
+V0.7.2
+---------
+ * Added a hacking variable for KTitleWidget.
+ * Made toolbox labels respect custom colors.
+
+V0.7.1
+---------
+ * Added a Hacks section. Currently it has only one hack for Dolphin.
+ * Remove flat backgrounds from scroll areas also when they are inside toolboxes.
+ * Use update() instead of repaint() to make busy progressbars take less CPU time.
+
+V0.7
+---------
+ * Added a theme manager for installing and choosing Kvantum themes.
+ * Remember the last chosen path in the open dialog of Kvantum Manager.
+ * Make use of Kvantum Manager's statusbar.
+
+V0.6.3
+---------
+ * Use "sudo make install" for installation.
+ * Added a new variable for spreading the indicator of a progressbar across its whole groove and not just its interior.
+ * Removed ugly (flat) backgrounds from toolboxes.
+
+V0.6.2
+---------
+ * Don't display a combo toggled when its menu isn't shown.
+ * Don't use the focus text color for toggled or pressed widgets.
+ * Added a toggle text color (distinct from press text color).
+ * Level a popup list with the bottom or top edge of its combobox while not letting the former cover the latter.
+ * Don't use toggled and pressed states for the progressbar indicator.
+
+V0.6.1
+---------
+ * Organized frame and interior rendering (some frame parts were rendered twice).
+ * Ignore the pressed state for tabs.
+ * Don't use toolbar's frame and interior size specifications for its handle or separator.
+ * With styled window backgrounds, remove ugly flat backgrounds from scroll areas even when they have frame.
+ * Added a 2px right margin to menu-items when they have arrow or check/radio button.
+ * Fixed transparent MDI subwindows.
+
+V0.6
+---------
+ * Whole windows and dialogs can be styled with an interior element now. The section [Window] is added for that.
+ * Removed the redundant section [Widget].
+ * Removed ugly flat backgrounds as far as possible when the window background is styled.
+
+V0.5.3
+---------
+ * Derive all slider handles from the main one when its length and width are different.
+ * Use interiorRect() instead of labelRect() for drawing menuitem indicators.
+ * Added a little extra space to menuitems when they have indicators.
+ * Don't focus a tool button if only its arrow is focused.
+ * When tabs are joined together, don't join the selected tab to its adjacent one(s).
+ * Clearing the attribute WA_OpaquePaintEvent from scrollbars is a better solution for their transparency problem than filling their rectangles with the window background.
+ * Fixes.
+
+V0.5.2
+---------
+ * No out-of-grid text, icon, checkbox or tool-button.
+ * Give space to slider ticks.
+ * Draw slider tickmarks when available.
+ * Less concave pressed/toggled buttons look more natural.
+
+V0.5.1
+---------
+ * Added optional top and bottom (or left and right) glows for scrollbar sliders.
+ * Fixed the position of shortcut text for a menu-item that points to a submenu (like in the Extract menu-item of Ark's Action menu).
+ * Fixed a condition for rendering (button) texts of Plasma related apps.
+
+V0.5
+---------
+ * Added optional inactive sub-states. The default theme doesn't use them.
+ * Respect the toolbar text color with auto-raised buttons.
+ * Read kdeglobals for deciding how to activate view items with single-click as the fallback.
+ * Exclude "appmenu" as a Plasma app.
+ * Use the old-fashioned method to get the application name because, apparently, applicationName() doesn't work with all Qt4 versions.
+
+V0.4.1
+---------
+ * Corrected slider position and groove.
+ * No redundant arrow on toolbuttons.
+ * Force the tooltip (normal) text color.
+ * Set the group-box title color.
+ * Draw a more elegant rubber band.
+ * Added the possibility to set the slider thickness and also the length and thickness of slider handles.
+ * Skip ugly frames.
+ * No frame for a line-edit inside a view-item whose text is being edited.
+
+V0.4
+---------
+ * Added the possibility to set the normal, focused and pressed text colors for non-editable widgets. If no (valid) color is set, the color scheme will be used.
+ * Added the possibility to set the size of radio buttons and checkboxes without making those on menuitems bigger than usual.
+ * Fixed a miscalculation in getting the horizontal scrollbar groove from the vertical one.
+ * Set the widths of opposite frames of tool buttons equal to each other when there's only text in them.
+ * Fixed instant and delayed popup arrows of tool buttons.
+ * Considered the top and bottom frames of line-edits inside editable combos.
+ * Corrected the interior of line-edits inside spinboxes.
+ * Corrected the width of menu items when they have no icons.
+ * Ignore the text margins in getting the rectangle of a (button) label when it's just an icon.
+ * Put the contents of tab widgets inside their frames.
+ * Fixed labels of vertical progressbars with thick frames.
+
+V0.3.1
+---------
+ * Adjust the splitter indicator to fit in the handle when the latter is too thin.
+ * Get the text shadow color as a string.
+ * Minor fixes.
+
+V0.3
+---------
+ * Added the possibility to raise and group neighbor toolbar (tool) buttons.
+ * Translucent tooltips with shadow and rounded corners when compositing is available and enabled.
+
+V0.2.2
+---------
+ * Don't enable compositing for torn-off menus.
+ * Excluded "Qt-subapplication" from compositing. So far, only VirtualBox has introduced itself in that way.
+ * If a key is not found in a group from the user config file, first search the "inherits" group(s) of the same file and only then go to the default config.
+ * Fixed tiny QStackedWidget arrows (in Qt4 Designer).
+
+V0.2.1
+---------
+ * Added the possibility to have translucent menus or tooltips with compositing. Now they can also have rounded corners.
+ * Added optional menu shadows without inheritance from the default theme (the general plan is to not inherit anything related to compositing from the default theme).
+ * A mild shadow and a little translucency for menus of the default theme.
+ * Don't use PE_FrameMenu because it would result in frameless menus sometimes.
+ * Corrected the position of the menu tear-off indicator.
+ * Fixes for preventing any crash.
+
+V0.2
+---------
+ * Added an alternative glassy theme as a demo.
+ * Added documentation for the first release.
+
+V0.1.4
+---------
+ * Added the capability to drag windows from everywhere by consulting the sources of Oxygen, QtCurve and Bespin.
+ * Added workarounds for LibreOffice.
+ * Vertical dock titles are taken into account.
+ * Text eliding for titles of docks and QMdiSubWindows.
+ * Fixed falling back to the default configuration.
+ * Removed extra objects from the SVG image.
+ * Miscellaneous fixes. Now Kvantum is robust and almost ready to be publicly available :)
+
+V0.1.3
+---------
+ * Took care of orientation for all widgets by using appropriate transformations.
+ * To know the orientation of splitters, check their height and width instead of State_Horizontal.
+ * Added the possibility to attach the active tab to the tab widget.
+ * Added decorative indicators to splitters.
+ * Added grip indicators to scrollbar sliders.
+ * Removed animation as it wasn't practical.
+ * Removed the config interface since it didn't make configuration easier.
+
+V0.1.2
+---------
+ * sizeCalculated() can give wrong results in many cases, so use it only when needed.
+ * To force frames on view-items, adjust PM_FocusFrameHMargin and PM_FocusFrameVMargin (-> Qt4 -> qcommonstyle.cpp).
+ * Set SH_Menu_SloppySubMenus to true for being able to reach submenus by moving the cursor diagonally (bug #315346 at KDE Bugtracking System).
+ * Don't remove tab bottom frames; users could remove them if they want to.
+ * Fixed the transparency problem of scrollbars.
+ * Fixed tabbar scroll buttons by adjusting PM_TabBar_ScrollButtonOverlap and PM_TabBarScrollButtonWidth.
+ * Don't press a tool button if only its arrow is pressed.
+ * A separate pressed or focused (hover) state for each spin button.
+ * Treat arrows as icons for tool buttons.
+ * Don't draw the interior of a Plasma spinbox.
+ * Workaround for some Plasma tool buttons that pretend to have only icons. (why does Plasma sometimes take its style from the window style in the first place?)
+ * Workaround for some apps (like Kdenlive with its TimecodeDisplay) that presuppose all spinboxes should have vertical buttons.
+ * Fixed (Krita's) progress-spin boxes by checking the orientation of QProgressBars instead of checking State_Horizontal.
+ * Fixed some hidden bugs by consulting Qt's qcommonstyle.cpp.
+
+V0.1.1
+---------
+ * Added shortcut handler (mnemonics with Alt pressed) by consulting QtCurve's source.
+ * Fixed the problem of long texts with combo boxes.
+ * Took into account the height of checkbox/radio-button indicators for having a reasonable vertical distance between them.
+ * Fixed Akregator's tabs.
+ * Handled view-item texts inside buttons, like in Kate's font preferences.
+ * Took care of vertical buttons in some apps (like digiKam) by not using sizeCalculated().
+ * Other fixes.
+
+V0.1
+---------
+ * Kvantum is born as a fork of QuantumStyle. Many bugs are fixed and some missing widgets are added so that it is fairly usable now but there is still a lot of work to do.

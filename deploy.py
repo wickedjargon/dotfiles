@@ -736,6 +736,12 @@ def deploy_dotfiles(username, script_dir):
         except subprocess.CalledProcessError:
             pass  # Continue even if chown fails
 
+    # Update font cache
+    try:
+        subprocess.run(['fc-cache', '-f'], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pass # Non-fatal
+
     return True, None, backup_dir, backed_up_items
 
 

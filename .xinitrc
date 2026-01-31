@@ -7,6 +7,10 @@ xset s off -dpms
 xset -b
 xsetroot -cursor_name left_ptr
 
+# qt theme
+export QT_QPA_PLATFORMTHEME=qt5ct
+export QT_QPA_PLATFORMTHEME_QT6=qt6ct
+
 # # set background
 # feh --bg-scale ~/d/fakeimages/rms01.png
 

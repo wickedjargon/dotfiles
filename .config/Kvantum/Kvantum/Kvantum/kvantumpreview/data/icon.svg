@@ -1,0 +1,11 @@
+<svg width="32" version="1.1" xmlns="http://www.w3.org/2000/svg" height="32">
+<g style="color:#bebebe">
+<path style="fill:#39f" id="path4150" d="M 3,0 C 1.25,0 0,1.25 0,3 v 26 c 0,1.75 1.25,3 3,3 h 26 c 1.75,0 3,-1.25 3,-3 V 3 C 32,1.25 30.75,0 29,0 Z"/>
+<g style="fill:#fff">
+<path id="path4148" d="m 4,4 h 10 v 6 h -4 v 4 H 4 Z"/>
+<path id="path4146" d="M 18,4 H 28 V 14 H 22 V 10 H 18 Z"/>
+<path id="path4144" d="m 4,18 h 6 v 4 h 4 v 6 H 4 Z"/>
+<path id="rect11749-5-0-1" d="m 22,18 h 6 V 28 H 18 v -6 h 4 z"/>
+</g>
+</g>
+</svg>

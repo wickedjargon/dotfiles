@@ -71,6 +71,11 @@ xwallpaper               # Wallpaper setting utility
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
 arc-theme                # Arc Dark GTK theme
 qt5-gtk-platformtheme    # Qt5 GTK theme integration
+qt5ct                    # Qt5 settings tool
+qt6ct                    # Qt6 settings tool
+qt5-style-kvantum        # Kvantum theme engine for Qt5
+qt6-style-kvantum        # Kvantum theme engine for Qt6
+kvantum                  # Kvantum manager and themes
 
 # Fonts
 fonts-noto-color-emoji   # Color emoji font from Google
