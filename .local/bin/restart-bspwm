@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Restart BSPWM
+bspc wm -r
+
+# Restart SXHKD
+pkill -USR1 -x sxhkd
+
+# Restart Polybar
+# The config usually handles reloading, but a hard restart ensures cleanliness
+pkill polybar
+# Wait a moment for it to die
+sleep 0.5
+# Relaunch using the command from bspwmrc
+polybar mybar &
