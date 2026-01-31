@@ -7,26 +7,45 @@ if [ -z "$direction" ]; then
     exit 1
 fi
 
-# Get count of visible tiled windows on current desktop
+# Get State
 count=$(bspc query -N -d focused -n .leaf.!hidden.window | wc -l)
+is_fullscreen=$(bspc query -N -n focused.fullscreen >/dev/null && echo "true" || echo "false")
+# Robustly grep layout from json output since jq might not be available
+layout=$(bspc query -T -d | grep -o '"layout":"[^"]*"' | head -n1 | cut -d'"' -f4)
 
-if [ "$count" -le 1 ]; then
-    # SINGLE WINDOW (or empty): Prepare for splitting
-    
-    # 1. If fullscreen, toggle it off
-    if bspc query -N -n focused.fullscreen > /dev/null; then
-        bspc node focused -t \~fullscreen
+# Decision Logic
+allowed=true
+
+if [ "$is_fullscreen" = "true" ]; then
+    # If Fullscreen: Only allow if it's the only window
+    if [ "$count" -gt 1 ]; then
+        allowed=false
     fi
+elif [ "$layout" = "monocle" ]; then
+    # If Monocle: Only allow if it's the only window
+    if [ "$count" -gt 1 ]; then
+        allowed=false
+    fi
+fi
 
-    # 2. Ensure Tiled
-    bspc desktop -l tiled
-
-    # 3. Perform the detailed action (preselection)
-    # Only if there is a window to split
-    if [ "$count" -eq 1 ]; then
+# Execute or Notify
+if [ "$allowed" = "true" ]; then
+    # If we have no windows, we can't preselect off a node, so check count >= 1
+    if [ "$count" -ge 1 ]; then
+        # 1. Exit Fullscreen if needed
+        if [ "$is_fullscreen" = "true" ]; then
+            bspc node focused -t ~fullscreen
+        fi
+        
+        # 2. Ensure Tiled Layout
+        if [ "$layout" != "tiled" ]; then
+            bspc desktop -l tiled
+        fi
+        
+        # 3. Preselect
         bspc node -p "$direction"
     fi
 else
-    # MULTIPLE WINDOWS: Notify user, do nothing else
-    notify-send "Smart Arrow" "Multiple windows detected - no action taken."
+    # Optional feedback
+    notify-send "Smart Arrow" "Split blocked: Multiple windows in Fullscreen/Monocle mode."
 fi
