@@ -1,10 +1,9 @@
 #!/bin/sh
 
 # BSPWM Configuration
-# Migrated from DWM config.h
 
 #### WORKSPACES ####
-# Create 6 workspaces to match DWM tags
+# Create 6 workspaces
 bspc monitor -d 1 2 3 4 5 6
 
 # Set all desktops to Monocle layout by default
@@ -13,13 +12,13 @@ for desktop in $(bspc query -D); do
 done
 
 #### WINDOW APPEARANCE ####
-# Border width (from DWM: borderpx = 3)
+# Border width
 bspc config border_width         3
 
-# Window gaps (from DWM: gappih/gappiv/gappoh/gappov = 2)
+# Window gaps
 bspc config window_gap           2
 
-# Border colors (from DWM config.h color scheme)
+# Border colors
 bspc config normal_border_color  "#222222"   # normbordercolor
 bspc config active_border_color  "#222222"
 bspc config focused_border_color "#8b1a1a"   # selbordercolor
@@ -41,16 +40,9 @@ bspc config focus_follows_pointer false
 bspc config pointer_follows_focus false
 
 #### WINDOW RULES ####
-# Terminal swallowing (from DWM: swallowfloating = 0)
 # BSPWM doesn't have native swallowing, but we'll set up basic rules
 
-# Scratchpad-like terminal (from DWM: spterm)
-bspc rule -a st-256color:spterm state=floating sticky=on
-
-# Calculator scratchpad (from DWM: spcalc)
-bspc rule -a st-256color:spcalc state=floating sticky=on
-
-# Gimp on workspace 9 (from DWM rules)
+# Gimp on workspace 9
 # bspc rule -a Gimp desktop='^9' follow=on
 
 #### AUTOSTART ####

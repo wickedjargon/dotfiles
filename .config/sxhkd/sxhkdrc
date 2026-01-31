@@ -1,31 +1,30 @@
 #
 # SXHKD Configuration
-# Converted from DWM config.h keybindings
 #
 
 # ========== WINDOW MANAGEMENT ==========
 
-# Close/kill window (DWM: Mod+p)
+# Close/kill window
 super + p
     bspc node -c
 
-# Toggle fullscreen (DWM: Mod+f)
+# Toggle fullscreen
 super + f
     bspc node -t ~fullscreen
 
-# Toggle floating (DWM: Mod+Shift+f)
+# Toggle floating
 super + shift + f
     bspc node -t ~floating
 
-# Toggle sticky (DWM: Mod+Shift+s)
+# Toggle sticky
 super + shift + s
     bspc node -g sticky
 
-# Focus next/previous window (DWM: Mod+j/k)
+# Focus next/previous window
 super + {j,k}
     bspc node -f {next,prev}.local.!hidden.window
 
-# Swap with next/previous window (DWM: Mod+Shift+j/k)
+# Swap with next/previous window
 super + shift + {j,k}
     bspc node -s {next,prev}.local.!hidden.window
 
@@ -35,7 +34,7 @@ super + shift + {j,k}
 super + t
     bspc desktop -l tiled
 
-# Monocle mode (DWM: Mod+g)
+# Monocle mode
 super + g
     bspc desktop -l monocle
 
@@ -62,11 +61,11 @@ super + shift + l
 
 # ========== WORKSPACE SWITCHING ==========
 
-# Switch to workspace (DWM: Mod+1-6)
+# Switch to workspace
 super + {1-6}
     bspc desktop -f '^{1-6}'
 
-# Move window to workspace (DWM: Mod+Shift+1-6)
+# Move window to workspace
 super + shift + {1-6}
     bspc node -d '^{1-6}'
 
@@ -80,63 +79,63 @@ super + l
 
 # ========== APPLICATION LAUNCHERS ==========
 
-# Terminal (DWM: Mod+Return)
+# Terminal
 super + Return
     alacritty
 
-# Dmenu run (DWM: Mod+d)
+# Dmenu run
 super + d
     dmenu_run
 
-# App finder (DWM: Mod+space)
+# App finder
 super + space
     xfce4-appfinder
 
-# Emacs (DWM: Mod+m)
+# Emacs
 super + m
     emacsclient -c
 
-# Browser (DWM: Mod+w)
+# Browser
 super + w
     dmenu-browser
 
-# Commands menu (DWM: Mod+b)
+# Commands menu
 super + b
     dmenu-commands
 
-# System menu (DWM: Mod+BackSpace)
+# System menu
 super + BackSpace
     dmenu-system
 
-# Clipmenu (DWM: Mod+c)
+# Clipmenu
 super + c
     clipmenu
 
-# WiFi menu (DWM: Mod+i)
+# WiFi menu
 super + i
     dmenu-wifi-menu
 
-# Night/day mode (DWM: Mod+n)
+# Night/day mode
 super + n
     dmenu-night-and-day
 
 # ========== VOLUME CONTROLS ==========
 
-# Volume up (DWM: Mod+equal, XF86AudioRaiseVolume)
+# Volume up
 super + equal
     pactl set-sink-volume @DEFAULT_SINK@ +5% && polybar-msg hook pulseaudio 1
 
 XF86AudioRaiseVolume
     pactl set-sink-volume @DEFAULT_SINK@ +5% && polybar-msg hook pulseaudio 1
 
-# Volume down (DWM: Mod+minus, XF86AudioLowerVolume)
+# Volume down
 super + minus
     pactl set-sink-volume @DEFAULT_SINK@ -5% && polybar-msg hook pulseaudio 1
 
 XF86AudioLowerVolume
     pactl set-sink-volume @DEFAULT_SINK@ -5% && polybar-msg hook pulseaudio 1
 
-# Mute toggle (DWM: Mod+0, XF86AudioMute)
+# Mute toggle
 super + 0
     pactl set-sink-mute @DEFAULT_SINK@ toggle && polybar-msg hook pulseaudio 1
 

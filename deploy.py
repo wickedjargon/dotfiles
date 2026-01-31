@@ -817,23 +817,7 @@ def deploy_system_configs(script_dir):
                     shutil.copy2(src_file, dest_file)
 
                     # Make scripts executable
-                    # TODO: Refactor to preserve source file permissions instead of path-based logic.
-                    # Current approach requires adding paths whenever new script locations are added.
-                    #
-                    # New approach:
-                    #   1. Replace lines below with:
-                    #        src_mode = os.stat(src_file).st_mode
-                    #        os.chmod(dest_file, src_mode)
-                    #   2. Run these chmod commands in the repo:
-                    #        chmod +x system-configs/etc/acpi/power-adapter.sh
-                    #        chmod +x system-configs/etc/NetworkManager/dispatcher.d/99-dwmblocks-network.sh
-                    #        chmod +x system-configs/usr/local/bin/refresh-dwmblocks
-                    #        chmod +x system-configs/usr/lib/systemd/system-sleep/dwmblocks-refresh.sh
-                    #   3. Do NOT chmod +x these (they are config files, not scripts):
-                    #        system-configs/etc/acpi/events/power-adapter
-                    #   4. Delete the if-statement and just keep os.chmod(dest_file, src_mode)
-                    #
-                    # Test on real laptop to verify ACPI/sleep/network hooks work correctly.
+
                     if dest_file.suffix == '.sh' or 'bin' in dest_file.parts or 'dispatcher.d' in dest_file.parts or 'system-sleep' in dest_file.parts or 'acpi' in dest_file.parts:
                         os.chmod(dest_file, 0o755)
 

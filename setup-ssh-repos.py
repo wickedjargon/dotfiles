@@ -196,7 +196,7 @@ def main():
     repos_failed = 0
 
     # Wickedjargon repos to look for
-    repo_names = ['dwm', 'dwmblocks', 'dmenu', 'st', '.emacs.d']
+    repo_names = ['dmenu', '.emacs.d']
 
     # Search locations
     search_paths = [
