@@ -34,7 +34,13 @@ for full_profile_path in ~/.mozilla/firefox/*.default* ~/.mozilla/firefox/*.defa
     # 2. Native Vertical Tabs (Sidebar)
     set_pref "sidebar.revamp" "true"
     set_pref "sidebar.verticalTabs" "true"
-    set_pref "sidebar.main.tools" "\"\""  # Cleanup tools menu if needed
+    set_pref "sidebar.expanded" "true"
+    set_pref "sidebar.visibility" "true"
+    set_pref "sidebar.main.tools" "\"\""
+
+    # 3. Force UI Reset (Critical for Vertical Tabs to activate)
+    # Clearing this state forces Firefox to rebuild the toolbar layout using the new defaults
+    set_pref "browser.uiCustomization.state" "\"\""
 
     echo "  - Applied preferences for Compact Mode and Native Vertical Tabs."
 done
