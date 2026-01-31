@@ -1,0 +1,5 @@
+#!/bin/sh
+# Refresh Polybar bluetooth modules by sending IPC hook 0
+polybar-msg action headphones hook 0
+polybar-msg action miniroll hook 0
+polybar-msg action musicozy hook 0

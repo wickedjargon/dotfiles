@@ -105,6 +105,14 @@ def main():
     
     # Refresh status bar
     refresh_dwmblocks(signal)
+    refresh_polybar()
+
+
+def refresh_polybar():
+    """Trigger Polybar updates for bluetooth modules."""
+    modules = ["headphones", "miniroll", "musicozy"]
+    for module in modules:
+        run_command(f"polybar-msg action {module} hook 0")
 
 
 if __name__ == "__main__":
