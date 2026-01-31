@@ -119,6 +119,9 @@ super + i
 super + n
     dmenu-night-and-day
 
+super + v
+    dmenu-virtual-machines
+
 # ========== VOLUME CONTROLS ==========
 
 # Volume up
