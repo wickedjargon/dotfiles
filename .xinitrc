@@ -16,5 +16,4 @@ clipmenud &  # Start clipmenu daemon
 unclutter -idle 1 &  # makes cursor disappear
 # uncomment when ready to install emacs packages
 # emacs --daemon & # emacs server
-# exec dwm
 exec bspwm

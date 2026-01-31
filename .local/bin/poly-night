@@ -1,7 +1,0 @@
-#!/bin/sh
-
-# Set brightness to 5% (night mode)
-brightnessctl set 5%
-
-# Trigger polybar brightness module update (hook 1)
-polybar-msg hook brightness 1 >/dev/null 2>&1
