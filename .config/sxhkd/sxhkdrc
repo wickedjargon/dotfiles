@@ -30,15 +30,15 @@ super + shift + {j,k}
 
 # ========== LAYOUT MANAGEMENT ==========
 
-# Set tiled layout
+# Set tiled layout (tiled mode)
 super + t
     bspc desktop -l tiled
 
-# Monocle mode
+# Monocle mode (grand mode)
 super + g
     bspc desktop -l monocle
 
-# Deck Layout (bspwm-deck script)
+# Deck Layout (regional mode)
 super + r
     bspwm-deck
 
