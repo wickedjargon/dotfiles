@@ -123,34 +123,34 @@ super + n
 
 # Volume up
 super + equal
-    pactl set-sink-volume @DEFAULT_SINK@ +5% && polybar-msg hook pulseaudio 1
+    pactl set-sink-volume @DEFAULT_SINK@ +5%
 
 XF86AudioRaiseVolume
-    pactl set-sink-volume @DEFAULT_SINK@ +5% && polybar-msg hook pulseaudio 1
+    pactl set-sink-volume @DEFAULT_SINK@ +5%
 
 # Volume down
 super + minus
-    pactl set-sink-volume @DEFAULT_SINK@ -5% && polybar-msg hook pulseaudio 1
+    pactl set-sink-volume @DEFAULT_SINK@ -5%
 
 XF86AudioLowerVolume
-    pactl set-sink-volume @DEFAULT_SINK@ -5% && polybar-msg hook pulseaudio 1
+    pactl set-sink-volume @DEFAULT_SINK@ -5%
 
 # Mute toggle
 super + 0
-    pactl set-sink-mute @DEFAULT_SINK@ toggle && polybar-msg hook pulseaudio 1
+    pactl set-sink-mute @DEFAULT_SINK@ toggle
 
 XF86AudioMute
-    pactl set-sink-mute @DEFAULT_SINK@ toggle && polybar-msg hook pulseaudio 1
+    pactl set-sink-mute @DEFAULT_SINK@ toggle
 
 # ========== BRIGHTNESS CONTROLS ==========
 
 # Brightness up
 XF86MonBrightnessUp
-    brightnessctl set +5% && polybar-msg hook brightness 1
+    brightnessctl set +5%
 
 # Brightness down
 XF86MonBrightnessDown
-    brightnessctl set 5%- && polybar-msg hook brightness 1
+    brightnessctl set 5%-
 
 # ========== MEDIA CONTROLS ==========
 

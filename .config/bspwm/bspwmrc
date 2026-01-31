@@ -42,8 +42,7 @@ bspc config pointer_follows_focus false
 #### WINDOW RULES ####
 # BSPWM doesn't have native swallowing, but we'll set up basic rules
 
-# Gimp on workspace 9
-# bspc rule -a Gimp desktop='^9' follow=on
+
 
 #### AUTOSTART ####
 # Launch SXHKD (keybinding daemon)
