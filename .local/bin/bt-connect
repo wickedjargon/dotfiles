@@ -83,10 +83,6 @@ def set_default_sink(sink_name):
     return True
 
 
-def refresh_dwmblocks(signal):
-    """Refresh dwmblocks status bar."""
-    run_command(f'pkill -RTMIN+{signal} dwmblocks')
-    run_command('pkill -RTMIN+4 dwmblocks')
 
 
 def main():
@@ -130,7 +126,7 @@ def main():
     notify("Bluetooth Connected", name, "normal")
 
     # Refresh status bar
-    refresh_dwmblocks(signal)
+    # Refresh status bar
     refresh_polybar()
 
 

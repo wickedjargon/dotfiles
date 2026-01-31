@@ -66,10 +66,6 @@ def check_sink_gone(mac, max_attempts=20, interval=0.5):
     return False
 
 
-def refresh_dwmblocks(signal):
-    """Refresh dwmblocks status bar."""
-    run_command(f'pkill -RTMIN+{signal} dwmblocks')
-    run_command('pkill -RTMIN+4 dwmblocks')
 
 
 def main():
@@ -104,7 +100,7 @@ def main():
     notify("Bluetooth Disconnected", name, "normal")
     
     # Refresh status bar
-    refresh_dwmblocks(signal)
+    # Refresh status bar
     refresh_polybar()
 
 
