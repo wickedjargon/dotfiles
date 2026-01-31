@@ -1,0 +1,171 @@
+#
+# SXHKD Configuration
+# Converted from DWM config.h keybindings
+#
+
+# ========== WINDOW MANAGEMENT ==========
+
+# Close/kill window (DWM: Mod+p)
+super + p
+    bspc node -c
+
+# Toggle fullscreen (DWM: Mod+f)
+super + f
+    bspc node -t ~fullscreen
+
+# Toggle floating (DWM: Mod+Shift+f)
+super + shift + f
+    bspc node -t ~floating
+
+# Toggle sticky (DWM: Mod+Shift+s)
+super + shift + s
+    bspc node -g sticky
+
+# Focus next/previous window (DWM: Mod+j/k)
+super + {j,k}
+    bspc node -f {next,prev}.local.!hidden.window
+
+# Swap with next/previous window (DWM: Mod+Shift+j/k)
+super + shift + {j,k}
+    bspc node -s {next,prev}.local.!hidden.window
+
+# ========== LAYOUT MANAGEMENT ==========
+
+# Set tiled layout
+super + t
+    bspc desktop -l tiled
+
+# Monocle mode (DWM: Mod+g)
+super + g
+    bspc desktop -l monocle
+
+# Deck Layout (bspwm-deck script)
+super + r
+    bspwm-deck
+
+# Preselect split direction
+super + {Left,Down,Up,Right}
+    bspc node -p {west,south,north,east}
+
+# Cancel preselection
+super + shift + {Left,Down,Up,Right}
+    bspc node -p cancel
+
+# Resize window / move gap left (h) and right (l)
+super + shift + h
+    bspc node -z right -20 0 || bspc node -z left -20 0
+
+super + shift + l
+    bspc node -z right 20 0 || bspc node -z left 20 0
+
+
+
+# ========== WORKSPACE SWITCHING ==========
+
+# Switch to workspace (DWM: Mod+1-6)
+super + {1-6}
+    bspc desktop -f '^{1-6}'
+
+# Move window to workspace (DWM: Mod+Shift+1-6)
+super + shift + {1-6}
+    bspc node -d '^{1-6}'
+
+# Move to previous workspace (no wrap)
+super + h
+    curr=$(bspc query -D -d focused); first=$(bspc query -D -d .local | head -n1); [ "$curr" != "$first" ] && bspc desktop -f prev.local
+
+# Move to next workspace (no wrap)
+super + l
+    curr=$(bspc query -D -d focused); last=$(bspc query -D -d .local | tail -n1); [ "$curr" != "$last" ] && bspc desktop -f next.local
+
+# ========== APPLICATION LAUNCHERS ==========
+
+# Terminal (DWM: Mod+Return)
+super + Return
+    st
+
+# Dmenu run (DWM: Mod+d)
+super + d
+    dmenu_run
+
+# App finder (DWM: Mod+space)
+super + space
+    xfce4-appfinder
+
+# Emacs (DWM: Mod+m)
+super + m
+    emacsclient -c
+
+# Browser (DWM: Mod+w)
+super + w
+    dmenu-browser
+
+# Commands menu (DWM: Mod+b)
+super + b
+    dmenu-commands
+
+# System menu (DWM: Mod+BackSpace)
+super + BackSpace
+    dmenu-system
+
+# Clipmenu (DWM: Mod+c)
+super + c
+    clipmenu
+
+# WiFi menu (DWM: Mod+i)
+super + i
+    dmenu-wifi-menu
+
+# Night/day mode (DWM: Mod+n)
+super + n
+    dmenu-night-and-day
+
+# ========== VOLUME CONTROLS ==========
+
+# Volume up (DWM: Mod+equal, XF86AudioRaiseVolume)
+super + equal
+    pactl set-sink-volume @DEFAULT_SINK@ +5% && polybar-msg hook pulseaudio 1
+
+XF86AudioRaiseVolume
+    pactl set-sink-volume @DEFAULT_SINK@ +5% && polybar-msg hook pulseaudio 1
+
+# Volume down (DWM: Mod+minus, XF86AudioLowerVolume)
+super + minus
+    pactl set-sink-volume @DEFAULT_SINK@ -5% && polybar-msg hook pulseaudio 1
+
+XF86AudioLowerVolume
+    pactl set-sink-volume @DEFAULT_SINK@ -5% && polybar-msg hook pulseaudio 1
+
+# Mute toggle (DWM: Mod+0, XF86AudioMute)
+super + 0
+    pactl set-sink-mute @DEFAULT_SINK@ toggle && polybar-msg hook pulseaudio 1
+
+XF86AudioMute
+    pactl set-sink-mute @DEFAULT_SINK@ toggle && polybar-msg hook pulseaudio 1
+
+# ========== BRIGHTNESS CONTROLS ==========
+
+# Brightness up
+XF86MonBrightnessUp
+    brightnessctl set +5% && polybar-msg hook brightness 1
+
+# Brightness down
+XF86MonBrightnessDown
+    brightnessctl set 5%- && polybar-msg hook brightness 1
+
+# ========== MEDIA CONTROLS ==========
+
+XF86AudioPlay
+    mpc play
+
+XF86AudioPause
+    mpc pause
+
+XF86AudioStop
+    mpc stop
+
+XF86AudioNext
+    mpc next
+
+XF86AudioPrev
+    mpc prev

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Reload/restart BSPWM, Polybar, and SXHKD configs
+
+echo "Reloading sxhkd..."
+pkill -USR1 -x sxhkd
+
+echo "Restarting polybar..."
+killall -q polybar
+while pgrep -u $UID -x polybar >/dev/null; do sleep 0.1; done
+polybar mybar &
+
+echo "Reloading bspwm..."
+bspc wm -r
+
+echo "✓ All configs reloaded!"

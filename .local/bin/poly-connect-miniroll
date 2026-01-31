@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Connect Miniroll and set as default audio output
+
+MAC="10:94:97:3C:C4:41"
+SINK="bluez_sink.10:94:97:3C:C4:41.a2dp_sink"
+
+# Connect via bluetoothctl
+echo -e "connect $MAC\nexit" | bluetoothctl
+
+# Wait for the sink to appear
+for i in {1..10}; do
+    if pactl list short sinks | grep -q "$SINK"; then
+        break
+    fi
+    sleep 0.5
+done
+
+# Set default sink
+pactl set-default-sink "$SINK"
+
+# Move all current audio streams to headphones
+for stream in $(pactl list short sink-inputs | awk '{print $1}'); do
+    pactl move-sink-input "$stream" "$SINK"
+done
+
+echo "Miniroll connected and set as default."
+
+sleep 0.5
+
+# Trigger polybar module updates
+polybar-msg hook miniroll 1 >/dev/null 2>&1
+polybar-msg hook pulseaudio 1 >/dev/null 2>&1

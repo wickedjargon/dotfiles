@@ -1,0 +1,23 @@
+#!/bin/bash
+MAC="3C:B0:ED:A7:6A:88"
+
+# Ask bluez to disconnect (use the bluetoothctl subcommand directly)
+bluetoothctl disconnect "$MAC"
+
+# wait (with timeout) for bluez to report Connected: no
+TIMEOUT=10   # seconds
+WAITED=0
+INTERVAL=0.2
+
+while bluetoothctl info "$MAC" 2>/dev/null | grep -q "Connected: yes"; do
+    sleep $INTERVAL
+    WAITED=$(awk "BEGIN {print $WAITED + $INTERVAL}")
+    if (( $(echo "$WAITED >= $TIMEOUT" | bc -l) )); then
+        echo "Timeout waiting for device to disconnect"
+        break
+    fi
+done
+
+# Trigger polybar module updates
+polybar-msg hook headphones 1 >/dev/null 2>&1
+polybar-msg hook pulseaudio 1 >/dev/null 2>&1
