@@ -32,6 +32,11 @@ fi
 if [ "$allowed" = "true" ]; then
     # If we have no windows, we can't preselect off a node, so check count >= 1
     if [ "$count" -ge 1 ]; then
+        # 0. Save State
+        state_file="/tmp/bspwm_smart_arrow_state"
+        echo "WAS_FULLSCREEN=$is_fullscreen" > "$state_file"
+        echo "PREV_LAYOUT=$layout" >> "$state_file"
+
         # 1. Exit Fullscreen if needed
         if [ "$is_fullscreen" = "true" ]; then
             bspc node focused -t ~fullscreen

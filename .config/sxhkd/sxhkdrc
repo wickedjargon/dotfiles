@@ -46,9 +46,9 @@ super + r
 super + {Left,Down,Up,Right}
     bspwm-smart-arrow {west,south,north,east}
 
-# Cancel preselection
+# Cancel preselection (and restore state if smart-arrow was used)
 super + shift + {Left,Down,Up,Right}
-    bspc node -p cancel
+    bspwm-smart-cancel
 
 # Resize window / move gap left (h) and right (l)
 super + shift + h
