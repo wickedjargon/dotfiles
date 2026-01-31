@@ -1,0 +1,23 @@
+#!/bin/sh
+
+case "$(printf " connect-nothing
+ disconnect-nothing
+ hfp-nothing
+ a2dp-nothing
+ connect-musicozy
+ disconnect-musicozy
+ connect-miniroll
+ disconnect-miniroll
+ remap" | rofi -dmenu -i -p 'Run: ')" in
+    # Runs the connect command; if it fails, runs it again immediately
+    ' connect-nothing') bt-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" || bt-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" ;;
+    ' disconnect-nothing') bt-disconnect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" ;;
+    ' hfp-nothing') bt-set-profile "3C:B0:ED:A7:6A:88" handsfree_head_unit ;;
+    ' a2dp-nothing') bt-set-profile "3C:B0:ED:A7:6A:88" a2dp_sink ;;
+    ' connect-musicozy') bt-connect "41:42:AB:DD:51:37" 5 "Musicozy" ;;
+    ' disconnect-musicozy') bt-disconnect "41:42:AB:DD:51:37" 5 "Musicozy" ;;
+    ' connect-miniroll') bt-connect "10:94:97:3C:C4:41" 8 "Miniroll" ;;
+    ' disconnect-miniroll') bt-disconnect "10:94:97:3C:C4:41" 8 "Miniroll" ;;
+    ' remap') remap ;;
+    *) exit 1 ;;
+esac

@@ -18,20 +18,12 @@ cd dotfiles
 python3 deploy.py
 ```
 
-### Step 2: Copy SSH Keys (optional)
+### Step 2: Copy SSH Keys and files from old computer (optional)
 
 From your old computer, copy SSH keys to the new system:
 
 ```bash
 scp -r ~/.ssh/ new_user@new_hostname:~/
-```
-
-### Step 3: Copy ~/d/ Directory (optional)
-
-From your old computer, copy your projects directory:
-
-```bash
-scp -r ~/d/ new_user@new_hostname:~/
 ```
 
 ### Step 4: Setup SSH Repos (optional)
@@ -45,6 +37,19 @@ python3 setup-ssh-repos.py
 ### Step 5: Setup firefox extensions
 
 - launch firefox to trigger extension installation
+
+### step 6: set up bluetooth devices
+
+```
+sudo systemctl enable --now bluetooth
+bluetoothctl
+[bluetooth]# scan on
+[bluetooth]# pair XX:XX:XX:XX:XX:XX
+[bluetooth]# trust XX:XX:XX:XX:XX:XX
+[bluetooth]# connect XX:XX:XX:XX:XX:XX
+[bluetooth]# exit
+systemctl --user restart wireplumber pipewire pipewire-pulse
+```
 
 ## Post-Install
 
@@ -65,3 +70,5 @@ python3 setup-ssh-repos.py
 - [ ] add `--dry-run` flag to `deploy.py`
 - [ ] add error recovery/resume capability to `deploy.py`
 - [ ] refactor large functions
+
+

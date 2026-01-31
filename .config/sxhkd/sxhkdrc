@@ -84,12 +84,13 @@ super + Return
     alacritty
 
 # Dmenu run
+# Rofi run
 super + d
-    dmenu_run
+    rofi -show run
 
 # App finder
 super + space
-    xfce4-appfinder
+    rofi -show drun
 
 # Emacs
 super + m
@@ -97,15 +98,15 @@ super + m
 
 # Browser
 super + w
-    dmenu-browser
+    rofi-browser
 
 # Commands menu
 super + b
-    dmenu-commands
+    rofi-commands
 
 # System menu
 super + BackSpace
-    dmenu-system
+    rofi-system
 
 # Clipmenu
 super + c
@@ -113,14 +114,14 @@ super + c
 
 # WiFi menu
 super + i
-    dmenu-wifi-menu
+    rofi-wifi-menu
 
 # Night/day mode
 super + n
-    dmenu-night-and-day
+    rofi-night-and-day
 
 super + v
-    dmenu-virtual-machines
+    rofi-virtual-machines
 
 # ========== VOLUME CONTROLS ==========
 
