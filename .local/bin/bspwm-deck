@@ -22,7 +22,7 @@ if [ "$hidden_count" -gt 0 ]; then
 else
     # Hide everything except master and focused
     # If focused is master, we need to pick one meaningful stack window to show?
-    # DWM deck usually shows Master + Top of Stack.
+    # Deck layout usually shows Master + Top of Stack.
     # Let's try to keep Focused visible.
     
     for node in $(bspc query -N -d -n .window.!hidden); do

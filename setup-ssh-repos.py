@@ -196,7 +196,8 @@ def main():
     repos_failed = 0
 
     # Wickedjargon repos to look for
-    repo_names = ['dmenu', '.emacs.d']
+    # Wickedjargon repos to look for
+    repo_names = ['.emacs.d']
 
     # Search locations
     search_paths = [

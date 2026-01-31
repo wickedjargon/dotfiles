@@ -2,4 +2,4 @@
 
 # Set brightness to 100% (day mode)
 brightnessctl set 100%
-pkill -RTMIN+6 dwmblocks
+

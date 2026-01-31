@@ -1,5 +1,5 @@
 #!/bin/sh
-# logout.sh - logs out of dwm
+# logout.sh - logs out of window manager
 
 # Send SIGTERM to the X session
 # $DISPLAY is set for your current X session
