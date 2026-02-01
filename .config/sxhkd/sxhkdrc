@@ -42,6 +42,10 @@ super + g
 super + r
     bspwm-deck
 
+# Wide mode toggle
+super + a
+    bspwm-wide
+
 # Preselect split direction
 super + {Left,Down,Up,Right}
     bspwm-smart-arrow {west,south,north,east}

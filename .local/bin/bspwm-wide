@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+import json
+import subprocess
+import sys
+
+def run_cmd(cmd):
+    try:
+        return subprocess.check_output(cmd, shell=True).decode('utf-8').strip()
+    except subprocess.CalledProcessError:
+        return ""
+
+def main():
+    # Get monitor width
+    try:
+        # Query the focused monitor for its rectangle
+        output = run_cmd("bspc query -T -m focused")
+        if not output:
+             print("Error: Could not query bspwm monitor", file=sys.stderr)
+             sys.exit(1)
+             
+        data = json.loads(output)
+        width = data['rectangle']['width']
+    except Exception as e:
+        print(f"Error getting monitor width: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Calculate 5% of width
+    target_padding = int(width * 0.07)
+
+    # Get current padding of the focused desktop
+    try:
+        current_padding_str = run_cmd("bspc config -d focused left_padding")
+        current_padding = int(current_padding_str) if current_padding_str.isdigit() else 0
+    except:
+        current_padding = 0
+
+    # Toggle logic: if near 0, set to target; otherwise set to 0
+    # We use a threshold of 0 here, assuming 'off' is exactly 0.
+    if current_padding == 0:
+        new_padding = target_padding
+    else:
+        new_padding = 0
+
+    run_cmd(f"bspc config -d focused left_padding {new_padding}")
+    run_cmd(f"bspc config -d focused right_padding {new_padding}")
+
+if __name__ == "__main__":
+    main()
