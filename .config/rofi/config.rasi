@@ -4,6 +4,16 @@
 configuration {
     font: "Monospace 12";
     show-icons: true;
+    disable-history: true;
+    display-drun: "Apps";
+    display-run: "Run";
+    display-window: "Window";
+    display-ssh: "SSH";
+    sort: true;
+    sorting-method: "fzf";
+    matching: "fuzzy";
+    kb-primary-paste: "Shift+Insert,Control+y";
+    kb-secondary-paste: "Insert";
 }
 
 * {
