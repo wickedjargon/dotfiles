@@ -8,7 +8,7 @@ case "$(printf " connect-nothing
  disconnect-musicozy
  connect-miniroll
  disconnect-miniroll
- remap" | rofi -dmenu -i -p 'Run: ')" in
+ remap" | rofi -dmenu -i -p 'Run')" in
     # Runs the connect command; if it fails, runs it again immediately
     ' connect-nothing') bt-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" || bt-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" ;;
     ' disconnect-nothing') bt-disconnect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" ;;

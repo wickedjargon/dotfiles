@@ -1,6 +1,6 @@
 #!/bin/sh
 
-case "$(printf "rofi-wifi\nshow-current-network\nwifi-disconnect\nrescan-wifi" | rofi -dmenu -i -p 'Run: ')" in
+case "$(printf "rofi-wifi\nshow-current-network\nwifi-disconnect\nrescan-wifi" | rofi -dmenu -i -p 'Run')" in
     'rofi-wifi') rofi-wifi ;;
     'show-current-network') show-current-network ;;
     'wifi-disconnect') wifi-disconnect ;;

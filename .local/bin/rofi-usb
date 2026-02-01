@@ -137,7 +137,7 @@ class UsbManager:
         
         menu_items = [self.format_partition_label(p) for p in partitions]
         
-        selected = self.rofi_select("Select drive:", menu_items)
+        selected = self.rofi_select("Select drive", menu_items)
         if not selected:
             sys.exit(0)
             
@@ -156,7 +156,7 @@ class UsbManager:
         else:
             actions = ["📂 Mount"]
             
-        action = self.rofi_select(f"Action for {os.path.basename(device_name)}:", actions)
+        action = self.rofi_select(f"Action for {os.path.basename(device_name)}", actions)
         
         if not action:
             sys.exit(0)

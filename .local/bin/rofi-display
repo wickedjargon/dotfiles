@@ -100,7 +100,7 @@ class DisplayManager:
 
         selected_external = None
         if len(externals) > 1:
-            selected_external = self.rofi_select("Select display:", externals)
+            selected_external = self.rofi_select("Select display", externals)
             if not selected_external:
                 sys.exit(0)
         else:
@@ -121,7 +121,7 @@ class DisplayManager:
         # Add padding to align somewhat if needed, or just list them. original used printf format.
         # Python dicts are ordered insertion (3.7+).
         
-        selected_action_label = self.rofi_select("Display:", action_labels)
+        selected_action_label = self.rofi_select("Display", action_labels)
         if not selected_action_label:
             sys.exit(0)
 

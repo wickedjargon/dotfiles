@@ -156,7 +156,7 @@ def main():
     print(f"[DEBUG] Showing rofi with {len(menu_items)} items")
 
     # Show network selection menu
-    choice = show_menu("WiFi:", menu_items)
+    choice = show_menu("WiFi", menu_items)
 
     print(f"[DEBUG] User choice: '{choice}'")
 
@@ -206,7 +206,7 @@ def main():
                 notify("WiFi", f"Saved connection failed, please enter password")
 
         # Prompt for password (either no saved connection or saved connection failed)
-        password = show_menu(f"Password for {ssid}:", [])
+        password = show_menu(f"Password for {ssid}", [])
         print(f"[DEBUG] Password entered: {'Yes' if password else 'No'}")
         if not password:
             sys.exit(0)

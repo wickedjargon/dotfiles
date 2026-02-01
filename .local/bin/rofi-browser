@@ -1,6 +1,6 @@
 #!/bin/sh
 
-case "$(printf " Firefox\n Tor Browser" | rofi -dmenu -i -p 'Open browser: ')" in
+case "$(printf " Firefox\n Tor Browser" | rofi -dmenu -i -p 'Open browser')" in
     ' Firefox') firefox ;;
     ' Tor Browser') tor-browser ;;
     *) exit 1 ;;
