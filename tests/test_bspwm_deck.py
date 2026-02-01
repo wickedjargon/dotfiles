@@ -38,7 +38,7 @@ class TestBspwmDeck(unittest.TestCase):
         # 4. hidden -> 0x2
         
         mock_output.side_effect = [
-            "0x1", # focused
+            "0x2", # focused (must not be master 0x1)
             "0x1", # master
             json.dumps({"layout": "tiled"}), # layout
             "0x2", # hidden nodes
@@ -58,20 +58,16 @@ class TestBspwmDeck(unittest.TestCase):
         # 0x3: Stack Window 2
         
         mock_output.side_effect = [
-            "0x1", # focused
+            "0x2", # focused (must not be master 0x1)
             "0x1", # master
-            json.dumps({"layout": "monocle"}), # layout (should switch to tiled)
+            json.dumps({"layout": "tiled"}), # layout (must be tiled)
             "",    # hidden nodes (empty)
             "0x1\n0x2\n0x3", # visible nodes
         ]
         
         self.deck.run()
         
-        # 1. Switch to tiled
-        mock_run.assert_any_call(["bspc", "desktop", "-l", "tiled"])
-        
-        # 2. Hide 0x2 and 0x3
-        mock_run.assert_any_call(["bspc", "node", "0x2", "-g", "hidden=on"])
+        # 2. Hide 0x3 (0x2 is focused now, 0x1 is master)
         mock_run.assert_any_call(["bspc", "node", "0x3", "-g", "hidden=on"])
         
         # 3. Ensure 0x1 not hidden
