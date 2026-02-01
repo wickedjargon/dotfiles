@@ -111,7 +111,7 @@ def convert_https_to_ssh(https_url):
 
 def is_wickedjargon_repo(url):
     """Check if URL is a wickedjargon repo"""
-    return 'github.com/wickedjargon/' in url
+    return 'github.com/wickedjargon/' in url or 'github.com:wickedjargon/' in url
 
 def convert_repo(repo_path):
     """Convert a single repo from HTTPS to SSH"""

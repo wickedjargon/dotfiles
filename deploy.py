@@ -15,7 +15,23 @@ import traceback
 from pathlib import Path
 
 
-LOG_FILE = '/tmp/dotfiles-deploy.log'
+
+def get_log_file_path():
+    """Determine log file path, creating new numbered file if necessary"""
+    base_path = Path('/tmp/dotfiles-deploy.log')
+    if not base_path.exists():
+        return str(base_path)
+    
+    counter = 1
+    while True:
+        # Check for next available numbered log file
+        log_path = base_path.parent / f"{base_path.name}.{counter}"
+        if not log_path.exists():
+            return str(log_path)
+        counter += 1
+
+
+LOG_FILE = get_log_file_path()
 
 
 def log_error(message, exception=None, context=None):
