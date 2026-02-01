@@ -1,103 +1,138 @@
-#!/bin/sh
+#!/usr/bin/env python3
+import subprocess
+import re
+import sys
+import shutil
 
-# rofi-display - Manage external displays via rofi
-# Supports VGA, HDMI, DisplayPort, etc. automatically via xrandr
+"""Manage external displays via rofi and xrandr."""
 
-# Get the internal display (usually LVDS, eDP, or similar)
-get_internal() {
-    xrandr --query | grep -E "^(LVDS|eDP|eDP-?[0-9]*)-?[0-9]* connected" | cut -d' ' -f1 | head -n1
-}
+class DisplayManager:
+    def notify(self, message):
+        subprocess.run(["notify-send", "Display", message])
 
-# Get connected external displays (everything except internal)
-get_externals() {
-    internal=$(get_internal)
-    xrandr --query | grep " connected" | cut -d' ' -f1 | grep -v "^$internal$"
-}
+    def get_xrandr_output(self):
+        try:
+            return subprocess.check_output(["xrandr", "--query"], text=True)
+        except subprocess.CalledProcessError:
+            self.notify("Error running xrandr")
+            return ""
 
-# Get all connected displays
-get_all_connected() {
-    xrandr --query | grep " connected" | cut -d' ' -f1
-}
+    def get_internal(self):
+        output = self.get_xrandr_output()
+        # Regex to find internal display (LVDS, eDP, etc.)
+        match = re.search(r"^(LVDS|eDP|eDP-?[0-9]*)-?[0-9]* connected", output, re.MULTILINE)
+        if match:
+            return match.group(0).split()[0]
+        return None
 
-# Apply display configuration
-apply_config() {
-    mode="$1"
-    external="$2"
-    internal=$(get_internal)
+    def get_externals(self):
+        internal = self.get_internal()
+        output = self.get_xrandr_output()
+        # Find all connected displays
+        connected = re.findall(r"^(\S+) connected", output, re.MULTILINE)
+        # Filter out internal
+        return [d for d in connected if d != internal]
 
-    case "$mode" in
-        mirror)
-            # Get the internal display's preferred resolution
-            internal_res=$(xrandr --query | grep -A1 "^$internal " | tail -n1 | awk '{print $1}')
-            xrandr --output "$internal" --auto --output "$external" --auto --same-as "$internal"
-            notify-send "Display" "Mirroring to $external"
-            ;;
-        extend-right)
-            xrandr --output "$internal" --auto --output "$external" --auto --right-of "$internal"
-            notify-send "Display" "Extended to $external (right)"
-            ;;
-        extend-left)
-            xrandr --output "$internal" --auto --output "$external" --auto --left-of "$internal"
-            notify-send "Display" "Extended to $external (left)"
-            ;;
-        extend-above)
-            xrandr --output "$internal" --auto --output "$external" --auto --above "$internal"
-            notify-send "Display" "Extended to $external (above)"
-            ;;
-        external-only)
-            xrandr --output "$internal" --off --output "$external" --auto
-            notify-send "Display" "Using $external only"
-            ;;
-        laptop-only)
-            # Turn off all externals
-            for ext in $(get_externals); do
-                xrandr --output "$ext" --off
-            done
-            xrandr --output "$internal" --auto
-            notify-send "Display" "Using laptop display only"
-            ;;
-    esac
-}
+    def rofi_select(self, prompt, items):
+        if not items:
+            return None
+        input_str = "\n".join(items)
+        try:
+            result = subprocess.run(
+                ["rofi", "-dmenu", "-i", "-p", prompt],
+                input=input_str,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            return result.stdout.strip()
+        except subprocess.CalledProcessError:
+            return None
 
-# Main logic
-main() {
-    internal=$(get_internal)
-    externals=$(get_externals)
+    def apply_config(self, mode, external):
+        internal = self.get_internal()
+        if not internal:
+            self.notify("Could not detect internal display")
+            return
 
-    # Check if any external displays are connected
-    if [ -z "$externals" ]; then
-        notify-send "Display" "No external displays detected"
-        exit 0
-    fi
+        cmd = ["xrandr"]
+        
+        if mode == "mirror":
+             cmd.extend(["--output", internal, "--auto", "--output", external, "--auto", "--same-as", internal])
+             msg = f"Mirroring to {external}"
+        elif mode == "extend-right":
+             cmd.extend(["--output", internal, "--auto", "--output", external, "--auto", "--right-of", internal])
+             msg = f"Extended to {external} (right)"
+        elif mode == "extend-left":
+             cmd.extend(["--output", internal, "--auto", "--output", external, "--auto", "--left-of", internal])
+             msg = f"Extended to {external} (left)"
+        elif mode == "extend-above":
+             cmd.extend(["--output", internal, "--auto", "--output", external, "--auto", "--above", internal])
+             msg = f"Extended to {external} (above)"
+        elif mode == "external-only":
+             cmd.extend(["--output", internal, "--off", "--output", external, "--auto"])
+             msg = f"Using {external} only"
+        elif mode == "laptop-only":
+             # Turn off all externals
+             externals = self.get_externals() # Re-fetch to be safe
+             for ext in externals:
+                 cmd.extend(["--output", ext, "--off"])
+             cmd.extend(["--output", internal, "--auto"])
+             msg = "Using laptop display only"
+        else:
+             return
 
-    # Count external displays
-    ext_count=$(echo "$externals" | wc -l)
+        if subprocess.run(cmd).returncode == 0:
+            self.notify(msg)
+        else:
+            self.notify("Failed to apply display configuration")
 
-    # If multiple externals, let user pick one first
-    if [ "$ext_count" -gt 1 ]; then
-        selected_external=$(printf "%s" "$externals" | rofi -dmenu -i -p "Select display:")
-        [ -z "$selected_external" ] && exit 0
-    else
-        selected_external="$externals"
-    fi
+    def run(self):
+        if not shutil.which("xrandr") or not shutil.which("rofi"):
+             self.notify("Error: xrandr or rofi not found")
+             sys.exit(1)
 
-    # Show action menu
-    action=$(printf " Mirror to %s\n Extend right (%s)\n Extend left (%s)\n Extend above (%s)\n External only (%s)\n Laptop only" \
-        "$selected_external" "$selected_external" "$selected_external" "$selected_external" "$selected_external" \
-        | rofi -dmenu -i -p "Display:")
+        externals = self.get_externals()
+        
+        if not externals:
+            self.notify("No external displays detected")
+            sys.exit(0)
 
-    [ -z "$action" ] && exit 0
+        selected_external = None
+        if len(externals) > 1:
+            selected_external = self.rofi_select("Select display:", externals)
+            if not selected_external:
+                sys.exit(0)
+        else:
+            selected_external = externals[0]
 
-    # Parse action and apply
-    case "$action" in
-        *"Mirror"*)       apply_config mirror "$selected_external" ;;
-        *"right"*)        apply_config extend-right "$selected_external" ;;
-        *"left"*)         apply_config extend-left "$selected_external" ;;
-        *"above"*)        apply_config extend-above "$selected_external" ;;
-        *"External only"*) apply_config external-only "$selected_external" ;;
-        *"Laptop only"*)  apply_config laptop-only "$selected_external" ;;
-        *)                exit 1 ;;
-    esac
-}
+        # Action Menu
+        actions = {
+            f"Mirror to {selected_external}": "mirror",
+            f"Extend right ({selected_external})": "extend-right",
+            f"Extend left ({selected_external})": "extend-left",
+            f"Extend above ({selected_external})": "extend-above",
+            f"External only ({selected_external})": "external-only",
+            "Laptop only": "laptop-only"
+        }
 
-main
+        # Need to preserve order for rofi menu
+        action_labels = list(actions.keys())
+        # Add padding to align somewhat if needed, or just list them. original used printf format.
+        # Python dicts are ordered insertion (3.7+).
+        
+        selected_action_label = self.rofi_select("Display:", action_labels)
+        if not selected_action_label:
+            sys.exit(0)
+
+        # Match partial string if needed or exact match
+        # Original script used case "$action" in *Mirror*
+        # Here we used specific keys so we can look it up directly?
+        # rofi returns exactly one of the input lines.
+        
+        mode = actions.get(selected_action_label)
+        if mode:
+            self.apply_config(mode, selected_external)
+
+if __name__ == "__main__":
+    DisplayManager().run()

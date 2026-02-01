@@ -1,56 +1,93 @@
-#!/bin/sh
+#!/usr/bin/env python3
+import subprocess
+import json
+import sys
+import os
+import shutil
 
-direction=$1
+"""Smart directional preselection for bspwm."""
 
-if [ -z "$direction" ]; then
-    echo "Usage: $0 <direction>"
-    exit 1
-fi
+STATE_FILE = "/tmp/bspwm_smart_arrow_state.json"
 
-# Get State
-count=$(bspc query -N -d focused -n .leaf.!hidden.window | wc -l)
-is_fullscreen=$(bspc query -N -n focused.fullscreen >/dev/null && echo "true" || echo "false")
-# Robustly grep layout from json output since jq might not be available
-layout=$(bspc query -T -d | grep -o '"layout":"[^"]*"' | head -n1 | cut -d'"' -f4)
+class BspwmSmartArrow:
+    def notify(self, message):
+         subprocess.run(["notify-send", "Smart Arrow", message])
 
-# Decision Logic
-allowed=true
+    def bspc_query_nodes(self, args):
+        cmd = ["bspc", "query", "-N"] + args
+        try:
+            return subprocess.check_output(cmd, text=True).strip().split('\n')
+        except subprocess.CalledProcessError:
+            return []
 
-if [ "$is_fullscreen" = "true" ]; then
-    # If Fullscreen: Only allow if it's the only window
-    if [ "$count" -gt 1 ]; then
-        allowed=false
-    fi
-elif [ "$layout" = "monocle" ]; then
-    # If Monocle: Only allow if it's the only window
-    if [ "$count" -gt 1 ]; then
-        allowed=false
-    fi
-fi
+    def is_fullscreen(self):
+        # bspc query -N -n focused.fullscreen returns node ID if true, exit 1 if false
+        try:
+            subprocess.check_call(["bspc", "query", "-N", "-n", "focused.fullscreen"], 
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
+        except subprocess.CalledProcessError:
+            return False
 
-# Execute or Notify
-if [ "$allowed" = "true" ]; then
-    # If we have no windows, we can't preselect off a node, so check count >= 1
-    if [ "$count" -ge 1 ]; then
-        # 0. Save State
-        state_file="/tmp/bspwm_smart_arrow_state"
-        echo "WAS_FULLSCREEN=$is_fullscreen" > "$state_file"
-        echo "PREV_LAYOUT=$layout" >> "$state_file"
+    def get_layout(self):
+        try:
+            output = subprocess.check_output(["bspc", "query", "-T", "-d"], text=True)
+            data = json.loads(output)
+            return data.get("layout")
+        except (subprocess.CalledProcessError, json.JSONDecodeError):
+            return None
 
-        # 1. Exit Fullscreen if needed
-        if [ "$is_fullscreen" = "true" ]; then
-            bspc node focused -t ~fullscreen
-        fi
+    def run(self, direction):
+        if not direction:
+            print(f"Usage: {sys.argv[0]} <direction>")
+            sys.exit(1)
+
+        # Get State
+        # count focused leaf windows that are not hidden
+        nodes = self.bspc_query_nodes(["-d", "focused", "-n", ".leaf.!hidden.window"])
+        # If result is empty string (split gives ['']), count 0
+        count = len([n for n in nodes if n])
         
-        # 2. Ensure Tiled Layout
-        if [ "$layout" != "tiled" ]; then
-            bspc desktop -l tiled
-        fi
+        fullscreen = self.is_fullscreen()
+        layout = self.get_layout()
         
-        # 3. Preselect
-        bspc node -p "$direction"
-    fi
-else
-    # Optional feedback
-    notify-send "Smart Arrow" "Split blocked: Multiple windows in Fullscreen/Monocle mode."
-fi
+        allowed = True
+        
+        if fullscreen:
+            if count > 1:
+                allowed = False
+        elif layout == "monocle":
+             if count > 1:
+                 allowed = False
+        
+        if allowed:
+             if count >= 1:
+                 # Save State
+                 state = {
+                     "WAS_FULLSCREEN": fullscreen,
+                     "PREV_LAYOUT": layout
+                 }
+                 try:
+                     with open(STATE_FILE, 'w') as f:
+                         json.dump(state, f)
+                 except IOError:
+                     pass # warn?
+                     
+                 # Exit Fullscreen
+                 if fullscreen:
+                      subprocess.run(["bspc", "node", "focused", "-t", "~fullscreen"])
+                 
+                 # Ensure Tiled
+                 if layout != "tiled":
+                      subprocess.run(["bspc", "desktop", "-l", "tiled"])
+                 
+                 # Preselect
+                 subprocess.run(["bspc", "node", "-p", direction])
+        else:
+             self.notify("Split blocked: Multiple windows in Fullscreen/Monocle mode.")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print(f"Usage: {sys.argv[0]} <direction>")
+        sys.exit(1)
+    BspwmSmartArrow().run(sys.argv[1])

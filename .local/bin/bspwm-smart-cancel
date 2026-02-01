@@ -1,29 +1,55 @@
-#!/bin/sh
+#!/usr/bin/env python3
+import subprocess
+import json
+import sys
+import os
 
-# Cancel the preselection first
-bspc node -p cancel
+"""Cancel preselection and restore state for bspwm."""
 
-# Check for saved state
-state_file="/tmp/bspwm_smart_arrow_state"
+STATE_FILE = "/tmp/bspwm_smart_arrow_state.json"
 
-if [ -f "$state_file" ]; then
-    # Load state variables (WAS_FULLSCREEN, PREV_LAYOUT)
-    . "$state_file"
+class BspwmSmartCancel:
+    def get_layout(self):
+        try:
+            output = subprocess.check_output(["bspc", "query", "-T", "-d"], text=True)
+            data = json.loads(output)
+            return data.get("layout")
+        except (subprocess.CalledProcessError, json.JSONDecodeError):
+            return None
 
-    # Restore Layout if it was different
-    current_layout=$(bspc query -T -d | grep -o '"layout":"[^"]*"' | head -n1 | cut -d'"' -f4)
-    if [ "$PREV_LAYOUT" != "$current_layout" ] && [ -n "$PREV_LAYOUT" ]; then
-        bspc desktop -l "$PREV_LAYOUT"
-    fi
+    def is_fullscreen(self):
+        try:
+            subprocess.check_call(["bspc", "query", "-N", "-n", "focused.fullscreen"], 
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
+        except subprocess.CalledProcessError:
+            return False
 
-    # Restore Fullscreen if it was fullscreen
-    # We check if the focused node is not currently fullscreen before toggling
-    is_fullscreen=$(bspc query -N -n focused.fullscreen >/dev/null && echo "true" || echo "false")
-    
-    if [ "$WAS_FULLSCREEN" = "true" ] && [ "$is_fullscreen" = "false" ]; then
-        bspc node focused -t ~fullscreen
-    fi
+    def run(self):
+        # Cancel preselection
+        subprocess.run(["bspc", "node", "-p", "cancel"])
+        
+        if os.path.exists(STATE_FILE):
+            try:
+                with open(STATE_FILE, 'r') as f:
+                    state = json.load(f)
+                
+                prev_layout = state.get("PREV_LAYOUT")
+                was_fullscreen = state.get("WAS_FULLSCREEN")
+                
+                # Restore Layout
+                current_layout = self.get_layout()
+                if prev_layout and prev_layout != current_layout:
+                    subprocess.run(["bspc", "desktop", "-l", prev_layout])
+                
+                # Restore Fullscreen
+                is_fs = self.is_fullscreen()
+                if was_fullscreen and not is_fs:
+                     subprocess.run(["bspc", "node", "focused", "-t", "~fullscreen"])
+                
+                os.remove(STATE_FILE)
+            except (IOError, json.JSONDecodeError):
+                pass
 
-    # Clean up state file so subsequent cancels don't trigger this
-    rm "$state_file"
-fi
+if __name__ == "__main__":
+    BspwmSmartCancel().run()

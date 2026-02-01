@@ -1,59 +1,105 @@
-#!/bin/sh
+#!/usr/bin/env python3
+import os
+import sys
+import subprocess
+import select
+import signal
+import shutil
 
-# Configuration
-BATTERY_PATH="/sys/class/power_supply/BAT0"
-SOUND_FILE="/usr/share/sounds/freedesktop/stereo/suspend-error.oga"
+"""Battery monitor script converted to Python."""
 
-# Exit early if no battery (desktop system)
-if [ ! -d "$BATTERY_PATH" ]; then
-    exit 0
-fi
+BATTERY_PATH = "/sys/class/power_supply/BAT0"
+SOUND_FILE = "/usr/share/sounds/freedesktop/stereo/suspend-error.oga"
 
-# Flags
-SENT_20=false
-SENT_10=false
+class BatteryMonitor:
+    def __init__(self):
+        self.sent_10 = False
+        self.sent_20 = False
+        self.battery_path = BATTERY_PATH
 
-if ! command -v acpi_listen >/dev/null 2>&1; then
-    notify-send "Battery Monitor" "Error: acpi_listen not found. Install 'acpid'."
-    exit 1
-fi
+    def notify(self, urgency, title, message, expire_time=None):
+        cmd = ["notify-send", "-u", urgency, "-h", "string:x-canonical-private-synchronous:bat_alert"]
+        if expire_time:
+            cmd.extend(["-t", str(expire_time)])
+        cmd.extend([title, message])
+        subprocess.run(cmd)
 
-stdbuf -oL acpi_listen | while IFS= read -r -t 60 event || true; do
+    def play_sound(self):
+        subprocess.Popen(["paplay", SOUND_FILE])
 
-    if [ -d "$BATTERY_PATH" ]; then
-        STATUS=$(cat "$BATTERY_PATH/status")
-        CAPACITY=$(cat "$BATTERY_PATH/capacity")
+    def get_file_content(self, filename):
+        try:
+            with open(os.path.join(self.battery_path, filename), 'r') as f:
+                return f.read().strip()
+        except IOError:
+            return None
 
-        if [ "$STATUS" = "Discharging" ]; then
+    def check_battery(self):
+        if not os.path.exists(self.battery_path):
+            return
 
-            # --- 10% Critical ---
-            if [ "$CAPACITY" -le 10 ] && [ "$SENT_10" = "false" ]; then
-                # Use the synchronous hint to allow this notification to be overwritten later
-                notify-send -u critical -h string:x-canonical-private-synchronous:bat_alert "Battery Critical" "Level is at ${CAPACITY}%."
-                paplay "$SOUND_FILE" &
-                SENT_10=true
-                SENT_20=true
+        status = self.get_file_content("status")
+        capacity_str = self.get_file_content("capacity")
+        
+        if not status or not capacity_str:
+            return
 
-            # --- 20% Low ---
-            elif [ "$CAPACITY" -le 20 ] && [ "$CAPACITY" -gt 10 ] && [ "$SENT_20" = "false" ]; then
-                notify-send -u normal -h string:x-canonical-private-synchronous:bat_alert "Battery Low" "Level is at ${CAPACITY}%."
-                paplay "$SOUND_FILE" &
-                SENT_20=true
-            fi
+        try:
+            capacity = int(capacity_str)
+        except ValueError:
+            return
 
-        else
-            # STATUS is Charging/Full
+        if status == "Discharging":
+            # Critical
+            if capacity <= 10 and not self.sent_10:
+                self.notify("critical", "Battery Critical", f"Level is at {capacity}%.")
+                self.play_sound()
+                self.sent_10 = True
+                self.sent_20 = True # Also silence low warning if we skipped it
+            
+            # Low
+            elif 10 < capacity <= 20 and not self.sent_20:
+                self.notify("normal", "Battery Low", f"Level is at {capacity}%.")
+                self.play_sound()
+                self.sent_20 = True
 
-            # If we were previously alerting, replace the alert with a self-destructing message
-            if [ "$SENT_20" = "true" ] || [ "$SENT_10" = "true" ]; then
-                 # -t 2000 means expire in 2 seconds.
-                 # This overwrites the Critical alert with this temporary one.
-                 notify-send -u low -h string:x-canonical-private-synchronous:bat_alert -t 2000 "Charging" "Battery recovering..."
-            fi
+        else:
+            # Charging or Full
+            if self.sent_10 or self.sent_20:
+                self.notify("low", "Charging", "Battery recovering...", expire_time=2000)
+                self.sent_10 = False
+                self.sent_20 = False
 
-            # Reset flags
-            SENT_10=false
-            SENT_20=false
-        fi
-    fi
-done
+    def run(self):
+        proc = None
+        try:
+            if not os.path.exists(self.battery_path):
+                sys.exit(0)
+
+            if not shutil.which("acpi_listen"):
+                 self.notify("normal", "Battery Monitor", "Error: acpi_listen not found. Install 'acpid'.")
+                 sys.exit(1)
+
+            # Start acpi_listen with line buffering
+            proc = subprocess.Popen(["stdbuf", "-oL", "acpi_listen"], stdout=subprocess.PIPE, text=True)
+
+            while True:
+                self.check_battery()
+                
+                # Wait for up to 60 seconds for output
+                r, _, _ = select.select([proc.stdout], [], [], 60)
+                
+                if r:
+                    line = proc.stdout.readline()
+                    if not line:
+                        break # EOF
+                # Loop continues on timeout or event
+
+        except KeyboardInterrupt:
+            pass
+        finally:
+            if proc:
+                proc.kill()
+
+if __name__ == "__main__":
+    BatteryMonitor().run()
