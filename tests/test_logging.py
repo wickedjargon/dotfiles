@@ -100,5 +100,57 @@ class TestLogging(unittest.TestCase):
                 self.assertIn("Failed to create user", content)
                 self.assertIn("useradd", content)
 
+class TestLogRotation(unittest.TestCase):
+    @patch('deploy.Path')
+    def test_get_log_file_path_fresh(self, mock_path_cls):
+        """Test getting log path when no log file exists"""
+        mock_base = MagicMock()
+        mock_base.exists.return_value = False
+        mock_base.__str__.return_value = '/tmp/dotfiles-deploy.log'
+        mock_path_cls.return_value = mock_base
+        
+        result = deploy.get_log_file_path()
+        self.assertEqual(result, '/tmp/dotfiles-deploy.log')
+        
+    @patch('deploy.Path')
+    def test_get_log_file_path_rotates(self, mock_path_cls):
+        """Test that log file rotates (appends .1, .2) if file exists"""
+        # 1. Setup base path mock (it exists)
+        mock_base = MagicMock()
+        mock_base.exists.return_value = True
+        mock_base.name = 'dotfiles-deploy.log'
+        mock_base.__str__.return_value = '/tmp/dotfiles-deploy.log'
+        
+        # 2. Setup parent behavior
+        mock_parent = MagicMock()
+        mock_base.parent = mock_parent
+        
+        # 3. Setup rotated files
+        # .1 exists
+        mock_log_1 = MagicMock()
+        mock_log_1.exists.return_value = True
+        
+        # .2 does NOT exist (this should be the one picked)
+        mock_log_2 = MagicMock()
+        mock_log_2.exists.return_value = False
+        mock_log_2.__str__.return_value = '/tmp/dotfiles-deploy.log.2'
+        
+        # Define behavior for parent / "filename"
+        def div_side_effect(arg):
+            if arg == 'dotfiles-deploy.log.1':
+                return mock_log_1
+            if arg == 'dotfiles-deploy.log.2':
+                return mock_log_2
+            return MagicMock()
+            
+        mock_parent.__truediv__.side_effect = div_side_effect
+        mock_path_cls.return_value = mock_base
+        
+        # Execute
+        result = deploy.get_log_file_path()
+        
+        # Verify
+        self.assertEqual(result, '/tmp/dotfiles-deploy.log.2')
+
 if __name__ == '__main__':
     unittest.main()
