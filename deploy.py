@@ -15,16 +15,18 @@ import traceback
 from pathlib import Path
 
 
+LOG_FILE = '/tmp/dotfiles-deploy.log'
+
+
 def log_error(message, exception=None, context=None):
     """Log error to secure temporary file"""
-    log_file = '/tmp/dotfiles-deploy.log'
     
     try:
         # Create or append to log file
-        with open(log_file, 'a') as f:
+        with open(LOG_FILE, 'a') as f:
             # Ensure secure permissions (only owner can read/write)
             try:
-                os.chmod(log_file, 0o600)
+                os.chmod(LOG_FILE, 0o600)
             except OSError:
                 pass  # Best effort
                 
@@ -35,17 +37,18 @@ def log_error(message, exception=None, context=None):
             if context:
                 f.write(f"Context: {context}\n")
                 
-            if exception:
+            if isinstance(exception, subprocess.CalledProcessError):
+                # Clean logging for subprocess errors - NO TRACEBACK
+                f.write(f"Command: {exception.cmd}\n")
+                f.write(f"Return Code: {exception.returncode}\n")
+                if exception.stdout:
+                    f.write(f"STDOUT:\n{exception.stdout}\n")
+                if exception.stderr:
+                    f.write(f"STDERR:\n{exception.stderr}\n")
+            elif exception:
+                # Standard logging for other exceptions
                 f.write(f"Exception Type: {type(exception).__name__}\n")
                 f.write(f"Exception Message: {str(exception)}\n")
-                
-                if isinstance(exception, subprocess.CalledProcessError):
-                    f.write(f"Command: {exception.cmd}\n")
-                    f.write(f"Return Code: {exception.returncode}\n")
-                    if exception.stdout:
-                        f.write(f"STDOUT:\n{exception.stdout}\n")
-                    if exception.stderr:
-                        f.write(f"STDERR:\n{exception.stderr}\n")
                 
                 # Write traceback for unexpected python exceptions
                 f.write(f"\nTraceback:\n")

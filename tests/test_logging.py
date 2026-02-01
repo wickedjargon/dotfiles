@@ -4,6 +4,7 @@ import sys
 import os
 import shutil
 import subprocess
+import tempfile
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
@@ -15,14 +16,19 @@ import deploy
 
 class TestLogging(unittest.TestCase):
     def setUp(self):
-        self.log_file = '/tmp/dotfiles-deploy.log'
-        # Clear log file if exists
-        if os.path.exists(self.log_file):
-            os.remove(self.log_file)
+        # Create a temp file for logging
+        self.temp_log = tempfile.NamedTemporaryFile(delete=False)
+        self.temp_log.close()
+        self.log_file = self.temp_log.name
+        
+        # Patch the LOG_FILE in deploy module
+        self.patcher = patch('deploy.LOG_FILE', self.log_file)
+        self.patcher.start()
             
     def tearDown(self):
-        # Optional: cleanup
-        pass
+        self.patcher.stop()
+        if os.path.exists(self.log_file):
+            os.remove(self.log_file)
 
     def test_log_error_creates_file(self):
         deploy.log_error("Test error message")
@@ -51,9 +57,16 @@ class TestLogging(unittest.TestCase):
             content = f.read()
             self.assertIn("ValueError", content)
             self.assertIn("Test generic exception", content)
-            self.assertIn("content", "content") # dummy assertion
+            # self.assertIn("content", "content") # dummy assertion
 
     def test_log_error_with_subprocess_error(self):
+        """
+        Verify that subprocess errors log the command and return code.
+        Note: We updated this to NOT include traceback/exception name for clean logging.
+        So we assert that the COMMAND info is there, but we relax the check for "Exception Type" 
+        or we check that it's NOT there if we want to be strict.
+        For this existing test, I'll just check for the presence of command info.
+        """
         cmd = ['ls', '/nonexistent']
         try:
             subprocess.run(cmd, check=True, capture_output=True)
@@ -65,6 +78,9 @@ class TestLogging(unittest.TestCase):
             self.assertIn("Subprocess failed", content)
             self.assertIn("ls", content)
             self.assertIn("Return Code", content)
+            # Verify NO traceback for subprocess errors
+            self.assertNotIn("Traceback:", content)
+            self.assertNotIn("Exception Type:", content)
 
     def test_create_user_logs_error(self):
         # We can't easily mock the internal subprocess call of create_user without restructuring,
