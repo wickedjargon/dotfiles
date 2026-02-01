@@ -1222,6 +1222,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
 
 ;; audio / music payer
 (use-package emms :straight t :defer t
+  :commands (emms)
   :diminish emms-mode-line
   :init
   (defun emms-volume-set (level)
