@@ -17,6 +17,7 @@ bspc config border_width         3
 
 # Window gaps
 bspc config window_gap           2
+bspc config top_padding          19
 
 # Border colors
 bspc config normal_border_color  "#222222"   # normbordercolor
