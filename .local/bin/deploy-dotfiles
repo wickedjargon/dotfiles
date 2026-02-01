@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+
+import os
+import subprocess
+import shutil
+import sys
+from pathlib import Path
+
+# Configuration
+# We assume the script is running from within the repo or we hardcode the path
+# Given the user's setup, hardcoding is the most reliable way for a fixed station
+REPO_PATH = Path("/home/ff/d/projects/dotfiles")
+MANIFEST_FILE = REPO_PATH / "copy-these"
+
+def notify(message, urgency="normal"):
+    """Send a notification using notify-send if available"""
+    if shutil.which("notify-send"):
+        subprocess.run(["notify-send", "-u", urgency, "Dotfiles Deploy", message])
+
+def deploy():
+    if not MANIFEST_FILE.exists():
+        msg = f"Error: Manifest file not found at {MANIFEST_FILE}"
+        print(msg)
+        notify(msg, "critical")
+        sys.exit(1)
+
+    notify("Starting deployment...")
+    
+    success_count = 0
+    error_count = 0
+
+    try:
+        with open(MANIFEST_FILE) as f:
+            lines = f.readlines()
+
+        for line in lines:
+            line = line.strip()
+            # Skip empty lines and comments
+            if not line or line.startswith("#"):
+                continue
+            
+            # Remove leading / for relative path (e.g. /.bashrc -> .bashrc)
+            rel_path = line.lstrip("/")
+            src = REPO_PATH / rel_path
+            dst = Path.home() / rel_path
+            
+            if not src.exists():
+                print(f"Skipping missing source: {src}")
+                continue
+            
+            # Prepare rsync command
+            # -a: archive (recursive, preserves permissions/times/etc)
+            # -v: verbose
+            cmd = ["rsync", "-av"]
+            
+            src_str = str(src)
+            dst_str = str(dst)
+            
+            # IMPORTANT: For directories, append trailing slash to src to merge contents
+            # instead of creating the directory inside the destination.
+            # e.g. src=dotfiles/.config/ -> dst=~/.config/
+            if src.is_dir():
+                if not src_str.endswith("/"):
+                    src_str += "/"
+            
+            cmd.extend([src_str, dst_str])
+            
+            print(f"Deploying {rel_path}...")
+            try:
+                subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                success_count += 1
+            except subprocess.CalledProcessError as e:
+                error_msg = e.stderr.decode() if e.stderr else str(e)
+                print(f"Error syncing {rel_path}: {error_msg}")
+                error_count += 1
+
+        summary = f"Deployment complete.\nSuccess: {success_count}\nErrors: {error_count}"
+        print(summary)
+        notify(summary, "critical" if error_count > 0 else "normal")
+
+    except Exception as e:
+        msg = f"Unexpected error: {str(e)}"
+        print(msg)
+        notify(msg, "critical")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    deploy()
