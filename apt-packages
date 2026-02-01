@@ -64,8 +64,8 @@ xserver-xorg             # X server for graphical display
 xinit                    # X server initialization tool (startx)
 xdotool                  # Command-line X11 automation
 xclip                    # Command-line clipboard utility
-rofi                     # Window switcher, run dialog, dmenu replacement
-suckless-tools           # Simple commands for minimalistic window managers (dmenu)
+rofi                     # Window switcher, run dialog
+suckless-tools           # Simple commands for minimalistic window managers
 xcape                    # Remap modifier keys to other keys
 xwallpaper               # Wallpaper setting utility
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)

@@ -66,7 +66,7 @@ systemctl --user restart wireplumber pipewire pipewire-pulse
 - [x] allow extensions in private browser
 - [ ] pairing bluetooth instructions
 - [ ] add unit tests for `deploy.py` and `setup-ssh-repos.py`
-- [x] replace hardcoded paths with `$HOME` in scripts (e.g., `dmenu-virtual-machines`)
+- [x] replace hardcoded paths with `$HOME` in scripts
 - [ ] add `--dry-run` flag to `deploy.py`
 - [ ] add error recovery/resume capability to `deploy.py`
 - [ ] refactor large functions
