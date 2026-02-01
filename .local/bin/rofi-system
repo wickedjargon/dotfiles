@@ -1,6 +1,6 @@
 #!/bin/sh
 
-case "$(printf " lock\n kill X\n reboot\n poweroff\n hibernate\n display off\n logout\n restart bspwm" | rofi -dmenu -i -p 'Action')" in
+case "$(printf " lock\n kill X\n reboot\n poweroff\n hibernate\n display off\n logout\n restart bspwm\n deploy dotfiles" | rofi -dmenu -i -p 'Action')" in
     ' lock') slock ;;
     ' kill X') pkill X ;;
     ' reboot') systemctl reboot -i ;;
@@ -9,5 +9,6 @@ case "$(printf " lock\n kill X\n reboot\n poweroff\n hibernate\n display off\n l
     ' display off') xset dpms force off ;;
     ' logout') sys-logout ;;
     ' restart bspwm') restart-bspwm ;;
+    ' deploy dotfiles') deploy-dotfiles ;;
     *) exit 1 ;;
 esac
