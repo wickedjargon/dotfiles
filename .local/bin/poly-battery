@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+
+def main():
+    try:
+        # Check battery status
+        status_path = "/sys/class/power_supply/BAT0/status"
+        capacity_path = "/sys/class/power_supply/BAT0/capacity"
+        
+        if not os.path.exists(status_path) or not os.path.exists(capacity_path):
+            print("No Battery")
+            return
+
+        with open(status_path, "r") as f:
+            status = f.read().strip()
+        
+        with open(capacity_path, "r") as f:
+            capacity = f.read().strip()
+            
+        # Determine icon
+        if status == "Discharging":
+            icon = "🔋"
+        else:
+            # Charging, Full, Not charging, etc.
+            icon = "⚡"
+            
+        print(f"{icon} {capacity}%")
+        
+    except Exception:
+        print("Error")
+
+if __name__ == "__main__":
+    main()
