@@ -35,7 +35,11 @@ class BspwmDeck:
              layout = None
 
         if layout != "tiled":
-             subprocess.run(["bspc", "desktop", "-l", "tiled"])
+             sys.exit(0)
+
+        # 3. Check if master
+        if focused == master:
+             sys.exit(0)
 
         # 3. Check hidden
         hidden_nodes = self.get_nodes_list(["-d", "-n", ".hidden"])
