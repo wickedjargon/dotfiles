@@ -128,6 +128,10 @@ super + n
 super + v
     rofi-virtual-machines
 
+# Scripts launcher
+super + s
+    rofi-scripts
+
 # ========== VOLUME CONTROLS ==========
 
 # Volume up
