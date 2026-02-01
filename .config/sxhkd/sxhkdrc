@@ -4,7 +4,7 @@
 
 # ========== WINDOW MANAGEMENT ==========
 
-# Close/kill window
+# Close window
 super + p
     bspc node -c
 
@@ -30,15 +30,15 @@ super + shift + {j,k}
 
 # ========== LAYOUT MANAGEMENT ==========
 
-# Set tiled layout (tiled mode)
+# Tiled mode
 super + t
     bspc desktop -l tiled
 
-# Monocle mode (grand mode)
+# Monocle mode
 super + g
     bspc desktop -l monocle
 
-# Deck Layout (regional mode)
+# Deck mode
 super + r
     bspwm-deck
 
@@ -46,14 +46,15 @@ super + r
 super + {Left,Down,Up,Right}
     bspwm-smart-arrow {west,south,north,east}
 
-# Cancel preselection (and restore state if smart-arrow was used)
+# Cancel preselection
 super + shift + {Left,Down,Up,Right}
     bspwm-smart-cancel
 
-# Resize window / move gap left (h) and right (l)
+# Resize window (left)
 super + shift + h
     bspc node -z right -20 0 || bspc node -z left -20 0
 
+# Resize window (right)
 super + shift + l
     bspc node -z right 20 0 || bspc node -z left 20 0
 
@@ -69,11 +70,11 @@ super + {1-6}
 super + shift + {1-6}
     bspc node -d '^{1-6}'
 
-# Move to previous workspace (no wrap)
+# Move to previous workspace
 super + h
     curr=$(bspc query -D -d focused); first=$(bspc query -D -d .local | head -n1); [ "$curr" != "$first" ] && bspc desktop -f prev.local
 
-# Move to next workspace (no wrap)
+# Move to next workspace
 super + l
     curr=$(bspc query -D -d focused); last=$(bspc query -D -d .local | tail -n1); [ "$curr" != "$last" ] && bspc desktop -f next.local
 
@@ -83,7 +84,6 @@ super + l
 super + Return
     alacritty
 
-# Dmenu run
 # Rofi run
 super + d
     rofi -show run
@@ -104,6 +104,10 @@ super + w
 super + b
     rofi-commands
 
+# Show keybindings
+super + slash
+    rofi-sxhkd-help
+
 # System menu
 super + BackSpace
     rofi-system
@@ -120,6 +124,7 @@ super + i
 super + n
     rofi-night-and-day
 
+# Virtual machines
 super + v
     rofi-virtual-machines
 

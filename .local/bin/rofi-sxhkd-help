@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import sys
+import subprocess
+
+CONFIG_FILE = os.path.expanduser("~/.config/sxhkd/sxhkdrc")
+WIDTH = 1000
+LINES = 15
+
+def get_braces_content(text):
+    """Finds content inside the first matching set of braces {a,b,c}."""
+    depth = 0
+    start = -1
+    for i, char in enumerate(text):
+        if char == '{':
+            if depth == 0:
+                start = i
+            depth += 1
+        elif char == '}':
+            depth -= 1
+            if depth == 0 and start != -1:
+                return start, i, text[start+1:i]
+    return -1, -1, None
+
+def expand_braces(text, variants=None):
+    """Expands a string with braces into a list of tuples (expanded_text, [variants])."""
+    if variants is None:
+        variants = []
+        
+    start, end, content = get_braces_content(text)
+    if content is None:
+        return [(text, variants)]
+    
+    # Split by comma but respect nested braces?
+    # Simple split ',' is risky if nested, but sxhkd usually doesn't nest heavily inside comma lists without braces.
+    # A robust splitter would track level. But for now simple split is likely sufficient for standard sxhkdrc.
+    parts = content.split(',')
+    
+    prefix = text[:start]
+    suffix = text[end+1:]
+    
+    results = []
+    for part in parts:
+        # Valid variants are cleaned of surrounding whitespace if needed, 
+        # but sxhkd is usually strict.
+        part_clean = part.strip()
+        new_variants = variants + [part_clean]
+        results.extend(expand_braces(prefix + part + suffix, new_variants))
+        
+    return results
+
+def parse_config(filepath):
+    bindings = []
+    current_desc = []
+    
+    with open(filepath, 'r') as f:
+        lines = f.readlines()
+        
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        
+        # Header/Description handling
+        if line.startswith('#'):
+            desc_part = line.lstrip('#').strip()
+            if re.match(r'^=+$', desc_part) or not desc_part: 
+                current_desc = []
+            elif desc_part.startswith('='): 
+                current_desc = []
+            else:
+                current_desc.append(desc_part)
+            i += 1
+            continue
+            
+        if not line:
+            current_desc = [] 
+            i += 1
+            continue
+            
+        # Key definition (start of line)
+        if not line.startswith(' '):
+            keys = line
+            i += 1
+            # Next matching lines should be commands (indented)
+            cmds = []
+            while i < len(lines) and (lines[i].startswith(' ') or lines[i].startswith('\t')):
+                cmd_line = lines[i].strip()
+                if cmd_line and not cmd_line.startswith('#'):
+                     cmds.append(cmd_line)
+                i += 1
+            
+            command = "; ".join(cmds)
+            
+            if current_desc:
+                desc_text = " ".join(current_desc)
+                
+                # Expand with variant tracking
+                expanded_keys = expand_braces(keys) # List of (str, vars)
+                expanded_cmds = expand_braces(command)
+                
+                # Pairing logic
+                if len(expanded_keys) == len(expanded_cmds) and len(expanded_keys) > 1:
+                    for (k_str, k_vars), (c_str, c_vars) in zip(expanded_keys, expanded_cmds):
+                        # Use command variants if available and meaningful (not empty)
+                        # Fallback to key variants if command variants are missing (unlikely if keys expanded)
+                        
+                        # Use c_vars if they differ? 
+                        # If a variable is identical across all, it's not a differentiator? 
+                        # No, expand_braces captures content of ANY brace.
+                        
+                        # Simplification: Use command variants if present, else key variants.
+                        suffix_vars = c_vars if c_vars else k_vars
+                        
+                        # Join variants with ' ' or '-'? User example used " - next".
+                        suffix = " ".join(suffix_vars)
+                        
+                        final_desc = f"{desc_text} - {suffix}"
+                        
+                        bindings.append({
+                            'desc': final_desc,
+                            'key': k_str,
+                            'cmd': c_str
+                        })
+                else:
+                    # Single mapping or broadcast
+                    # Or mismatched lengths (which shouldn't happen with valid sxhkdrc)
+                    for (k_str, k_vars) in expanded_keys:
+                        # If we have multiple keys but one command (broadcast)
+                        # Use key variants to distinguish
+                        
+                        # Determine command
+                        if expanded_cmds:
+                            cmd_to_use, _ = expanded_cmds[0] # Just take first?
+                        else:
+                            cmd_to_use = command
+                            
+                        if len(expanded_keys) > 1:
+                            suffix = " ".join(k_vars)
+                            final_desc = f"{desc_text} - {suffix}"
+                        else:
+                            final_desc = desc_text
+                        
+                        bindings.append({
+                            'desc': final_desc,
+                            'key': k_str,
+                            'cmd': cmd_to_use
+                        })
+            current_desc = []
+            
+        else:
+            i += 1
+            
+    return bindings
+
+def main():
+    if len(sys.argv) > 1:
+        # Execution mode
+        # Arguments might be split by shell
+        cmd = " ".join(sys.argv[1:])
+        subprocess.run(cmd, shell=True)
+        return
+
+    bindings = parse_config(CONFIG_FILE)
+    
+    options = []
+    cmds = []
+    
+    for b in bindings:
+        # Pango markup for rofi
+        # Escape special XML characters in description and key
+        def escape_pango(s):
+            return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            
+        desc = escape_pango(b['desc'])
+        key = escape_pango(b['key'])
+        
+        display = f"{desc:<60} <span color='gray'>{key}</span>"
+        options.append(display)
+        cmds.append(b['cmd'])
+        
+    rofi_process = subprocess.Popen(
+        ['rofi', '-dmenu', '-i', '-markup-rows', '-p', 'Hotkeys', 
+         '-theme-str', f'window {{width: {WIDTH}px;}}', '-lines', str(LINES), 
+         '-format', 'i'],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    
+    input_str = "\n".join(options)
+    stdout, _ = rofi_process.communicate(input=input_str)
+    
+    if stdout.strip():
+        idx = int(stdout.strip())
+        selected_cmd = cmds[idx]
+        
+        # Execute the command
+        subprocess.Popen(selected_cmd, shell=True)
+
+if __name__ == "__main__":
+    main()
