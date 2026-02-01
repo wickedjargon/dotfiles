@@ -136,6 +136,7 @@ entry {
     spacing:    0;
     text-color: @foreground;
     placeholder-color: #555555;
+    placeholder: "";
     padding: 0 4px;
 }
 
