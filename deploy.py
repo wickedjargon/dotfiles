@@ -10,7 +10,52 @@ import sys
 import subprocess
 import shutil
 import re
+import datetime
+import traceback
 from pathlib import Path
+
+
+def log_error(message, exception=None, context=None):
+    """Log error to secure temporary file"""
+    log_file = '/tmp/dotfiles-deploy.log'
+    
+    try:
+        # Create or append to log file
+        with open(log_file, 'a') as f:
+            # Ensure secure permissions (only owner can read/write)
+            try:
+                os.chmod(log_file, 0o600)
+            except OSError:
+                pass  # Best effort
+                
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            f.write(f"\n{'-'*60}\n")
+            f.write(f"[{timestamp}] ERROR: {message}\n")
+            
+            if context:
+                f.write(f"Context: {context}\n")
+                
+            if exception:
+                f.write(f"Exception Type: {type(exception).__name__}\n")
+                f.write(f"Exception Message: {str(exception)}\n")
+                
+                if isinstance(exception, subprocess.CalledProcessError):
+                    f.write(f"Command: {exception.cmd}\n")
+                    f.write(f"Return Code: {exception.returncode}\n")
+                    if exception.stdout:
+                        f.write(f"STDOUT:\n{exception.stdout}\n")
+                    if exception.stderr:
+                        f.write(f"STDERR:\n{exception.stderr}\n")
+                
+                # Write traceback for unexpected python exceptions
+                f.write(f"\nTraceback:\n")
+                traceback.print_tb(exception.__traceback__, file=f)
+                
+            f.write(f"{'-'*60}\n")
+    except Exception as e:
+        # Failsafe: if logging fails, try to print to stderr (though curses might hide it)
+        # but don't crash the program
+        pass
 
 
 class DeploymentTUI:
@@ -110,6 +155,7 @@ def create_user(username):
         return True, None
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr.decode() if e.stderr else str(e)
+        log_error(f"Failed to create user '{username}'", e)
         return False, error_msg
 
 
@@ -120,7 +166,8 @@ def set_user_password(username, password):
         process = subprocess.Popen(['chpasswd'], stdin=subprocess.PIPE)
         process.communicate(f'{username}:{password}'.encode())
         return process.returncode == 0
-    except Exception:
+    except Exception as e:
+        log_error(f"Failed to set password for user '{username}'", e)
         return False
 
 
@@ -130,7 +177,8 @@ def add_user_to_sudo(username):
         subprocess.run(['usermod', '-aG', 'sudo', username],
                       check=True, capture_output=True)
         return True
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
+        log_error(f"Failed to add user '{username}' to sudo group", e)
         return False
 
 
@@ -241,8 +289,7 @@ def clone_and_build_repos(repos, username, tui, start_row):
                       check=True, capture_output=True)
     except subprocess.CalledProcessError as e:
         # Non-fatal, but log it
-        with open('/tmp/dotfiles-deploy.log', 'a') as f:
-            f.write(f"\nWarning: Failed to set ownership of {local_dir}: {e}\n")
+        log_error(f"Warning: Failed to set ownership of {local_dir}", e)
 
     failed_repos = []
     progress_row = start_row
@@ -308,28 +355,8 @@ def clone_and_build_repos(repos, username, tui, start_row):
             )
 
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
-            # Log error to file with secure permissions
-            try:
-                log_file = '/tmp/dotfiles-deploy.log'
-                # Create with restrictive permissions
-                with open(log_file, 'a') as f:
-                    os.chmod(log_file, 0o600)  # Owner read/write only
-                    f.write(f"\n{'='*60}\n")
-                    f.write(f"ERROR: Failed to build {repo_name}\n")
-                    if hasattr(e, 'cmd'):
-                        f.write(f"Command: {' '.join(e.cmd)}\n")
-                    if hasattr(e, 'returncode'):
-                        f.write(f"Return code: {e.returncode}\n")
-                    f.write(f"Working directory: {repo_path}\n")
-                    if hasattr(e, 'stdout') and e.stdout:
-                        f.write(f"\nSTDOUT:\n{e.stdout}\n")
-                    if hasattr(e, 'stderr') and e.stderr:
-                        f.write(f"\nSTDERR:\n{e.stderr}\n")
-                    f.write(f"Error type: {type(e).__name__}\n")
-                    f.write(f"Error message: {str(e)}\n")
-                    f.write(f"{'='*60}\n")
-            except IOError:
-                pass  # Can't write to log, continue anyway
+            # Log error
+            log_error(f"Failed to build {repo_name}", e, context=f"Working directory: {repo_path}")
             failed_repos.append(repo_name)
 
     # Summary
@@ -395,25 +422,8 @@ def clone_dotfiles_home(repos, username, tui, start_row):
                 pass  # Continue even if chown fails
 
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-            # Log error to file with secure permissions
-            try:
-                log_file = '/tmp/dotfiles-deploy.log'
-                with open(log_file, 'a') as f:
-                    os.chmod(log_file, 0o600)  # Owner read/write only
-                    f.write(f"\n{'='*60}\n")
-                    f.write(f"ERROR: Failed to clone {repo_name} to {dest_dir}\n")
-                    if hasattr(e, 'cmd'):
-                        f.write(f"Command: {' '.join(e.cmd)}\n")
-                    if hasattr(e, 'returncode'):
-                        f.write(f"Return code: {e.returncode}\n")
-                    if hasattr(e, 'stdout') and e.stdout:
-                        f.write(f"\nSTDOUT:\n{e.stdout}\n")
-                    if hasattr(e, 'stderr') and e.stderr:
-                        f.write(f"\nSTDERR:\n{e.stderr}\n")
-                    f.write(f"Error type: {type(e).__name__}\n")
-                    f.write(f"{'='*60}\n")
-            except IOError:
-                pass  # Can't write to log, continue anyway
+            # Log error
+            log_error(f"Failed to clone {repo_name} to {dest_dir}", e)
             failed_repos.append(dest_dir)
 
     # Set ownership of backup directory if created
@@ -585,8 +595,7 @@ def setup_third_party_repos(repos, tui, start_row):
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, IOError) as e:
             failed_repos.append(package_name)
             # Log error but continue with other repos
-            with open('/tmp/dotfiles-deploy.log', 'a') as f:
-                f.write(f"\nFailed to setup repository for {package_name}: {str(e)}\n")
+            log_error(f"Failed to setup repository for {package_name}", e)
 
     if failed_repos:
         tui.show_progress(start_row, "Setting up third-party repositories...", success=False)
@@ -610,8 +619,9 @@ def install_packages(packages, tui, start_row):
                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         tui.show_progress(start_row, "Updating package cache...", success=True)
         start_row += 1
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
         tui.show_progress(start_row, "Updating package cache...", success=False)
+        log_error("Failed to update package cache", e)
         return False, "Failed to update package cache", start_row + 1
 
     # Install packages one by one
@@ -634,7 +644,8 @@ def install_packages(packages, tui, start_row):
         try:
             subprocess.run(['apt-get', 'install', '-y', package],
                          check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as e:
+            log_error(f"Failed to install package: {package}", e)
             failed_packages.append(package)
 
     # Summary
@@ -726,6 +737,7 @@ def deploy_dotfiles(username, script_dir):
             except subprocess.CalledProcessError:
                 pass  # Continue even if chown fails
         except (OSError, IOError, subprocess.CalledProcessError) as e:
+            log_error(f"Failed to deploy dotfile: {src} -> {dst}", e)
             return False, str(e), None, []
 
     # Change ownership of backup directory if created
@@ -739,7 +751,8 @@ def deploy_dotfiles(username, script_dir):
     # Update font cache
     try:
         subprocess.run(['fc-cache', '-f'], check=True, capture_output=True)
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
+        log_error("Failed to update font cache", e)
         pass # Non-fatal
 
     return True, None, backup_dir, backed_up_items
@@ -867,6 +880,7 @@ def install_firefox_extensions(script_dir):
 
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
         error_msg = f"Failed to install Firefox extensions: {str(e)}"
+        log_error("Failed to install Firefox extensions", e)
         return False, error_msg
 
 
@@ -903,17 +917,8 @@ def install_tor_browser(username, script_dir, tui, row):
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         error_msg = e.stderr.decode() if hasattr(e, 'stderr') and e.stderr else str(e)
         stdout_msg = e.stdout.decode() if hasattr(e, 'stdout') and e.stdout else ''
-        # Log full error details to /tmp for debugging
-        with open('/tmp/deploy_tor_errors.log', 'a') as f:
-            f.write(f"\n{'='*60}\n")
-            f.write(f"Tor Browser Installation Error\n")
-            f.write(f"Script: {install_script}\n")
-            f.write(f"User: {username}\n")
-            f.write(f"Exception type: {type(e).__name__}\n")
-            f.write(f"Return code: {getattr(e, 'returncode', 'N/A')}\n")
-            f.write(f"\nSTDOUT:\n{stdout_msg}\n")
-            f.write(f"\nSTDERR:\n{error_msg}\n")
-            f.write(f"{'='*60}\n")
+        
+        log_error(f"Tor Browser Installation Error for user {username}", e, context=f"Script: {install_script}")
         tui.show_progress(row, "Installing Tor Browser...", success=False)
         return False, error_msg, row + 1
 
@@ -1236,6 +1241,16 @@ def main():
         curses.wrapper(main_tui)
     except KeyboardInterrupt:
         print("\nDeployment cancelled.")
+        sys.exit(1)
+    except Exception as e:
+        log_error("Unhandled exception in main application", e)
+        # Try to restore terminal state if curses was active
+        try:
+            curses.endwin()
+        except:
+            pass
+        print(f"CRITICAL ERROR: {e}")
+        print("See /tmp/dotfiles-deploy.log for details.")
         sys.exit(1)
 
 
