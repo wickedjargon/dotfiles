@@ -2,4 +2,5 @@
     "editor.minimap.enabled": false,
     "files.autoSave": "afterDelay",
     "editor.occurrencesHighlight": "off",
+    "workbench.colorTheme": "GitHub Dark Colorblind (Beta)",
 }
