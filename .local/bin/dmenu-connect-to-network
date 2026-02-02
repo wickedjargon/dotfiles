@@ -1,9 +1,9 @@
-. ~/.config/dmenu/config
 #!/usr/bin/env python3
 
 import subprocess
 import sys
 import re
+import os
 
 def notify(title, message):
     """Send system notification and print to console."""
@@ -19,6 +19,29 @@ def run_cmd(cmd):
         text=True
     )
     return result.stdout.strip(), result.stderr.strip(), result.returncode
+
+def load_dmenu_config():
+    """Load dmenu arguments from config file manually."""
+    config_path = os.path.expanduser("~/.config/dmenu/config")
+    args = []
+    font = None
+    
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("DMENU_BASIC_ARGS="):
+                        # Extract args, remove quotes
+                        val = line.split("=", 1)[1].strip().strip('"')
+                        args.extend(val.split())
+                    elif line.startswith("DMENU_FONT="):
+                        # Extract font, remove quotes
+                        font = line.split("=", 1)[1].strip().strip('"')
+        except Exception as e:
+            print(f"Error loading dmenu config: {e}", file=sys.stderr)
+            
+    return args, font
 
 def get_wifi_list():
     """Get list of available WiFi networks."""
@@ -96,9 +119,22 @@ def has_saved_connection(ssid):
     return False
 
 def show_dmenu(prompt, items):
-    """Show dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" with given items and return selected item."""
+    """Show dmenu with given items and return selected item."""
+    args, font = load_dmenu_config()
+    
+    cmd = ["dmenu", "-i", "-l", "15", "-p", prompt]
+    
+    # Add config args if any
+    if args:
+        cmd.extend(args)
+        
+    # Add font if found (overriding config args if duplicated? dmenu usually takes last)
+    # The shell script used -fn explicitly, so we do too.
+    if font:
+        cmd.extend(["-fn", font])
+    
     proc = subprocess.Popen(
-        ["dmenu", "-i", "-l", "15", "-p", prompt],
+        cmd,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         text=True
@@ -154,7 +190,7 @@ def main():
         # Store by SSID for easy lookup
         menu_map[net['ssid']] = net
 
-    print(f"[DEBUG] Showing dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" with {len(menu_items)} items")
+    print(f'[DEBUG] Showing dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" with {len(menu_items)} items')
 
     # Show network selection menu
     choice = show_dmenu("WiFi:", menu_items)

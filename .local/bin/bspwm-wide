@@ -31,7 +31,7 @@ def main():
     try:
         current_padding_str = run_cmd("bspc config -d focused left_padding")
         current_padding = int(current_padding_str) if current_padding_str.isdigit() else 0
-    except:
+    except Exception:
         current_padding = 0
 
     # Toggle logic: if near 0, set to target; otherwise set to 0

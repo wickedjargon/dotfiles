@@ -1,6 +1,6 @@
 #!/bin/sh
 . ~/.config/dmenu/config
-``
+
 # dmenu-display - Manage external displays via dmenu
 # Supports VGA, HDMI, DisplayPort, etc. automatically via xrandr
 

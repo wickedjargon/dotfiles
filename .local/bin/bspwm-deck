@@ -2,7 +2,6 @@
 import subprocess
 import json
 import sys
-import os
 
 """Deck layout logic for bspwm."""
 

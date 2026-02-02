@@ -126,7 +126,6 @@ def main():
     notify("Bluetooth Connected", name, "normal")
 
     # Refresh status bar
-    # Refresh status bar
     refresh_polybar()
 
 
