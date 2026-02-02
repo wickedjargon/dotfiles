@@ -103,6 +103,7 @@
   (global-set-key (kbd "M-u") #'universal-argument)                     ;; C-u is bound to evil-scroll-up
   (global-set-key (kbd "C-x k") #'bury-buffer)                          ;; kill buffers doesn't save memory
   (global-set-key (kbd "C-c c") #'fff-clear-shell)
+  (global-set-key (kbd "C-c C-p") #'consult-yank-from-kill-ring)
   (global-set-key (kbd "C-g")  #'fff-keyboard-quit-dwim)
   (global-set-key [remap list-buffers] #'ibuffer)                       ;; ibuffer is superior
   (global-set-key [remap beginning-of-line] #'beginning-of-visual-line) ;; use visual line for beginning and end of line
@@ -468,7 +469,7 @@
   (evil-leader/set-key "o" 'other-window)
   (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
   (evil-leader/set-key "w" 'save-buffer)
-  (evil-leader/set-key "p" 'consult-yank-from-kill-ring)
+  (evil-leader/set-key "p" 'project-find-file)
   (evil-leader/set-key "e" 'eval-last-sexp)
 
   ;; popper
