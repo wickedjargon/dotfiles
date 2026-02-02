@@ -1,0 +1,15 @@
+#!/bin/sh
+. ~/.config/dmenu/config
+
+case "$(printf " lock\n kill X\n reboot\n poweroff\n hibernate\n display off\n logout\n restart bspwm\n deploy dotfiles" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Action: ')" in
+    ' lock') slock ;;
+    ' kill X') pkill X ;;
+    ' reboot') systemctl reboot -i ;;
+    ' poweroff') systemctl poweroff -i ;;
+    ' hibernate') slock & sleep 0.2 && systemctl hibernate ;;
+    ' display off') xset dpms force off ;;
+    ' logout') sys-logout ;;
+    ' restart bspwm') restart-bspwm ;;
+    ' deploy dotfiles') deploy-dotfiles ;;
+    *) exit 1 ;;
+esac

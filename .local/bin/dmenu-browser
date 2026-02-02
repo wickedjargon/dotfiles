@@ -1,0 +1,8 @@
+#!/bin/sh
+. ~/.config/dmenu/config
+
+case "$(printf " Firefox\n Tor Browser" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Open browser: ')" in
+    ' Firefox') firefox ;;
+    ' Tor Browser') tor-browser ;;
+    *) exit 1 ;;
+esac

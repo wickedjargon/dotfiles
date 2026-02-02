@@ -90,7 +90,7 @@ super + Return
 
 # Rofi run
 super + d
-    dmenu_run
+    dmenu-run
 
 # App finder
 super + space
@@ -102,11 +102,11 @@ super + m
 
 # Browser
 super + w
-    rofi-browser
+    dmenu-browser
 
 # Commands menu
 super + b
-    rofi-commands
+    dmenu-commands
 
 # Show keybindings
 super + slash
@@ -114,7 +114,7 @@ super + slash
 
 # System menu
 super + BackSpace
-    rofi-system
+    dmenu-system
 
 # Clipmenu
 super + c
@@ -122,19 +122,19 @@ super + c
 
 # WiFi menu
 super + i
-    rofi-wifi-menu
+    dmenu-wifi-menu
 
 # Night/day mode
 super + n
-    rofi-night-and-day
+    dmenu-night-and-day
 
 # Virtual machines
 super + v
-    rofi-virtual-machines
+    dmenu-virtual-machines
 
 # Scripts launcher
 super + s
-    rofi-scripts
+    dmenu-scripts
 
 # ========== VOLUME CONTROLS ==========
 

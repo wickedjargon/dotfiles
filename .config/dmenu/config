@@ -1,0 +1,3 @@
+
+DMENU_BASIC_ARGS="-nb #000000 -nf #ffffff -sb #222222 -sf #ffffff -l 12"
+DMENU_FONT="monospace-10"

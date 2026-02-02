@@ -1,0 +1,104 @@
+#!/bin/sh
+. ~/.config/dmenu/config
+``
+# dmenu-display - Manage external displays via dmenu
+# Supports VGA, HDMI, DisplayPort, etc. automatically via xrandr
+
+# Get the internal display (usually LVDS, eDP, or similar)
+get_internal() {
+    xrandr --query | grep -E "^(LVDS|eDP|eDP-?[0-9]*)-?[0-9]* connected" | cut -d' ' -f1 | head -n1
+}
+
+# Get connected external displays (everything except internal)
+get_externals() {
+    internal=$(get_internal)
+    xrandr --query | grep " connected" | cut -d' ' -f1 | grep -v "^$internal$"
+}
+
+# Get all connected displays
+get_all_connected() {
+    xrandr --query | grep " connected" | cut -d' ' -f1
+}
+
+# Apply display configuration
+apply_config() {
+    mode="$1"
+    external="$2"
+    internal=$(get_internal)
+
+    case "$mode" in
+        mirror)
+            # Get the internal display's preferred resolution
+            internal_res=$(xrandr --query | grep -A1 "^$internal " | tail -n1 | awk '{print $1}')
+            xrandr --output "$internal" --auto --output "$external" --auto --same-as "$internal"
+            notify-send "Display" "Mirroring to $external"
+            ;;
+        extend-right)
+            xrandr --output "$internal" --auto --output "$external" --auto --right-of "$internal"
+            notify-send "Display" "Extended to $external (right)"
+            ;;
+        extend-left)
+            xrandr --output "$internal" --auto --output "$external" --auto --left-of "$internal"
+            notify-send "Display" "Extended to $external (left)"
+            ;;
+        extend-above)
+            xrandr --output "$internal" --auto --output "$external" --auto --above "$internal"
+            notify-send "Display" "Extended to $external (above)"
+            ;;
+        external-only)
+            xrandr --output "$internal" --off --output "$external" --auto
+            notify-send "Display" "Using $external only"
+            ;;
+        laptop-only)
+            # Turn off all externals
+            for ext in $(get_externals); do
+                xrandr --output "$ext" --off
+            done
+            xrandr --output "$internal" --auto
+            notify-send "Display" "Using laptop display only"
+            ;;
+    esac
+}
+
+# Main logic
+main() {
+    internal=$(get_internal)
+    externals=$(get_externals)
+
+    # Check if any external displays are connected
+    if [ -z "$externals" ]; then
+        notify-send "Display" "No external displays detected"
+        exit 0
+    fi
+
+    # Count external displays
+    ext_count=$(echo "$externals" | wc -l)
+
+    # If multiple externals, let user pick one first
+    if [ "$ext_count" -gt 1 ]; then
+        selected_external=$(printf "%s" "$externals" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p "Select display:")
+        [ -z "$selected_external" ] && exit 0
+    else
+        selected_external="$externals"
+    fi
+
+    # Show action menu
+    action=$(printf " Mirror to %s\n Extend right (%s)\n Extend left (%s)\n Extend above (%s)\n External only (%s)\n Laptop only" \
+        "$selected_external" "$selected_external" "$selected_external" "$selected_external" "$selected_external" \
+        | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p "Display:")
+
+    [ -z "$action" ] && exit 0
+
+    # Parse action and apply
+    case "$action" in
+        *"Mirror"*)       apply_config mirror "$selected_external" ;;
+        *"right"*)        apply_config extend-right "$selected_external" ;;
+        *"left"*)         apply_config extend-left "$selected_external" ;;
+        *"above"*)        apply_config extend-above "$selected_external" ;;
+        *"External only"*) apply_config external-only "$selected_external" ;;
+        *"Laptop only"*)  apply_config laptop-only "$selected_external" ;;
+        *)                exit 1 ;;
+    esac
+}
+
+main
