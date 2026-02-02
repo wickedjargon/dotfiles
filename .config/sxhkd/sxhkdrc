@@ -171,6 +171,26 @@ XF86MonBrightnessDown
 
 # ========== MEDIA CONTROLS ==========
 
+# MPD volume up
+super + Prior
+    mpc volume +5
+
+# MPD volume down
+super + Next
+    mpc volume -5
+
+# MPD previous track
+super + F10
+    mpc prev
+
+# MPD play/pause toggle
+super + F11
+    mpc toggle
+
+# MPD next track
+super + F12
+    mpc next
+
 XF86Audio{Play,Pause}
     mpc toggle
 
