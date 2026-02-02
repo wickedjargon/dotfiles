@@ -1,7 +1,0 @@
-#!/bin/sh
-
-case "$(printf " night\n day" | rofi -dmenu -i -p 'Run')" in
-    ' night') night ;;
-    ' day') day ;;
-    *) exit 1 ;;
-esac
