@@ -90,7 +90,7 @@ super + Return
 
 # Rofi run
 super + d
-    rofi -show run
+    dmenu_run
 
 # App finder
 super + space
