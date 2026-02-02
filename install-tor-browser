@@ -12,13 +12,20 @@ INSTALL_DIR="$HOME/.local/src/tor-browser"
 SYMLINK_PATH="$HOME/.local/bin/tor-browser"
 
 # Get latest stable version (exclude alpha/beta versions with 'a' or 'b' suffix)
+# Get latest stable version (exclude alpha/beta versions with 'a' or 'b' suffix)
 get_latest_version() {
-    curl -sL "$TOR_DIST_URL/" \
-        | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?/' \
-        | tr -d '/' \
-        | grep -vE '[ab]' \
-        | sort -V \
-        | tail -1
+    local retries=3
+    for ((i=1; i<=retries; i++)); do
+        if version=$(curl -sL "$TOR_DIST_URL/" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?/' | tr -d '/' | grep -vE '[ab]' | sort -V | tail -1); then
+            if [[ -n "$version" ]]; then
+                echo "$version"
+                return 0
+            fi
+        fi
+        echo "Failed to fetch version (attempt $i/$retries)" >&2
+        sleep 2
+    done
+    return 1
 }
 
 echo "Fetching latest Tor Browser version..."
@@ -41,7 +48,21 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Downloading $TARBALL..."
-curl -fL "$DOWNLOAD_URL" -o "$TEMP_FILE"
+download_success=false
+for ((i=1; i<=3; i++)); do
+    echo "Attempt $i/3..."
+    if curl -fL "$DOWNLOAD_URL" -o "$TEMP_FILE"; then
+        download_success=true
+        break
+    fi
+    echo "Download failed, retrying in 2s..."
+    sleep 2
+done
+
+if [[ "$download_success" != "true" ]]; then
+    echo "Error: Failed to download Tor Browser" >&2
+    exit 1
+fi
 
 echo "Extracting to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"

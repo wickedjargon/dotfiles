@@ -16,6 +16,23 @@ from pathlib import Path
 
 
 
+import time
+
+def run_command_with_retry(cmd, max_retries=3, delay=2, **kwargs):
+    """Run subprocess.run with retries"""
+    for attempt in range(max_retries):
+        try:
+            return subprocess.run(cmd, **kwargs)
+        except subprocess.CalledProcessError as e:
+            if attempt == max_retries - 1:
+                raise  # Re-raise on last attempt
+            
+            # Log retry attempt
+            error_msg = e.stderr.decode() if e.stderr else str(e)
+            log_error(f"Command failed (attempt {attempt + 1}/{max_retries}): {cmd}", e)
+            time.sleep(delay)
+    return None  # Should not be reached due to raise
+
 def get_log_file_path():
     """Determine log file path, creating new numbered file if necessary"""
     base_path = Path('/tmp/dotfiles-deploy.log')
@@ -591,10 +608,11 @@ def setup_third_party_repos(repos, tui, start_row):
             key_path = keyrings_dir / key_filename
 
             # Download key
-            result = subprocess.run(
+            result = run_command_with_retry(
                 ['curl', '-fsSL', key_url],
-                capture_output=True,
+                max_retries=3,
                 check=True,
+                capture_output=True,
                 timeout=30
             )
 
