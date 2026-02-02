@@ -1,0 +1,5 @@
+#!/bin/sh
+. ~/.config/dmenu/config
+
+# Run dmenu with config args plus any args passed by clipmenu
+dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" "$@"
