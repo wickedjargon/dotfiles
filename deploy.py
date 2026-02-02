@@ -107,10 +107,8 @@ class DeploymentTUI:
     def draw_header(self, title):
         """Draw header with title"""
         self.stdscr.clear()
-        self.stdscr.addstr(0, 0, "=" * self.width)
         self.stdscr.addstr(1, (self.width - len(title)) // 2, title,
                           curses.color_pair(1) | curses.A_BOLD)
-        self.stdscr.addstr(2, 0, "=" * self.width)
 
     def show_message(self, y, x, message, color_pair=0, bold=False):
         """Display a message at given coordinates"""
