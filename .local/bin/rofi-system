@@ -8,7 +8,7 @@ case "$(printf " lock\n kill X\n reboot\n poweroff\n hibernate\n display off\n l
     ' hibernate') slock & sleep 0.2 && systemctl hibernate ;;
     ' display off') xset dpms force off ;;
     ' logout') sys-logout ;;
-    ' restart bspwm') restart-bspwm ;;
+    ' reload desktop') reload-desktop ;;
     ' deploy dotfiles') deploy-dotfiles ;;
     *) exit 1 ;;
 esac
