@@ -22,53 +22,9 @@ class TestDeployCore(unittest.TestCase):
         self.username = "testuser"
         self.script_dir = Path("/script/dir")
 
-    @patch('deploy.read_copy_these_file')
-    @patch('shutil.copy2')
-    @patch('shutil.copytree')
-    @patch('shutil.move')
-    @patch('subprocess.run')
-    @patch('pathlib.Path.exists')
-    @patch('pathlib.Path.mkdir')
-    def test_deploy_dotfiles_success(self, mock_mkdir, mock_exists, mock_run, mock_move, mock_copytree, mock_copy2, mock_read_copy):
-        # Setup
-        mock_read_copy.return_value = ['.bashrc', '.config/i3']
-        
-        # Mock file existence:
-        # 1. Home exists
-        # 2. Source .bashrc exists
-        # 3. Dest .bashrc exists (to test backup)
-        # 4. Source .config/i3 exists
-        # 5. Dest .config/i3 does NOT exist
-        # 6. backup_base does not exist (created first time)
-        
-        def exists_side_effect(self_path):
-            path_str = str(self_path)
-            if path_str == f"/home/{self.username}": return True
-            if path_str == "/script/dir/.bashrc": return True
-            if path_str == f"/home/{self.username}/.bashrc": return True
-            if path_str == "/script/dir/.config/i3": return True
-            if path_str == f"/home/{self.username}/.config/i3": return False
-            if ".backup" in path_str: return False
-            return False
-            
-        # We need to monkeypath Path.exists, but mocking the method on the class is tricky with side_effect relying on 'self' which is the path instance
-        # Instead, we mock Path objects created inside the function?
-        # Actually, standard patch on Path.exists works but side_effect receives the path instance as first arg if we use autospec=True or wrap properly?
-        # Let's use a simpler approach: Mock filesystem completely? No, too complex.
-        # Let's trust the mock_exists we patched. The first argument to side_effect will be the instance.
-        mock_exists.side_effect = lambda: exists_side_effect(mock_exists.call_args[0]) # Wait, no.
-        
-        # Better: mock file operations logic abstractly.
-        # Let's simplify. We can set checks inside the function.
-        # deploy.py uses `dest.exists()`.
-        
-        # Let's mock the relevant Path objects returned by / operator mock?
-        # That's hard because Path is instantiated extensively.
-        
-        # Alternative: We can mock os.path.exists if Path uses it, but Path.exists calls stat().
-        # Let's try to infer intent based on call count or args.
-        # The logic is complex. Let's assume happy path where everything "just works" and we check the calls.
-        pass
+    # NOTE: test_deploy_dotfiles_success was removed as it had complex mocking
+    # but no actual assertions. The simpler test_deploy_dotfiles_simple provides
+    # adequate coverage for the core deployment logic.
 
     @patch('deploy.read_copy_these_file')
     @patch('shutil.copy2')
