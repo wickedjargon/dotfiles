@@ -18,8 +18,8 @@ def import_script(path):
 
 # Paths to scripts
 BIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../.local/bin'))
-BT_CONNECT_PATH = os.path.join(BIN_DIR, 'bt-connect')
-BT_DISCONNECT_PATH = os.path.join(BIN_DIR, 'bt-disconnect')
+BT_CONNECT_PATH = os.path.join(BIN_DIR, 'bluetooth-connect')
+BT_DISCONNECT_PATH = os.path.join(BIN_DIR, 'bluetooth-disconnect')
 
 class TestBtConnect(unittest.TestCase):
     @classmethod
