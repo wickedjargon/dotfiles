@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Disconnect and then reconnect "Nothing Headphone (1)" (3C:B0:ED:A7:6A:88)
+MAC="3C:B0:ED:A7:6A:88"
+NAME="Nothing Headphone (1)"
+TIMEOUT=3
+
+bt-disconnect "$MAC" "$TIMEOUT" "$NAME"
+sleep 2
+bt-connect "$MAC" "$TIMEOUT" "$NAME"
