@@ -792,6 +792,18 @@ def deploy_dotfiles(username, script_dir):
         log_error("Failed to update font cache", e)
         pass # Non-fatal
 
+    # Ensure fontconfig user configuration is enabled (50-user.conf)
+    # This symlink is required for ~/.config/fontconfig/fonts.conf to be recognized
+    user_conf_link = Path('/etc/fonts/conf.d/50-user.conf')
+    user_conf_target = Path('/usr/share/fontconfig/conf.avail/50-user.conf')
+    
+    if not user_conf_link.exists() and user_conf_target.exists():
+        try:
+            user_conf_link.symlink_to(user_conf_target)
+        except (OSError, IOError) as e:
+            log_error("Failed to enable fontconfig user configuration (50-user.conf)", e)
+            # Non-fatal - system may still work without it
+
     return True, None, backup_dir, backed_up_items
 
 
