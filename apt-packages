@@ -53,6 +53,7 @@ alsa-utils               # ALSA utilities (alsamixer, aplay, etc)
 alsa-topology-conf       # ALSA topology configuration files
 alsa-ucm-conf            # ALSA Use Case Manager configuration
 mpc                      # Command-line MPD client
+mpd                      # Music Player Daemon
 ncmpcpp                  # Ncurses-based MPD client
 
 # Bluetooth
