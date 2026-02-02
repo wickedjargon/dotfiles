@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""
+open-in-d
+
+Master menu to select between dmenu media scripts for ~/d/ content.
+Requires: dmenu, python3, and the individual dmenu-* scripts
+"""
+
+import os
+import subprocess
+
+# Map labels to script names
+MENU_ITEMS = {
+    "Audio": "dmenu-play-audio",
+    "Books": "dmenu-read-book",
+    "Images": "dmenu-view-image",
+    "Notes": "dmenu-edit-note",
+    "Projects": "dmenu-open-project",
+    "Videos": "dmenu-watch-video"
+}
+
+
+def load_dmenu_config():
+    """Load dmenu arguments from config file"""
+    config_path = os.path.expanduser("~/.config/dmenu/config")
+    args = []
+    font = ""
+    
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            for line in f:
+                if line.startswith("DMENU_BASIC_ARGS="):
+                    val = line.split("=", 1)[1].strip().strip('"')
+                    args.extend(val.split())
+                elif line.startswith("DMENU_FONT="):
+                    font = line.split("=", 1)[1].strip().strip('"')
+    
+    return args, font
+
+
+def dmenu_select(options, args, font, prompt="Select:"):
+    """Present options in dmenu and return selected."""
+    dmenu_input = "\n".join(options)
+    
+    cmd = ["dmenu", "-p", prompt, "-i"] + args
+    if font:
+        cmd.extend(["-fn", font])
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            input=dmenu_input,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return None
+
+
+def main():
+    options = sorted(MENU_ITEMS.keys())
+    
+    args, font = load_dmenu_config()
+    selected_label = dmenu_select(options, args, font, prompt="Open in ~/d/:")
+    
+    if selected_label:
+        script_name = MENU_ITEMS.get(selected_label)
+        if script_name:
+            # We assume these scripts are in the PATH (e.g. ~/.local/bin)
+            # Use Popen to launch and detach
+            try:
+                subprocess.Popen([script_name])
+            except FileNotFoundError:
+                subprocess.run(["notify-send", "Error", f"Script not found: {script_name}"])
+
+if __name__ == "__main__":
+    main()
