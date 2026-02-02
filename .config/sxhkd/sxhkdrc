@@ -106,7 +106,7 @@ super + w
 
 # Commands menu
 super + b
-    dmenu-commands
+    dmenu-bluetooth
 
 # Show keybindings
 super + slash
