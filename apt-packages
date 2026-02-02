@@ -1,6 +1,5 @@
 # General utilities
 emacs                    # Extensible text editor
-neovim                   # Modern Vim-based text editor
 firefox-esr              # Extended support release web browser
 git                      # Version control system
 network-manager          # Network connection manager
@@ -24,12 +23,10 @@ sudo                     # Super User Do
 tree                     # Directory tree viewer
 bash-completion          # Enhanced bash tab completion
 fd-find                  # Fast find alternative
-bat                      # Cat with syntax highlighting
 jq                       # JSON processor
 ripgrep                  # Fast grep alternative
 brightnessctl            # Control backlight brightness
 libnotify-bin            # Desktop notifications (notify-send)
-xfce4-appfinder          # Application finder for Xfce4
 xfce4-screenshooter      # Screenshot utility
 xfce4-settings           # XFCE settings manager (appearance, display, etc)
 nm-connection-editor     # NetworkManager connection editor
@@ -68,7 +65,6 @@ xclip                    # Command-line clipboard utility
 rofi                     # Window switcher, run dialog
 suckless-tools           # Simple commands for minimalistic window managers
 xcape                    # Remap modifier keys to other keys
-xwallpaper               # Wallpaper setting utility
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
 arc-theme                # Arc Dark GTK theme
 qt5-gtk-platformtheme    # Qt5 GTK theme integration
@@ -79,6 +75,7 @@ qt6-style-kvantum        # Kvantum theme engine for Qt6
 
 # Fonts
 fonts-noto-color-emoji   # Color emoji font from Google
+fonts-liberation         # Liberation fonts (contains Liberation Mono)
 
 # Development Tools
 gdb                      # GNU debugger
@@ -106,4 +103,3 @@ bspwm                    # Binary space partitioning window manager
 sxhkd                    # Simple X hotkey daemon
 polybar                  # Status bar
 alacritty                # GPU-accelerated terminal emulator
-fonts-liberation         # Liberation fonts (contains Liberation Mono)
