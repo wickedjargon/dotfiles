@@ -171,11 +171,8 @@ XF86MonBrightnessDown
 
 # ========== MEDIA CONTROLS ==========
 
-XF86AudioPlay
-    mpc play
-
-XF86AudioPause
-    mpc pause
+XF86Audio{Play,Pause}
+    mpc toggle
 
 XF86AudioStop
     mpc stop
