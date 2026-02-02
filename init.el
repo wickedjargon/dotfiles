@@ -469,8 +469,12 @@
   (evil-leader/set-key "o" 'other-window)
   (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
   (evil-leader/set-key "w" 'save-buffer)
-  (evil-leader/set-key "p" 'project-find-file)
-  (evil-leader/set-key "e" 'eval-last-sexp)
+
+  ;; project
+  (evil-leader/set-key "p p" 'project-find-file)
+
+  ;; eval
+  (evil-leader/set-key "e e" 'eval-last-sexp)
 
   ;; popper
   (evil-leader/set-key "TAB TAB" 'popper-toggle)
