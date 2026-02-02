@@ -394,7 +394,6 @@ def clone_and_build_repos(repos, username, tui, start_row):
             failed_repos.append(repo_name)
 
     # Summary
-    start_row += 1
     if failed_repos:
         return False, failed_repos, start_row
 
@@ -469,7 +468,6 @@ def clone_dotfiles_home(repos, username, tui, start_row):
             pass  # Continue even if chown fails
 
     # Summary
-    start_row += 1
     if failed_repos:
         return False, failed_repos, backup_dir, backed_up_items, start_row
 
@@ -684,7 +682,6 @@ def install_packages(packages, tui, start_row):
             failed_packages.append(package)
 
     # Summary
-    start_row += 1
     if failed_packages:
         return False, failed_packages, start_row
 
