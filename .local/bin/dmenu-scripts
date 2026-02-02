@@ -2,7 +2,7 @@
 
 import os
 import subprocess
-import glob
+
 
 def load_dmenu_config():
     """Load dmenu arguments from config file"""

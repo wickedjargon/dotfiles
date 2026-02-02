@@ -92,7 +92,7 @@ def main():
         sys.exit(1)
 
     mac = sys.argv[1]
-    signal = sys.argv[2]
+    # signal = sys.argv[2]  # Unused
     name = sys.argv[3]
 
     print(f"Connecting to {name}...")

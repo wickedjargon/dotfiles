@@ -99,7 +99,7 @@ def has_saved_connection(ssid):
     # Get all connection profiles that match the SSID
     # The -t flag makes output terse (machine-readable)
     # We check the connection.id field to match the SSID
-    stdout, stderr, code = run_cmd(f"nmcli -t -f NAME connection show")
+    stdout, stderr, code = run_cmd("nmcli -t -f NAME connection show")
 
     if code != 0:
         # If we can't get connections, assume no saved connection
@@ -208,7 +208,7 @@ def main():
     print(f"[DEBUG] Extracted SSID: '{ssid}'")
 
     if ssid not in menu_map:
-        print(f"[DEBUG] SSID not in menu_map, exiting")
+        print("[DEBUG] SSID not in menu_map, exiting")
         notify("WiFi", "Selection error. Please try again.")
         sys.exit(1)
 
@@ -240,7 +240,7 @@ def main():
             else:
                 # If saved connection failed, fall through to prompt for password
                 print(f"[DEBUG] Saved connection failed: {output}")
-                notify("WiFi", f"Saved connection failed, please enter password")
+                notify("WiFi", "Saved connection failed, please enter password")
 
         # Prompt for password (either no saved connection or saved connection failed)
         password = show_dmenu(f"Password for {ssid}:", [])

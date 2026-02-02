@@ -2,7 +2,7 @@
 import subprocess
 import json
 import sys
-import os
+
 
 """Smart directional preselection for bspwm."""
 
