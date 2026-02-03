@@ -1595,3 +1595,20 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
   (interactive)
   (setq evil-regexp-search (not evil-regexp-search))
   (message "evil-regexp-search is now %s" (if evil-regexp-search "enabled" "disabled")))
+
+(defun fff-dired-open-other-window-no-focus ()
+  "Open file in the 'next' window specifically, without switching focus.
+   If only one window exists, split it first."
+  (interactive)
+  (let ((filename (dired-get-file-for-visit)))
+    ;; 1. If we are the only window, we MUST split to have a place to put the file.
+    (when (one-window-p)
+      ;; Force a split (you can change this to split-window-vertically if you prefer)
+      (split-window-horizontally))
+    
+    ;; 2. Load the file into memory (buffer) without displaying it yet
+    (let ((new-buffer (find-file-noselect filename)))
+      
+      ;; 3. Force the 'next' window to display this buffer.
+      ;; This bypasses Emacs's decision-making on whether to split again.
+      (set-window-buffer (next-window) new-buffer))))
