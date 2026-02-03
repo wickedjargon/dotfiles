@@ -452,7 +452,12 @@
   (with-eval-after-load 'pdf-view
     (evil-define-key 'normal pdf-view-mode-map
       "d" 'pdf-view-scroll-up-or-next-page
-      "u" 'pdf-view-scroll-down-or-previous-page)))
+      "u" 'pdf-view-scroll-down-or-previous-page))
+
+  ;; Override Dired Shift-Enter
+  (with-eval-after-load 'dired
+    (evil-define-key 'normal dired-mode-map
+      (kbd "S-<return>") 'fff-dired-open-other-window-no-focus)))
 
 (use-package evil-leader :defer nil :straight t
   :commands (evil-leader-mode)
