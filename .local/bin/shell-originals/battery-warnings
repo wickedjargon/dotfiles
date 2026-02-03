@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# Configuration
+BATTERY_PATH="/sys/class/power_supply/BAT0"
+SOUND_FILE="/usr/share/sounds/freedesktop/stereo/suspend-error.oga"
+
+# Exit early if no battery (desktop system)
+if [ ! -d "$BATTERY_PATH" ]; then
+    exit 0
+fi
+
+# Flags
+SENT_20=false
+SENT_10=false
+
+if ! command -v acpi_listen >/dev/null 2>&1; then
+    notify-send "Battery Monitor" "Error: acpi_listen not found. Install 'acpid'."
+    exit 1
+fi
+
+stdbuf -oL acpi_listen | while IFS= read -r -t 60 event || true; do
+
+    if [ -d "$BATTERY_PATH" ]; then
+        STATUS=$(cat "$BATTERY_PATH/status")
+        CAPACITY=$(cat "$BATTERY_PATH/capacity")
+
+        if [ "$STATUS" = "Discharging" ]; then
+
+            # --- 10% Critical ---
+            if [ "$CAPACITY" -le 10 ] && [ "$SENT_10" = "false" ]; then
+                # Use the synchronous hint to allow this notification to be overwritten later
+                notify-send -u critical -h string:x-canonical-private-synchronous:bat_alert "Battery Critical" "Level is at ${CAPACITY}%."
+                paplay "$SOUND_FILE" &
+                SENT_10=true
+                SENT_20=true
+
+            # --- 20% Low ---
+            elif [ "$CAPACITY" -le 20 ] && [ "$CAPACITY" -gt 10 ] && [ "$SENT_20" = "false" ]; then
+                notify-send -u normal -h string:x-canonical-private-synchronous:bat_alert "Battery Low" "Level is at ${CAPACITY}%."
+                paplay "$SOUND_FILE" &
+                SENT_20=true
+            fi
+
+        else
+            # STATUS is Charging/Full
+
+            # If we were previously alerting, replace the alert with a self-destructing message
+            if [ "$SENT_20" = "true" ] || [ "$SENT_10" = "true" ]; then
+                 # -t 2000 means expire in 2 seconds.
+                 # This overwrites the Critical alert with this temporary one.
+                 notify-send -u low -h string:x-canonical-private-synchronous:bat_alert -t 2000 "Charging" "Battery recovering..."
+            fi
+
+            # Reset flags
+            SENT_10=false
+            SENT_20=false
+        fi
+    fi
+done

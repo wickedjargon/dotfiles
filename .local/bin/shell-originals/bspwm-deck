@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Get the focused node
+focused=$(bspc query -N -n focused)
+# Get the "biggest" window, usually master in tiled layout (west or north)
+master=$(bspc query -N -n @/1)
+
+# If we are not in tiled mode, do nothing or switch to it
+layout=$(bspc query -T -d | jq -r .layout)
+if [ "$layout" != "tiled" ]; then
+    bspc desktop -l tiled
+fi
+
+# Check if there are hidden windows in this workspace
+hidden_count=$(bspc query -N -d -n .hidden | wc -l)
+
+if [ "$hidden_count" -gt 0 ]; then
+    # Unhide all windows
+    for node in $(bspc query -N -d -n .hidden); do
+        bspc node "$node" -g hidden=off
+    done
+else
+    # Hide everything except master and focused
+    # If focused is master, we need to pick one meaningful stack window to show?
+    # Deck layout usually shows Master + Top of Stack.
+    # Let's try to keep Focused visible.
+    
+    for node in $(bspc query -N -d -n .window.!hidden); do
+        if [ "$node" != "$focused" ] && [ "$node" != "$master" ]; then
+            bspc node "$node" -g hidden=on
+        fi
+    done
+fi

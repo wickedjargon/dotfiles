@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Cancel the preselection first
+bspc node -p cancel
+
+# Check for saved state
+state_file="/tmp/bspwm_smart_arrow_state"
+
+if [ -f "$state_file" ]; then
+    # Load state variables (WAS_FULLSCREEN, PREV_LAYOUT)
+    . "$state_file"
+
+    # Restore Layout if it was different
+    current_layout=$(bspc query -T -d | grep -o '"layout":"[^"]*"' | head -n1 | cut -d'"' -f4)
+    if [ "$PREV_LAYOUT" != "$current_layout" ] && [ -n "$PREV_LAYOUT" ]; then
+        bspc desktop -l "$PREV_LAYOUT"
+    fi
+
+    # Restore Fullscreen if it was fullscreen
+    # We check if the focused node is not currently fullscreen before toggling
+    is_fullscreen=$(bspc query -N -n focused.fullscreen >/dev/null && echo "true" || echo "false")
+    
+    if [ "$WAS_FULLSCREEN" = "true" ] && [ "$is_fullscreen" = "false" ]; then
+        bspc node focused -t ~fullscreen
+    fi
+
+    # Clean up state file so subsequent cancels don't trigger this
+    rm "$state_file"
+fi
