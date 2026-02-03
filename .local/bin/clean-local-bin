@@ -11,7 +11,10 @@ echo "Cleaning $TARGET_DIR..."
 
 # Delete all files except preserved ones
 # Keeping clean-local-bin as well in case it's run from there
+# Delete all files except preserved ones (tor-browser is a symlink, excluded separately)
 find "$TARGET_DIR" -maxdepth 1 -type f ! -name 'dmenu-system' ! -name 'deploy-dotfiles' ! -name 'clean-local-bin' -delete
+# Delete symlinks except tor-browser (created by install-tor-browser)
+find "$TARGET_DIR" -maxdepth 1 -type l ! -name 'tor-browser' -delete
 
 # Remove specific directories that accumulated
 rm -rf "$TARGET_DIR/__pycache__"
