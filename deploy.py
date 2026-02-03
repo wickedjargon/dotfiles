@@ -592,6 +592,7 @@ def setup_third_party_repos(repos, tui, start_row):
     try:
         keyrings_dir.mkdir(parents=True, exist_ok=True)
     except (OSError, IOError) as e:
+        log_error("Failed to create keyrings directory", e)
         tui.show_progress(start_row, "Setting up third-party repositories...", success=False)
         return False, f"Failed to create keyrings directory: {e}", start_row + 1
 
@@ -866,6 +867,7 @@ def deploy_system_configs(script_dir):
                         deployed_files.append(str(relative_path))
 
                 except (IOError, OSError) as e:
+                    log_error(f"Failed to deploy patch file: {relative_path}", e)
                     failed_files.append((str(relative_path), str(e)))
                     continue
             else:
@@ -887,6 +889,7 @@ def deploy_system_configs(script_dir):
                     deployed_files.append(str(relative_path))
 
                 except (IOError, OSError) as e:
+                    log_error(f"Failed to deploy system config: {relative_path}", e)
                     failed_files.append((str(relative_path), str(e)))
                     continue
 
