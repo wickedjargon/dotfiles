@@ -1,10 +1,12 @@
 #!/bin/sh
 . ~/.config/dmenu/config
 
-case "$(printf "dmenu-connect-to-network\nwifi-current-network\nwifi-disconnect\nwifi-rescan" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Run: ')" in
+case "$(printf "dmenu-connect-to-network\nwifi-current-network\nwifi-disconnect\nwifi-rescan\nwifi-delete-connection\nwifi-show-password" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Run: ')" in
     'dmenu-connect-to-network') dmenu-connect-to-network ;;
     'wifi-current-network') wifi-current-network ;;
     'wifi-disconnect') wifi-disconnect ;;
     'wifi-rescan') wifi-rescan ;;
+    'wifi-delete-connection') wifi-delete-connection ;;
+    'wifi-show-password') wifi-show-password ;;
     *) exit 1 ;;
 esac

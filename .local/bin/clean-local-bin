@@ -1,0 +1,20 @@
+#!/bin/bash
+# Clean up system .local/bin
+TARGET_DIR="$HOME/.local/bin"
+
+if [ ! -d "$TARGET_DIR" ]; then
+    echo "Directory $TARGET_DIR does not exist."
+    exit 1
+fi
+
+echo "Cleaning $TARGET_DIR..."
+
+# Delete all files except preserved ones
+# Keeping clean-local-bin as well in case it's run from there
+find "$TARGET_DIR" -maxdepth 1 -type f ! -name 'dmenu-system' ! -name 'deploy-dotfiles' ! -name 'clean-local-bin' -delete
+
+# Remove specific directories that accumulated
+rm -rf "$TARGET_DIR/__pycache__"
+rm -rf "$TARGET_DIR/shell-originals"
+
+echo "Cleanup complete. Preserved 'dmenu-system' and 'deploy-dotfiles'."

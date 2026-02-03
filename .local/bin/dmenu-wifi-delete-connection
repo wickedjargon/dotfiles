@@ -1,0 +1,31 @@
+#!/bin/sh
+# Delete a saved network connection via dmenu.
+# Lists all saved connections and deletes the selected one using nmcli.
+
+. ~/.config/dmenu/config
+
+# Get list of saved connections (name only, one per line)
+connections=$(nmcli -t -f NAME connection show)
+
+if [ -z "$connections" ]; then
+    notify-send -u low "No saved connections to delete"
+    exit 0
+fi
+
+# Prompt user to select a connection
+selected=$(printf "%s" "$connections" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p "Delete connection:")
+
+if [ -z "$selected" ]; then
+    exit 0
+fi
+
+# Confirm deletion
+confirm=$(printf "No\nYes" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p "Delete '$selected'?")
+
+if [ "$confirm" = "Yes" ]; then
+    if nmcli connection delete "$selected" 2>/dev/null; then
+        notify-send -u normal "Deleted connection: $selected"
+    else
+        notify-send -u critical "Failed to delete: $selected"
+    fi
+fi
