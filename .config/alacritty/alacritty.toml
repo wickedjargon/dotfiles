@@ -2,7 +2,7 @@
 size = 8.0
 
 [font.normal]
-family = "Liberation Mono"
+family = "monospace"
 style = "Regular"
 
 [window]
