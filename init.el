@@ -600,6 +600,24 @@
   :config
   (progn
     (evil-mode +1)
+
+    ;; Custom evil state tags for modeline
+    (setq evil-normal-state-tag   " <NORMAL> ")
+    (setq evil-insert-state-tag   " <INSERT> ")
+    (setq evil-visual-state-tag   " <VISUAL> ")
+    (setq evil-motion-state-tag   " <MOTION> ")
+    (setq evil-emacs-state-tag    " <EMACS> ")
+    (setq evil-operator-state-tag " <OPERATOR> ")
+    (setq evil-replace-state-tag  " <REPLACE> ")
+
+    ;; Use block cursor in all states (consistent with TTY)
+    (setq evil-normal-state-cursor 'box)
+    (setq evil-insert-state-cursor 'box)
+    (setq evil-visual-state-cursor 'box)
+    (setq evil-motion-state-cursor 'box)
+    (setq evil-replace-state-cursor 'box)
+    (setq evil-operator-state-cursor 'box)
+    (setq evil-emacs-state-cursor 'box)
     ;; Force Evil mode in Eglot event buffers
     (add-hook 'eglot-managed-mode-hook
               (lambda ()
@@ -1367,7 +1385,8 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   (setq doom-modeline-position-line-format '(""))
   (setq doom-modeline-buffer-encoding nil)
   (setq doom-modeline-percent-position '(""))
-  (setq doom-modeline-modal nil)
+  (setq doom-modeline-modal t)              ;; Show evil state in modeline (NORMAL, INSERT, etc.)
+  (setq doom-modeline-modal-icon nil)       ;; Use text labels instead of icons (better for terminal)
   (setq doom-modeline-env-enable-rust nil)
   (setq doom-modeline-buffer-file-name-style 'relative-from-project)
   (setq doom-modeline-time-analogue-clock nil)
