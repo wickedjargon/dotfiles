@@ -4,8 +4,8 @@
 
 . ~/.config/dmenu/config
 
-# Get list of saved connections (name only, one per line)
-connections=$(nmcli -t -f NAME connection show)
+# Get list of saved WiFi connections only (filter for 802-11-wireless type)
+connections=$(nmcli -t -f NAME,TYPE connection show | grep ':802-11-wireless$' | cut -d: -f1)
 
 if [ -z "$connections" ]; then
     notify-send -u low "No saved connections to delete"
