@@ -414,6 +414,7 @@
   :defer nil
   :straight t
   :config
+  (add-to-list 'custom-theme-load-path (expand-file-name "fff-lisp/tty-dark-theme" user-emacs-directory))
   (cond
    ;; On Linux
    ((eq system-type 'gnu/linux)
@@ -421,8 +422,12 @@
         (add-hook 'after-make-frame-functions
                   (lambda (frame)
                     (with-selected-frame frame
-                      (load-theme 'ef-tritanopia-dark t))))
-      (load-theme 'modus-vivendi-tinted t)))
+                      (if (display-graphic-p frame)
+                          (load-theme 'ef-tritanopia-dark t)
+                        (load-theme 'tty-dark t)))))
+      (if (display-graphic-p)
+          (load-theme 'modus-vivendi-tinted t)
+        (load-theme 'tty-dark t))))
    ;; On Windows
    ((eq system-type 'windows-nt)
     ;; Delay theme loading until after frame is initialized
