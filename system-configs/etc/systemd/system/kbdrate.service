@@ -1,0 +1,12 @@
+[Unit]
+Description=Set keyboard repeat rate for TTY
+DefaultDependencies=no
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/kbdrate -d 300 -r 50
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

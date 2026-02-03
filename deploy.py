@@ -900,6 +900,103 @@ def deploy_system_configs(script_dir):
     return True, None
 
 
+def configure_keyd():
+    """Enable and restart keyd service to apply configuration.
+    
+    Called after deploy_system_configs to apply the new keyd configuration.
+    Returns: (success, error_message)
+    """
+    # Check if systemctl is available
+    if not shutil.which('systemctl'):
+         return True, None # Not a systemd system
+
+    # Check if keyd package is installed (Debian-specific)
+    # Note: The binary may be named differently (e.g., keyd.rvaiya on Debian)
+    # so we check for the package instead of the binary
+    try:
+        result = subprocess.run(
+            ['dpkg-query', '-W', '-f=${Status}', 'keyd'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if 'install ok installed' not in result.stdout:
+            return True, None  # keyd not installed
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+        return True, None  # dpkg not available or keyd not installed
+
+    try:
+        # Enable keyd service
+        subprocess.run(
+            ['systemctl', 'enable', 'keyd'],
+            check=True,
+            capture_output=True,
+            timeout=10
+        )
+        
+        # Restart keyd to apply new config
+        subprocess.run(
+            ['systemctl', 'restart', 'keyd'],
+            check=True,
+            capture_output=True,
+            timeout=10
+        )
+        return True, None
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        error_msg = f"Failed to configure keyd: {str(e)}"
+        log_error("Failed to configure keyd service", e)
+        # Don't fail the whole deployment if just the service restart fails, 
+        # but return False so it can be reported
+        return False, error_msg
+
+
+def configure_kbdrate():
+    """Enable and start kbdrate service for TTY keyboard repeat configuration.
+    
+    Called after deploy_system_configs to enable the kbdrate service.
+    Returns: (success, error_message)
+    """
+    # Check if systemctl is available
+    if not shutil.which('systemctl'):
+         return True, None # Not a systemd system
+
+    # Check if kbd package is installed (provides kbdrate)
+    try:
+        result = subprocess.run(
+            ['dpkg-query', '-W', '-f=${Status}', 'kbd'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if 'install ok installed' not in result.stdout:
+            return True, None  # kbd not installed
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+        return True, None  # dpkg not available or kbd not installed
+
+    try:
+        # Enable kbdrate service
+        subprocess.run(
+            ['systemctl', 'enable', 'kbdrate'],
+            check=True,
+            capture_output=True,
+            timeout=10
+        )
+        
+        # Start kbdrate service
+        subprocess.run(
+            ['systemctl', 'start', 'kbdrate'],
+            check=True,
+            capture_output=True,
+            timeout=10
+        )
+        return True, None
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        error_msg = f"Failed to configure kbdrate: {str(e)}"
+        log_error("Failed to configure kbdrate service", e)
+        return False, error_msg
+
+
+
 def install_firefox_extensions(script_dir):
     """Install Firefox extensions via Enterprise Policies
 
@@ -1252,6 +1349,18 @@ def main_tui(stdscr):
         row += 4
     else:
         tui.show_progress(row, "Deploying system configurations...", success=True)
+        row += 1
+
+    # Configure keyd to apply new configuration
+    success, error = configure_keyd()
+    if not success:
+        tui.show_message(row, 4, f"Warning: {error}", color_pair=3)
+        row += 1
+    
+    # Configure kbdrate service for TTY keyboard repeat
+    success, error = configure_kbdrate()
+    if not success:
+        tui.show_message(row, 4, f"Warning: {error}", color_pair=3)
         row += 1
 
     # Install Firefox extensions

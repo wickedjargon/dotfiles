@@ -1,4 +1,4 @@
-remap
+xset-settings
 
 # turn off the auto monitor off
 xset -dpms

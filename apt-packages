@@ -35,6 +35,8 @@ libreoffice              # Office productivity suite
 acpid                    # ACPI event daemon (for battery monitoring)
 upower                   # Power management tool (battery status)
 udisks2                  # Disk management daemon (non-root mounting)
+kbd                      # Keyboard utilities (includes kbdrate for TTY repeat config)
+
 
 # Networking & System Tools
 net-tools                # Network tools (ifconfig, netstat, etc)
@@ -64,7 +66,8 @@ xdotool                  # Command-line X11 automation
 xclip                    # Command-line clipboard utility
 rofi                     # Window switcher, run dialog
 suckless-tools           # Simple commands for minimalistic window managers
-xcape                    # Remap modifier keys to other keys
+xcape                    # Remap modifier keys to other keys (X11)
+keyd                     # Key remapping daemon (works in TTY and X11)
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
 arc-theme                # Arc Dark GTK theme
 qt5-gtk-platformtheme    # Qt5 GTK theme integration

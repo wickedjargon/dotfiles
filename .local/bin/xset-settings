@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Keyboard repeat rate (matches TTY kbdrate settings: 500ms delay, 30 cps)
+xset r rate 500 30
+
+# Turn off auto monitor off
+xset -dpms
+xset s off
+xset s off -dpms
+xset -b
