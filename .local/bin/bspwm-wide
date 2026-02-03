@@ -24,7 +24,7 @@ def main():
         print(f"Error getting monitor width: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # Calculate 5% of width
+    # Calculate 7% of width
     target_padding = int(width * 0.07)
 
     # Get current padding of the focused desktop

@@ -86,14 +86,13 @@ def set_default_sink(sink_name):
 
 
 def main():
-    if len(sys.argv) != 4:
-        print("Usage: bt-connect MAC SIGNAL NAME")
-        print("Example: bt-connect '3C:B0:ED:A7:6A:88' 3 'Nothing Headphone (1)'")
+    if len(sys.argv) != 3:
+        print("Usage: bluetooth-connect MAC NAME")
+        print("Example: bluetooth-connect '3C:B0:ED:A7:6A:88' 'Nothing Headphone (1)'")
         sys.exit(1)
 
     mac = sys.argv[1]
-    # signal = sys.argv[2]  # Unused
-    name = sys.argv[3]
+    name = sys.argv[2]
 
     print(f"Connecting to {name}...")
 

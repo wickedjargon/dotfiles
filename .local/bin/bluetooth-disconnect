@@ -69,14 +69,13 @@ def check_sink_gone(mac, max_attempts=20, interval=0.5):
 
 
 def main():
-    if len(sys.argv) != 4:
-        print("Usage: bt-disconnect MAC SIGNAL NAME")
-        print("Example: bt-disconnect '3C:B0:ED:A7:6A:88' 3 'Nothing Headphone (1)'")
+    if len(sys.argv) != 3:
+        print("Usage: bluetooth-disconnect MAC NAME")
+        print("Example: bluetooth-disconnect '3C:B0:ED:A7:6A:88' 'Nothing Headphone (1)'")
         sys.exit(1)
-    
+
     mac = sys.argv[1]
-    # signal = sys.argv[2]  # Unused
-    name = sys.argv[3]
+    name = sys.argv[2]
     
     print(f"Disconnecting {name}...")
     

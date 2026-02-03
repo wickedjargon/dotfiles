@@ -28,8 +28,6 @@ apply_config() {
 
     case "$mode" in
         mirror)
-            # Get the internal display's preferred resolution
-            internal_res=$(xrandr --query | grep -A1 "^$internal " | tail -n1 | awk '{print $1}')
             xrandr --output "$internal" --auto --output "$external" --auto --same-as "$internal"
             notify-send "Display" "Mirroring to $external"
             ;;

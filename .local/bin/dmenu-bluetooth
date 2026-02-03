@@ -11,14 +11,14 @@ case "$(printf " connect-nothing
  connect-miniroll
  disconnect-miniroll" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -l 10 -p 'Run: ')" in
     # Runs the connect command; if it fails, runs it again immediately
-    ' connect-nothing') bluetooth-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" || bluetooth-connect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" ;;
-    ' disconnect-nothing') bluetooth-disconnect "3C:B0:ED:A7:6A:88" 3 "Nothing Headphone (1)" ;;
+    ' connect-nothing') bluetooth-connect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" || bluetooth-connect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" ;;
+    ' disconnect-nothing') bluetooth-disconnect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" ;;
     ' reconnect-nothing') reconnect-nothing ;;
     ' hfp-nothing') bluetooth-set-profile "3C:B0:ED:A7:6A:88" handsfree_head_unit ;;
     ' a2dp-nothing') bluetooth-set-profile "3C:B0:ED:A7:6A:88" a2dp_sink ;;
-    ' connect-musicozy') bluetooth-connect "41:42:AB:DD:51:37" 5 "Musicozy" ;;
-    ' disconnect-musicozy') bluetooth-disconnect "41:42:AB:DD:51:37" 5 "Musicozy" ;;
-    ' connect-miniroll') bluetooth-connect "10:94:97:3C:C4:41" 8 "Miniroll" ;;
-    ' disconnect-miniroll') bluetooth-disconnect "10:94:97:3C:C4:41" 8 "Miniroll" ;;
+    ' connect-musicozy') bluetooth-connect "41:42:AB:DD:51:37" "Musicozy" ;;
+    ' disconnect-musicozy') bluetooth-disconnect "41:42:AB:DD:51:37" "Musicozy" ;;
+    ' connect-miniroll') bluetooth-connect "10:94:97:3C:C4:41" "Miniroll" ;;
+    ' disconnect-miniroll') bluetooth-disconnect "10:94:97:3C:C4:41" "Miniroll" ;;
     *) exit 1 ;;
 esac

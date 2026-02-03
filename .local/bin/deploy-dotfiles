@@ -7,9 +7,8 @@ import sys
 from pathlib import Path
 
 # Configuration
-# We assume the script is running from within the repo or we hardcode the path
-# Given the user's setup, hardcoding is the most reliable way for a fixed station
-REPO_PATH = Path("/home/ff/d/projects/dotfiles")
+# The repo path is relative to the user's home directory
+REPO_PATH = Path.home() / "d/projects/dotfiles"
 MANIFEST_FILE = REPO_PATH / "copy-these"
 
 def notify(message, urgency="normal"):

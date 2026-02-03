@@ -148,20 +148,19 @@ def connect_to_network(ssid, password=None):
     run_cmd(f"nmcli connection delete '{ssid}' 2>/dev/null")
 
     if password:
-        # For WPA/WPA2/WPA3 networks, let nmcli auto-detect the security
-        # Use --ask to bypass interactive mode issues
-        cmd = f"nmcli device wifi connect '{ssid}' password '{password}'"
+        # Use list form to avoid password appearing in process list
+        cmd = ["nmcli", "device", "wifi", "connect", ssid, "password", password]
     else:
         # For open networks
-        cmd = f"nmcli device wifi connect '{ssid}'"
+        cmd = ["nmcli", "device", "wifi", "connect", ssid]
 
-    stdout, stderr, code = run_cmd(cmd)
-    output = stdout or stderr
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    output = result.stdout.strip() or result.stderr.strip()
 
     # Clean ANSI escape codes
     output = re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', output)
 
-    return code == 0, output
+    return result.returncode == 0, output
 
 def main():
     print("[DEBUG] Starting main()")
@@ -190,7 +189,7 @@ def main():
         # Store by SSID for easy lookup
         menu_map[net['ssid']] = net
 
-    print(f'[DEBUG] Showing dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" with {len(menu_items)} items')
+    print(f'[DEBUG] Showing dmenu with {len(menu_items)} items')
 
     # Show network selection menu
     choice = show_dmenu("WiFi:", menu_items)
