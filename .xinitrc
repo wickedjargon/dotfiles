@@ -1,11 +1,5 @@
 xset-settings
 
-# turn off the auto monitor off
-xset -dpms
-xset s off
-xset s off -dpms
-xset -b
-xsetroot -cursor_name left_ptr
 
 # qt theme
 export QT_QPA_PLATFORMTHEME=qt5ct
