@@ -1,0 +1,19 @@
+[global]
+    font = Monospace 10
+
+[urgency_low]
+    background = "#000000"
+    frame_color = "#000000"
+    foreground = "#ffffff"
+    timeout = 5
+
+[urgency_normal]
+    background = "#000000"
+    frame_color = "#000000"
+    foreground = "#ffffff"
+    timeout = 5
+
+[urgency_critical]
+    background = "#660000"
+    frame_color = "#660000"
+    foreground = "#ffffff"
