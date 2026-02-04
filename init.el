@@ -651,6 +651,7 @@
     (define-key evil-insert-state-map (kbd "C-y") #'yank)
     (define-key evil-insert-state-map (kbd "M-y") #'yank-pop)
     (define-key evil-insert-state-map (kbd "C-'") #'hippie-expand)
+    (define-key evil-insert-state-map (kbd "M-'") #'hippie-expand)
     (define-key evil-insert-state-map (kbd "C-d") #'delete-char)
     (define-key evil-insert-state-map (kbd "C-/") #'fff-comment)
     (define-key evil-insert-state-map (kbd "C-k") #'kill-line)
