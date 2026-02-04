@@ -32,14 +32,14 @@ class TestSSHSetup(unittest.TestCase):
             "https://gitlab.com/user/repo"
         )
 
-    def test_is_wickedjargon_repo(self):
+    def test_is_user_repo(self):
         # Matching repos
-        self.assertTrue(ssh_setup.is_wickedjargon_repo("https://github.com/wickedjargon/dotfiles"))
-        self.assertTrue(ssh_setup.is_wickedjargon_repo("git@github.com:wickedjargon/project"))
+        self.assertTrue(ssh_setup.is_user_repo("https://github.com/wickedjargon/dotfiles"))
+        self.assertTrue(ssh_setup.is_user_repo("git@github.com:wickedjargon/project"))
         
         # Non-matching repos
-        self.assertFalse(ssh_setup.is_wickedjargon_repo("https://github.com/other/dotfiles"))
-        self.assertFalse(ssh_setup.is_wickedjargon_repo("https://google.com"))
+        self.assertFalse(ssh_setup.is_user_repo("https://github.com/other/dotfiles"))
+        self.assertFalse(ssh_setup.is_user_repo("https://google.com"))
 
 from unittest.mock import patch, MagicMock
 
@@ -70,7 +70,7 @@ class TestConvertRepo(unittest.TestCase):
 
     @patch('setup_ssh_repos.get_remote_url')
     @patch('pathlib.Path.is_dir')
-    def test_non_wickedjargon_repo(self, mock_is_dir, mock_get_url):
+    def test_non_user_repo(self, mock_is_dir, mock_get_url):
         mock_is_dir.return_value = True
         mock_get_url.return_value = "https://github.com/other/repo.git"
         
