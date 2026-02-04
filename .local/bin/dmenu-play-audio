@@ -104,8 +104,12 @@ def main():
         # We'll clear the playlist and add the file
         subprocess.run(["mpc", "clear"], check=False)
         
-        # MPD requires paths relative to music_directory
-        subprocess.run(["mpc", "add", selected_name], check=False)
+        if selected_name.lower().endswith('.m3u'):
+            subprocess.run(["mpc", "load", selected_name], check=False)
+        else:
+            # MPD requires paths relative to music_directory
+            subprocess.run(["mpc", "add", selected_name], check=False)
+        
         subprocess.run(["mpc", "play"], check=False)
         
         # Notify
