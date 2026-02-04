@@ -13,7 +13,7 @@ from pathlib import Path
 
 # Configuration
 AUDIO_DIR = Path.home() / "d" / "audio"
-SUPPORTED_EXTENSIONS = {'.mp3', '.flac', '.ogg', '.wav', '.m4a'}
+SUPPORTED_EXTENSIONS = {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.m3u'}
 
 
 def get_audio_files():
