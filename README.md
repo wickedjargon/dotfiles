@@ -55,21 +55,5 @@ systemctl --user restart wireplumber pipewire pipewire-pulse
 ## Post-Install
 
 - Turn off Firefox hardware acceleration for PCs on older Sandy Bridge CPUs
-- make firefox compact 
-- make firefox use sidebar for tabs
-- set up qt theme
-- setup bluetooth
+- make firefox compact (right click on address bar, customize, select `density`)
 - pair bluetooth devices
-
-## TODOs
-
-- [ ] automated bluetooth setup
-- [x] allow extensions in private browser
-- [ ] pairing bluetooth instructions
-- [ ] add unit tests for `deploy.py` and `setup-ssh-repos.py`
-- [x] replace hardcoded paths with `$HOME` in scripts
-- [ ] add `--dry-run` flag to `deploy.py`
-- [ ] add error recovery/resume capability to `deploy.py`
-- [ ] refactor large functions
-
-
