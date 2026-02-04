@@ -9,11 +9,13 @@ feh                      # Lightweight image viewer
 qdirstat                 # Disk usage analyzer with GUI
 zathura                  # Minimalist document viewer
 zathura-pdf-poppler      # PDF support for zathura
+poppler-utils            # PDF utilities (pdftotext, pdfimages)
 calibre                  # E-book management and viewer
 curl                     # Command-line data transfer tool
 htop                     # Interactive process viewer
 dunst                    # Lightweight notification daemon
 imagemagick              # Image manipulation suite
+ffmpeg                   # Tools for recording, converting and streaming audio and video
 unclutter                # Hide mouse cursor when idle
 sxiv                     # Simple X Image Viewer (scriptable)
 vis                      # Modal text editor combining vim and sam ideas
@@ -27,11 +29,8 @@ jq                       # JSON processor
 ripgrep                  # Fast grep alternative
 brightnessctl            # Control backlight brightness
 libnotify-bin            # Desktop notifications (notify-send)
-xfce4-screenshooter      # Screenshot utility
-xfce4-settings           # XFCE settings manager (appearance, display, etc)
-nm-connection-editor     # NetworkManager connection editor
+maim                     # Screenshot utility
 cheese                   # Webcam photo and video tool
-libreoffice              # Office productivity suite
 acpid                    # ACPI event daemon (for battery monitoring)
 upower                   # Power management tool (battery status)
 udisks2                  # Disk management daemon (non-root mounting)
@@ -67,7 +66,7 @@ xclip                    # Command-line clipboard utility
 rofi                     # Window switcher, run dialog
 suckless-tools           # Simple commands for minimalistic window managers
 xcape                    # Remap modifier keys to other keys (X11)
-keyd                     # Key remapping daemon (works in TTY and X11)
+keyd                     # Key remapping shark tank offer faildaemon (works in TTY and X11)
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
 arc-theme                # Arc Dark GTK theme
 qt5-gtk-platformtheme    # Qt5 GTK theme integration
@@ -78,7 +77,8 @@ qt6-style-kvantum        # Kvantum theme engine for Qt6
 
 # Fonts
 fonts-noto-color-emoji   # Color emoji font from Google
-fonts-liberation         # Liberation fonts (contains Liberation Mono)
+fonts-noto-core          # "No Tofu" font families (Latin, Greek, Cyrillic)
+fonts-dejavu             # DejaVu fonts (includes Core, Extra, Mono)
 
 # Development Tools
 gdb                      # GNU debugger
