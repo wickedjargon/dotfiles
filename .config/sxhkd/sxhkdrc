@@ -94,7 +94,7 @@ super + d
 
 # App finder
 super + space
-    rofi -show drun
+    rofi-app-launcher
 
 # Emacs
 super + m
