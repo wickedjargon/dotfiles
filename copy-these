@@ -6,6 +6,6 @@
 /.gtkrc-2.0
 /.xinitrc
 /.config/
-/.local/bin/
-/.local/share/fonts/
+/.local/
 /.Xresources
+/d/
