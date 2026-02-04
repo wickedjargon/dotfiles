@@ -1,0 +1,30 @@
+#!/bin/sh
+. ~/.config/dmenu/config
+
+# Define options
+opt_full="  Full Screenshot"
+opt_region="  Region Screenshot"
+
+# Select option
+selected="$(printf "$opt_full\n$opt_region" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Screenshot: ')"
+
+# Filename with timestamp
+filename="/tmp/screenshot-$(date +%Y%m%d-%H%M%S).png"
+
+case "$selected" in
+    "$opt_full")
+        maim "$filename"
+        ;;
+    "$opt_region")
+        maim -s "$filename"
+        ;;
+    *) exit 1 ;;
+esac
+
+# Check if file exists (verification that screenshot was taken)
+if [ -f "$filename" ]; then
+    # Copy path to clipboard
+    echo -n "$filename" | xclip -selection clipboard
+    # Send notification
+    notify-send "Screenshot taken" "Saved to $filename\nPath copied to clipboard"
+fi
