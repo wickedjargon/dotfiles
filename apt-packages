@@ -15,6 +15,7 @@ curl                     # Command-line data transfer tool
 htop                     # Interactive process viewer
 dunst                    # Lightweight notification daemon
 imagemagick              # Image manipulation suite
+grabc                    # Command-line screen pixel color picker
 ffmpeg                   # Tools for recording, converting and streaming audio and video
 unclutter                # Hide mouse cursor when idle
 sxiv                     # Simple X Image Viewer (scriptable)

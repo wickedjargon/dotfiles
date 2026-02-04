@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Pick color
+COLOR=$(grabc)
+
+# Check if color was picked (grabc output is not empty)
+if [ -n "$COLOR" ]; then
+    # Copy to clipboard
+    echo -n "$COLOR" | xclip -selection clipboard
+    # Notify
+    notify-send "Color Picked" "$COLOR copied to clipboard"
+fi
