@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Get selection
+CONTENT=$(xclip -o)
+
+if [ -z "$CONTENT" ]; then
+    notify-send "Upload Failed" "No text selected"
+    exit 1
+fi
+
+notify-send "Uploading..." "Uploading selection to 0x0.st"
+
+# Upload to 0x0.st
+URL=$(echo "$CONTENT" | curl -F "file=@-" https://0x0.st)
+
+if [ -n "$URL" ]; then
+    # Copy URL to clipboard
+    echo -n "$URL" | xclip -selection clipboard
+    # Notify
+    notify-send "Upload Successful" "URL copied to clipboard: $URL"
+else
+    notify-send "Upload Failed" "Could not upload to 0x0.st"
+fi
