@@ -5,6 +5,9 @@ xset-settings
 export QT_QPA_PLATFORMTHEME=qt5ct
 export QT_QPA_PLATFORMTHEME_QT6=qt6ct
 
+# Load Xresources
+[[ -f ~/.Xresources ]] && xrdb -merge ~/.Xresources
+
 # # set background
 # feh --bg-scale ~/d/fakeimages/rms01.png
 
