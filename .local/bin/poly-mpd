@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Get MPD status
+status=$(mpc status 2>/dev/null)
+
+# Check if MPD is running
+if [ $? -ne 0 ]; then
+    exit 0
+fi
+
+# Only print if playing
+if echo "$status" | grep -q "\[playing\]"; then
+    volume=$(echo "$status" | grep -o 'volume:[ ]*[0-9]*%' | head -n1 | cut -d: -f2 | tr -d ' ')
+    echo "▶️ $volume"
+else
+    # Paused, Stopped, or other states -> No output
+    exit 0
+fi
