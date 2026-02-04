@@ -173,32 +173,32 @@ XF86MonBrightnessDown
 
 # MPD volume up
 super + Prior
-    mpc volume +5
+    mpc volume +5 && polybar-msg action "#mpd.hook.0"
 
 # MPD volume down
 super + Next
-    mpc volume -5
+    mpc volume -5 && polybar-msg action "#mpd.hook.0"
 
 # MPD previous track
 super + F10
-    mpc prev
+    mpc prev && polybar-msg action "#mpd.hook.0"
 
 # MPD play/pause toggle
 super + F11
-    mpc toggle
+    mpc toggle && polybar-msg action "#mpd.hook.0"
 
 # MPD next track
 super + F12
-    mpc next
+    mpc next && polybar-msg action "#mpd.hook.0"
 
 XF86Audio{Play,Pause}
-    mpc toggle
+    mpc toggle && polybar-msg action "#mpd.hook.0"
 
 XF86AudioStop
-    mpc stop
+    mpc stop && polybar-msg action "#mpd.hook.0"
 
 XF86AudioNext
-    mpc next
+    mpc next && polybar-msg action "#mpd.hook.0"
 
 XF86AudioPrev
-    mpc prev
+    mpc prev && polybar-msg action "#mpd.hook.0"
