@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+"""
+rofi-app-launcher
+
+Custom Rofi dmenu script to launch applications.
+Features:
+- Scans .desktop files from XDG directories.
+- Displays Name and Icon.
+- Press Enter: Launch application.
+- Press Alt+c: Copy execution command to clipboard.
+"""
+
+import os
+import sys
+import subprocess
+import glob
+from pathlib import Path
+
+# XDG Data Dirs
+DATA_DIRS = [
+    Path.home() / ".local/share/applications",
+    Path("/usr/share/applications"),
+    Path("/var/lib/snapd/desktop/applications")
+]
+
+def get_apps():
+    """Scan for .desktop files and return valid apps."""
+    apps = []
+    seen_names = set()
+
+    for d in DATA_DIRS:
+        if not d.exists():
+            continue
+        
+        # Scan dir
+        desktop_files = glob.glob(str(d / "**/*.desktop"), recursive=True)
+        
+        for fpath in desktop_files:
+            try:
+                with open(fpath, 'r', errors='ignore') as f:
+                    name = None
+                    exec_cmd = None
+                    icon = None
+                    no_display = False
+                    
+                    for line in f:
+                        line = line.strip()
+                        if line == "[Desktop Entry]":
+                            continue
+                        # Stop if we hit another section/action
+                        if line.startswith("[") and line != "[Desktop Entry]":
+                            break
+                            
+                        if line.startswith("Name=") and not name:
+                            name = line.split("=", 1)[1]
+                        elif line.startswith("Exec=") and not exec_cmd:
+                            exec_cmd = line.split("=", 1)[1]
+                        elif line.startswith("Icon=") and not icon:
+                            icon = line.split("=", 1)[1]
+                        elif line.startswith("NoDisplay=true"):
+                            no_display = True
+
+                    if name and exec_cmd and not no_display:
+                        # Deduplicate by name
+                        if name not in seen_names:
+                            seen_names.add(name)
+                            # Clean up exec command (remove %u, %F etc)
+                            clean_exec = exec_cmd.split('%')[0].strip()
+                            apps.append({
+                                'name': name,
+                                'exec': clean_exec,
+                                'raw_exec': exec_cmd,
+                                'icon': icon or "",
+                                'path': fpath
+                            })
+            except Exception:
+                continue
+                
+    # Sort by name
+    apps.sort(key=lambda x: x['name'].lower())
+    return apps
+
+def run_rofi(apps):
+    """Run rofi and return (exit_code, selected_line)"""
+    # Format input for rofi
+    # Syntax: Name\0icon\x1fIconName
+    rofi_input = []
+    for app in apps:
+        line = app['name']
+        if app['icon']:
+            line += f"\0icon\x1f{app['icon']}"
+        rofi_input.append(line)
+        
+    rofi_str = "\n".join(rofi_input)
+    
+    cmd = [
+        "rofi", 
+        "-dmenu", 
+        "-i", 
+        "-p", "Apps", 
+        "-show-icons",
+        "-kb-custom-1", "Alt+c",  # Bind Custom 1 to Alt+c
+        "-format", "i" # Return index of selection
+    ]
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            input=rofi_str,
+            capture_output=True,
+            text=True
+        )
+        return result.returncode, result.stdout.strip()
+    except Exception as e:
+        print(f"Error running rofi: {e}")
+        return -1, None
+
+def main():
+    apps = get_apps()
+    if not apps:
+        subprocess.run(["notify-send", "Error", "No applications found"])
+        return
+
+    # Run Rofi
+    # Exit codes: 0 = Enter (Accept), 1 = Cancel, 10 = Custom 1 (Alt+c)
+    exit_code, selection_index = run_rofi(apps)
+    
+    if exit_code == 1:
+        # Cancelled
+        return
+        
+    try:
+        idx = int(selection_index)
+        selected_app = apps[idx]
+    except (ValueError, IndexError):
+        return
+
+    if exit_code == 0:
+        # Launch App
+        # Use subprocess.Popen for detach
+        subprocess.Popen(selected_app['exec'], shell=True, start_new_session=True)
+
+    elif exit_code == 10:
+        # Copy Command (Alt+c)
+        cmd_to_copy = selected_app['exec']
+        
+        # Use xclip
+        try:
+            p = subprocess.Popen(['xclip', '-selection', 'clipboard'], stdin=subprocess.PIPE)
+            p.communicate(input=cmd_to_copy.encode('utf-8'))
+            subprocess.run(["notify-send", "Copied Command", cmd_to_copy])
+        except FileNotFoundError:
+             subprocess.run(["notify-send", "Error", "xclip not installed"])
+
+if __name__ == "__main__":
+    main()
