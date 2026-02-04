@@ -1190,6 +1190,8 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
   (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 
+(use-package consult-gh :straight t :defer t)
+
 ;;; Tools
 
 (use-package tmr :straight t :defer t)
