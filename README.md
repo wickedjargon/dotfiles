@@ -57,3 +57,53 @@ systemctl --user restart wireplumber pipewire pipewire-pulse
 - Turn off Firefox hardware acceleration for PCs on older Sandy Bridge CPUs
 - make firefox compact (right click on address bar, customize, select `density`)
 - pair bluetooth devices
+
+## TODOs:
+
+### bookmarks script
+- create a script that parses my bookmarks file and provides a rofi or dmenu front-end
+- open book items using api + emacs or online resource for ISBN
+- open union urls using tor browser file:///
+- open youtube urls with mpv (account for both youtube domain names)
+- open files online in their default program (example: pdf in zathura)
+- open text files with `emacsclient -c`
+- a file is identified with `file:///...`, `/home/...`, or `~/` 
+- other filetypes are opened with default program
+- convert some urls to use lightweight mirrored sites:
+    - `reddit.com` to `old.reddit.com` or `libreddit.kavin.rocks`
+    - `x.com` to `xcancel.com` or `nitter.net`
+    - `twitch.tv` to `twitchls.com`
+    - `youtube.com` to `piped.video`
+
+below is an example of the bookmarks file to be parsed
+
+the format of the bookmarks file will be this (one example of each item type - url, book, file, ):
+
+```
+# title bookmark
+optional notes
+https://url-goes.here/
+
+# book title
+optional notes
+- ISBN: 1234567891234
+
+# file title
+optional notes
+/home/ff/d/books/the_selfish_gene.pdf
+```
+
+a real example would be
+
+```
+# Odysee
+youtube alternative
+https://odysee.com
+
+# PeerTube
+youtube alternative
+https://joinpeertube.org
+
+# The Selfish Gene
+ISBN: 9780198575191
+```
