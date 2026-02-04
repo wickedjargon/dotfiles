@@ -25,6 +25,7 @@ wget                     # Network downloader
 sudo                     # Super User Do
 tree                     # Directory tree viewer
 bash-completion          # Enhanced bash tab completion
+fish                     # User-friendly command line shell
 fd-find                  # Fast find alternative
 jq                       # JSON processor
 ripgrep                  # Fast grep alternative
