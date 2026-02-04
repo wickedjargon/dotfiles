@@ -2,7 +2,7 @@ if status is-interactive
     # Disable inline autosuggestions
     set -g fish_autosuggestion_enabled 0
 
-    # Disable syntax highlighting
+    # Disable syntax highlighting (Comprehensive)
     set -g fish_color_normal normal
     set -g fish_color_command normal
     set -g fish_color_quote normal
@@ -17,6 +17,17 @@ if status is-interactive
     set -g fish_color_operator normal
     set -g fish_color_escape normal
     set -g fish_color_autosuggestion normal
+    
+    # Additional variables to ensure no underlining
+    set -g fish_color_valid_path normal
+    set -g fish_color_cwd normal
+    set -g fish_color_cwd_root normal
+    set -g fish_color_user normal
+    set -g fish_color_host normal
+    set -g fish_color_host_remote normal
+    set -g fish_color_cancel normal
+    set -g fish_color_keyword normal
+    set -g fish_color_option normal
 
     # Aliases
     alias ls='ls --color=auto'
