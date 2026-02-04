@@ -11,6 +11,7 @@ export QT_QPA_PLATFORMTHEME_QT6=qt6ct
 # # set background
 # feh --bg-scale ~/d/fakeimages/rms01.png
 
+mpd & # Music Player Daemon
 dunst & # notificatoins
 battery-warnings & # low battery warning
 clipmenud &  # Start clipmenu daemon
