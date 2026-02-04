@@ -1,6 +1,7 @@
 if status is-interactive
     # Disable inline autosuggestions
     set -g fish_autosuggestion_enabled 0
+    set -g fish_greeting
 
     # Disable syntax highlighting (Comprehensive)
     set -g fish_color_normal normal
