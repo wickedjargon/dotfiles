@@ -10,6 +10,9 @@ import sys
 import subprocess
 from pathlib import Path
 
+# Configuration
+GITHUB_USER = 'wickedjargon'
+
 # ANSI color codes
 class Colors:
     RED = '\033[0;31m'
@@ -109,9 +112,9 @@ def convert_https_to_ssh(https_url):
         return https_url.replace('https://github.com/', 'git@github.com:')
     return https_url
 
-def is_wickedjargon_repo(url):
-    """Check if URL is a wickedjargon repo"""
-    return 'github.com/wickedjargon/' in url or 'github.com:wickedjargon/' in url
+def is_user_repo(url):
+    """Check if URL is a repo belonging to GITHUB_USER"""
+    return f'github.com/{GITHUB_USER}/' in url or f'github.com:{GITHUB_USER}/' in url
 
 def convert_repo(repo_path):
     """Convert a single repo from HTTPS to SSH"""
@@ -126,8 +129,8 @@ def convert_repo(repo_path):
     if not current_url:
         return None
 
-    # Check if it's a wickedjargon repo
-    if not is_wickedjargon_repo(current_url):
+    # Check if it's a target user repo
+    if not is_user_repo(current_url):
         return None
 
     # Check if already SSH
@@ -188,7 +191,7 @@ def main():
     print()
 
     # Check 4: Find and convert repos
-    print_section("Looking for wickedjargon repositories")
+    print_section(f"Looking for {GITHUB_USER} repositories")
     print()
 
     repos_converted = 0
@@ -229,7 +232,7 @@ def main():
     print()
 
     if repos_converted > 0:
-        print_success("Setup complete! Your wickedjargon repos now use SSH.")
+        print_success(f"Setup complete! Your {GITHUB_USER} repos now use SSH.")
     else:
         print_warning("No repositories were converted.")
 
