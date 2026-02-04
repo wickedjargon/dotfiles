@@ -47,7 +47,7 @@ bspc config pointer_follows_focus false
 
 #### AUTOSTART ####
 # Launch SXHKD (keybinding daemon)
-pgrep -x sxhkd > /dev/null || sxhkd &
+pgrep -x sxhkd > /dev/null || SXHKD_SHELL=/bin/bash sxhkd &
 
 # Launch Polybar
 pgrep -x polybar > /dev/null || polybar mybar &
