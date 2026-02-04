@@ -1,5 +1,5 @@
 # General utilities
-emacs                    # Extensible text editor
+emacs-lucid              # Extensible text editor
 firefox-esr              # Extended support release web browser
 git                      # Version control system
 network-manager          # Network connection manager

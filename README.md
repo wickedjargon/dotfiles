@@ -58,7 +58,7 @@ systemctl --user restart wireplumber pipewire pipewire-pulse
 - make firefox compact (right click on address bar, customize, select `density`)
 - pair bluetooth devices
 
-## TODOs:
+## working on adding:
 
 ### bookmarks script
 - create a script that parses my bookmarks file and provides a rofi or dmenu front-end
