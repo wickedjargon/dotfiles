@@ -172,11 +172,11 @@ XF86MonBrightnessDown
 # ========== MEDIA CONTROLS ==========
 
 # MPD volume up
-super + Prior
+super + {Prior,F9}
     mpc volume +5 && polybar-msg action "#mpd.hook.0"
 
 # MPD volume down
-super + Next
+super + {Next,F8}
     mpc volume -5 && polybar-msg action "#mpd.hook.0"
 
 # MPD previous track
