@@ -1567,3 +1567,30 @@ With a prefix ARG always prompt for command to use."
   :ensure nil
   :config
   (editorconfig-mode 1))
+
+;;; TTY Keybindings
+
+(unless (display-graphic-p)
+  (with-eval-after-load 'evil
+    (define-key evil-insert-state-map (kbd "M-'") #'hippie-expand)
+
+    (define-key evil-visual-state-map (kbd "M-/") #'fff-comment)
+    (define-key evil-insert-state-map (kbd "M-/") #'fff-comment)
+    (define-key evil-normal-state-map (kbd "M-/") #'fff-comment)
+
+    (define-key evil-insert-state-map (kbd "M-DEL") #'fff-delete-till-beginning-of-line)
+    (define-key evil-normal-state-map (kbd "M-DEL") #'fff-delete-till-beginning-of-line))
+
+  (global-set-key (kbd "M-;") #'iedit-mode)
+
+  (with-eval-after-load 'vertico
+    (define-key vertico-map (kbd "M-DEL") #'vertico-directory-up))
+
+  (with-eval-after-load 'dired
+    (define-key dired-mode-map (kbd "M-\\") #'fff-dired-open-other-window-no-focus))
+
+  (with-eval-after-load 'consult
+    (setq consult-preview-key "M-\\"))
+
+  (with-eval-after-load 'lisp-mode
+    (define-key lisp-mode-map (kbd "M-\\") #'sly-eval-print-last-expression)))
