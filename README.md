@@ -107,3 +107,12 @@ https://joinpeertube.org
 # The Selfish Gene
 ISBN: 9780198575191
 ```
+
+
+## TODOS
+- [ ] script to set alarm
+- [ ] script to insert calendar item using natural language processing (ex: "Doctor appointment next firday - 5pm" is parsed and calendar is updated)
+- [ ] make wifi-rescan watch for connections 5 seconds after rescan to see if results in connection notify-send if it happens
+- [ ] set up research environment
+- [x] script for youtube search using emacs+yeetube
+- [ ] dmenu-screen-shot-plus utility fails sometimes. add multiple attempts. same with upload-selection
