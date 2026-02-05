@@ -6,7 +6,7 @@ family = "monospace"
 style = "Regular"
 
 [window]
-# Background opacity (matches st alpha=1, though st has code for it, config said 1)
+# Background opacity
 opacity = 1.0
 padding = { x = 2, y = 2 }
 
