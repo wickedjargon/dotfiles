@@ -46,6 +46,10 @@ bspc config pointer_follows_focus false
 
 
 #### AUTOSTART ####
+systemctl --user import-environment DISPLAY XAUTHORITY
+systemctl --user restart xdg-desktop-portal-gtk xdg-desktop-portal
+gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+
 # Launch SXHKD (keybinding daemon)
 pgrep -x sxhkd > /dev/null || SXHKD_SHELL=/bin/bash sxhkd &
 

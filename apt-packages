@@ -70,6 +70,8 @@ xcape                    # Remap modifier keys to other keys (X11)
 keyd                     # Key remapping shark tank offer faildaemon (works in TTY and X11)
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
 arc-theme                # Arc Dark GTK theme
+xdg-desktop-portal-gtk  # Portal backend for dark theme and file dialogs
+dconf-gsettings-backend  # GSettings backend for dconf (dark theme preference)
 qt5-gtk-platformtheme    # Qt5 GTK theme integration
 qt5ct                    # Qt5 settings tool
 qt6ct                    # Qt6 settings tool
