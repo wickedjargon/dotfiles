@@ -1,3 +1,56 @@
-#!/bin/sh
+#!/usr/bin/env python3
 
-nmcli device wifi rescan
+import subprocess
+import time
+import sys
+
+
+def notify(title, message):
+    subprocess.run(["notify-send", title, message])
+
+
+def get_current_ssid():
+    try:
+        result = subprocess.run(
+            ["iwgetid", "-r"],
+            capture_output=True, text=True, timeout=5,
+        )
+        return result.stdout.strip() or None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+def rescan():
+    subprocess.run(
+        ["nmcli", "device", "wifi", "rescan"],
+        capture_output=True, timeout=10,
+    )
+
+
+def main():
+    was_connected = get_current_ssid()
+
+    notify("WiFi", "Rescanning...")
+    rescan()
+
+    max_wait = 15
+    poll_interval = 1
+    elapsed = 0
+
+    while elapsed < max_wait:
+        time.sleep(poll_interval)
+        elapsed += poll_interval
+        ssid = get_current_ssid()
+        if ssid and ssid != was_connected:
+            notify("WiFi", f"Connected to {ssid}")
+            return
+
+    ssid = get_current_ssid()
+    if ssid:
+        notify("WiFi", f"Connected to {ssid}")
+    else:
+        notify("WiFi", "No connection after rescan")
+
+
+if __name__ == "__main__":
+    main()
