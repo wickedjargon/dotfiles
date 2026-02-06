@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import subprocess
+from pathlib import Path
+from urllib.parse import urlparse, urlunparse, unquote
+
+BOOKMARKS_FILE = Path.home() / "d" / "notes" / "bm.md"
+
+TEXT_EXTENSIONS = {
+    ".txt", ".md", ".org", ".py", ".sh", ".c", ".h", ".rs", ".go",
+    ".js", ".ts", ".el", ".lisp", ".scm", ".clj", ".lua", ".rb",
+    ".html", ".css", ".json", ".yaml", ".yml", ".toml", ".ini",
+    ".conf", ".cfg", ".csv", ".xml", ".tex", ".rst", ".log",
+}
+
+DOCUMENT_EXTENSIONS = {".pdf", ".epub", ".djvu"}
+
+YOUTUBE_HOSTS = {
+    "youtube.com", "www.youtube.com", "m.youtube.com",
+    "music.youtube.com", "youtu.be", "www.youtu.be",
+}
+
+URL_REWRITES = {
+    "reddit.com": "old.reddit.com",
+    "www.reddit.com": "old.reddit.com",
+    "x.com": "xcancel.com",
+    "www.x.com": "xcancel.com",
+    "twitch.tv": "twitchls.com",
+    "www.twitch.tv": "twitchls.com",
+}
+
+
+def load_dmenu_config():
+    config_path = os.path.expanduser("~/.config/dmenu/config")
+    args = []
+    font = ""
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            for line in f:
+                if line.startswith("DMENU_BASIC_ARGS="):
+                    val = line.split("=", 1)[1].strip().strip('"')
+                    args.extend(val.split())
+                elif line.startswith("DMENU_FONT="):
+                    font = line.split("=", 1)[1].strip().strip('"')
+    return args, font
+
+
+def dmenu_select(titles, args, font):
+    dmenu_input = "\n".join(titles)
+    cmd = ["dmenu", "-p", "Bookmark:", "-i"] + args
+    if font:
+        cmd.extend(["-fn", font])
+    try:
+        result = subprocess.run(
+            cmd, input=dmenu_input, capture_output=True, text=True, check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return None
+
+
+def parse_bookmarks(path):
+    entries = []
+    title = None
+    resource = None
+    kind = None
+
+    def commit():
+        nonlocal title, resource, kind
+        if title and resource:
+            entries.append({"title": title, "resource": resource, "kind": kind})
+        title = None
+        resource = None
+        kind = None
+
+    with open(path, "r") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+
+            if line.startswith("# "):
+                if title and resource:
+                    commit()
+                elif line.startswith("# ") and title:
+                    title = None
+                    resource = None
+                    kind = None
+                title = line[2:].strip()
+
+            elif not line:
+                if title and resource:
+                    commit()
+
+            elif re.match(r"^-?\s*ISBN:\s*", line):
+                isbn = re.sub(r"[^0-9Xx]", "", line).upper()
+                if isbn:
+                    resource = isbn
+                    kind = "isbn"
+
+            elif line.startswith(("http://", "https://")):
+                resource = line
+                kind = "url"
+
+            elif line.startswith("file:///"):
+                resource = unquote(line[len("file://"):])
+                kind = "file"
+
+            elif line.startswith("/home/") or line.startswith("~/"):
+                resource = os.path.expanduser(line)
+                kind = "file"
+
+    commit()
+    return entries
+
+
+def rewrite_url(url):
+    parsed = urlparse(url)
+    host = parsed.hostname or ""
+    new_host = URL_REWRITES.get(host)
+    if new_host:
+        parsed = parsed._replace(netloc=parsed.netloc.replace(host, new_host, 1))
+        return urlunparse(parsed)
+    return url
+
+
+def get_handler(entry):
+    kind = entry["kind"]
+    resource = entry["resource"]
+    if kind == "isbn":
+        return "isbn"
+    elif kind == "file":
+        ext = Path(resource).suffix.lower()
+        if ext in TEXT_EXTENSIONS:
+            return "emacs"
+        elif ext in DOCUMENT_EXTENSIONS:
+            return "zathura"
+        else:
+            return "xdg"
+    elif kind == "url":
+        host = (urlparse(resource).hostname or "")
+        if host.endswith(".onion"):
+            return "tor"
+        elif host in YOUTUBE_HOSTS:
+            return "youtube"
+    return None
+
+
+def open_entry(entry):
+    kind = entry["kind"]
+    resource = entry["resource"]
+
+    if kind == "isbn":
+        subprocess.Popen(["firefox", "--new-window", f"https://openlibrary.org/isbn/{resource}"])
+
+    elif kind == "file":
+        ext = Path(resource).suffix.lower()
+        if ext in TEXT_EXTENSIONS:
+            subprocess.Popen(["emacsclient", "-c", resource])
+        elif ext in DOCUMENT_EXTENSIONS:
+            subprocess.Popen(["zathura", resource])
+        else:
+            subprocess.Popen(["xdg-open", resource])
+
+    elif kind == "url":
+        parsed = urlparse(resource)
+        host = parsed.hostname or ""
+
+        if host.endswith(".onion"):
+            subprocess.Popen(["tor-browser", "--new-window", resource])
+        elif host in YOUTUBE_HOSTS:
+            subprocess.Popen(["mpv", resource])
+        else:
+            url = rewrite_url(resource)
+            subprocess.Popen(["firefox", "--new-window", url])
+
+
+def main():
+    if not BOOKMARKS_FILE.exists():
+        subprocess.run(["notify-send", "Error", f"Bookmarks file not found: {BOOKMARKS_FILE}"])
+        return
+
+    entries = parse_bookmarks(BOOKMARKS_FILE)
+    if not entries:
+        subprocess.run(["notify-send", "Error", "No bookmarks found"])
+        return
+
+    title_to_entry = {}
+    titles = []
+    for e in entries:
+        handler = get_handler(e)
+        t = f"{handler} - {e['title']}" if handler else e["title"]
+        if t in title_to_entry:
+            t = f"{t}  ({e['resource'][:40]})"
+        title_to_entry[t] = e
+        titles.append(t)
+
+    args, font = load_dmenu_config()
+    selected = dmenu_select(titles, args, font)
+
+    if selected and selected in title_to_entry:
+        open_entry(title_to_entry[selected])
+
+
+if __name__ == "__main__":
+    main()
