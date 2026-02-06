@@ -70,10 +70,9 @@ systemctl --user restart wireplumber pipewire pipewire-pulse
 - a file is identified with `file:///...`, `/home/...`, or `~/` 
 - other filetypes are opened with default program
 - convert some urls to use lightweight mirrored sites:
-    - `reddit.com` to `old.reddit.com` or `libreddit.kavin.rocks`
-    - `x.com` to `xcancel.com` or `nitter.net`
+    - `reddit.com` to `old.reddit.com`
+    - `x.com` to `xcancel.com`
     - `twitch.tv` to `twitchls.com`
-    - `youtube.com` to `piped.video`
 
 below is an example of the bookmarks file to be parsed
 
