@@ -1,47 +1,32 @@
 #!/usr/bin/env python3
 """
-dmenu-play-audio
+dmenu-play-audio-plus
 
-Select a song from ~/d/audio and play it using mpd.
+Advanced dmenu-based audio player for MPD.
+- Interactive directory browser.
+- Starts at ~/d/audio.
+- Shows directories (ending in /) and audio files.
+- Selecting a directory enters it.
+- Selecting '..' goes to parent directory.
+- Selecting a playlist (.m3u) loads and plays it.
+- Selecting an audio file:
+    1. Loads all sibling audio files from the same directory.
+    2. Sorts them alphabetically.
+    3. Adds them to the playlist.
+    4. Jumps directly to the selected track.
+
 Requires: dmenu, mpd, mpc, python3
 """
 
 import os
 import subprocess
-
 from pathlib import Path
 
 # Configuration
 AUDIO_DIR = Path.home() / "d" / "audio"
-SUPPORTED_EXTENSIONS = {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.m3u'}
-
-
-def get_audio_files():
-    """Recursively find audio files."""
-    files = []
-    if not AUDIO_DIR.exists():
-        return []
-
-    for root, _, filenames in os.walk(AUDIO_DIR):
-        for name in filenames:
-            if Path(name).suffix.lower() in SUPPORTED_EXTENSIONS:
-                # Store relative path for display/mpd compatibility if needed,
-                # but for 'mpc add', absolute path is safer if mpd is configured for it.
-                # However, usually MPD expects paths relative to its music directory.
-                # If ~/d/audio IS the music directory, we should use relative paths.
-                # Let's try to assume ~/d/audio is the root or we use absolute paths file://
-                
-                # Using absolute path with file:// protocol is robust if MPD supports it
-                full_path = os.path.join(root, name)
-                
-                # For display, we want something readable. Relpath is good.
-                rel_path = os.path.relpath(full_path, AUDIO_DIR)
-                files.append((rel_path, full_path))
-                
-    # Sort by relative path
-    files.sort(key=lambda x: x[0])
-    return files
-
+SUPPORTED_EXTENSIONS = {'.mp3', '.flac', '.ogg', '.wav', '.m4a'}
+PLAYLIST_EXTENSIONS = {'.m3u'}
+ALL_EXTENSIONS = SUPPORTED_EXTENSIONS | PLAYLIST_EXTENSIONS
 
 def load_dmenu_config():
     """Load dmenu arguments from config file"""
@@ -53,21 +38,18 @@ def load_dmenu_config():
         with open(config_path, "r") as f:
             for line in f:
                 if line.startswith("DMENU_BASIC_ARGS="):
-                    # Extract args, remove quotes
                     val = line.split("=", 1)[1].strip().strip('"')
                     args.extend(val.split())
                 elif line.startswith("DMENU_FONT="):
-                    # Extract font, remove quotes
                     font = line.split("=", 1)[1].strip().strip('"')
     
     return args, font
 
-
-def dmenu_select(options, args, font):
+def dmenu_select(options, args, font, prompt="Play:"):
     """Present options in dmenu and return selected."""
-    dmenu_input = "\n".join([x[0] for x in options])
+    dmenu_input = "\n".join(options)
     
-    cmd = ["dmenu", "-p", "Play Song:", "-i"] + args
+    cmd = ["dmenu", "-p", prompt, "-i"] + args
     if font:
         cmd.extend(["-fn", font])
     
@@ -83,37 +65,146 @@ def dmenu_select(options, args, font):
     except subprocess.CalledProcessError:
         return None
 
+def run_mpc(args):
+    """Run mpc command and notify on error."""
+    try:
+        result = subprocess.run(
+            ["mpc"] + args,
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            error_msg = result.stderr.strip() or "Unknown error"
+            subprocess.run(["notify-send", "MPD Error", f"Command: mpc {' '.join(args)}\n{error_msg}"])
+            return False
+        return True
+    except FileNotFoundError:
+        subprocess.run(["notify-send", "Error", "mpc not found"])
+        return False
 
 def main():
-    if not subprocess.run(["which", "mpc"], capture_output=True).returncode == 0:
+    # Check for mpc
+    if subprocess.run(["which", "mpc"], capture_output=True).returncode != 0:
         subprocess.run(["notify-send", "Error", "mpc is not installed"])
         return
 
-    songs = get_audio_files()
-    if not songs:
-        subprocess.run(["notify-send", "Error", f"No audio files found in {AUDIO_DIR}"])
-        return
+    # Load config once
+    dmenu_args, dmenu_font = load_dmenu_config()
+    
+    current_path = AUDIO_DIR
+    
+    while True:
+        # Check if we are inside AUDIO_DIR
+        try:
+            rel_path = current_path.relative_to(AUDIO_DIR)
+            is_root = (rel_path == Path("."))
+        except ValueError:
+            # Should not happen typically unless we escaped, reset to root
+            current_path = AUDIO_DIR
+            is_root = True
 
-    args, font = load_dmenu_config()
-    selected_name = dmenu_select(songs, args, font)
-    if not selected_name:
-        return
+        display_options = []
+        if not is_root:
+            display_options.append("..")
 
-    if selected_name:
-        # Use mpc to play
-        # We'll clear the playlist and add the file
-        subprocess.run(["mpc", "clear"], check=False)
+        # List directories and files
+        dirs = []
+        files = []
         
-        if selected_name.lower().endswith('.m3u'):
-            subprocess.run(["mpc", "load", selected_name], check=False)
-        else:
-            # MPD requires paths relative to music_directory
-            subprocess.run(["mpc", "add", selected_name], check=False)
+        try:
+            for item in current_path.iterdir():
+                if item.name.startswith('.'):
+                    continue
+                if item.is_dir():
+                    dirs.append(f"{item.name}/")
+                elif item.suffix.lower() in ALL_EXTENSIONS:
+                    files.append(item.name)
+        except OSError:
+            pass
+
+        dirs.sort()
+        files.sort()
+        display_options.extend(dirs)
+        display_options.extend(files)
+
+        if not display_options:
+            display_options.append("..") # Always allow going back if empty
+
+        # Show dmenu
+        prompt = f"Browse {current_path.name}:" if not is_root else "Browse Audio:"
+        selection = dmenu_select(display_options, dmenu_args, dmenu_font, prompt=prompt)
+
+        if not selection:
+            # User cancelled
+            return
+
+        # Handle Selection
+        if selection == "..":
+            current_path = current_path.parent
+            continue
+
+        selected_item = current_path / selection
+
+        if selection.endswith("/"):
+            # Enter directory (remove trailing slash for logic)
+            current_path = current_path / selection[:-1]
+            continue
         
-        subprocess.run(["mpc", "play"], check=False)
-        
-        # Notify
-        subprocess.run(["notify-send", "Now Playing", selected_name])
+        # It's a file
+        ext = selected_item.suffix.lower()
+
+        if ext in PLAYLIST_EXTENSIONS:
+            run_mpc(["clear"])
+            # Use path relative to AUDIO_DIR for clean loading if possible
+            try:
+                rel_playlist = selected_item.relative_to(AUDIO_DIR)
+                if run_mpc(["load", str(rel_playlist)]):
+                    run_mpc(["play"])
+                    subprocess.run(["notify-send", "Playlist Loaded", selection])
+            except ValueError:
+                if run_mpc(["load", str(selected_item)]):
+                    run_mpc(["play"])
+                    subprocess.run(["notify-send", "Playlist Loaded", selection])
+            return
+
+        elif ext in SUPPORTED_EXTENSIONS:
+            # Siblings Logic
+            files_in_current = []
+            
+            try:
+                for item in current_path.iterdir():
+                    if item.suffix.lower() in SUPPORTED_EXTENSIONS:
+                        files_in_current.append(item)
+            except OSError:
+                pass
+            
+            files_in_current.sort(key=lambda x: x.name)
+
+            run_mpc(["clear"])
+            
+            target_pos = 1
+            found = False
+            
+            for i, sibling in enumerate(files_in_current, 1):
+                try:
+                    rel_sib = sibling.relative_to(AUDIO_DIR)
+                    # We don't check ret code here to avoid 1000 notifications if something is weird
+                    subprocess.run(["mpc", "add", str(rel_sib)], capture_output=True)
+                except ValueError:
+                    subprocess.run(["mpc", "add", str(sibling)], capture_output=True)
+
+                if sibling.name == selection:
+                    target_pos = i
+                    found = True
+
+            if found:
+                if run_mpc(["play", str(target_pos)]):
+                    subprocess.run(["notify-send", "Now Playing", selection])
+            else:
+                 # Fallback
+                run_mpc(["add", str(selected_item)])
+                run_mpc(["play"])
+            return
 
 if __name__ == "__main__":
     main()
