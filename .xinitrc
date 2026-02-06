@@ -1,5 +1,6 @@
-xset-settings
+export PATH="$HOME/.local/bin:$PATH"
 
+xset-settings
 
 # qt theme
 export QT_QPA_PLATFORMTHEME=qt5ct
@@ -18,4 +19,4 @@ clipmenud &  # Start clipmenu daemon
 unclutter -idle 1 &  # makes cursor disappear
 # uncomment when ready to install emacs packages
 # emacs --daemon & # emacs server
-exec bspwm
+exec dbus-run-session bspwm
