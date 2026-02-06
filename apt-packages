@@ -97,10 +97,8 @@ clangd                   # C/C++ language server
 # Build dependencies
 build-essential          # Compilers and build tools (gcc, make, etc)
 libx11-dev               # X11 client library development files
-
 libxft-dev               # FreeType-based font rendering library
 libxinerama-dev          # Multi-monitor X extension library
-
 libxfixes-dev            # X11 Xfixes extension library (for clipmenu)
 
 # Window Manager & Terminal (BSPWM + Alacritty)
