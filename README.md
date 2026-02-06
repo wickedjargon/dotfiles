@@ -116,3 +116,5 @@ ISBN: 9780198575191
 - [ ] set up research environment
 - [x] script for youtube search using emacs+yeetube
 - [ ] dmenu-screen-shot-plus utility fails sometimes. add multiple attempts. same with upload-selection
+- [ ] remove most mpv keybindings as they are unused.
+- [ ] display volume change using graphical scale.
