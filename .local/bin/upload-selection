@@ -1,23 +1,106 @@
-#!/bin/sh
+#!/usr/bin/env python3
 
-# Get selection
-CONTENT=$(xclip -o)
+import subprocess
+import sys
 
-if [ -z "$CONTENT" ]; then
-    notify-send "Upload Failed" "No text selected"
-    exit 1
-fi
 
-notify-send "Uploading..." "Uploading selection to 0x0.st"
+def notify(title, message):
+    subprocess.run(["notify-send", title, message])
 
-# Upload to 0x0.st
-URL=$(echo "$CONTENT" | curl -F "file=@-" https://0x0.st)
 
-if [ -n "$URL" ]; then
-    # Copy URL to clipboard
-    echo -n "$URL" | xclip -selection clipboard
-    # Notify
-    notify-send "Upload Successful" "URL copied to clipboard: $URL"
-else
-    notify-send "Upload Failed" "Could not upload to 0x0.st"
-fi
+def get_selection():
+    try:
+        result = subprocess.run(
+            ["xclip", "-o", "-selection", "primary"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout
+        return None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+def copy_to_clipboard(text):
+    result = subprocess.run(
+        ["xclip", "-selection", "clipboard"],
+        input=text,
+        text=True,
+    )
+    return result.returncode == 0
+
+
+def upload_to_0x0(content):
+    try:
+        result = subprocess.run(
+            [
+                "curl", "-fsS",
+                "--connect-timeout", "5",
+                "--max-time", "30",
+                "--retry", "3",
+                "--retry-all-errors",
+                "--retry-delay", "2",
+                "-F", "file=@-",
+                "https://0x0.st",
+            ],
+            input=content,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            return None
+        url = result.stdout.strip()
+        if url.startswith("http://0x0.st/") or url.startswith("https://0x0.st/"):
+            return url
+        return None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+def upload_file_to_0x0(filepath):
+    try:
+        result = subprocess.run(
+            [
+                "curl", "-fsS",
+                "--connect-timeout", "5",
+                "--max-time", "30",
+                "--retry", "3",
+                "--retry-all-errors",
+                "--retry-delay", "2",
+                "-F", f"file=@{filepath}",
+                "https://0x0.st",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            return None
+        url = result.stdout.strip()
+        if url.startswith("http://0x0.st/") or url.startswith("https://0x0.st/"):
+            return url
+        return None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+def main():
+    content = get_selection()
+    if not content:
+        notify("Upload Failed", "No text selected")
+        sys.exit(1)
+
+    notify("Uploading...", "Uploading selection to 0x0.st")
+
+    url = upload_to_0x0(content)
+    if url:
+        copy_to_clipboard(url)
+        notify("Upload Successful", f"URL copied to clipboard: {url}")
+    else:
+        notify("Upload Failed", "Could not upload to 0x0.st")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
