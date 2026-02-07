@@ -1,0 +1,10 @@
+#!/bin/sh
+. ~/.config/dmenu/config
+
+query=$(printf '' | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Search Wikipedia: ')
+if [ -z "$query" ]; then
+    exit 1
+fi
+
+encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote_plus(sys.argv[1]))' "$query")
+firefox --new-window "https://en.wikipedia.org/wiki/Special:Search?search=${encoded}"
