@@ -36,6 +36,7 @@ acpid                    # ACPI event daemon (for battery monitoring)
 upower                   # Power management tool (battery status)
 udisks2                  # Disk management daemon (non-root mounting)
 kbd                      # Keyboard utilities (includes kbdrate for TTY repeat config)
+xournalpp                # handwriting note-taking package
 
 
 # Networking & System Tools
