@@ -5,7 +5,7 @@ After=local-fs.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/sbin/kbdrate -d 250 -r 50
+ExecStart=/usr/sbin/kbdrate -d 250 -r 30
 RemainAfterExit=yes
 
 [Install]

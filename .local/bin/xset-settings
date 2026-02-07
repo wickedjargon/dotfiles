@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Keyboard repeat rate (matches TTY kbdrate settings: 250ms delay, 50 cps)
-xset r rate 250 50
+# Keyboard repeat rate (matches TTY kbdrate settings: 250ms delay, 30 cps)
+xset r rate 250 30
 
 xset -dpms        # disable DPMS (power management)
 xset s off        # disable screensaver
