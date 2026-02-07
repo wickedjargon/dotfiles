@@ -96,9 +96,9 @@ super + d
 super + space
     rofi-app-launcher
 
-# Emacs
+# Text editor menu
 super + m
-    emacsclient -c
+    dmenu-text-editor
 
 # Browser
 super + w
@@ -127,10 +127,6 @@ super + i
 # Night/day mode
 super + n
     dmenu-night-and-day
-
-# Virtual machines
-super + v
-    dmenu-virtual-machines
 
 # Scripts launcher
 super + s
