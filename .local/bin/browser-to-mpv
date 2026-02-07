@@ -1,0 +1,17 @@
+#!/bin/sh
+
+xdotool key --clearmodifiers ctrl+l
+sleep 0.1
+xdotool key --clearmodifiers ctrl+c
+sleep 0.1
+url=$(xclip -o -selection clipboard)
+
+case "$url" in
+    *youtube.com*|*youtu.be*)
+        notify-send "mpv" "Opening: $url"
+        mpv "$url" &
+        ;;
+    *)
+        notify-send "mpv" "Not a YouTube URL: $url"
+        ;;
+esac
