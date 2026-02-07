@@ -5,6 +5,8 @@ sleep 0.1
 xdotool key --clearmodifiers ctrl+c
 sleep 0.1
 url=$(xclip -o -selection clipboard)
+xdotool key Escape
+xdotool key F6
 
 case "$url" in
     *youtube.com*|*youtu.be*)
