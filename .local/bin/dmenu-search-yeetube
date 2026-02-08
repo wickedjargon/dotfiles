@@ -1,0 +1,9 @@
+#!/bin/sh
+. ~/.config/dmenu/config
+
+query=$(printf '' | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Search Youtube: ')
+if [ -z "$query" ]; then
+    exit 1
+fi
+
+emacsclient -c --eval "(yeetube-search \"$query\")"
