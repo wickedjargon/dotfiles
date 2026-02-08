@@ -26,6 +26,7 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"}
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv", ".wmv"}
 AUDIO_EXTENSIONS = {".mp3", ".flac", ".ogg", ".wav", ".m4a"}
 PLAYLIST_EXTENSIONS = {".m3u"}
+VM_EXTENSIONS = {".qcow2"}
 
 BOOKMARKS_FILE = (Path.home() / "d" / "notes" / "bm.md").resolve()
 PROJECTS_DIR = (Path.home() / "d" / "projects").resolve()
@@ -106,6 +107,37 @@ def open_file(path):
         subprocess.Popen(["mpc", "play"])
     elif ext in VIDEO_EXTENSIONS:
         subprocess.Popen(["mpv", str(path)])
+    elif ext in VM_EXTENSIONS:
+        parts = path.stem.rsplit(".", 2)
+        arch = parts[1] if len(parts) >= 3 else "x86_64"
+        ram = parts[2].replace("GB", "G") if len(parts) >= 3 else "1G"
+        cmd = [
+            f"qemu-system-{arch}",
+            "-m", ram,
+        ]
+        if arch == "x86_64":
+            cmd.extend([
+                "-drive", f"file={path},format=qcow2",
+                "-enable-kvm",
+                "-net", "user,hostfwd=tcp::2222-:22",
+                "-net", "nic",
+                "-display", "gtk,zoom-to-fit=on",
+            ])
+        elif arch == "aarch64":
+            cmd.extend([
+                "-machine", "virt",
+                "-cpu", "cortex-a57",
+                "-drive", f"file={path},format=qcow2,if=virtio",
+                "-net", "user,hostfwd=tcp::2223-:22",
+                "-net", "nic,model=virtio",
+                "-display", "gtk,zoom-to-fit=on",
+                "-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd",
+                "-device", "virtio-gpu-pci",
+                "-device", "qemu-xhci",
+                "-device", "usb-kbd",
+                "-device", "usb-mouse",
+            ])
+        subprocess.Popen(cmd)
     else:
         subprocess.Popen(["xdg-open", str(path)])
 
