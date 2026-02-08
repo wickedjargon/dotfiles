@@ -31,6 +31,7 @@ VM_EXTENSIONS = {".qcow2"}
 
 BOOKMARKS_FILE = (Path.home() / "d" / "notes" / "bm.md").resolve()
 PROJECTS_DIR = (Path.home() / "d" / "projects").resolve()
+MUSIC_DIR = (Path.home() / "d" / "audio").resolve()
 
 def load_dmenu_config():
     """Load dmenu arguments from config file"""
@@ -89,6 +90,30 @@ def list_directory(current_path):
 
     return options, mapping
 
+def to_rel_path(path):
+    """Convert path to be relative to MUSIC_DIR if it's inside it."""
+    try:
+        return path.resolve().relative_to(MUSIC_DIR)
+    except (ValueError, OSError):
+        return path
+
+def run_mpc(args):
+    """Run mpc command and notify on error."""
+    try:
+        result = subprocess.run(
+            ["mpc"] + args,
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            error_msg = result.stderr.strip() or "Unknown error"
+            subprocess.run(["notify-send", "MPD Error", f"Command: mpc {' '.join(args)}\n{error_msg}"])
+            return False
+        return True
+    except FileNotFoundError:
+        subprocess.run(["notify-send", "Error", "mpc not found"])
+        return False
+
 def open_file(path, run_executables=False):
     resolved = path.resolve()
     if resolved == BOOKMARKS_FILE:
@@ -106,10 +131,42 @@ def open_file(path, run_executables=False):
         subprocess.Popen(["zathura", str(path)])
     elif ext in IMAGE_EXTENSIONS:
         subprocess.Popen(["sxiv", str(path)])
-    elif ext in PLAYLIST_EXTENSIONS or ext in AUDIO_EXTENSIONS:
-        subprocess.run(["mpc", "clear"], capture_output=True)
-        subprocess.run(["mpc", "add", str(path)], capture_output=True)
-        subprocess.Popen(["mpc", "play"])
+    elif ext in PLAYLIST_EXTENSIONS:
+        run_mpc(["clear"])
+        rel_playlist = to_rel_path(path)
+        if run_mpc(["load", str(rel_playlist)]):
+            run_mpc(["play"])
+            subprocess.run(["notify-send", "Playlist Loaded", path.name])
+
+    elif ext in AUDIO_EXTENSIONS:
+        files_in_current = []
+        try:
+            for item in path.parent.iterdir():
+                if item.suffix.lower() in AUDIO_EXTENSIONS:
+                    files_in_current.append(item)
+        except OSError:
+            pass
+
+        files_in_current.sort(key=lambda x: x.name.lower())
+        run_mpc(["clear"])
+
+        target_pos = 1
+        found = False
+
+        for i, sibling in enumerate(files_in_current, 1):
+            rel_sib = to_rel_path(sibling)
+            subprocess.run(["mpc", "add", str(rel_sib)], capture_output=True)
+            if sibling.name == path.name:
+                target_pos = i
+                found = True
+
+        if found:
+            if run_mpc(["play", str(target_pos)]):
+                subprocess.run(["notify-send", "Now Playing", path.name])
+        else:
+            run_mpc(["add", str(to_rel_path(path))])
+            run_mpc(["play"])
+
     elif ext in VIDEO_EXTENSIONS:
         subprocess.Popen(["mpv", str(path)])
     elif ext in VM_EXTENSIONS:
