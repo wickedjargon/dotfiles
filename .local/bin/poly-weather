@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+
+import os
+import json
+import time
+import urllib.request
+import urllib.error
+import sys
+from datetime import datetime
+
+# Configuration
+LOCATION_FILE = os.path.expanduser("~/.config/location")
+CACHE_FILE = "/tmp/weather_cache.json"
+CACHE_AGE = 600  # 10 minutes
+DEBUG_LOG = "/tmp/weather_debug.log"
+
+def log(message):
+    with open(DEBUG_LOG, "a") as f:
+        f.write(f"{datetime.now()}: {message}\n")
+
+def get_location():
+    lat = None
+    lon = None
+    if os.path.exists(LOCATION_FILE):
+        with open(LOCATION_FILE, "r") as f:
+            for line in f:
+                if "export LAT=" in line:
+                    lat = line.split("=")[1].strip().strip('"')
+                elif "export LON=" in line:
+                    lon = line.split("=")[1].strip().strip('"')
+    return lat, lon
+
+def fetch_weather(lat, lon):
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=apparent_temperature&hourly=precipitation_probability,weathercode,rain_probability,snowfall_probability,freezing_rain_probability,thunderstorm_probability&timezone=auto&forecast_days=1"
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            data = json.loads(response.read().decode())
+            with open(CACHE_FILE, "w") as f:
+                json.dump(data, f)
+            return data
+    except Exception as e:
+        log(f"Fetch failed: {e}")
+        return None
+
+def get_weather_data():
+    lat, lon = get_location()
+    if not lat or not lon:
+        log("Location not found")
+        return None
+
+    # Check cache
+    if os.path.exists(CACHE_FILE):
+        file_age = time.time() - os.path.getmtime(CACHE_FILE)
+        if file_age < CACHE_AGE:
+            try:
+                with open(CACHE_FILE, "r") as f:
+                    return json.load(f)
+            except json.JSONDecodeError:
+                pass # corrupted cache
+
+    return fetch_weather(lat, lon)
+
+def process_feels_like(data):
+    try:
+        temp = data["current"]["apparent_temperature"]
+        print(f"🌡️{round(temp)}°C")
+    except KeyError as e:
+        log(f"Data error: {e}")
+
+def process_precipitation(data):
+    try:
+        current_hour = datetime.now().hour
+        hourly = data["hourly"]
+        
+        probs = []
+        
+        # Check specific probabilities if available
+        # User requested: rain -> 💧, snow -> ❄️, thunderstorm -> 🌩️, freezing_rain -> 🧊
+        
+        if "rain_probability" in hourly:
+            val = hourly["rain_probability"][current_hour]
+            if val is not None and val > 0:
+                probs.append(f"💧{val}%")
+                
+        if "snowfall_probability" in hourly:
+            val = hourly["snowfall_probability"][current_hour]
+            if val is not None and val > 0:
+                probs.append(f"❄️{val}%")
+                
+        if "thunderstorm_probability" in hourly:
+            val = hourly["thunderstorm_probability"][current_hour]
+            if val is not None and val > 0:
+                probs.append(f"🌩️ {val}%")
+                
+        if "freezing_rain_probability" in hourly:
+            val = hourly["freezing_rain_probability"][current_hour]
+            if val is not None and val > 0:
+                probs.append(f"🧊{val}%")
+                
+        # Fallback to general probability if specific ones are missing or 0 but general is > 0?
+        # User said "use them instead", implied replacement.
+        # But if we don't request them, they won't be there. We need to update fetch_weather too.
+        
+        if probs:
+            print(" ".join(probs))
+            
+    except (KeyError, IndexError) as e:
+        log(f"Data processing error: {e}")
+
+def main():
+    if len(sys.argv) < 2:
+        return
+
+    mode = sys.argv[1]
+    
+    # Simple logging of execution
+    # log(f"Running mode: {mode}")
+
+    data = get_weather_data()
+    if not data:
+        return
+
+    if mode == "feels_like":
+        process_feels_like(data)
+    elif mode == "precipitation":
+        process_precipitation(data)
+
+if __name__ == "__main__":
+    main()
