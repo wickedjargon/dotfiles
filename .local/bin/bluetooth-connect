@@ -28,8 +28,8 @@ def notify(title, message, urgency="normal"):
 
 
 def bluetoothctl_connect(mac):
-    """Send connect command to bluetoothctl."""
-    cmd = f'printf "connect {mac}\\nexit\\n" | bluetoothctl'
+    """Trust and connect command to bluetoothctl."""
+    cmd = f'printf "trust {mac}\\nconnect {mac}\\nexit\\n" | bluetoothctl'
     stdout, stderr, code = run_command(cmd)
     return code == 0
 
