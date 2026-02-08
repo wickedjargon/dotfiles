@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+"""
+dmenu-navigator
+
+Dmenu-based file navigator with basic file associations.
+- Starts at ~/d by default or a provided path argument.
+- Shows directories and files (including hidden).
+- ".." navigates to the parent directory.
+- Directories open within dmenu; files open with associated apps.
+"""
+
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+TEXT_EXTENSIONS = {
+    ".txt", ".md", ".org", ".py", ".sh", ".c", ".h", ".rs", ".go",
+    ".js", ".ts", ".el", ".lisp", ".scm", ".clj", ".lua", ".rb",
+    ".html", ".css", ".json", ".yaml", ".yml", ".toml", ".ini",
+    ".conf", ".cfg", ".csv", ".xml", ".tex", ".rst", ".log",
+}
+
+DOCUMENT_EXTENSIONS = {".pdf", ".epub", ".djvu", ".mobi", ".cbz"}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"}
+VIDEO_EXTENSIONS = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv", ".wmv"}
+AUDIO_EXTENSIONS = {".mp3", ".flac", ".ogg", ".wav", ".m4a"}
+PLAYLIST_EXTENSIONS = {".m3u"}
+
+BOOKMARKS_FILE = (Path.home() / "d" / "notes" / "bm.md").resolve()
+PROJECTS_DIR = (Path.home() / "d" / "projects").resolve()
+
+def load_dmenu_config():
+    """Load dmenu arguments from config file"""
+    config_path = os.path.expanduser("~/.config/dmenu/config")
+    args = []
+    font = ""
+
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            for line in f:
+                if line.startswith("DMENU_BASIC_ARGS="):
+                    val = line.split("=", 1)[1].strip().strip('"')
+                    args.extend(val.split())
+                elif line.startswith("DMENU_FONT="):
+                    font = line.split("=", 1)[1].strip().strip('"')
+
+    return args, font
+
+def dmenu_select(options, args, font, prompt="Browse:"):
+    """Present options in dmenu and return selected."""
+    dmenu_input = "\n".join(options)
+
+    cmd = ["dmenu", "-p", prompt, "-i"] + args
+    if font:
+        cmd.extend(["-fn", font])
+
+    try:
+        result = subprocess.run(
+            cmd,
+            input=dmenu_input,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return None
+
+def list_directory(current_path):
+    options = [".."]
+    entries = []
+
+    try:
+        with os.scandir(current_path) as it:
+            for entry in it:
+                display_name = entry.name
+                if entry.is_dir(follow_symlinks=True):
+                    display_name = f"{display_name}/"
+                entries.append((display_name, entry.path))
+    except OSError:
+        pass
+
+    entries.sort(key=lambda x: (not x[0].endswith("/"), x[0].lower()))
+    options.extend([display for display, _ in entries])
+    mapping = {display: Path(path) for display, path in entries}
+
+    return options, mapping
+
+def open_file(path):
+    resolved = path.resolve()
+    if resolved == BOOKMARKS_FILE:
+        subprocess.Popen(["dmenu-bookmarks"])
+        return
+
+    ext = path.suffix.lower()
+    if ext in TEXT_EXTENSIONS:
+        subprocess.Popen(["emacsclient", "-c", "-a", "", str(path)])
+    elif ext in DOCUMENT_EXTENSIONS:
+        subprocess.Popen(["zathura", str(path)])
+    elif ext in IMAGE_EXTENSIONS:
+        subprocess.Popen(["sxiv", str(path)])
+    elif ext in PLAYLIST_EXTENSIONS or ext in AUDIO_EXTENSIONS:
+        subprocess.run(["mpc", "clear"], capture_output=True)
+        subprocess.run(["mpc", "add", str(path)], capture_output=True)
+        subprocess.Popen(["mpc", "play"])
+    elif ext in VIDEO_EXTENSIONS:
+        subprocess.Popen(["mpv", str(path)])
+    else:
+        subprocess.Popen(["xdg-open", str(path)])
+
+def is_project_dir(path):
+    """Check if path is a direct subdirectory of ~/d/projects"""
+    try:
+        path_resolved = path.resolve()
+        parent = path_resolved.parent.resolve()
+        return parent == PROJECTS_DIR
+    except (ValueError, OSError):
+        return False
+
+def open_project(path):
+    """Prompt to open project in emacsclient or antigravity"""
+    args, font = load_dmenu_config()
+    options = ["emacsclient", "antigravity"]
+    dmenu_input = "\n".join(options)
+    
+    cmd = ["dmenu", "-p", "Open project with:", "-i"] + args
+    if font:
+        cmd.extend(["-fn", font])
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            input=dmenu_input,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        choice = result.stdout.strip()
+        if choice == "emacsclient":
+            subprocess.Popen(["emacsclient", "-c", str(path)])
+        elif choice == "antigravity":
+            subprocess.Popen(["antigravity", str(path)])
+    except subprocess.CalledProcessError:
+        pass
+
+def normalize_path(raw_path):
+    expanded = os.path.expandvars(os.path.expanduser(raw_path))
+    return Path(expanded)
+
+def main():
+    start_path = Path.home() / "d"
+    if len(sys.argv) > 1:
+        start_path = normalize_path(sys.argv[1])
+
+    if not start_path.exists():
+        subprocess.run(["notify-send", "Error", f"Path not found: {start_path}"])
+        return
+
+    current_path = start_path
+    dmenu_args, dmenu_font = load_dmenu_config()
+
+    while True:
+        options, mapping = list_directory(current_path)
+        prompt = f"Browse {current_path}:"
+        selection = dmenu_select(options, dmenu_args, dmenu_font, prompt=prompt)
+
+        if not selection:
+            return
+
+        if selection == "..":
+            current_path = current_path.parent
+            continue
+
+        target = mapping.get(selection)
+        if not target:
+            manual_path = normalize_path(selection)
+            if manual_path.is_dir():
+                current_path = manual_path
+                continue
+            if manual_path.exists():
+                open_file(manual_path)
+            return
+
+        if selection.endswith("/") and target.is_dir():
+            # Check if it's a project directory
+            if is_project_dir(target):
+                open_project(target)
+                return
+            current_path = target
+            continue
+
+        open_file(target)
+        return
+
+if __name__ == "__main__":
+    main()

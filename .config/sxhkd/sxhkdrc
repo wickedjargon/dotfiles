@@ -128,6 +128,9 @@ super + i
 super + n
     dmenu-night-and-day
 
+# File explorer
+super + e
+    dmenu-explorer
 
 # ========== VOLUME CONTROLS ==========
 
