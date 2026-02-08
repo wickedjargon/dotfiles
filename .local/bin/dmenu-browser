@@ -1,7 +1,7 @@
 #!/bin/sh
 . ~/.config/dmenu/config
 
-case "$(printf " Firefox\n Firefox Private\n Tor Browser\n Bookmarks\n Gmail\n WhatsApp\n Telegram\n YouTube\n Search Google\n Search Yandex\n Search Wiby\n Search Wikipedia" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Open browser: ')" in
+case "$(printf " Firefox\n Firefox Private\n Tor Browser\n Bookmarks\n Gmail\n WhatsApp\n Telegram\n YouTube\n Search Google\n Search Yandex\n Search Wiby\n Search Wikipedia\n Search Youtube\n Search Yeetube" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Open browser: ')" in
     ' Firefox') firefox --new-window ;;
     ' Firefox Private') firefox --private-window ;;
     ' Tor Browser') tor-browser ;;
@@ -14,5 +14,7 @@ case "$(printf " Firefox\n Firefox Private\n Tor Browser\n Bookmarks\n Gmail\n W
     ' Search Yandex') dmenu-search-yandex ;;
     ' Search Wiby') dmenu-search-wiby ;;
     ' Search Wikipedia') dmenu-search-wikipedia ;;
+    ' Search Youtube') dmenu-search-youtube ;;
+    ' Search Yeetube') dmenu-search-yeetube ;;
     *) exit 1 ;;
 esac
