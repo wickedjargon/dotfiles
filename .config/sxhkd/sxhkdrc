@@ -47,11 +47,11 @@ super + a
     bspwm-wide
 
 # Preselect split direction
-super + {Left,Down,Up,Right}
+super + alt + {Left,Down,Up,Right}
     bspwm-smart-arrow {west,south,north,east}
 
 # Cancel preselection
-super + shift + {Left,Down,Up,Right}
+super + alt + space
     bspwm-smart-cancel
 
 # Resize window (left)
@@ -171,25 +171,29 @@ XF86MonBrightnessDown
 
 # ========== MEDIA CONTROLS ==========
 
+# MPD previous track
+super + Left
+    mpc prev && polybar-msg action "#mpd.hook.0"
+
+# MPD next track
+super + Right
+    mpc next && polybar-msg action "#mpd.hook.0"
+
 # MPD volume up
-super + {Prior,F9}
+super + Up
     mpc volume +5 && polybar-msg action "#mpd.hook.0"
 
 # MPD volume down
-super + {Next,F8}
+super + Down
     mpc volume -5 && polybar-msg action "#mpd.hook.0"
 
-# MPD previous track
-super + F10
-    mpc prev && polybar-msg action "#mpd.hook.0"
-
 # MPD play/pause toggle
-super + F11
+super + period
     mpc toggle && polybar-msg action "#mpd.hook.0"
 
-# MPD next track
-super + F12
-    mpc next && polybar-msg action "#mpd.hook.0"
+XF86Audio{Play,Pause}
+    mpc toggle && polybar-msg action "#mpd.hook.0"
+
 
 XF86Audio{Play,Pause}
     mpc toggle && polybar-msg action "#mpd.hook.0"
@@ -202,3 +206,5 @@ XF86AudioNext
 
 XF86AudioPrev
     mpc prev && polybar-msg action "#mpd.hook.0"
+
+
