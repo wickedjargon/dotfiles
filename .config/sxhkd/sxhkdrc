@@ -100,9 +100,9 @@ super + space
 super + m
     dmenu-text-editor
 
-# Browser
+# Web menu
 super + w
-    dmenu-browser
+    dmenu-web
 
 # Commands menu
 super + b
