@@ -109,11 +109,8 @@ ISBN: 9780198575191
 
 
 ## TODOS
-- [ ] `dmenu-documents-media` script should act as file navigator of entire home dir, but starting within `~/d/`
 - [ ] script to set alarm
 - [ ] script to insert calendar item using natural language processing (ex: "Doctor appointment next firday - 5pm" is parsed and calendar is updated). basic natural language can be done locally but use google's free api for more complex requests.
+- [ ] notifications regarding calendar items
 - [ ] set up research environment
-- [ ] script for youtube search using emacs+yeetube
-- [ ] dmenu-screen-shot-plus utility fails sometimes. add multiple attempts. same with upload-selection
-- [ ] remove most mpv keybindings as they are unused.
 - [ ] display volume change using graphical scale.
