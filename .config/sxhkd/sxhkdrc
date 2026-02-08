@@ -128,9 +128,6 @@ super + i
 super + n
     dmenu-night-and-day
 
-# Scripts launcher
-super + s
-    dmenu-scripts
 
 # ========== VOLUME CONTROLS ==========
 
