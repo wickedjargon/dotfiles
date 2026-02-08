@@ -72,7 +72,7 @@ class TestConvertRepo(unittest.TestCase):
     @patch('pathlib.Path.is_dir')
     def test_non_user_repo(self, mock_is_dir, mock_get_url):
         mock_is_dir.return_value = True
-        mock_get_url.return_value = "https://github.com/other/repo.git"
+        mock_get_url.return_value = "https://github.com/h/repo.git"
         
         result = ssh_setup.convert_repo(self.repo_path)
         
