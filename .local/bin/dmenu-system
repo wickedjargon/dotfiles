@@ -1,7 +1,7 @@
 #!/bin/sh
 . ~/.config/dmenu/config
 
-case "$(printf " lock\n kill X\n reboot\n poweroff\n hibernate\n display off\n logout\n reload desktop\n clean local bin\n deploy dotfiles" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Action: ')" in
+case "$(printf " lock\n screenshot\n kill X\n reboot\n poweroff\n hibernate\n display off\n logout\n reload desktop\n clean local bin\n deploy dotfiles" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Action: ')" in
     ' lock') slock ;;
     ' kill X') pkill X ;;
     ' reboot') systemctl reboot -i ;;
@@ -12,5 +12,6 @@ case "$(printf " lock\n kill X\n reboot\n poweroff\n hibernate\n display off\n l
     ' reload desktop') reload-desktop ;;
     ' clean local bin') clean-local-bin ;;
     ' deploy dotfiles') deploy-dotfiles ;;
+    ' screenshot') dmenu-screenshot ;;
     *) exit 1 ;;
 esac
