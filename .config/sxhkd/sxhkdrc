@@ -132,6 +132,10 @@ super + n
 super + e
     dmenu-explorer
 
+# Scripts menu
+super + s
+    dmenu-explorer "~/.local/bin/" --run-executables
+
 # ========== VOLUME CONTROLS ==========
 
 # Volume up

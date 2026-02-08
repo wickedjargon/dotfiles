@@ -1,3 +1,30 @@
+# Environment Variables
+set -gx EDITOR vis
+set -gx BROWSER firefox
+set -gx SUDO_EDITOR vis
+set -gx OCEN_ROOT $HOME/.local/src/ocen
+set -gx JAVA_HOME /usr/lib/jvm/default
+set -gx ZED_ALLOW_EMULATED_GPU 1
+
+# QT Theme
+set -gx QT_QPA_PLATFORMTHEME qt5ct
+set -gx QT_QPA_PLATFORMTHEME_QT6 qt6ct
+
+# PATH (appending to preserve order from bashrc loop)
+fish_add_path -a /usr/sbin
+fish_add_path -a /sbin
+fish_add_path -a $HOME/.local/bin
+fish_add_path -a $HOME/.cargo/bin
+fish_add_path -a /usr/local/go/bin
+fish_add_path -a $HOME/go/bin
+fish_add_path -a $HOME/.ghcup/bin
+fish_add_path -a $OCEN_ROOT/bin
+fish_add_path -a $OCEN_ROOT/bootstrap
+fish_add_path -a $HOME/.local/src/v
+fish_add_path -a $HOME/.asdf/shims
+fish_add_path -a $HOME/.dotnet/tools
+fish_add_path -a $JAVA_HOME/bin
+
 if status is-interactive
     # Disable inline autosuggestions
     set -g fish_autosuggestion_enabled 0
@@ -42,19 +69,6 @@ if status is-interactive
     alias r="rlwrap"
     alias android-emulator="~/Android/Sdk/emulator/emulator -avd Medium_Phone_API_36 -snapshot default_boot"
     alias neofetch="fastfetch"
-
-    # Environment Variables
-    set -gx EDITOR vis
-    set -gx BROWSER firefox
-    set -gx SUDO_EDITOR vis
-    set -gx OCEN_ROOT $HOME/.local/src/ocen
-    set -gx JAVA_HOME /usr/lib/jvm/default
-    set -gx ZED_ALLOW_EMULATED_GPU 1
-    
-    # QT Theme
-    set -gx QT_QPA_PLATFORMTHEME qt5ct
-    set -gx QT_QPA_PLATFORMTHEME_QT6 qt6ct
-
     # Prompt
     function fish_prompt
         set_color -o green
@@ -68,21 +82,6 @@ if status is-interactive
         echo -n '$ '
     end
 
-    # PATH (appending to preserve order from bashrc loop)
-    # Bash loop: export PATH=$PATH:$apath
-    fish_add_path -a /usr/sbin
-    fish_add_path -a /sbin
-    fish_add_path -a $HOME/.local/bin
-    fish_add_path -a $HOME/.cargo/bin
-    fish_add_path -a /usr/local/go/bin
-    fish_add_path -a $HOME/go/bin
-    fish_add_path -a $HOME/.ghcup/bin
-    fish_add_path -a $OCEN_ROOT/bin
-    fish_add_path -a $OCEN_ROOT/bootstrap
-    fish_add_path -a $HOME/.local/src/v
-    fish_add_path -a $HOME/.asdf/shims
-    fish_add_path -a $HOME/.dotnet/tools
-    fish_add_path -a $JAVA_HOME/bin
 
     # Secrets
     if test -f ~/.secrets

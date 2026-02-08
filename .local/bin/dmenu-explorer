@@ -9,6 +9,7 @@ Dmenu-based file navigator with basic file associations.
 - Directories open within dmenu; files open with associated apps.
 """
 
+import argparse
 import os
 import subprocess
 import sys
@@ -88,10 +89,14 @@ def list_directory(current_path):
 
     return options, mapping
 
-def open_file(path):
+def open_file(path, run_executables=False):
     resolved = path.resolve()
     if resolved == BOOKMARKS_FILE:
         subprocess.Popen(["dmenu-bookmarks"])
+        return
+
+    if run_executables and path.is_file() and os.access(path, os.X_OK):
+        subprocess.Popen([str(path)], cwd=str(path.parent))
         return
 
     ext = path.suffix.lower()
@@ -181,9 +186,18 @@ def normalize_path(raw_path):
     return Path(expanded)
 
 def main():
+    parser = argparse.ArgumentParser(description="Dmenu-based file navigator")
+    parser.add_argument("start_path", nargs="?", default=None)
+    parser.add_argument(
+        "--run-executables",
+        action="store_true",
+        help="Run executable files when selected",
+    )
+    args = parser.parse_args()
+
     start_path = Path.home() / "d"
-    if len(sys.argv) > 1:
-        start_path = normalize_path(sys.argv[1])
+    if args.start_path:
+        start_path = normalize_path(args.start_path)
 
     if not start_path.exists():
         subprocess.run(["notify-send", "Error", f"Path not found: {start_path}"])
@@ -211,7 +225,7 @@ def main():
                 current_path = manual_path
                 continue
             if manual_path.exists():
-                open_file(manual_path)
+                open_file(manual_path, run_executables=args.run_executables)
             return
 
         if selection.endswith("/") and target.is_dir():
@@ -222,7 +236,7 @@ def main():
             current_path = target
             continue
 
-        open_file(target)
+        open_file(target, run_executables=args.run_executables)
         return
 
 if __name__ == "__main__":
