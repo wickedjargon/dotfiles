@@ -109,6 +109,7 @@ ISBN: 9780198575191
 
 
 ## TODOS
+- [ ] common colors among bspwm, dmenu, bspwm, XOB, etc should be inherited from a dot file or system variable.
 - [ ] script to set alarm
 - [ ] script to insert calendar item using natural language processing (ex: "Doctor appointment next firday - 5pm" is parsed and calendar is updated). basic natural language can be done locally but use google's free api for more complex requests.
 - [ ] notifications regarding calendar items
