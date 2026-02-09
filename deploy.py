@@ -1353,6 +1353,19 @@ def main_tui(stdscr):
         tui.show_progress(row, "Installing Firefox extensions...", success=True)
         row += 1
 
+    # Cleanup - remove unnecessary packages and clean apt cache
+    tui.show_progress(row, "Cleaning up...", success=None)
+    tui.stdscr.refresh()
+    
+    try:
+        subprocess.run(['apt-get', 'clean'], check=True, capture_output=True)
+        subprocess.run(['apt-get', 'autoremove', '-y'], check=True, capture_output=True)
+        tui.show_progress(row, "Cleaning up...", success=True)
+    except subprocess.CalledProcessError as e:
+        log_error("Cleanup failed", e)
+        tui.show_progress(row, "Cleaning up...", success=False)
+    row += 1
+
     # Final message - ensure it's visible even if row exceeds terminal height
     row += 2
     final_row = min(row, tui.height - 3)  # Leave room for both messages
