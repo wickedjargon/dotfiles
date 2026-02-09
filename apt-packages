@@ -101,6 +101,8 @@ libx11-dev               # X11 client library development files
 libxft-dev               # FreeType-based font rendering library
 libxinerama-dev          # Multi-monitor X extension library
 libxfixes-dev            # X11 Xfixes extension library (for clipmenu)
+libconfig-dev            # Configuration file library (for xob)
+libxrender-dev           # X11 Render extension library (for xob)
 
 # Window Manager & Terminal (BSPWM + Alacritty)
 bspwm                    # Binary space partitioning window manager
