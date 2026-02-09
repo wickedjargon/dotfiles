@@ -132,6 +132,10 @@ super + n
 super + e
     dmenu-explorer
 
+# Audio explorer
+super + comma
+    dmenu-explorer ~/d/audio/
+
 # Scripts menu
 super + s
     dmenu-explorer "~/.local/bin/" --run-executables
