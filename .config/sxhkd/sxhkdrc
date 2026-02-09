@@ -134,7 +134,7 @@ super + e
 
 # Audio explorer
 super + comma
-    dmenu-explorer ~/d/audio/
+    dmenu-explorer ~/d/audio/; mpd-notification
 
 # Scripts menu
 super + s
@@ -177,11 +177,11 @@ XF86MonBrightnessDown
 
 # MPD previous track
 super + Left
-    mpc prev && polybar-msg action "#mpd.hook.0"
+    mpc prev && polybar-msg action "#mpd.hook.0"; mpd-notification
 
 # MPD next track
 super + Right
-    mpc next && polybar-msg action "#mpd.hook.0"
+    mpc next && polybar-msg action "#mpd.hook.0"; mpd-notification
 
 # MPD volume up
 super + Up
@@ -193,7 +193,7 @@ super + Down
 
 # MPD play/pause toggle
 super + period
-    mpc toggle && polybar-msg action "#mpd.hook.0"
+    mpc toggle && polybar-msg action "#mpd.hook.0"; mpd-notification
 
 XF86Audio{Play,Pause}
     mpc toggle && polybar-msg action "#mpd.hook.0"
@@ -206,9 +206,9 @@ XF86AudioStop
     mpc stop && polybar-msg action "#mpd.hook.0"
 
 XF86AudioNext
-    mpc next && polybar-msg action "#mpd.hook.0"
+    mpc next && polybar-msg action "#mpd.hook.0"; mpd-notification
 
 XF86AudioPrev
-    mpc prev && polybar-msg action "#mpd.hook.0"
+    mpc prev && polybar-msg action "#mpd.hook.0"; mpd-notification
 
 

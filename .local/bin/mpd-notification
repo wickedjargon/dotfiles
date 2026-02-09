@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# mpd-notification: Send a notification with the currently playing MPD track.
+# Only sends a notification if MPD is in the 'playing' state.
+
+# Handle cases where mpc might not be installed or MPD not running
+if ! command -v mpc >/dev/null 2>&1; then
+    exit 0
+fi
+
+# Check if MPD is currently playing (with a small delay to catch state change)
+sleep 0.1
+if mpc status | grep -q "\[playing\]"; then
+    # Extract track info. 'mpc current' usually returns "Artist - Title" 
+    # or just filename if tags are missing.
+    track=$(mpc current)
+    
+    if [ -n "$track" ]; then
+        # Send notification with a 2-second timeout
+        notify-send -t 2000 "Now Playing" "$track"
+    fi
+fi
