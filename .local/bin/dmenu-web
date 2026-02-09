@@ -19,5 +19,6 @@ case "$(printf " Firefox\n Firefox Private\n Tor Browser\n Bookmarks\n Upload Se
     ' Search Wikipedia') dmenu-search-wikipedia ;;
     ' Search Youtube') dmenu-search-youtube ;;
     ' Search Yeetube') dmenu-search-yeetube ;;
+    ' Youtube to mpv') browser-to-mpv ;;
     *) exit 1 ;;
 esac
