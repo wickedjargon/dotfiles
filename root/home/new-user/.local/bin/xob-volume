@@ -10,19 +10,30 @@ if [ ! -p "$PIPE" ]; then
     exit 1
 fi
 
+# Get current volume percentage
+current=$(pactl get-sink-volume @DEFAULT_SINK@ | head -n1 | grep -o '[0-9]\+%' | head -n1 | tr -d '%')
+
 case "$1" in
     up)
-        pactl set-sink-volume @DEFAULT_SINK@ +5%
+        # Round down to nearest 5, then add 5
+        target=$(( (current / 5) * 5 + 5 ))
+        # Cap at 150%
+        [ "$target" -gt 150 ] && target=150
+        pactl set-sink-volume @DEFAULT_SINK@ "${target}%"
         ;;
     down)
-        pactl set-sink-volume @DEFAULT_SINK@ -5%
+        # Round up to nearest 5, then subtract 5
+        target=$(( ((current + 4) / 5) * 5 - 5 ))
+        # Floor at 0%
+        [ "$target" -lt 0 ] && target=0
+        pactl set-sink-volume @DEFAULT_SINK@ "${target}%"
         ;;
     mute)
         pactl set-sink-mute @DEFAULT_SINK@ toggle
         ;;
 esac
 
-# Get volume percentage (first occurrence)
+# Get updated volume percentage
 vol=$(pactl get-sink-volume @DEFAULT_SINK@ | head -n1 | grep -o '[0-9]\+%' | head -n1 | tr -d '%')
 
 # Get mute status
