@@ -183,7 +183,7 @@ def create_user(username):
         subprocess.run([
             'useradd',
             '-m',  # Create home directory
-            '-s', '/usr/bin/fish',  # Set default shell
+            '-s', '/bin/bash',  # Set default shell
             username
         ], check=True, capture_output=True)
         return True, None

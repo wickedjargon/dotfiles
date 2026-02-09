@@ -27,7 +27,7 @@ class TestDeploySystem(unittest.TestCase):
         
         # Verify call args
         mock_run.assert_called_with(
-            ['useradd', '-m', '-s', '/usr/bin/fish', 'testuser'],
+            ['useradd', '-m', '-s', '/bin/bash', 'testuser'],
             check=True,
             capture_output=True
         )
