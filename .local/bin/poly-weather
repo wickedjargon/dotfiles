@@ -97,10 +97,14 @@ def process_precipitation(data):
             if val is not None and val > 0:
                 probs.append(f"🧊{val}%")
                 
-        # Fallback to general probability if specific ones are missing or 0 but general is > 0?
-        # User said "use them instead", implied replacement.
-        # But if we don't request them, they won't be there. We need to update fetch_weather too.
-        
+        # Fallback to general probability if specific ones are missing or 0 but general is > 0
+        if not probs and "precipitation_probability" in hourly:
+            val = hourly["precipitation_probability"][current_hour]
+            if val is not None and val > 0:
+                # Use a specific icon for general precipitation or just reuse rain?
+                # Using rain icon for now as a reasonable default for general precip
+                probs.append(f"🌧️{val}%")
+
         if probs:
             print(" ".join(probs))
             
