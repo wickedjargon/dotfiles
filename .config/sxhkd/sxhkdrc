@@ -140,24 +140,24 @@ super + s
 
 # Volume up
 super + equal
-    pactl set-sink-volume @DEFAULT_SINK@ +5%
+    xob-volume up
 
 XF86AudioRaiseVolume
-    pactl set-sink-volume @DEFAULT_SINK@ +5%
+    xob-volume up
 
 # Volume down
 super + minus
-    pactl set-sink-volume @DEFAULT_SINK@ -5%
+    xob-volume down
 
 XF86AudioLowerVolume
-    pactl set-sink-volume @DEFAULT_SINK@ -5%
+    xob-volume down
 
 # Mute toggle
 super + 0
-    pactl set-sink-mute @DEFAULT_SINK@ toggle
+    xob-volume mute
 
 XF86AudioMute
-    pactl set-sink-mute @DEFAULT_SINK@ toggle
+    xob-volume mute
 
 # ========== BRIGHTNESS CONTROLS ==========
 
@@ -181,11 +181,11 @@ super + Right
 
 # MPD volume up
 super + Up
-    mpc volume +5 && polybar-msg action "#mpd.hook.0"
+    xob-mpd up; polybar-msg action "#mpd.hook.0"
 
 # MPD volume down
 super + Down
-    mpc volume -5 && polybar-msg action "#mpd.hook.0"
+    xob-mpd down; polybar-msg action "#mpd.hook.0"
 
 # MPD play/pause toggle
 super + period

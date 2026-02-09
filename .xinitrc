@@ -19,4 +19,11 @@ clipmenud &  # Start clipmenu daemon
 unclutter -idle 1 &  # makes cursor disappear
 # uncomment when ready to install emacs packages
 # emacs --daemon & # emacs server
+
+# Start xob
+if [ ! -p /tmp/xobpipe ]; then
+    mkfifo /tmp/xobpipe
+fi
+tail -f /tmp/xobpipe | xob &
+
 exec dbus-run-session bspwm

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Control volume and update xob
+# Usage: xob-volume [up|down|mute]
+
+PIPE="/tmp/xobpipe"
+
+# Ensure pipe exists to avoid errors, though .xinitrc should manage it
+if [ ! -p "$PIPE" ]; then
+    exit 1
+fi
+
+case "$1" in
+    up)
+        pactl set-sink-volume @DEFAULT_SINK@ +5%
+        ;;
+    down)
+        pactl set-sink-volume @DEFAULT_SINK@ -5%
+        ;;
+    mute)
+        pactl set-sink-mute @DEFAULT_SINK@ toggle
+        ;;
+esac
+
+# Get volume percentage (first occurrence)
+vol=$(pactl get-sink-volume @DEFAULT_SINK@ | head -n1 | grep -o '[0-9]\+%' | head -n1 | tr -d '%')
+
+# Get mute status
+mute_status=$(pactl get-sink-mute @DEFAULT_SINK@)
+
+# Write to pipe with timeout to prevent hanging if xob isn't reading
+if [[ "$mute_status" == *"yes"* ]]; then
+    timeout 0.2s bash -c "echo \"${vol}!\" > $PIPE"
+else
+    timeout 0.2s bash -c "echo \"$vol\" > $PIPE"
+fi
