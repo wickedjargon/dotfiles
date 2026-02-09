@@ -265,7 +265,11 @@ def main():
 
     while True:
         options, mapping = list_directory(current_path)
-        prompt = f"Browse {current_path}:"
+        dir_name = current_path.name or str(current_path)
+        max_len = 40
+        if len(dir_name) > max_len:
+            dir_name = dir_name[:max_len] + "..."
+        prompt = f"{dir_name}:"
         selection = dmenu_select(options, dmenu_args, dmenu_font, prompt=prompt)
 
         if not selection:
