@@ -47,20 +47,12 @@ https://github.com/user/zsh.git .zsh
             self.assertEqual(repos[0], ("https://github.com/user/vim.git", ".vim"))
             self.assertEqual(repos[1], ("https://github.com/user/zsh.git", ".zsh"))
 
-    @patch('pathlib.Path.exists')
-    def test_read_copy_these_file(self, mock_exists):
-        mock_exists.return_value = True
-        # Mock content of copy-these
-        content = """
-/file1
-/.config/dir1
-"""
-        with patch('builtins.open', mock_open(read_data=content)):
-            files = deploy.read_copy_these_file(Path("/tmp"))
-            
-            self.assertEqual(len(files), 2)
-            self.assertIn("file1", files) # Leading slash removal check
-            self.assertIn(".config/dir1", files)
+    def test_get_home_dotfiles_dir(self):
+        # Test that get_home_dotfiles_dir returns correct path
+        script_dir = Path("/tmp/dotfiles")
+        result = deploy.get_home_dotfiles_dir(script_dir)
+        expected = script_dir / 'root' / 'home' / 'new-user'
+        self.assertEqual(result, expected)
 
     @patch('pathlib.Path.exists')
     def test_parsing_edge_cases(self, mock_exists):

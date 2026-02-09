@@ -32,7 +32,7 @@ def import_script(path):
 
 
 def get_script_path(script_name):
-    """Get the absolute path to a script in .local/bin.
+    """Get the absolute path to a script in root/home/new-user/.local/bin.
     
     Args:
         script_name: Name of the script (e.g., 'battery-warnings')
@@ -41,4 +41,4 @@ def get_script_path(script_name):
         Absolute path to the script
     """
     tests_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(tests_dir, '..', '.local', 'bin', script_name)
+    return os.path.join(tests_dir, '..', 'root', 'home', 'new-user', '.local', 'bin', script_name)

@@ -9,7 +9,7 @@ from pathlib import Path
 # Configuration
 # The repo path is relative to the user's home directory
 REPO_PATH = Path.home() / "d/projects/dotfiles"
-MANIFEST_FILE = REPO_PATH / "copy-these"
+DOTFILES_DIR = REPO_PATH / "root" / "home" / "new-user"
 
 def notify(message, urgency="normal"):
     """Send a notification using notify-send if available"""
@@ -17,8 +17,8 @@ def notify(message, urgency="normal"):
         subprocess.run(["notify-send", "-u", urgency, "Dotfiles Deploy", message])
 
 def deploy():
-    if not MANIFEST_FILE.exists():
-        msg = f"Error: Manifest file not found at {MANIFEST_FILE}"
+    if not DOTFILES_DIR.exists():
+        msg = f"Error: Dotfiles directory not found at {DOTFILES_DIR}"
         print(msg)
         notify(msg, "critical")
         sys.exit(1)
@@ -29,23 +29,11 @@ def deploy():
     error_count = 0
 
     try:
-        with open(MANIFEST_FILE) as f:
-            lines = f.readlines()
-
-        for line in lines:
-            line = line.strip()
-            # Skip empty lines and comments
-            if not line or line.startswith("#"):
-                continue
-            
-            # Remove leading / for relative path (e.g. /.bashrc -> .bashrc)
-            rel_path = line.lstrip("/")
-            src = REPO_PATH / rel_path
+        # Iterate over all items in the dotfiles directory
+        for item in DOTFILES_DIR.iterdir():
+            rel_path = item.name
+            src = item
             dst = Path.home() / rel_path
-            
-            if not src.exists():
-                print(f"Skipping missing source: {src}")
-                continue
             
             # Prepare rsync command
             # -a: archive (recursive, preserves permissions/times/etc)
@@ -85,3 +73,4 @@ def deploy():
 
 if __name__ == "__main__":
     deploy()
+

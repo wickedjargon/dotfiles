@@ -498,40 +498,12 @@ def read_packages_file(script_dir):
     return packages
 
 
-def read_copy_these_file(script_dir):
-    """Read dotfile paths from copy-these file
-    Format: Files/directories to copy, one per line (e.g., /.bashrc, /.config/)
-    Leading / is removed to get path relative to repo
+def get_home_dotfiles_dir(script_dir):
+    """Get the path to the home dotfiles directory.
+    The directory structure mirrors a Linux system: root/home/new-user/
+    Returns the path to script_dir/root/home/new-user
     """
-    copy_these_file = script_dir / 'copy-these'
-    if not copy_these_file.exists():
-        return []
-
-    paths = []
-    with open(copy_these_file, 'r') as f:
-        for line_num, line in enumerate(f, 1):
-            line = line.strip()
-            # Skip empty lines and full-line comments
-            if not line or line.startswith('#'):
-                continue
-
-            # Handle inline comments
-            if '#' in line:
-                line = line.split('#')[0].strip()
-
-            if line:
-                # Remove leading / to get relative path
-                if line.startswith('/'):
-                    line = line[1:]
-
-                # Validate path safety
-                if not is_safe_dest_path(line):
-                    print(f"Warning: Skipping unsafe path at line {line_num}: {line}", file=sys.stderr)
-                    continue
-
-                paths.append(line)
-
-    return paths
+    return script_dir / 'root' / 'home' / 'new-user'
 
 
 def is_package_installed(package_name):
@@ -713,18 +685,17 @@ def deploy_dotfiles(username, script_dir):
 
     deployments = []
 
-    # Read dotfiles to deploy from copy-these file
-    dotfiles_to_deploy = read_copy_these_file(script_dir)
+    # Get dotfiles directory (root/home/new-user)
+    dotfiles_dir = get_home_dotfiles_dir(script_dir)
+    
+    if not dotfiles_dir.exists():
+        return False, f"Dotfiles directory doesn't exist: {dotfiles_dir}", None, []
 
-    # Build deployment list from copy-these entries
-    for relative_path in dotfiles_to_deploy:
-        src = script_dir / relative_path
+    # Build deployment list from directory contents
+    for item in dotfiles_dir.iterdir():
+        relative_path = item.name
+        src = item
         dst = home_dir / relative_path
-
-        # Skip if source doesn't exist
-        if not src.exists():
-            print(f"Warning: Source path doesn't exist: {relative_path}", file=sys.stderr)
-            continue
 
         # Create display name (with ~/ for home directory paths)
         if relative_path.startswith('.'):

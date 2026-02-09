@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 # Import the script source directly since it has no extension
-SCRIPT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../.local/bin/rofi-sxhkd-help'))
+SCRIPT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../root/home/new-user/.local/bin/rofi-sxhkd-help'))
 
 if not os.path.exists(SCRIPT_PATH):
     raise FileNotFoundError(f"Script not found at {SCRIPT_PATH}")

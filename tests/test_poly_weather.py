@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 
 # Add local bin to path to import poly-weather
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../.local/bin')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../root/home/new-user/.local/bin')))
 
 # Import the module - name is 'poly-weather' (no .py), so we use importlib or just strict import if we renamed it. 
 # Since it has no extension, we can use importlib.util
@@ -17,7 +17,7 @@ from importlib.machinery import SourceFileLoader
 # Ensure we get the absolute path to the script correctly
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(TEST_DIR)
-SCRIPT_PATH = os.path.join(PROJECT_ROOT, '.local', 'bin', 'poly-weather')
+SCRIPT_PATH = os.path.join(PROJECT_ROOT, 'root', 'home', 'new-user', '.local', 'bin', 'poly-weather')
 
 if not os.path.exists(SCRIPT_PATH):
     raise FileNotFoundError(f"Could not find poly-weather script at {SCRIPT_PATH}")

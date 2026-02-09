@@ -26,47 +26,51 @@ class TestDeployCore(unittest.TestCase):
     # but no actual assertions. The simpler test_deploy_dotfiles_simple provides
     # adequate coverage for the core deployment logic.
 
-    @patch('deploy.read_copy_these_file')
+    @patch('deploy.get_home_dotfiles_dir')
     @patch('shutil.copy2')
     @patch('shutil.move')
     @patch('subprocess.run')
-    def test_deploy_dotfiles_simple(self, mock_run, mock_move, mock_copy2, mock_read_copy):
+    def test_deploy_dotfiles_simple(self, mock_run, mock_move, mock_copy2, mock_get_dir):
         # A simpler test that mocks the Path objects used in the loop
+        import tempfile
         
-        # Mock paths
-        mock_read_copy.return_value = ['.bashrc']
-        
-        with patch('pathlib.Path.exists') as mock_exists:
-            with patch('pathlib.Path.is_dir') as mock_is_dir:
-                 with patch('pathlib.Path.mkdir') as mock_mkdir:
-                     with patch('deploy.get_backup_dir') as mock_get_backup:
-                        
-                        # Home exists
-                        # Source exists
-                        # Dest exists (trigger backup)
-                        # Source is file (not dir)
-                        mock_exists.return_value = True
-                        mock_is_dir.return_value = False
-                        
-                        mock_backup_dir = MagicMock()
-                        mock_get_backup.return_value = mock_backup_dir
-                        
-                        success, error, backup, items = deploy.deploy_dotfiles(self.username, self.script_dir)
-                        
-                        self.assertTrue(success)
-                        
-                        # Verify backup
-                        mock_get_backup.assert_called_once()
-                        mock_move.assert_called_once()
-                        
-                        # Verify copy
-                        mock_copy2.assert_called_once()
-                        
-                        # Verify chown
-                        self.assertGreaterEqual(mock_run.call_count, 1)
-                        # Check for chown call
-                        args, _ = mock_run.call_args_list[0]
-                        self.assertEqual(args[0][0], 'chown')
+        # Create a temp directory with dotfiles
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dotfiles_dir = Path(tmpdir) / "root" / "home" / "new-user"
+            dotfiles_dir.mkdir(parents=True)
+            bashrc = dotfiles_dir / ".bashrc"
+            bashrc.touch()
+            
+            mock_get_dir.return_value = dotfiles_dir
+            
+            with patch('pathlib.Path.exists') as mock_exists:
+                with patch('pathlib.Path.is_dir') as mock_is_dir:
+                    with patch('pathlib.Path.mkdir') as mock_mkdir:
+                        with patch('deploy.get_backup_dir') as mock_get_backup:
+                            
+                            # Home exists, Dest exists (trigger backup)
+                            mock_exists.return_value = True
+                            mock_is_dir.return_value = False
+                            
+                            mock_backup_dir = MagicMock()
+                            mock_get_backup.return_value = mock_backup_dir
+                            
+                            success, error, backup, items = deploy.deploy_dotfiles(self.username, self.script_dir)
+                            
+                            self.assertTrue(success)
+                            
+                            # Verify backup
+                            mock_get_backup.assert_called_once()
+                            mock_move.assert_called_once()
+                            
+                            # Verify copy
+                            mock_copy2.assert_called_once()
+                            
+                            # Verify chown
+                            self.assertGreaterEqual(mock_run.call_count, 1)
+                            # Check for chown call
+                            args, _ = mock_run.call_args_list[0]
+                            self.assertEqual(args[0][0], 'chown')
 
     @patch('pathlib.Path.mkdir')
     @patch('subprocess.run')

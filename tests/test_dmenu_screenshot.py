@@ -9,7 +9,7 @@ from importlib.machinery import SourceFileLoader
 # Load module from path
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(TEST_DIR)
-SCRIPT_PATH = os.path.join(PROJECT_ROOT, '.local', 'bin', 'dmenu-screenshot')
+SCRIPT_PATH = os.path.join(PROJECT_ROOT, 'root', 'home', 'new-user', '.local', 'bin', 'dmenu-screenshot')
 
 if not os.path.exists(SCRIPT_PATH):
     raise FileNotFoundError(f"Could not find script at {SCRIPT_PATH}")
