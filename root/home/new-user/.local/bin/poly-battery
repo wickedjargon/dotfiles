@@ -10,7 +10,7 @@ def main():
         capacity_path = "/sys/class/power_supply/BAT0/capacity"
         
         if not os.path.exists(status_path) or not os.path.exists(capacity_path):
-            print("No Battery")
+            print("")
             return
 
         with open(status_path, "r") as f:
@@ -29,7 +29,7 @@ def main():
         print(f"{icon} {capacity}%")
         
     except Exception:
-        print("Error")
+        print("")
 
 if __name__ == "__main__":
     main()

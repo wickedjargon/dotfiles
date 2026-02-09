@@ -36,7 +36,7 @@ class TestPolyBattery(unittest.TestCase):
         
         output = self.run_main_capture_output()
         
-        self.assertEqual(output, "No Battery")
+        self.assertEqual(output, "")
 
     @patch('builtins.open', mock_open())
     @patch('os.path.exists')
@@ -110,14 +110,14 @@ class TestPolyBattery(unittest.TestCase):
 
     @patch('os.path.exists')
     def test_error_handling(self, mock_exists):
-        """Test that exceptions result in 'Error' output."""
+        """Test that exceptions result in empty output."""
         mock_exists.return_value = True
         
         # Make open raise an exception
         with patch('builtins.open', side_effect=IOError("Read error")):
             output = self.run_main_capture_output()
         
-        self.assertEqual(output, "Error")
+        self.assertEqual(output, "")
 
 
 if __name__ == '__main__':

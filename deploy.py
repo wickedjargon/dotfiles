@@ -630,6 +630,20 @@ def install_packages(packages, tui, start_row):
         log_error("Failed to update package cache", e)
         return False, "Failed to update package cache", start_row + 1
 
+    # Upgrade existing packages
+    tui.show_progress(start_row, "Upgrading system packages...", success=None)
+    tui.stdscr.refresh()
+
+    try:
+        subprocess.run(['apt-get', 'upgrade', '-y'],
+                      check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        tui.show_progress(start_row, "Upgrading system packages...", success=True)
+        start_row += 1
+    except subprocess.CalledProcessError as e:
+        tui.show_progress(start_row, "Upgrading system packages...", success=False)
+        log_error("Failed to upgrade system packages", e)
+        return False, "Failed to upgrade system packages", start_row + 1
+
     # Install packages one by one
     failed_packages = []
 
