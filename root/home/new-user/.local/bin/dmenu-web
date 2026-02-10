@@ -3,7 +3,7 @@
 
 # web-related scripts and packages go here
 
-case "$(printf "Firefox\nFirefox Private\nTor Browser\nBookmarks\nUpload Selection\nGmail\nWhatsApp\nTelegram\nYouTube\nSearch Google\nSearch Yandex\nSearch Wiby\nSearch Wikipedia\nSearch YouTube\nSearch Yeetube\nYouTube to MPV" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Web:')" in
+case "$(printf "Firefox\nFirefox Private\nTor Browser\nBookmarks\nUpload Selection\nGmail\nWhatsApp\nTelegram\nYouTube\nGoogle Calendar\nSearch Google\nSearch Yandex\nSearch Wiby\nSearch Wikipedia\nSearch YouTube\nSearch Yeetube\nYouTube to MPV" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Web:')" in
     'Firefox') firefox --new-window ;;
     'Firefox Private') firefox --private-window ;;
     'Tor Browser') tor-browser ;;
@@ -13,6 +13,7 @@ case "$(printf "Firefox\nFirefox Private\nTor Browser\nBookmarks\nUpload Selecti
     'WhatsApp') firefox --new-window "https://web.whatsapp.com/" ;;
     'Telegram') firefox --new-window "https://web.telegram.org/" ;;
     'YouTube') firefox --new-window "https://www.youtube.com/" ;;
+    'Google Calendar') firefox --new-window "https://calendar.google.com/" ;;
     'Search Google') dmenu-search-google ;;
     'Search Yandex') dmenu-search-yandex ;;
     'Search Wiby') dmenu-search-wiby ;;
