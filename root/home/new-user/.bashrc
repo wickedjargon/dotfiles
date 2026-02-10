@@ -1,10 +1,8 @@
 # exports
 export EDITOR="vis"
-export BROWSER="firefox"
 export SUDO_EDITOR="vis"
-export OCEN_ROOT=$HOME/.local/src/ocen
+export BROWSER="firefox"
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-export ZED_ALLOW_EMULATED_GPU=1
 
 # qt theme
 export QT_QPA_PLATFORMTHEME=qt5ct
@@ -55,6 +53,3 @@ PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
 
 # auto complete with tab
 [ -r /usr/share/bash-completion/bash_completion ] && . /usr/share/bash-completion/bash_completion
-
-
-if [ -f ~/.secrets ] ; then source ~/.secrets ; fi
