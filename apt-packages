@@ -54,6 +54,7 @@ alsa-topology-conf       # ALSA topology configuration files
 alsa-ucm-conf            # ALSA Use Case Manager configuration
 mpc                      # Command-line MPD client
 mpd                      # Music Player Daemon
+bash-completion          # bash tab completion
 
 # Bluetooth
 bluez                    # Bluetooth tools and daemons
