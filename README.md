@@ -35,11 +35,15 @@ If you copied your SSH keys in Step 2, login to new user and convert your wicked
 python3 setup-ssh-repos.py
 ```
 
-### Step 5: Setup firefox extensions
+### Step 5: Setup Google API for dmenu-gcal
+
+copy `credentials.json` to `~/.config/dmenu-gcal/`
+
+### Step 6: Setup firefox extensions
 
 - launch firefox to trigger extension installation
 
-### step 6: set up bluetooth devices
+### Step 7: set up bluetooth devices
 
 ```
 sudo systemctl enable --now bluetooth
@@ -59,6 +63,10 @@ systemctl --user restart wireplumber pipewire pipewire-pulse
 - pair bluetooth devices
 
 ## TODOS
+- [x] reverting my shell from fish back to bash.
+- [x] poly-weather should not display anything when it has no internet connection
+- [ ] poly-weather should display rain right now, but it is not
+- [ ] volume control should only show multiples of 5.
 - [ ] common colors among bspwm, dmenu, bspwm, XOB, etc should be inherited from a dot file or system variable like `$DESKTOP_THEME_BG_COLOR`, etc.
 - [ ] script to insert calendar item using natural language processing (ex: "Doctor appointment next firday - 5pm" is parsed and calendar is updated). basic natural language can be done locally but use google's free api for more complex requests.
 - [ ] script to set alarm (might not need this if google integration works)
