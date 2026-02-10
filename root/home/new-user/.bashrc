@@ -3,7 +3,7 @@ export EDITOR="vis"
 export BROWSER="firefox"
 export SUDO_EDITOR="vis"
 export OCEN_ROOT=$HOME/.local/src/ocen
-export JAVA_HOME=/usr/lib/jvm/default
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 export ZED_ALLOW_EMULATED_GPU=1
 
 # qt theme
