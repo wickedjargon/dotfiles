@@ -3,22 +3,22 @@
 
 # web-related scripts and packages go here
 
-case "$(printf " Firefox\n Firefox Private\n Tor Browser\n Bookmarks\n Upload Selection\n Gmail\n WhatsApp\n Telegram\n YouTube\n Search Google\n Search Yandex\n Search Wiby\n Search Wikipedia\n Search Youtube\n Search Yeetube\n Youtube to mpv" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Web: ')" in
-    ' Firefox') firefox --new-window ;;
-    ' Firefox Private') firefox --private-window ;;
-    ' Tor Browser') tor-browser ;;
-    ' Bookmarks') dmenu-bookmarks ;;
-    ' Upload Selection') upload-selection ;;
-    ' Gmail') firefox --new-window "https://mail.google.com/" ;;
-    ' WhatsApp') firefox --new-window "https://web.whatsapp.com/" ;;
-    ' Telegram') firefox --new-window "https://web.telegram.org/" ;;
-    ' YouTube') firefox --new-window "https://www.youtube.com/" ;;
-    ' Search Google') dmenu-search-google ;;
-    ' Search Yandex') dmenu-search-yandex ;;
-    ' Search Wiby') dmenu-search-wiby ;;
-    ' Search Wikipedia') dmenu-search-wikipedia ;;
-    ' Search Youtube') dmenu-search-youtube ;;
-    ' Search Yeetube') dmenu-search-yeetube ;;
-    ' Youtube to mpv') browser-to-mpv ;;
+case "$(printf "Firefox\nFirefox Private\nTor Browser\nBookmarks\nUpload Selection\nGmail\nWhatsApp\nTelegram\nYouTube\nSearch Google\nSearch Yandex\nSearch Wiby\nSearch Wikipedia\nSearch YouTube\nSearch Yeetube\nYouTube to MPV" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Web:')" in
+    'Firefox') firefox --new-window ;;
+    'Firefox Private') firefox --private-window ;;
+    'Tor Browser') tor-browser ;;
+    'Bookmarks') dmenu-bookmarks ;;
+    'Upload Selection') upload-selection ;;
+    'Gmail') firefox --new-window "https://mail.google.com/" ;;
+    'WhatsApp') firefox --new-window "https://web.whatsapp.com/" ;;
+    'Telegram') firefox --new-window "https://web.telegram.org/" ;;
+    'YouTube') firefox --new-window "https://www.youtube.com/" ;;
+    'Search Google') dmenu-search-google ;;
+    'Search Yandex') dmenu-search-yandex ;;
+    'Search Wiby') dmenu-search-wiby ;;
+    'Search Wikipedia') dmenu-search-wikipedia ;;
+    'Search YouTube') dmenu-search-youtube ;;
+    'Search Yeetube') dmenu-search-yeetube ;;
+    'YouTube to MPV') browser-to-mpv ;;
     *) exit 1 ;;
 esac

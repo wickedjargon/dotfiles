@@ -1,11 +1,11 @@
 #!/bin/sh
 . ~/.config/dmenu/config
 
-selection="$( (printf "night\nday\n"; seq 5 5 100) | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Brightness: ' )"
+selection="$( (printf "Night\nDay\n"; seq 5 5 100) | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Brightness:' )"
 
 case "$selection" in
-    night) night ;;
-    day) day ;;
+    Night) night ;;
+    Day) day ;;
     "") exit 1 ;;
     *) brightnessctl set "$selection"% ;;
 esac

@@ -1,15 +1,15 @@
 #!/bin/sh
 . ~/.config/dmenu/config
 
-case "$(printf " connect nothing\n disconnect nothing\n bluetooth-nothing-reconnect\n profile nothing hands free unit\n profile nothing a2dp sink\n connect musicozy\n disconnect musicozy\n connect miniroll\n disconnect miniroll" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -l 10 -p 'Run: ')" in
-    ' connect nothing') bluetooth-connect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" || bluetooth-connect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" ;;
-    ' disconnect nothing') bluetooth-disconnect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" ;;
-    ' bluetooth-nothing-reconnect') bluetooth-nothing-reconnect ;;
-    ' profile nothing hands free unit') bluetooth-set-profile "3C:B0:ED:A7:6A:88" handsfree_head_unit ;;
-    ' profile nothing a2dp sink') bluetooth-set-profile "3C:B0:ED:A7:6A:88" a2dp_sink ;;
-    ' connect musicozy') bluetooth-connect "41:42:AB:DD:51:37" "Musicozy" ;;
-    ' disconnect musicozy') bluetooth-disconnect "41:42:AB:DD:51:37" "Musicozy" ;;
-    ' connect miniroll') bluetooth-connect "10:94:97:3C:C4:41" "Miniroll" ;;
-    ' disconnect miniroll') bluetooth-disconnect "10:94:97:3C:C4:41" "Miniroll" ;;
+case "$(printf "Connect Nothing\nDisconnect Nothing\nReconnect Nothing\nProfile Nothing Hands Free Unit\nProfile Nothing A2DP Sink\nConnect Musicozy\nDisconnect Musicozy\nConnect Miniroll\nDisconnect Miniroll" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -l 10 -p 'Bluetooth:')" in
+    'Connect Nothing') bluetooth-connect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" || bluetooth-connect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" ;;
+    'Disconnect Nothing') bluetooth-disconnect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" ;;
+    'Reconnect Nothing') bluetooth-nothing-reconnect ;;
+    'Profile Nothing Hands Free Unit') bluetooth-set-profile "3C:B0:ED:A7:6A:88" handsfree_head_unit ;;
+    'Profile Nothing A2DP Sink') bluetooth-set-profile "3C:B0:ED:A7:6A:88" a2dp_sink ;;
+    'Connect Musicozy') bluetooth-connect "41:42:AB:DD:51:37" "Musicozy" ;;
+    'Disconnect Musicozy') bluetooth-disconnect "41:42:AB:DD:51:37" "Musicozy" ;;
+    'Connect Miniroll') bluetooth-connect "10:94:97:3C:C4:41" "Miniroll" ;;
+    'Disconnect Miniroll') bluetooth-disconnect "10:94:97:3C:C4:41" "Miniroll" ;;
     *) exit 1 ;;
 esac

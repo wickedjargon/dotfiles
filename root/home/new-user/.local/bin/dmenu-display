@@ -74,14 +74,14 @@ main() {
 
     # If multiple externals, let user pick one first
     if [ "$ext_count" -gt 1 ]; then
-        selected_external=$(printf "%s" "$externals" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p "Select display:")
+        selected_external=$(printf "%s" "$externals" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p "Select Display:")
         [ -z "$selected_external" ] && exit 0
     else
         selected_external="$externals"
     fi
 
     # Show action menu
-    action=$(printf " Mirror to %s\n Extend right (%s)\n Extend left (%s)\n Extend above (%s)\n External only (%s)\n Laptop only" \
+    action=$(printf "Mirror to %s\nExtend Right (%s)\nExtend Left (%s)\nExtend Above (%s)\nExternal Only (%s)\nLaptop Only" \
         "$selected_external" "$selected_external" "$selected_external" "$selected_external" "$selected_external" \
         | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p "Display:")
 
@@ -89,12 +89,12 @@ main() {
 
     # Parse action and apply
     case "$action" in
-        *"Mirror"*)       apply_config mirror "$selected_external" ;;
-        *"right"*)        apply_config extend-right "$selected_external" ;;
-        *"left"*)         apply_config extend-left "$selected_external" ;;
-        *"above"*)        apply_config extend-above "$selected_external" ;;
-        *"External only"*) apply_config external-only "$selected_external" ;;
-        *"Laptop only"*)  apply_config laptop-only "$selected_external" ;;
+        *"Mirror"*)        apply_config mirror "$selected_external" ;;
+        *"Right"*)         apply_config extend-right "$selected_external" ;;
+        *"Left"*)          apply_config extend-left "$selected_external" ;;
+        *"Above"*)         apply_config extend-above "$selected_external" ;;
+        *"External Only"*) apply_config external-only "$selected_external" ;;
+        *"Laptop Only"*)   apply_config laptop-only "$selected_external" ;;
         *)                exit 1 ;;
     esac
 }

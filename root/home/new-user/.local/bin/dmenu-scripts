@@ -69,7 +69,7 @@ def main():
         return
 
     args, font = load_dmenu_config()
-    selected = dmenu_select("Run script:", scripts, args, font)
+    selected = dmenu_select("Run Script:", scripts, args, font)
     
     if selected:
         # Execute the script

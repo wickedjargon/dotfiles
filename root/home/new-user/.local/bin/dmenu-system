@@ -1,17 +1,17 @@
 #!/bin/sh
 . ~/.config/dmenu/config
 
-case "$(printf " lock\n kill X\n reboot\n poweroff\n hibernate\n display off\n logout\n reload desktop\n clean local bin\n deploy dotfiles\n screenshot" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'System: ')" in
-    ' lock') slock ;;
-    ' kill X') pkill X ;;
-    ' reboot') systemctl reboot -i ;;
-    ' poweroff') systemctl poweroff -i ;;
-    ' hibernate') slock & sleep 0.2 && systemctl hibernate ;;
-    ' display off') xset dpms force off ;;
-    ' logout') sys-logout ;;
-    ' reload desktop') reload-desktop ;;
-    ' clean local bin') clean-local-bin ;;
-    ' deploy dotfiles') deploy-dotfiles ;;
-    ' screenshot') dmenu-screenshot ;;
+case "$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\nReload Desktop\nClean Local Bin\nDeploy Dotfiles\nScreenshot" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'System:')" in
+    'Lock') slock ;;
+    'Kill X') pkill X ;;
+    'Reboot') systemctl reboot -i ;;
+    'Poweroff') systemctl poweroff -i ;;
+    'Hibernate') slock & sleep 0.2 && systemctl hibernate ;;
+    'Display Off') xset dpms force off ;;
+    'Logout') sys-logout ;;
+    'Reload Desktop') reload-desktop ;;
+    'Clean Local Bin') clean-local-bin ;;
+    'Deploy Dotfiles') deploy-dotfiles ;;
+    'Screenshot') dmenu-screenshot ;;
     *) exit 1 ;;
 esac

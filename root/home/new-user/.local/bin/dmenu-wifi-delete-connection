@@ -13,7 +13,7 @@ if [ -z "$connections" ]; then
 fi
 
 # Prompt user to select a connection
-selected=$(printf "%s" "$connections" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p "Delete connection:")
+selected=$(printf "%s" "$connections" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p "Delete Connection:")
 
 if [ -z "$selected" ]; then
     exit 0

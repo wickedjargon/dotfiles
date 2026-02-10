@@ -90,7 +90,7 @@ main() {
     fi
 
     # Select a drive
-    selected=$(printf "%s" "$partitions" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -l 10 -p "Select drive:")
+    selected=$(printf "%s" "$partitions" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -l 10 -p "Select Drive:")
     [ -z "$selected" ] && exit 0
 
     device=$(get_device_from_selection "$selected")
