@@ -214,7 +214,7 @@ class TestOpenEntry(unittest.TestCase):
         entry = {"kind": "file", "resource": "/home/ff/notes.txt"}
         self.script.open_entry(entry)
         mock_popen.assert_called_once_with(
-            ["emacsclient", "-c", "/home/ff/notes.txt"]
+            ["emacsclient", "-c", "-a", "", "/home/ff/notes.txt"]
         )
 
     @patch('subprocess.Popen')
