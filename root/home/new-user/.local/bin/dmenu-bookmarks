@@ -156,7 +156,7 @@ def open_entry(entry):
     elif kind == "file":
         ext = Path(resource).suffix.lower()
         if ext in TEXT_EXTENSIONS:
-            subprocess.Popen(["emacsclient", "-c", resource])
+            subprocess.Popen(["emacsclient", "-c", "-a", "", resource])
         elif ext in DOCUMENT_EXTENSIONS:
             subprocess.Popen(["zathura", resource])
         else:
