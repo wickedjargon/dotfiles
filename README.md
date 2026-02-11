@@ -63,6 +63,7 @@ systemctl --user restart wireplumber pipewire pipewire-pulse
 - pair bluetooth devices
 
 ## TODOS
+- [ ] consider setting `FastConnectable = false` in `/etc/bluetooth/main.conf` after testing on current system
 - [x] reverting my shell from fish back to bash.
 - [x] poly-weather should not display anything when it has no internet connection
 - [ ] poly-weather should display rain right now, but it is not
