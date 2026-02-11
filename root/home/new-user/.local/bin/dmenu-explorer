@@ -136,7 +136,6 @@ def open_file(path, run_executables=False):
         rel_playlist = to_rel_path(path)
         if run_mpc(["load", str(rel_playlist)]):
             run_mpc(["play"])
-            subprocess.run(["notify-send", "Playlist Loaded", path.name])
 
     elif ext in AUDIO_EXTENSIONS:
         files_in_current = []
@@ -161,8 +160,7 @@ def open_file(path, run_executables=False):
                 found = True
 
         if found:
-            if run_mpc(["play", str(target_pos)]):
-                subprocess.run(["notify-send", "Now Playing", path.name])
+            run_mpc(["play", str(target_pos)])
         else:
             run_mpc(["add", str(to_rel_path(path))])
             run_mpc(["play"])
