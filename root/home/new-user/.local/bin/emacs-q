@@ -13,7 +13,6 @@ emacs -Q --eval "
     (when (file-exists-p init-file)
       (load-file init-file)))
 
-  ;; your custom settings
   (load-theme 'modus-vivendi t)
   (fido-vertical-mode +1)
   (global-set-key (kbd \"C-.\") 'end-of-buffer)
