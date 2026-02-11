@@ -10,8 +10,6 @@ Features:
 - Press Alt+c: Copy execution command to clipboard.
 """
 
-import os
-import sys
 import subprocess
 import glob
 from pathlib import Path

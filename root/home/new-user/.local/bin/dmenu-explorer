@@ -12,7 +12,6 @@ Dmenu-based file navigator with basic file associations.
 import argparse
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 TEXT_EXTENSIONS = {
