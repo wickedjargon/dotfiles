@@ -8,6 +8,8 @@ firefox-esr              # Extended support release web browser
 # Media (Audio/Video)
 yt-dlp                   # YouTube and video downloader
 mpv                      # Minimalist media player
+mpc                      # Command-line MPD client
+mpd                      # Music Player Daemon
 ffmpeg                   # Tools for recording, converting and streaming audio and video
 cheese                   # Webcam photo and video tool
 
@@ -63,8 +65,6 @@ pavucontrol              # PulseAudio Volume Control GUI
 alsa-utils               # ALSA utilities (alsamixer, aplay, etc)
 alsa-topology-conf       # ALSA topology configuration files
 alsa-ucm-conf            # ALSA Use Case Manager configuration
-mpc                      # Command-line MPD client
-mpd                      # Music Player Daemon
 
 # Bluetooth
 bluez                    # Bluetooth tools and daemons
