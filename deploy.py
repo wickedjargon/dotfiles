@@ -28,7 +28,6 @@ def run_command_with_retry(cmd, max_retries=3, delay=2, **kwargs):
                 raise  # Re-raise on last attempt
             
             # Log retry attempt
-            error_msg = e.stderr.decode() if e.stderr else str(e)
             log_error(f"Command failed (attempt {attempt + 1}/{max_retries}): {cmd}", e)
             time.sleep(delay)
     return None  # Should not be reached due to raise
@@ -84,11 +83,11 @@ def log_error(message, exception=None, context=None):
                 f.write(f"Exception Message: {str(exception)}\n")
                 
                 # Write traceback for unexpected python exceptions
-                f.write(f"\nTraceback:\n")
+                f.write("\nTraceback:\n")
                 traceback.print_tb(exception.__traceback__, file=f)
                 
             f.write(f"{'-'*60}\n")
-    except Exception as e:
+    except Exception:
         # Failsafe: if logging fails, try to print to stderr (though curses might hide it)
         # but don't crash the program
         pass
@@ -1045,7 +1044,6 @@ def install_tor_browser(username, script_dir, tui, row):
         return True, None, row + 1
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         error_msg = e.stderr.decode() if hasattr(e, 'stderr') and e.stderr else str(e)
-        stdout_msg = e.stdout.decode() if hasattr(e, 'stdout') and e.stdout else ''
         
         log_error(f"Tor Browser Installation Error for user {username}", e, context=f"Script: {install_script}")
         tui.show_progress(row, "Installing Tor Browser...", success=False)
