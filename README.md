@@ -63,6 +63,13 @@ systemctl --user restart wireplumber pipewire pipewire-pulse
 - pair bluetooth devices
 
 ## TODOS
+- [ ] create a download system for torrents / youtube downloader via rss / etc. prevents donwloading via hotspot network 
+names. determine if there is a better way to identify hotspot network connections. might require bit torrent daemon.
+- [ ] offline games, developed by myself using godot
+- [ ] dosbox games
+- [ ] auto connect irc. irc notify-send notifications for tagged messages
+- [ ] create script that finds rss feed given youtube channel name
+- [ ] create toggle dark / light theme. changes it for all packages. (bspwm, polybar, xob, firefox, emacs, antigravity)
 - [ ] consider setting `FastConnectable = false` in `/etc/bluetooth/main.conf` after testing on current system
 - [x] reverting my shell from fish back to bash.
 - [x] poly-weather should not display anything when it has no internet connection
