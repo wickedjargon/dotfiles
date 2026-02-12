@@ -17,8 +17,6 @@ paths=(
   "/usr/local/go/bin"
   "$HOME/go/bin"
   "$HOME/.ghcup/bin"
-  "$OCEN_ROOT/bin"
-  "$OCEN_ROOT/bootstrap"
   "$HOME/.local/src/v"
   "$HOME/.asdf/shims"
   "$HOME/.dotnet/tools"
@@ -38,11 +36,6 @@ alias grep='grep --color=auto'
 alias z='zathura'
 alias em='emacs'
 alias emc='emacsclient -c -a ""'
-alias pi-system='qemu-system-arm -kernel ~/.qemu-files/kernel-qemu-4.4.34-jessie -cpu arm1176 -m 256 -M versatilepb -serial  stdio -append "root=/dev/sda2 rootfstype=ext4 rw" -hda ~/.qemu-files/2017-04-10-raspbian-jessie.img  -nic user,hostfwd=tcp::5022-:22 -no-reboot'
-alias pi-ssh='ssh pi@127.0.0.1 -p 5022'
-alias pi-sshfs='sshfs pi@127.0.0.1:/home/pi/projects ~/d/projects/remote-projects/ -p 5022'
-alias r="rlwrap"
-alias android-emulator="~/Android/Sdk/emulator/emulator -avd Medium_Phone_API_36 -snapshot default_boot"
 alias neofetch="fastfetch"
 
 # bind ctrl+l to cls (using macro to force full prompt redraw)
