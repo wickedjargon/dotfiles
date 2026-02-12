@@ -44,6 +44,7 @@ fd-find                  # Fast find alternative
 jq                       # JSON processor
 ripgrep                  # Fast grep alternative
 bash-completion          # bash tab completion
+unzip                    # Archive extraction utility
 
 # Networking
 network-manager          # Network connection manager
@@ -53,9 +54,6 @@ git                      # Version control system
 net-tools                # Network tools (ifconfig, netstat, etc)
 dnsutils                 # DNS utilities (dig, nslookup, etc)
 openssh-server           # SSH server for remote access
-
-# Archives
-unzip                    # Archive extraction utility
 
 # Audio
 pulseaudio               # PulseAudio sound server
@@ -98,15 +96,12 @@ fonts-dejavu             # DejaVu fonts (includes Core, Extra, Mono)
 
 # Development Tools
 gdb                      # GNU debugger
+clangd                   # C/C++ language server
 
 # Emacs package dependencies
 libpoppler-glib-dev      # PDF rendering library for pdf-tools
 libpng-dev               # PNG library for pdf-tools
-sbcl                     # Steel Bank Common Lisp for sly package
 sqlite3                  # SQLite database for org-roam and other packages
-
-# Language servers for eglot
-clangd                   # C/C++ language server
 
 # Build dependencies
 build-essential          # Compilers and build tools (gcc, make, etc)
