@@ -53,7 +53,7 @@ bluetoothctl
 [bluetooth]# trust XX:XX:XX:XX:XX:XX
 [bluetooth]# connect XX:XX:XX:XX:XX:XX
 [bluetooth]# exit
-systemctl --user restart wireplumber pipewire pipewire-pulse
+systemctl --user restart pulseaudio
 ```
 
 ## Post-Install
