@@ -1,48 +1,61 @@
-# General utilities
+# Text Editors
 emacs-lucid              # Extensible text editor
+vis                      # Modal text editor combining vim and sam ideas
+
+# Web Browsers
 firefox-esr              # Extended support release web browser
-git                      # Version control system
-network-manager          # Network connection manager
+
+# Media (Audio/Video)
 yt-dlp                   # YouTube and video downloader
 mpv                      # Minimalist media player
-feh                      # Lightweight image viewer
-qdirstat                 # Disk usage analyzer with GUI
+ffmpeg                   # Tools for recording, converting and streaming audio and video
+cheese                   # Webcam photo and video tool
+
+# Images & Graphics
+feh                      # Lightweight image viewer (for setting background)
+imagemagick              # Image manipulation suite
+grabc                    # Command-line screen pixel color picker
+sxiv                     # Simple X Image Viewer
+maim                     # Screenshot utility
+
+# Documents & Reading
 zathura                  # Minimalist document viewer
 zathura-pdf-poppler      # PDF support for zathura
 poppler-utils            # PDF utilities (pdftotext, pdfimages)
 calibre                  # E-book management and viewer
-curl                     # Command-line data transfer tool
+xournalpp                # handwriting note-taking package
+
+# System Utilities
+qdirstat                 # Disk usage analyzer with GUI
 htop                     # Interactive process viewer
 dunst                    # Lightweight notification daemon
-imagemagick              # Image manipulation suite
-grabc                    # Command-line screen pixel color picker
-ffmpeg                   # Tools for recording, converting and streaming audio and video
 unclutter                # Hide mouse cursor when idle
-sxiv                     # Simple X Image Viewer (scriptable)
-vis                      # Modal text editor combining vim and sam ideas
-unzip                    # Archive extraction utility
-wget                     # Network downloader
 sudo                     # Super User Do
-tree                     # Directory tree viewer
-fish                     # User-friendly command line shell
-fd-find                  # Fast find alternative
-jq                       # JSON processor
-ripgrep                  # Fast grep alternative
 brightnessctl            # Control backlight brightness
 libnotify-bin            # Desktop notifications (notify-send)
-maim                     # Screenshot utility
-cheese                   # Webcam photo and video tool
 acpid                    # ACPI event daemon (for battery monitoring)
 upower                   # Power management tool (battery status)
 udisks2                  # Disk management daemon (non-root mounting)
 kbd                      # Keyboard utilities (includes kbdrate for TTY repeat config)
-xournalpp                # handwriting note-taking package
 
+# Shell & CLI Tools
+tree                     # Directory tree viewer
+fd-find                  # Fast find alternative
+jq                       # JSON processor
+ripgrep                  # Fast grep alternative
+bash-completion          # bash tab completion
 
-# Networking & System Tools
+# Networking
+network-manager          # Network connection manager
+curl                     # Command-line data transfer tool
+wget                     # Network downloader
+git                      # Version control system
 net-tools                # Network tools (ifconfig, netstat, etc)
 dnsutils                 # DNS utilities (dig, nslookup, etc)
 openssh-server           # SSH server for remote access
+
+# Archives
+unzip                    # Archive extraction utility
 
 # Audio
 pulseaudio               # PulseAudio sound server
@@ -54,12 +67,11 @@ alsa-topology-conf       # ALSA topology configuration files
 alsa-ucm-conf            # ALSA Use Case Manager configuration
 mpc                      # Command-line MPD client
 mpd                      # Music Player Daemon
-bash-completion          # bash tab completion
 
 # Bluetooth
 bluez                    # Bluetooth tools and daemons
 
-# X11/Xorg packages
+# X11 Core & Utilities
 xorg                     # X Window System meta-package
 xserver-xorg             # X server for graphical display
 xinit                    # X server initialization tool (startx)
@@ -70,6 +82,8 @@ suckless-tools           # Simple commands for minimalistic window managers
 xcape                    # Remap modifier keys to other keys (X11)
 keyd                     # Key remapping shark tank offer faildaemon (works in TTY and X11)
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
+
+# GUI Theming & Toolkits
 arc-theme                # Arc Dark GTK theme
 xdg-desktop-portal-gtk  # Portal backend for dark theme and file dialogs
 dconf-gsettings-backend  # GSettings backend for dconf (dark theme preference)
