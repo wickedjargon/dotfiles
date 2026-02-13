@@ -1597,5 +1597,6 @@ With a prefix ARG always prompt for command to use."
   (editorconfig-mode 1))
 
 (use-package webjump
+  :ensure nil
   :custom
   (webjump-use-internal-browser t))
