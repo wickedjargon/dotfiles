@@ -198,10 +198,6 @@ super + period
 XF86Audio{Play,Pause}
     mpc toggle && polybar-msg action "#mpd.hook.0"
 
-
-XF86Audio{Play,Pause}
-    mpc toggle && polybar-msg action "#mpd.hook.0"
-
 XF86AudioStop
     mpc stop && polybar-msg action "#mpd.hook.0"
 
