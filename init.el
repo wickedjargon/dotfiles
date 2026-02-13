@@ -242,6 +242,7 @@
       (apply orig-fun args)))
 
   (dolist (cmd '(diff-buffer-with-file
+                 diff-last-two-kills
                  compile
                  occur
                  grep
