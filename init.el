@@ -1254,7 +1254,6 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
       "#rust"
       "#c"
       "#haskell"
-      "#go-nuts"
       "#linux"
       "#debian"
       "#latex")))
