@@ -1612,3 +1612,20 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
       ;; 3. Force the 'next' window to display this buffer.
       ;; This bypasses Emacs's decision-making on whether to split again.
       (set-window-buffer (next-window) new-buffer))))
+
+(defun fff-diff-kill-ring ()
+  "Diff the last two items in the kill ring.
+Passes the most recent kill as the first argument (A) and the 
+previous kill as the second argument (B)."
+  (interactive)
+  (if (< (length kill-ring) 2)
+      (message "Kill ring does not have enough items to diff.")
+    (let* ((new (current-kill 0 t))
+           (old (current-kill 1 t))
+           (file-new (make-temp-file "kill-new-"))
+           (file-old (make-temp-file "kill-old-")))
+      (with-temp-file file-new (insert new))
+      (with-temp-file file-old (insert old))
+      ;; Runs diff NEW OLD
+      (diff file-new file-old "-u")
+      (message "Diffing kill ring items..."))))
