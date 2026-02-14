@@ -1629,3 +1629,41 @@ previous kill as the second argument (B)."
       ;; Runs diff NEW OLD
       (diff file-new file-old "-u")
       (message "Diffing kill ring items..."))))
+
+(defun other-window-prefix-left ()
+  "Display the buffer of the next command in a new window to the left."
+  (interactive)
+  (display-buffer-override-next-command
+   (lambda (buffer alist)
+     (cons (display-buffer-in-direction buffer
+                                        (append alist '((direction . left))))
+           'window))))
+
+(defun other-window-prefix-right ()
+  "Display the buffer of the next command in a new window to the right."
+  (interactive)
+  (display-buffer-override-next-command
+   (lambda (buffer alist)
+     (cons (display-buffer-in-direction buffer
+                                        (append alist '((direction . right))))
+           'window))))
+
+(defun move-current-window-left ()
+  "Swap the current window with the window to the left and follow focus."
+  (interactive)
+  (require 'windmove)
+  (let ((target (windmove-find-other-window 'left)))
+    (unless target
+      (user-error "No window to the left"))
+    (window-swap-states nil target)
+    (select-window target)))
+
+(defun move-current-window-right ()
+  "Swap the current window with the window to the right and follow focus."
+  (interactive)
+  (require 'windmove)
+  (let ((target (windmove-find-other-window 'right)))
+    (unless target
+      (user-error "No window to the right"))
+    (window-swap-states nil target)
+    (select-window target)))
