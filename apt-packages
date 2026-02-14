@@ -2,8 +2,18 @@
 emacs-lucid              # Extensible text editor
 vis                      # Modal text editor combining vim and sam ideas
 
-# Web Browsers
+# Emacs package dependencies
+libpoppler-glib-dev      # PDF rendering library for pdf-tools
+libpng-dev               # PNG library for pdf-tools
+sqlite3                  # SQLite database for org-roam and other packages
+
+# Web Browsers, Documents & Reading
 firefox-esr              # Extended support release web browser
+zathura                  # Minimalist document viewer
+zathura-pdf-poppler      # PDF support for zathura
+poppler-utils            # PDF utilities (pdftotext, pdfimages)
+calibre                  # E-book management and viewer
+xournalpp                # handwriting note-taking package
 
 # Media (Audio/Video)
 yt-dlp                   # YouTube and video downloader
@@ -20,12 +30,6 @@ grabc                    # Command-line screen pixel color picker
 sxiv                     # Simple X Image Viewer
 maim                     # Screenshot utility
 
-# Documents & Reading
-zathura                  # Minimalist document viewer
-zathura-pdf-poppler      # PDF support for zathura
-poppler-utils            # PDF utilities (pdftotext, pdfimages)
-calibre                  # E-book management and viewer
-xournalpp                # handwriting note-taking package
 
 # System Utilities
 qdirstat                 # Disk usage analyzer with GUI
@@ -37,6 +41,7 @@ brightnessctl            # Control backlight brightness
 libnotify-bin            # Desktop notifications (notify-send)
 acpid                    # ACPI event daemon (for battery monitoring)
 upower                   # Power management tool (battery status)
+acpi                     # ACPI utilities (battery status)
 udisks2                  # Disk management daemon (non-root mounting)
 kbd                      # Keyboard utilities (includes kbdrate for TTY repeat config)
 
@@ -98,10 +103,6 @@ fonts-dejavu             # DejaVu fonts (includes Core, Extra, Mono)
 gdb                      # GNU debugger
 clangd                   # C/C++ language server
 
-# Emacs package dependencies
-libpoppler-glib-dev      # PDF rendering library for pdf-tools
-libpng-dev               # PNG library for pdf-tools
-sqlite3                  # SQLite database for org-roam and other packages
 
 # Build dependencies
 build-essential          # Compilers and build tools (gcc, make, etc)
