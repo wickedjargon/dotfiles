@@ -534,7 +534,7 @@
   (evil-leader/set-key "c c" 'compile)
   (evil-leader/set-key "v v" 'eval-expression)
 
-  ;; left / right new window prefix
+  ;; left / right new window prefix and move current window
   (evil-leader/set-key "x h" 'other-window-prefix-left)
   (evil-leader/set-key "x l" 'other-window-prefix-right)
   (evil-leader/set-key "x H" 'move-current-window-left)
