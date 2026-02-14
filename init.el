@@ -102,7 +102,6 @@
   (global-set-key (kbd "M-ESC M-ESC") #'keyboard-escape-quit)           ;; I have to remap to this instead
   (global-set-key (kbd "M-u") #'universal-argument)                     ;; C-u is bound to evil-scroll-up
   (global-set-key (kbd "C-x k") #'bury-buffer)                          ;; kill buffers doesn't save memory
-  (global-set-key (kbd "C-c c") #'fff-clear-shell)
   (global-set-key (kbd "C-c C-p") #'consult-yank-from-kill-ring)
   (global-set-key (kbd "C-g")  #'fff-keyboard-quit-dwim)
   (global-set-key [remap list-buffers] #'ibuffer)                       ;; ibuffer is superior
