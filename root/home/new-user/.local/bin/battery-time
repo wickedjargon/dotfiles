@@ -1,0 +1,2 @@
+#!/bin/sh
+acpi -b | awk '{ if (match($0, /[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/)) { t=substr($0, RSTART, RLENGTH); split(t, a, ":"); print (a[1]+0) "h " (a[2]+0) "m" } else { print $0 } }'

@@ -1,7 +1,7 @@
 #!/bin/sh
 . ~/.config/dmenu/config
 
-case "$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\nReload Desktop\nClean Local Bin\nDeploy Dotfiles\nScreenshot" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'System:')" in
+case "$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\nReload Desktop\nClean Local Bin\nDeploy Dotfiles\nScreenshot\nBattery Time Left" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'System:')" in
     'Lock') slock ;;
     'Kill X') pkill X ;;
     'Reboot') systemctl reboot -i ;;
@@ -13,5 +13,6 @@ case "$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\n
     'Clean Local Bin') clean-local-bin ;;
     'Deploy Dotfiles') deploy-dotfiles ;;
     'Screenshot') dmenu-screenshot ;;
+    'Battery Time Left') notify-send "Battery Time Left" "$(battery-time)" ;;
     *) exit 1 ;;
 esac
