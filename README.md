@@ -63,6 +63,7 @@ systemctl --user restart pulseaudio
 - pair bluetooth devices
 
 ## TODOS
+- [ ] make a rofi version of dmenu-explorer where the second item is selected first (so not `..` which is parent directory). run as a pilot project to see if rofi is a viable replacement for dmenu.
 - [ ] create a download system for torrents / youtube downloader via rss / etc. prevents donwloading via hotspot network 
 names. determine if there is a better way to identify hotspot network connections. might require bit torrent daemon.
 - [ ] consider switching from pulseuadio to pipewire / wireplumbler
