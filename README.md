@@ -84,3 +84,29 @@ names. determine if there is a better way to identify hotspot network connection
 - [ ] notifications regarding calendar items
 - [ ] set up research environment
 - [x] display volume change using graphical scale.
+
+## Future Features Ideas: Daemon Integration
+
+Goal: Decouple backend logic from frontend interfaces to improve system speed, persistence, and scriptability.
+
+### - [ ] Universal Downloader: `aria2`
+Replace browser download managers and torrent clients with a single headless RPC daemon.
+* **Backend:** `aria2c --enable-rpc`
+* **Frontends:** Browser extension (Aria2 integration), Emacs package, `aria2p` (CLI).
+* **Benefit:** Centralized queue, lower resource usage, controllable via scripts/Emacs.
+
+### - [ ] File Synchronization: `Syncthing`
+Peer-to-peer, continuous file synchronization daemon.
+* **Usage:** Sync `~/org`, `~/documents`, and dotfiles across devices without third-party clouds.
+* **Benefit:** Private, instant local network sync, versioning support.
+
+### - [ ] Session Persistence: `tmux` (Headless)
+Treat terminal sessions as a service that survives window manager crashes or reboots.
+* **Setup:** Auto-start tmux server on boot; terminal emulator acts merely as a viewer.
+* **Benefit:** Never lose compile jobs or SSH sessions; seamless context switching.
+
+### - [ ] Async Mail: `isync` (mbsync) + `mu`
+Decouple email fetching from the email client (Emacs/mu4e).
+* **Backend:** Systemd timer triggers `mbsync` to fetch and `mu index` to index.
+* **Benefit:** Instant load times in mail client; no blocking UI while checking mail.
+
