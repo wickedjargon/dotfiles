@@ -65,6 +65,8 @@ systemctl --user restart pulseaudio
 ## TODOS
 - [ ] create a download system for torrents / youtube downloader via rss / etc. prevents donwloading via hotspot network 
 names. determine if there is a better way to identify hotspot network connections. might require bit torrent daemon.
+- [ ] consider switching from pulseuadio to pipewire / wireplumbler
+  - currently not experiencing any major issues with pulseaudio, although audio streaming is not possible using pulseaudio.
 - [ ] offline games, developed by myself using godot
 - [ ] dosbox games
 - [ ] auto connect irc. irc notify-send notifications for tagged messages
