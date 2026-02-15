@@ -3,9 +3,12 @@ import os
 import subprocess
 import glob
 
-# Set AUDIO_DIR relative to this script's location
-AUDIO_DIR = os.path.dirname(os.path.abspath(__file__))
-FAILED_STATIONS_FILE = os.path.join(AUDIO_DIR, "failed_stations.txt")
+# Set AUDIO_DIR relative to this script's location (project root)
+# The directory is root/home/new-user/d/audio/radio
+# This script is at the project root.
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+AUDIO_DIR = os.path.join(PROJECT_ROOT, "root/home/new-user/d/audio/radio")
+FAILED_STATIONS_FILE = os.path.join(PROJECT_ROOT, "failed_stations.txt")
 
 # Added --mute=yes to keep it silent
 MPV_CMD = ["mpv", "--no-video", "--no-audio-display", "--mute=yes", "--end=5"]
@@ -83,17 +86,40 @@ def main():
             print(f" - {fail}")
         
         while True:
-            choice = input("\nDo you want to delete these failed station files? [y/N]: ").strip().lower()
+            choice = input("\nDo you want to delete these failed station files from the PROJECT directory? [y/N]: ").strip().lower()
             if choice in ['y', 'yes']:
-                print("\nDeleting files...")
+                print("\nDeleting files from PROJECT directory...")
                 for fail in results['FAIL']:
                     full_path = os.path.join(AUDIO_DIR, fail)
                     try:
-                        os.remove(full_path)
-                        print(f"Deleted: {fail}")
+                        if os.path.exists(full_path):
+                            os.remove(full_path)
+                            print(f"Deleted (Project): {fail}")
+                        else:
+                            print(f"File not found (Project): {fail}")
                     except Exception as e:
-                        print(f"Error deleting {fail}: {e}")
+                        print(f"Error deleting (Project) {fail}: {e}")
                 
+                # Check for system sync
+                # Define system directory path
+                SYSTEM_AUDIO_DIR = "/home/ff/d/audio/radio/"
+                
+                choice_sys = input(f"\nDo you want to sync deletions to the SYSTEM directory ({SYSTEM_AUDIO_DIR})? [y/N]: ").strip().lower()
+                if choice_sys in ['y', 'yes']:
+                    print("\nDeleting files from SYSTEM directory...")
+                    for fail in results['FAIL']:
+                        full_path_sys = os.path.join(SYSTEM_AUDIO_DIR, fail)
+                        try:
+                            if os.path.exists(full_path_sys):
+                                os.remove(full_path_sys)
+                                print(f"Deleted (System): {fail}")
+                            else:
+                                print(f"File not found (System): {fail}")
+                        except Exception as e:
+                            print(f"Error deleting (System) {fail}: {e}")
+                else:
+                    print("Skipping system directory sync.")
+
                 # Also delete the log file since we handled them
                 if os.path.exists(FAILED_STATIONS_FILE):
                     os.remove(FAILED_STATIONS_FILE)
