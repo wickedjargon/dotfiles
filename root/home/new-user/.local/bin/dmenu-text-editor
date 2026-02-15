@@ -2,7 +2,7 @@
 . ~/.config/dmenu/config
 
 case "$(printf "Emacs Client\nAntigravity\nEmacs GUI\nStart Emacs Server" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Text Editor:')" in
-    'Emacs Client') emacsclient -c ;;
+    'Emacs Client') emacsclient -c -a ;;
     'Antigravity') antigravity ;;
     'Emacs GUI') emacs ;;
     'Start Emacs Server') emacs --daemon ;;
