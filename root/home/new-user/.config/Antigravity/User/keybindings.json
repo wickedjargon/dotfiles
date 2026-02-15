@@ -39,9 +39,9 @@
         "command": "list.focusDown",
         "when": "listFocus && !inputFocus"
     },
-    {
-        "key": "ctrl+e",
-        "command": "workbench.action.files.toggleActiveEditorReadonlyInSession",
-        "when": "editorTextFocus"
-    }
+    // {
+    //     "key": "ctrl+e",
+    //     "command": "workbench.action.files.toggleActiveEditorReadonlyInSession",
+    //     "when": "editorTextFocus"
+    // }
 ]

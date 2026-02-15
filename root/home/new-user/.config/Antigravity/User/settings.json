@@ -3,8 +3,8 @@
     "files.autoSave": "afterDelay",
     "editor.occurrencesHighlight": "off",
     "workbench.colorTheme": "GitHub Dark Colorblind (Beta)",
-    "window.restoreWindows": "none",
-    "files.readonlyInclude": {
-        "**/*": true
-    }
+    // "window.restoreWindows": "none",
+    // "files.readonlyInclude": {
+    //     "**/*": true
+    // }
 }
