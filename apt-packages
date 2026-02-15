@@ -121,3 +121,9 @@ polybar                  # Status bar
 alacritty                # GPU-accelerated terminal emulator
 suckless-tools           # Includes dmenu
 rofi                     # Window switcher, run dialog
+
+# Documentation
+info                     # Standalone GNU Info documentation browser
+man-db                   # Tools for reading manual pages
+manpages                 # Manual pages about using a GNU/Linux system
+emacs-common-non-dfsg    # GNU Emacs common non-dfsg documentation (requires non-free component in sources.list)
