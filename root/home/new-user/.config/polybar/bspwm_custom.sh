@@ -4,7 +4,7 @@
 # Matches your polybar colors
 COLOR_FOCUSED_UNDERLINE="#FFFF00"
 COLOR_FOREGROUND="#FFFF00"
-COLOR_EMPTY="#666666"
+COLOR_EMPTY="#4D4D00"
 COLOR_URGENT="#fb4934"
 
 # Create format strings
