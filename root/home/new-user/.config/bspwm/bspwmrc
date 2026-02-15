@@ -74,6 +74,11 @@ bspc rule -a qt6ct state=floating center=on rectangle=900x600+0+0
 bspc rule -a nm-connection-editor state=floating center=on rectangle=600x500+0+0
 bspc rule -a Nm-connection-editor state=floating center=on rectangle=600x500+0+0
 
+# set Transmission to float
+# Sized for torrent list visibility
+bspc rule -a transmission-gtk state=floating center=on rectangle=900x600+0+0
+bspc rule -a Transmission-gtk state=floating center=on rectangle=900x600+0+0
+
 
 # ... existing bspwmrc content ...
 
