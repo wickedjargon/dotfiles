@@ -127,3 +127,9 @@ info                     # Standalone GNU Info documentation browser
 man-db                   # Tools for reading manual pages
 manpages                 # Manual pages about using a GNU/Linux system
 emacs-common-non-dfsg    # GNU Emacs common non-dfsg documentation (requires non-free component in sources.list)
+gcc-doc                  # GNU compilers documentation
+glibc-doc                # GNU C Library documentation
+make-doc                 # GNU Make documentation
+gdb-doc                  # GNU Debugger documentation
+binutils-doc             # GNU binutils documentation
+manpages-dev             # Manual pages about using GNU/Linux for development
