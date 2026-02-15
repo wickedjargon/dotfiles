@@ -69,6 +69,7 @@ sxiv                     # Simple X Image Viewer
 qdirstat                 # Disk usage analyzer with GUI
 pavucontrol              # PulseAudio Volume Control GUI
 alacritty                # GPU-accelerated terminal emulator
+nm-connection-editor     # Network connection editor
 
 # Desktop Environment - Window Manager & Core
 bspwm                    # Binary space partitioning window manager
