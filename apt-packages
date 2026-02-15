@@ -1,27 +1,38 @@
-# Core System & Hardware
-sudo                     # Super User Do
+# Core System - Power & Hardware
 acpid                    # ACPI event daemon (for battery monitoring)
 upower                   # Power management tool (battery status)
 acpi                     # ACPI utilities (battery status)
 brightnessctl            # Control backlight brightness
 udisks2                  # Disk management daemon (non-root mounting)
 kbd                      # Keyboard utilities (includes kbdrate for TTY repeat config)
+keyd                     # Key remapping daemon (works in TTY and X11)
+
+# Core System - Network
 network-manager          # Network connection manager
 openssh-server           # SSH server for remote access
 bluez                    # Bluetooth tools and daemons
+
+# Core System - Audio
 pulseaudio               # PulseAudio sound server
 pulseaudio-utils         # PulseAudio command-line tools (pactl)
 pulseaudio-module-bluetooth  # Bluetooth audio support for PulseAudio
 alsa-utils               # ALSA utilities (alsamixer, aplay, etc)
 alsa-topology-conf       # ALSA topology configuration files
 alsa-ucm-conf            # ALSA Use Case Manager configuration
+
+# Core System - X11
 xorg                     # X Window System meta-package
 xserver-xorg             # X server for graphical display
 xinit                    # X server initialization tool (startx)
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
-keyd                     # Key remapping daemon (works in TTY and X11)
+grabc                    # Command-line screen pixel color picker
+maim                     # Screenshot utility
+xclip                    # Command-line clipboard utility
+xdotool                  # Command-line X11 automation
+xcape                    # Remap modifier keys to other keys (X11)
 
 # Shell & CLI Utilities
+sudo                     # Super User Do
 htop                     # Interactive process viewer
 bash-completion          # bash tab completion
 tree                     # Directory tree viewer
@@ -39,11 +50,6 @@ mpc                      # Command-line MPD client
 mpd                      # Music Player Daemon
 ffmpeg                   # Tools for recording, converting and streaming audio and video
 imagemagick              # Image manipulation suite
-grabc                    # Command-line screen pixel color picker
-maim                     # Screenshot utility
-xclip                    # Command-line clipboard utility
-xdotool                  # Command-line X11 automation
-xcape                    # Remap modifier keys to other keys (X11)
 poppler-utils            # PDF utilities (pdftotext, pdfimages)
 sqlite3                  # SQLite database (used by org-roam)
 vis                      # Modal text editor combining vim and sam ideas
