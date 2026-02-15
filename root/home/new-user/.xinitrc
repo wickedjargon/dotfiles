@@ -14,6 +14,7 @@ export QT_QPA_PLATFORMTHEME_QT6=qt6ct
 
 mpd & # Music Player Daemon
 dunst & # notificatoins
+lxpolkit & # authentication agent
 battery-warnings & # low battery warning
 clipmenud &  # Start clipmenu daemon
 unclutter -idle 1 &  # makes cursor disappear

@@ -35,6 +35,7 @@ maim                     # Screenshot utility
 qdirstat                 # Disk usage analyzer with GUI
 htop                     # Interactive process viewer
 dunst                    # Lightweight notification daemon
+lxpolkit                 # Lightweight PolicyKit authentication agent
 unclutter                # Hide mouse cursor when idle
 sudo                     # Super User Do
 brightnessctl            # Control backlight brightness
