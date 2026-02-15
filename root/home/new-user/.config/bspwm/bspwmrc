@@ -55,3 +55,6 @@ pgrep -x sxhkd > /dev/null || SXHKD_SHELL=/bin/bash sxhkd &
 
 # Launch Polybar
 pgrep -x polybar > /dev/null || polybar mybar &
+
+# set Qalculate-gtk to float
+bspc rule -a Qalculate-gtk state=floating center=on rectangle=716x470+0+0
