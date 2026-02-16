@@ -1,5 +1,7 @@
 # Godot on Debian via Distrobox
 
+also see: https://wiki.archlinux.org/title/Distrobox
+
 This "Golden Path" configuration avoids the OCI runtime, permission, and pathing errors common on minimal Debian/WM setups.
 
 ## 1. Host Preparation
