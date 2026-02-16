@@ -1,5 +1,7 @@
 # Distrobox Cheat Sheet
 
+also see: https://wiki.archlinux.org/title/Distrobox
+
 ## 1. Creating Containers
 
 **Basic creation (uses default image, usually Fedora)**
