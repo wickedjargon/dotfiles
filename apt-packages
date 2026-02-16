@@ -53,6 +53,9 @@ imagemagick              # Image manipulation suite
 poppler-utils            # PDF utilities (pdftotext, pdfimages)
 sqlite3                  # SQLite database (used by org-roam)
 vis                      # Modal text editor combining vim and sam ideas
+distrobox                # Container management tool
+podman                   # Container management tool
+fastfetch                # System information display tool
 
 # Graphical Applications
 firefox-esr              # Web browser (Extended Support Release)
