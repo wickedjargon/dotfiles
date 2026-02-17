@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+import os
+import subprocess
+
+def get_disk_usage(path="/"):
+    stat = os.statvfs(path)
+    
+    # Calculate bytes
+    total_bytes = stat.f_blocks * stat.f_frsize
+    avail_bytes = stat.f_bavail * stat.f_frsize
+    used_bytes = total_bytes - avail_bytes
+    
+    # Use Base-10 GB (10^9) to match GNOME/Baobab
+    gb_divisor = 1000**3
+    
+    total_gb = total_bytes / gb_divisor
+    avail_gb = avail_bytes / gb_divisor
+    used_gb = used_bytes / gb_divisor
+    
+    if total_bytes > 0:
+        percent = (used_bytes / total_bytes) * 100
+    else:
+        percent = 0
+    
+    return used_gb, avail_gb, total_gb, percent
+
+def send_notification(used_gb, avail_gb, total_gb, percent):
+    summary = "Storage Alert"
+    # Display: Used / Avail (or Total?)
+    # User asked: "storage taken / storage available"
+    # Interpreting as: "Used / Total (Avail: X)" for clarity
+    body = f"Taken: {used_gb:.1f} GB\nAvailable: {avail_gb:.1f} GB\nTotal: {total_gb:.1f} GB\nUsage: {percent:.1f}%"
+    
+    try:
+        subprocess.run(['notify-send', summary, body, '-u', 'normal', '-a', 'Storage Monitor'], check=True)
+    except FileNotFoundError:
+        print("notify-send not found. Is libnotify-bin installed?")
+        print(f"{summary}: {body}")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to send notification: {e}")
+
+if __name__ == "__main__":
+    used, avail, total, pct = get_disk_usage()
+    send_notification(used, avail, total, pct)
