@@ -7,7 +7,6 @@ export BROWSER="firefox"
 export QT_QPA_PLATFORMTHEME=qt5ct
 export QT_QPA_PLATFORMTHEME_QT6=qt6ct
 
-
 # Android / Java
 export ANDROID_HOME="$HOME/Android/Sdk"
 export JAVA_HOME="/usr/lib/jvm/java-21-openjdk"
