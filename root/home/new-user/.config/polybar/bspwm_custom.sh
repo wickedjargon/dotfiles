@@ -5,7 +5,7 @@
 COLOR_FOCUSED_UNDERLINE="#82AAFF"
 COLOR_FOREGROUND="#82AAFF"
 COLOR_EMPTY="#495368"
-COLOR_URGENT="#fb4934"
+COLOR_URGENT="#FF5370"
 
 # Create format strings
 # %{A1...} adds click handlers
@@ -15,7 +15,7 @@ f_focused_free="%{+u}%{u${COLOR_FOCUSED_UNDERLINE}}%{F${COLOR_EMPTY}}"
 f_focused_occupied="%{+u}%{u${COLOR_FOCUSED_UNDERLINE}}%{F${COLOR_FOREGROUND}}"
 f_occupied="%{F${COLOR_FOREGROUND}}"
 f_free="%{F${COLOR_EMPTY}}"
-f_urgent="%{B${COLOR_URGENT}}%{F${COLOR_FOREGROUND}}"
+f_urgent="%{B${COLOR_URGENT}}%{F#FFFFFF}"
 reset="%{F-}%{-u}%{B-}"
 
 # Listen to bspwm changes
