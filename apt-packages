@@ -40,10 +40,14 @@ fd-find                  # Fast find alternative
 ripgrep                  # Fast grep alternative
 jq                       # JSON processor
 unzip                    # Archive extraction utility
+zip                      # Zip archive utility
+unrar-free               # Unrar utility
+p7zip-full               # 7z and other archive support
 git                      # Version control system
 curl                     # Command-line data transfer tool
 wget                     # Network downloader
 net-tools                # Network tools (ifconfig, netstat, etc)
+nmap                     # Network scanner
 dnsutils                 # DNS utilities (dig, nslookup, etc)
 yt-dlp                   # YouTube and video downloader
 mpc                      # Command-line MPD client
@@ -55,6 +59,11 @@ sqlite3                  # SQLite database (used by org-roam)
 vis                      # Modal text editor combining vim and sam ideas
 distrobox                # Container management tool
 podman                   # Container management tool
+flatpak                  # Application sandboxing and distribution (needed for distrobox-host-exec)
+qemu-user-static         # QEMU user mode emulation binaries (static)
+binfmt-support           # Support for extra binary formats (for transparent emulation)
+usbutils                 # USB utilities (lsusb, etc)
+rsync                    # Remote sync utility
 fastfetch                # System information display tool
 
 # Graphical Applications
@@ -70,6 +79,7 @@ cheese                   # Webcam photo and video tool
 feh                      # Lightweight image viewer (for setting background)
 sxiv                     # Simple X Image Viewer
 qdirstat                 # Disk usage analyzer with GUI
+baobab                   # Disk usage analyzer with GUI
 pavucontrol              # PulseAudio Volume Control GUI
 alacritty                # GPU-accelerated terminal emulator
 nm-connection-editor     # Network connection editor
