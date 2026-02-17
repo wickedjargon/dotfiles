@@ -11,6 +11,8 @@ keyd                     # Key remapping daemon (works in TTY and X11)
 network-manager          # Network connection manager
 openssh-server           # SSH server for remote access
 bluez                    # Bluetooth tools and daemons
+syncthing                # Open Source Continuous File Synchronization
+
 
 # Core System - Audio
 pulseaudio               # PulseAudio sound server
