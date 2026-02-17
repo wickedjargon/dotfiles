@@ -2,11 +2,15 @@
 export EDITOR="vis"
 export SUDO_EDITOR="vis"
 export BROWSER="firefox"
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 
 # qt theme
 export QT_QPA_PLATFORMTHEME=qt5ct
 export QT_QPA_PLATFORMTHEME_QT6=qt6ct
+
+
+# Android / Java
+export ANDROID_HOME="$HOME/Android/Sdk"
+export JAVA_HOME="/usr/lib/jvm/java-21-openjdk"
 
 # PATH env variable
 paths=(
@@ -14,13 +18,8 @@ paths=(
   "/sbin"
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
-  "/usr/local/go/bin"
-  "$HOME/go/bin"
-  "$HOME/.ghcup/bin"
-  "$HOME/.local/src/v"
-  "$HOME/.asdf/shims"
-  "$HOME/.dotnet/tools"
-  "$JAVA_HOME/bin"
+  "$ANDROID_HOME/cmdline-tools/latest/bin"
+  "$ANDROID_HOME/platform-tools"
 )
 
 for apath in "${paths[@]}"; do
