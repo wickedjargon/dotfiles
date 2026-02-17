@@ -497,12 +497,7 @@ def read_packages_file(script_dir):
     return packages
 
 
-def get_home_dotfiles_dir(script_dir):
-    """Get the path to the home dotfiles directory.
-    The directory structure mirrors a Linux system: root/home/new-user/
-    Returns the path to script_dir/root/home/new-user
-    """
-    return script_dir / 'root' / 'home' / 'new-user'
+
 
 
 def is_package_installed(package_name):
@@ -689,73 +684,98 @@ def get_backup_dir(home_dir):
         counter += 1
 
 
-def deploy_dotfiles(username, script_dir):
-    """Deploy dotfiles to user's home directory"""
+def deploy_root(username, script_dir):
+    """Deploy all files from root/ to their corresponding system locations
+
+    The root/ directory is a filesystem mirror:
+      root/home/new-user/.bashrc  -> /home/<username>/.bashrc
+      root/etc/keyd/default.conf  -> /etc/keyd/default.conf
+      root/usr/local/bin/myscript -> /usr/local/bin/myscript
+
+    Home directory files (root/home/new-user/) get backup + chown treatment.
+    All other files are copied directly.
+
+    Returns: (success, error_message, backup_dir, backed_up_items)
+    """
+    root_dir = script_dir / 'root'
+
+    if not root_dir.exists():
+        return False, "root/ directory doesn't exist", None, []
+
     home_dir = Path(f'/home/{username}')
-
-    if not home_dir.exists():
-        return False, "Home directory doesn't exist", None, []
-
-    deployments = []
-
-    # Get dotfiles directory (root/home/new-user)
-    dotfiles_dir = get_home_dotfiles_dir(script_dir)
-    
-    if not dotfiles_dir.exists():
-        return False, f"Dotfiles directory doesn't exist: {dotfiles_dir}", None, []
-
-    # Build deployment list from directory contents
-    for item in dotfiles_dir.iterdir():
-        relative_path = item.name
-        src = item
-        dst = home_dir / relative_path
-
-        # Create display name (with ~/ for home directory paths)
-        if relative_path.startswith('.'):
-            display_name = f'~/{relative_path}'
-        else:
-            display_name = relative_path
-
-        deployments.append((display_name, src, dst))
 
     backup_dir = None
     backed_up_items = []
+    failed_files = []
 
-    for name, src, dst in deployments:
-        try:
-            # If destination exists, back it up first
-            if dst.exists():
-                if backup_dir is None:
-                    backup_dir = get_backup_dir(home_dir)
-                    backup_dir.mkdir(parents=True, exist_ok=True)
+    for src_root, dirs, files in os.walk(root_dir):
+        for file in files:
+            src_file = Path(src_root) / file
 
-                # Determine backup path (preserve directory structure)
-                relative_path = dst.relative_to(home_dir)
-                backup_path = backup_dir / relative_path
-                backup_path.parent.mkdir(parents=True, exist_ok=True)
+            # Calculate relative path from root/
+            relative_path = src_file.relative_to(root_dir)
+            relative_parts = relative_path.parts
 
-                # Move existing file/directory to backup
-                shutil.move(str(dst), str(backup_path))
-                backed_up_items.append(name)
+            # Determine if this is a home directory file
+            is_home_file = (
+                len(relative_parts) > 2
+                and relative_parts[0] == 'home'
+                and relative_parts[1] == 'new-user'
+            )
 
-            # Create parent directory if it doesn't exist
-            dst.parent.mkdir(parents=True, exist_ok=True)
-
-            # Copy directory or file
-            if src.is_dir():
-                shutil.copytree(src, dst)
+            if is_home_file:
+                # Map root/home/new-user/X -> /home/<username>/X
+                home_relative = Path(*relative_parts[2:])  # strip home/new-user/
+                dest_file = home_dir / home_relative
             else:
-                shutil.copy2(src, dst)
+                # Map root/X -> /X
+                dest_file = Path('/') / relative_path
 
-            # Change ownership to the new user
             try:
-                subprocess.run(['chown', '-R', f'{username}:{username}', str(dst)],
-                              check=True, capture_output=True)
-            except subprocess.CalledProcessError:
-                pass  # Continue even if chown fails
-        except (OSError, IOError, subprocess.CalledProcessError) as e:
-            log_error(f"Failed to deploy dotfile: {src} -> {dst}", e)
-            return False, str(e), None, []
+                if is_home_file:
+                    # Back up existing home directory files
+                    if dest_file.exists() or dest_file.is_symlink():
+                        if backup_dir is None:
+                            backup_dir = get_backup_dir(home_dir)
+                            backup_dir.mkdir(parents=True, exist_ok=True)
+
+                        backup_path = backup_dir / home_relative
+                        backup_path.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.move(str(dest_file), str(backup_path))
+
+                        display = f'~/{home_relative}'
+                        backed_up_items.append(display)
+
+                # Create parent directories
+                dest_file.parent.mkdir(parents=True, exist_ok=True)
+
+                # Copy file
+                shutil.copy2(src_file, dest_file)
+
+                # Make scripts executable for system files
+                if not is_home_file:
+                    if (dest_file.suffix == '.sh'
+                            or 'bin' in dest_file.parts
+                            or 'dispatcher.d' in dest_file.parts
+                            or 'system-sleep' in dest_file.parts
+                            or 'acpi' in dest_file.parts):
+                        os.chmod(dest_file, 0o755)
+
+                # Set ownership for home directory files
+                if is_home_file:
+                    try:
+                        subprocess.run(
+                            ['chown', '-R', f'{username}:{username}', str(dest_file)],
+                            check=True, capture_output=True)
+                    except subprocess.CalledProcessError:
+                        pass  # Continue even if chown fails
+
+            except (OSError, IOError, subprocess.CalledProcessError) as e:
+                log_error(f"Failed to deploy: {src_file} -> {dest_file}", e)
+                failed_files.append((str(relative_path), str(e)))
+                continue
+
+
 
     # Change ownership of backup directory if created
     if backup_dir and backup_dir.exists():
@@ -763,122 +783,99 @@ def deploy_dotfiles(username, script_dir):
             subprocess.run(['chown', '-R', f'{username}:{username}', str(backup_dir)],
                           check=True, capture_output=True)
         except subprocess.CalledProcessError:
-            pass  # Continue even if chown fails
+            pass
 
     # Update font cache
     try:
         subprocess.run(['fc-cache', '-f'], check=True, capture_output=True)
     except subprocess.CalledProcessError as e:
         log_error("Failed to update font cache", e)
-        pass # Non-fatal
 
     # Ensure fontconfig user configuration is enabled (50-user.conf)
-    # This symlink is required for ~/.config/fontconfig/fonts.conf to be recognized
     user_conf_link = Path('/etc/fonts/conf.d/50-user.conf')
     user_conf_target = Path('/usr/share/fontconfig/conf.avail/50-user.conf')
-    
+
     if not user_conf_link.exists() and user_conf_target.exists():
         try:
             user_conf_link.symlink_to(user_conf_target)
         except (OSError, IOError) as e:
             log_error("Failed to enable fontconfig user configuration (50-user.conf)", e)
-            # Non-fatal - system may still work without it
+
+    if failed_files:
+        error_msg = f"Failed to deploy: {', '.join([f[0] for f in failed_files])}"
+        return False, error_msg, backup_dir, backed_up_items
 
     return True, None, backup_dir, backed_up_items
 
 
-def deploy_system_configs(script_dir):
-    """Deploy system configuration files to their appropriate system locations
+def deploy_patches(script_dir):
+    """Apply patch files from patches/ to their corresponding system locations
+
+    Files under patches/ contain key=value lines (and comments) that are
+    merged into existing system files. The directory structure mirrors the
+    filesystem: patches/etc/systemd/logind.conf -> /etc/systemd/logind.conf
 
     Returns: (success, error_message)
     """
-    system_configs_dir = script_dir / 'system-configs'
+    patches_dir = script_dir / 'patches'
 
-    if not system_configs_dir.exists():
-        return True, None  # No system configs to deploy, not an error
+    if not patches_dir.exists():
+        return True, None  # No patches to apply, not an error
 
     deployed_files = []
     failed_files = []
 
-    # Walk through system-configs directory
-    for root, dirs, files in os.walk(system_configs_dir):
+    # Walk through patches/ directory
+    for root, dirs, files in os.walk(patches_dir):
         for file in files:
             src_file = Path(root) / file
 
-            # Calculate destination path by removing 'system-configs' prefix
-            relative_path = src_file.relative_to(system_configs_dir)
+            # Calculate destination path: patches/etc/foo/bar -> /etc/foo/bar
+            relative_path = src_file.relative_to(patches_dir)
+            dest_file = Path('/') / relative_path
 
-            # Special handling for .patch files
-            if file.endswith('.patch'):
-                # Handle patching existing config files
-                dest_file = Path('/') / relative_path.parent / file.replace('.patch', '')
+            try:
+                # Read patch content (non-empty, non-comment lines)
+                with open(src_file, 'r') as f:
+                    patch_lines = [line.strip() for line in f
+                                   if line.strip() and not line.strip().startswith('#')]
 
-                try:
-                    # Read patch content
-                    with open(src_file, 'r') as f:
-                        patch_lines = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+                if dest_file.exists():
+                    # Read existing config
+                    with open(dest_file, 'r') as f:
+                        existing_content = f.read()
 
-                    if dest_file.exists():
-                        # Read existing config
-                        with open(dest_file, 'r') as f:
-                            existing_content = f.read()
+                    # Check if any patch lines are missing
+                    needs_update = any(line not in existing_content for line in patch_lines)
 
-                        # Check if patch lines already exist
-                        needs_update = False
-                        for patch_line in patch_lines:
-                            if patch_line not in existing_content:
-                                needs_update = True
-                                break
+                    if needs_update:
+                        # Backup original
+                        backup_path = Path(str(dest_file) + '.bak')
+                        shutil.copy2(dest_file, backup_path)
 
-                        if needs_update:
-                            # Backup original
-                            backup_path = Path(str(dest_file) + '.bak')
-                            shutil.copy2(dest_file, backup_path)
-
-                            # Append patch content
-                            with open(dest_file, 'a') as f:
-                                f.write('\n# Added by dotfiles deployment\n')
-                                for patch_line in patch_lines:
+                        # Append missing lines
+                        with open(dest_file, 'a') as f:
+                            f.write('\n# Added by dotfiles deployment\n')
+                            for patch_line in patch_lines:
+                                if patch_line not in existing_content:
                                     f.write(patch_line + '\n')
 
-                            deployed_files.append(str(relative_path))
-                    else:
-                        # Create new file with patch content
-                        dest_file.parent.mkdir(parents=True, exist_ok=True)
-                        with open(dest_file, 'w') as f:
-                            for patch_line in patch_lines:
-                                f.write(patch_line + '\n')
                         deployed_files.append(str(relative_path))
-
-                except (IOError, OSError) as e:
-                    log_error(f"Failed to deploy patch file: {relative_path}", e)
-                    failed_files.append((str(relative_path), str(e)))
-                    continue
-            else:
-                # Regular file - direct copy
-                dest_file = Path('/') / relative_path
-
-                try:
-                    # Create parent directories if needed
+                else:
+                    # Create new file with patch content
                     dest_file.parent.mkdir(parents=True, exist_ok=True)
-
-                    # Copy file
-                    shutil.copy2(src_file, dest_file)
-
-                    # Make scripts executable
-
-                    if dest_file.suffix == '.sh' or 'bin' in dest_file.parts or 'dispatcher.d' in dest_file.parts or 'system-sleep' in dest_file.parts or 'acpi' in dest_file.parts:
-                        os.chmod(dest_file, 0o755)
-
+                    with open(dest_file, 'w') as f:
+                        for patch_line in patch_lines:
+                            f.write(patch_line + '\n')
                     deployed_files.append(str(relative_path))
 
-                except (IOError, OSError) as e:
-                    log_error(f"Failed to deploy system config: {relative_path}", e)
-                    failed_files.append((str(relative_path), str(e)))
-                    continue
+            except (IOError, OSError) as e:
+                log_error(f"Failed to apply patch: {relative_path}", e)
+                failed_files.append((str(relative_path), str(e)))
+                continue
 
     if failed_files:
-        error_msg = f"Failed to deploy: {', '.join([f[0] for f in failed_files])}"
+        error_msg = f"Failed to apply patches: {', '.join([f[0] for f in failed_files])}"
         return False, error_msg
 
     return True, None
@@ -1255,20 +1252,20 @@ def main_tui(stdscr):
                 return
             row += 3
 
-    # Deploy dotfiles
-    tui.show_progress(row, "Deploying dotfiles...", success=None)
+    # Deploy all files from root/ (dotfiles + system configs)
+    tui.show_progress(row, "Deploying from root/...", success=None)
     tui.stdscr.refresh()
 
-    success, error, backup_dir, backed_up_items = deploy_dotfiles(username, script_dir)
+    success, error, backup_dir, backed_up_items = deploy_root(username, script_dir)
 
     if not success:
-        tui.show_progress(row, "Deploying dotfiles...", success=False)
+        tui.show_progress(row, "Deploying from root/...", success=False)
         tui.show_message(row + 2, 4, f"Error: {error}", color_pair=3)
         tui.show_message(row + 3, 4, "Press any key to exit...", color_pair=3)
         stdscr.getch()
         return
     else:
-        tui.show_progress(row, "Deploying dotfiles...", success=True)
+        tui.show_progress(row, "Deploying from root/...", success=True)
         row += 2
 
         # Show backup info if files were backed up
@@ -1315,14 +1312,14 @@ def main_tui(stdscr):
             return
         row += 3
 
-    # Deploy system configurations
-    tui.show_progress(row, "Deploying system configurations...", success=None)
+    # Apply system patches
+    tui.show_progress(row, "Applying system patches...", success=None)
     tui.stdscr.refresh()
 
-    success, error = deploy_system_configs(script_dir)
+    success, error = deploy_patches(script_dir)
 
     if not success:
-        tui.show_progress(row, "Deploying system configurations...", success=False)
+        tui.show_progress(row, "Applying system patches...", success=False)
         tui.show_message(row + 1, 4, f"Error: {error}", color_pair=3)
         tui.show_message(row + 2, 4, "Continue anyway? (y/n): ", color_pair=4)
         tui.stdscr.refresh()
@@ -1331,7 +1328,7 @@ def main_tui(stdscr):
             return
         row += 4
     else:
-        tui.show_progress(row, "Deploying system configurations...", success=True)
+        tui.show_progress(row, "Applying system patches...", success=True)
         row += 1
 
     # Configure keyd to apply new configuration

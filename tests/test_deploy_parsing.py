@@ -47,12 +47,8 @@ https://github.com/user/zsh.git .zsh
             self.assertEqual(repos[0], ("https://github.com/user/vim.git", ".vim"))
             self.assertEqual(repos[1], ("https://github.com/user/zsh.git", ".zsh"))
 
-    def test_get_home_dotfiles_dir(self):
-        # Test that get_home_dotfiles_dir returns correct path
-        script_dir = Path("/tmp/dotfiles")
-        result = deploy.get_home_dotfiles_dir(script_dir)
-        expected = script_dir / 'root' / 'home' / 'new-user'
-        self.assertEqual(result, expected)
+
+
 
     @patch('pathlib.Path.exists')
     def test_parsing_edge_cases(self, mock_exists):
