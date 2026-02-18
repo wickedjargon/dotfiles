@@ -12,6 +12,7 @@ Dmenu-based file navigator with basic file associations.
 import argparse
 import os
 import subprocess
+import shlex
 from pathlib import Path
 
 TEXT_EXTENSIONS = {
@@ -131,10 +132,15 @@ def open_file(path, run_executables=False):
     elif ext in IMAGE_EXTENSIONS:
         subprocess.Popen(["sxiv", str(path)])
     elif ext in PLAYLIST_EXTENSIONS:
-        run_mpc(["clear"])
-        rel_playlist = to_rel_path(path)
-        if run_mpc(["load", str(rel_playlist)]):
-            run_mpc(["play"])
+        if "video" in path.name.lower():
+            quoted_path = shlex.quote(str(path))
+            cmd = f"mpv {quoted_path} || notify-send 'MPV Error' 'Failed to play {path.name}'"
+            subprocess.Popen(cmd, shell=True)
+        else:
+            run_mpc(["clear"])
+            rel_playlist = to_rel_path(path)
+            if run_mpc(["load", str(rel_playlist)]):
+                run_mpc(["play"])
 
     elif ext in AUDIO_EXTENSIONS:
         files_in_current = []
