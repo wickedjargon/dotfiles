@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# armbox - Wrapper to ensure the arm-assembly container is running before connecting
+
+CONTAINER="arm-assembly"
+
+# 1. Check if podman is installed
+if ! command -v podman &>/dev/null; then
+    echo "Error: 'podman' is not installed or not in PATH." >&2
+    exit 1
+fi
+
+# 2. Check if the container exists
+if ! podman container exists "$CONTAINER"; then
+    echo "Error: Container '$CONTAINER' not found." >&2
+    echo "Please create the container first." >&2
+    exit 1
+fi
+
+# 3. Check status and start if needed
+STATUS=$(podman container inspect -f '{{.State.Status}}' "$CONTAINER")
+if [ "$STATUS" != "running" ]; then
+    echo "Container '$CONTAINER' is currently '$STATUS'. Starting it..."
+    if ! podman start "$CONTAINER"; then
+        echo "Error: Failed to start container '$CONTAINER'." >&2
+        exit 1
+    fi
+    echo "Container started successfully."
+fi
+
+# 4. Connect to the container
+exec podman exec -it -u 0 "$CONTAINER" bash
