@@ -20,25 +20,23 @@ cd "$PROJECT_DIR" || exit 1
 cat <<EOF > main.c
 #include <stdio.h>
 
-/* Declare external assembly function */
-extern int fav_num(void);
+extern int asm_func(void);
 
 int main() {
     printf("Calling assembly function...\\n");
-    int result = fav_num();
+    int result = asm_func();
     printf("Result: %d\\n", result);
     return 0;
 }
 EOF
 
-# Create function.s
-cat <<EOF > function.s
-.global fav_num
-.type fav_num, @function
+# Create functions.s
+cat <<EOF > functions.s
+.global asm_func
 
-fav_num:
-    mov x0, #42        /* Return 42 */
-    ret
+asm_func:
+mov x0, #0
+ret
 EOF
 
 # Create Makefile
@@ -47,7 +45,7 @@ CC = aarch64-linux-gnu-gcc
 CFLAGS = -Wall -g
 LDFLAGS = -static
 
-OBJS = main.o function.o
+OBJS = main.o functions.o
 
 all: main
 
@@ -57,7 +55,7 @@ main: \$(OBJS)
 main.o: main.c
 	\$(CC) \$(CFLAGS) -c -o \$@ \$<
 
-function.o: function.s
+functions.o: functions.s
 	\$(CC) \$(CFLAGS) -c -o \$@ \$<
 
 clean:
