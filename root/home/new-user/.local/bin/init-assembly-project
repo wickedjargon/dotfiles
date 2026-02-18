@@ -1,0 +1,73 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 <project_name>"
+  exit 1
+fi
+
+PROJECT_NAME=$1
+PROJECT_DIR="$PWD/$PROJECT_NAME"
+
+if [ -d "$PROJECT_DIR" ]; then
+  echo "Error: Directory '$PROJECT_NAME' already exists."
+  exit 1
+fi
+
+mkdir -p "$PROJECT_DIR"
+cd "$PROJECT_DIR" || exit 1
+
+# Create main.c
+cat <<EOF > main.c
+#include <stdio.h>
+
+/* Declare external assembly function */
+extern int fav_num(void);
+
+int main() {
+    printf("Calling assembly function...\\n");
+    int result = fav_num();
+    printf("Result: %d\\n", result);
+    return 0;
+}
+EOF
+
+# Create function.s
+cat <<EOF > function.s
+.global fav_num
+.type fav_num, @function
+
+fav_num:
+    mov x0, #42        /* Return 42 */
+    ret
+EOF
+
+# Create Makefile
+cat <<EOF > Makefile
+CC = aarch64-linux-gnu-gcc
+CFLAGS = -Wall -g
+LDFLAGS = -static
+
+OBJS = main.o function.o
+
+all: main
+
+main: \$(OBJS)
+	\$(CC) \$(LDFLAGS) -o \$@ \$^
+
+main.o: main.c
+	\$(CC) \$(CFLAGS) -c -o \$@ \$<
+
+function.o: function.s
+	\$(CC) \$(CFLAGS) -c -o \$@ \$<
+
+clean:
+	rm -f main \$(OBJS)
+
+run: main
+	qemu-aarch64 ./main
+EOF
+
+echo "Project '$PROJECT_NAME' created successfully in $PROJECT_DIR"
+echo "To build and run:"
+echo "  cd $PROJECT_NAME"
+echo "  make run"
