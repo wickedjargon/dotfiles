@@ -1,0 +1,318 @@
+#!/usr/bin/env python3
+"""
+dmenu-mac-address
+
+A dmenu script to change or spoof MAC addresses on network interfaces.
+Supports 'macchanger' if available, otherwise falls back to 'ip link'.
+Uses 'pkexec' for privilege escalation.
+"""
+
+import subprocess
+import shutil
+import re
+import sys
+import os
+import shlex
+import logging
+
+# Setup debug logging
+logging.basicConfig(filename="/tmp/dmenu-mac-debug.log", level=logging.DEBUG, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Configuration
+DMENU_CONFIG = os.path.expanduser("~/.config/dmenu/config")
+
+def load_dmenu_config():
+    """Load dmenu arguments from config file, similar to dmenu-explorer."""
+    args = []
+    if os.path.exists(DMENU_CONFIG):
+        try:
+            with open(DMENU_CONFIG, "r") as f:
+                for line in f:
+                    if line.startswith("DMENU_BASIC_ARGS="):
+                        val = line.split("=", 1)[1].strip().strip('"')
+                        args.extend(val.split())
+                    elif line.startswith("DMENU_FONT="):
+                        font = line.split("=", 1)[1].strip().strip('"')
+                        if font:
+                            args.extend(["-fn", font])
+        except Exception:
+            pass
+    return args
+
+def get_interfaces():
+    """Get a list of network interfaces with human-readable names."""
+    interfaces = []
+    try:
+        # Using ip link to get interfaces
+        result = subprocess.run(["ip", "-o", "link", "show"], capture_output=True, text=True, check=True)
+        for line in result.stdout.splitlines():
+            # Format: 1: lo: <LOOPBACK,UP,LOWER_UP> ...
+            parts = line.split(": ")
+            if len(parts) >= 2:
+                iface_name = parts[1].strip()
+                # Exclude loopback
+                if iface_name == "lo":
+                    continue
+                
+                # Determine readable name
+                readable_name = "Network Interface"
+                if iface_name.startswith("wl"):
+                    readable_name = "Wi-Fi"
+                elif iface_name.startswith(("en", "eth")):
+                    readable_name = "Ethernet"
+                elif iface_name.startswith("ww"):
+                    readable_name = "Mobile Broadband"
+                elif iface_name.startswith("usb"):
+                    readable_name = "USB Tethering"
+                
+                display_str = f"{readable_name} ({iface_name})"
+                interfaces.append((display_str, iface_name))
+
+    except subprocess.CalledProcessError:
+        notify("Error", "Failed to list network interfaces.")
+    return interfaces
+
+def get_mac_address(iface):
+    """Get the current MAC address of an interface."""
+    try:
+        with open(f"/sys/class/net/{iface}/address", "r") as f:
+            return f.read().strip()
+    except Exception:
+        return "Unknown"
+
+def dmenu_select(options, prompt="Select:"):
+    """Present options in dmenu and return selection."""
+    try:
+        base_args = load_dmenu_config()
+        # Default fallback if no config
+        if not base_args:
+             base_args = ["-i"] # Case insensitive by default if no config
+
+        cmd = ["dmenu", "-p", prompt] + base_args
+        
+        input_str = "\n".join(options)
+        result = subprocess.run(
+            cmd,
+            input=input_str,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return None
+
+def notify(title, message, urgency="normal"):
+    """Send a notification."""
+    logging.debug(f"Sending notification: {title} - {message}")
+    full_title = f"MAC Address Changer: {title}"
+    cmd = ["notify-send", full_title, message, "-u", urgency]
+    try:
+        subprocess.run(cmd)
+        logging.debug("Notification sent")
+    except Exception as e:
+        logging.error(f"Failed to send notification: {e}")
+
+def run_command(cmd, as_root=True):
+    """Run a command, optionally dealing with pkexec."""
+    if as_root:
+        # If cmd is a list, join it for sh -c
+        if isinstance(cmd, list):
+            cmd_str = " ".join(shlex.quote(c) for c in cmd)
+        else:
+            cmd_str = cmd
+        
+        # Use sh -c to execute the full command string
+        full_cmd = ["pkexec", "sh", "-c", cmd_str]
+    else:
+        full_cmd = cmd
+    
+    logging.debug(f"Running command: {full_cmd}")
+    try:
+        result = subprocess.run(full_cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            logging.error(f"Command failed: {result.stderr}")
+        else:
+            logging.debug("Command successful")
+        return result.returncode == 0, result.stderr.strip()
+    except Exception as e:
+        logging.error(f"Command exception: {e}")
+        return False, str(e)
+
+def copy_to_clipboard(text):
+    """Copy text to clipboard using available tools."""
+    for tool in ["xclip", "wl-copy", "xsel"]:
+        if shutil.which(tool):
+            try:
+                logging.debug(f"Copying to clipboard using {tool}")
+                if tool == "xclip":
+                    subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True)
+                elif tool == "wl-copy":
+                    subprocess.run(["wl-copy"], input=text, text=True)
+                elif tool == "xsel":
+                    subprocess.run(["xsel", "--clipboard", "--input"], input=text, text=True)
+                return True
+            except Exception as e:
+                logging.error(f"Clipboard error: {e}")
+                pass
+    logging.warning("No clipboard tool found")
+    return False
+
+def change_mac(iface, action, old_mac, custom_mac=None):
+    """Change the MAC address based on action."""
+    has_macchanger = shutil.which("macchanger") is not None
+    commands_to_run = []
+
+    # 1. Bring interface down
+    commands_to_run.append(f"ip link set dev {iface} down")
+
+    # 2. Change MAC
+    if has_macchanger:
+        if action == "random":
+             # -A for random vendor MAC of same kind
+             commands_to_run.append(f"macchanger -A {iface}")
+        elif action == "fully_random":
+             commands_to_run.append(f"macchanger -r {iface}")
+        elif action == "reset":
+             commands_to_run.append(f"macchanger -p {iface}")
+        elif action == "custom" and custom_mac:
+             commands_to_run.append(f"macchanger -m {custom_mac} {iface}")
+    else:
+        # Fallback to ip link
+        if action == "random" or action == "fully_random":
+            # ip link doesn't have built-in random, we'd need to generate one.
+            notify("Warning", "macchanger not found. Using 'ip link' fallback.")
+            if not custom_mac:
+                # Basic random MAC generation
+                import random
+                mac = [0x00, 0x16, 0x3e,
+                       random.randint(0x00, 0x7f),
+                       random.randint(0x00, 0xff),
+                       random.randint(0x00, 0xff)]
+                custom_mac = ':'.join(map(lambda x: "%02x" % x, mac))
+            
+            commands_to_run.append(f"ip link set dev {iface} address {custom_mac}")
+        elif action == "reset":
+             # Without macchanger, finding permanent MAC is harder. 
+             # We rely on previous check or ethtool inside the root scope?
+             # To keep it simple, we do the check here (read-only usually allows user)
+             # or we run ethtool inside the pkexec command.
+             
+             # If we do it here (as user), we might fail if permissions denied.
+             # Better to use a subshell in the root command to find it, 
+             # BUT text processing in sh string is messy.
+             # Let's try to get it as user first (safe assumption on most distros for reading params)
+             perm_mac = None
+             if shutil.which("ethtool"):
+                 try:
+                     res = subprocess.run(["ethtool", "-P", iface], capture_output=True, text=True)
+                     match = re.search(r"Permanent address: ([\da-fA-F:]+)", res.stdout)
+                     if match:
+                         perm_mac = match.group(1)
+                 except:
+                     pass
+             
+             if perm_mac:
+                 commands_to_run.append(f"ip link set dev {iface} address {perm_mac}")
+             else:
+                 notify("Error", "Could not determine permanent MAC. Install 'macchanger' or 'ethtool'.", "critical")
+                 # Attempt to bring up anyway
+                 run_command(f"ip link set dev {iface} up") 
+                 return
+
+        elif action == "custom" and custom_mac:
+            commands_to_run.append(f"ip link set dev {iface} address {custom_mac}")
+
+    # 3. Bring interface up
+    commands_to_run.append(f"ip link set dev {iface} up")
+
+    # Join all commands with && to ensure they run sequentially and stop on error
+    full_command_str = " && ".join(commands_to_run)
+    
+    # Execute as a single pkexec call
+    success, err = run_command(full_command_str, as_root=True)
+    
+    if not success:
+        notify("Error", f"Failed to change MAC:\n{err}", "critical")
+        # Try to ensure interface is up even if change failed (if possible)
+        # We can't easily queue this if the previous failed in a single sh -c
+        # But user can manually fix or run script again.
+        return
+
+    # Verify New MAC (after commands completed)
+    new_mac = get_mac_address(iface)
+    
+    msg = f"Interface: {iface}\nOld MAC: {old_mac}\nNew MAC: {new_mac}"
+    if copy_to_clipboard(new_mac):
+        msg += "\n(Copied to clipboard)"
+    else:
+        msg += "\n(Clipboard tool not found: install xclip/wl-copy)"
+
+    notify("MAC Address Changed", msg)
+
+def main():
+    ifaces_data = get_interfaces()
+    if not ifaces_data:
+        notify("Error", "No network interfaces found.")
+        return
+
+    # Select Interface
+    # ifaces_data is list of (display, real_name)
+    options = [x[0] for x in ifaces_data]
+    selection = dmenu_select(options, prompt="Select Interface:")
+    if not selection:
+        return
+    
+    # Map back to real name
+    iface = next((real for display, real in ifaces_data if display == selection), None)
+    if not iface:
+        return
+
+    current_mac = get_mac_address(iface)
+
+    # Actions
+    actions = [
+        f"Random (Random Vendor) [Current: {current_mac}]",
+        "Fully Random",
+        "Reset to Permanent",
+        "Custom MAC",
+        "Cancel"
+    ]
+    
+    selection = dmenu_select(actions, prompt=f"Action for {iface}:")
+    if not selection or selection == "Cancel":
+        return
+
+    action_map = {
+        "Random": "random",
+        "Fully": "fully_random",
+        "Reset": "reset",
+        "Custom": "custom"
+    }
+    
+    # Simple keyword matching
+    chosen_action = None
+    for k, v in action_map.items():
+        if k in selection:
+            chosen_action = v
+            break
+            
+    if not chosen_action:
+        return
+
+    custom_mac = None
+    if chosen_action == "custom":
+        # Prompt for MAC
+        custom_mac = dmenu_select([], prompt="Enter MAC (XX:XX:XX:XX:XX:XX):")
+        if not custom_mac:
+            return
+        # Basic validation
+        if not re.match(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$", custom_mac):
+            notify("Error", "Invalid MAC address format.")
+            return
+
+    change_mac(iface, chosen_action, current_mac, custom_mac)
+
+if __name__ == "__main__":
+    main()
