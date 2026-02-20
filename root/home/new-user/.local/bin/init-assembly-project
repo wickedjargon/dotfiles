@@ -1,47 +1,54 @@
-#!/bin/bash
+#!/usr/bin/env python3
+import os
+import sys
+import subprocess
 
-if [ -z "$1" ]; then
-  echo "Usage: $0 <project_name>"
-  exit 1
-fi
+def main():
+    if len(sys.argv) < 2:
+        print(f"Usage: {sys.argv[0]} <project_name>")
+        sys.exit(1)
 
-PROJECT_NAME=$1
-PROJECT_DIR="$PWD/$PROJECT_NAME"
+    project_name = sys.argv[1]
+    project_dir = os.path.join(os.getcwd(), project_name)
 
-if [ -d "$PROJECT_DIR" ]; then
-  echo "Error: Directory '$PROJECT_NAME' already exists."
-  exit 1
-fi
+    if os.path.exists(project_dir):
+        print(f"Error: Directory '{project_name}' already exists.")
+        sys.exit(1)
 
-mkdir -p "$PROJECT_DIR"
-cd "$PROJECT_DIR" || exit 1
+    try:
+        os.makedirs(project_dir)
+        os.chdir(project_dir)
+    except OSError as e:
+        print(f"Error creating directory: {e}")
+        sys.exit(1)
 
-# Create main.c
-cat <<EOF > main.c
-#include <stdio.h>
+    # Create main.c
+    main_c_content = r"""#include <stdio.h>
 
 extern int asm_func(void);
 
 int main() {
-    printf("Calling assembly function...\\n");
+    printf("Calling assembly function...\n");
     int result = asm_func();
-    printf("Result: %d\\n", result);
+    printf("Result: %d\n", result);
     return 0;
 }
-EOF
+"""
+    with open("main.c", "w") as f:
+        f.write(main_c_content)
 
-# Create functions.s
-cat <<EOF > functions.s
-.global asm_func
+    # Create functions.s
+    functions_s_content = r""".global asm_func
 
 asm_func:
-mov x0, #0
-ret
-EOF
+    mov x0, #0
+    ret
+"""
+    with open("functions.s", "w") as f:
+        f.write(functions_s_content)
 
-# Create Makefile
-cat <<EOF > Makefile
-CC = aarch64-linux-gnu-gcc
+    # Create Makefile
+    makefile_content = r"""CC = aarch64-linux-gnu-gcc
 CFLAGS = -Wall -g
 LDFLAGS = -static
 
@@ -49,23 +56,39 @@ OBJS = main.o functions.o
 
 all: main
 
-main: \$(OBJS)
-	\$(CC) \$(LDFLAGS) -o \$@ \$^
+main: $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $^
 
 main.o: main.c
-	\$(CC) \$(CFLAGS) -c -o \$@ \$<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 functions.o: functions.s
-	\$(CC) \$(CFLAGS) -c -o \$@ \$<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f main \$(OBJS)
+	rm -f main $(OBJS)
 
 run: main
 	qemu-aarch64 ./main
-EOF
+"""
+    with open("Makefile", "w") as f:
+        f.write(makefile_content)
 
-echo "Project '$PROJECT_NAME' created successfully in $PROJECT_DIR"
-echo "To build and run:"
-echo "  cd $PROJECT_NAME"
-echo "  make run"
+    # Initialize git repository
+    try:
+        subprocess.run(["git", "init"], check=True)
+    except subprocess.CalledProcessError:
+        print("Warning: Failed to initialize git repository.")
+
+    # Create .gitignore
+    gitignore_content = "*.o\nmain\n"
+    with open(".gitignore", "w") as f:
+        f.write(gitignore_content)
+
+    print(f"Project '{project_name}' created successfully in {project_dir}")
+    print("To build and run:")
+    print(f"  cd {project_name}")
+    print("  make run")
+
+if __name__ == "__main__":
+    main()
