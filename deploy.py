@@ -1009,6 +1009,138 @@ def install_firefox_extensions(script_dir):
         return False, error_msg
 
 
+ARKENFOX_URL = "https://raw.githubusercontent.com/arkenfox/user.js/master/user.js"
+LARBS_URL = "https://raw.githubusercontent.com/LukeSmithxyz/voidrice/master/.config/firefox/larbs.js"
+
+USER_OVERRIDES = """\
+// USER REQUESTED OVERRIDES
+user_pref("dom.push.enabled", true);
+"""
+
+
+def configure_firefox_userjs(username, _home_dir=None):
+    """Configure Firefox user.js with Arkenfox + Luke Smith overrides.
+
+    Detects the active Firefox profile, downloads the latest Arkenfox user.js
+    and Luke Smith's larbs.js, combines them with custom overrides, and deploys
+    the result. Backs up any existing user.js before overwriting.
+
+    Returns: (success, error_message)
+    """
+    home_dir = Path(_home_dir) if _home_dir else Path(f'/home/{username}')
+    firefox_dir = home_dir / '.mozilla' / 'firefox'
+
+    # Check if Firefox directory exists
+    if not firefox_dir.exists():
+        log_error("Firefox not installed or no profile directory found",
+                  context=f"Checked: {firefox_dir}")
+        return True, None  # Not an error — Firefox simply isn't installed
+
+    # Detect active profile: prefer .default-release over .default
+    profile_dir = None
+    try:
+        candidates = [d for d in firefox_dir.iterdir() if d.is_dir()]
+    except (OSError, IOError) as e:
+        log_error("Failed to list Firefox profile directories", e)
+        return False, f"Cannot read Firefox profiles: {e}"
+
+    # Prefer .default-release, fall back to .default
+    for suffix in ('.default-release', '.default'):
+        for d in candidates:
+            if d.name.endswith(suffix):
+                profile_dir = d
+                break
+        if profile_dir:
+            break
+
+    if profile_dir is None:
+        log_error("No active Firefox profile found",
+                  context=f"Checked {len(candidates)} dirs in {firefox_dir}")
+        return True, None  # Not an error — just no profile yet
+
+    # Help static analysis know profile_dir is not None
+    assert profile_dir is not None
+
+    userjs_path = profile_dir / 'user.js'
+
+    # Backup existing user.js
+    if userjs_path.exists():
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_path = profile_dir / f'user.js.backup.{timestamp}'
+        try:
+            shutil.copy2(userjs_path, backup_path)
+        except (OSError, IOError) as e:
+            log_error("Failed to backup existing user.js", e)
+            return False, f"Failed to backup user.js: {e}"
+
+    # Download Arkenfox user.js
+    try:
+        arkenfox_result = run_command_with_retry(
+            ['curl', '-fsSL', ARKENFOX_URL],
+            max_retries=3,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        # Help static analysis know stdout is not None (capture_output=True guarantees it)
+        if arkenfox_result.stdout is None:
+             raise subprocess.CalledProcessError(1, ['curl'], stderr=b"No output captured")
+        arkenfox_content = arkenfox_result.stdout
+
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        log_error("Failed to download Arkenfox user.js", e)
+        return False, f"Failed to download Arkenfox user.js: {e}"
+
+    # Download Luke Smith's larbs.js
+    try:
+        larbs_result = run_command_with_retry(
+            ['curl', '-fsSL', LARBS_URL],
+            max_retries=3,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        if larbs_result.stdout is None:
+             raise subprocess.CalledProcessError(1, ['curl'], stderr=b"No output captured")
+        larbs_content = larbs_result.stdout
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        log_error("Failed to download Luke Smith's larbs.js", e)
+        return False, f"Failed to download larbs.js: {e}"
+
+    # Combine and write
+    try:
+        with open(userjs_path, 'w') as f:
+            f.write(arkenfox_content)
+            if not arkenfox_content.endswith('\n'):
+                f.write('\n')
+            f.write('\n')
+            f.write(larbs_content)
+            if not larbs_content.endswith('\n'):
+                f.write('\n')
+            f.write('\n')
+            f.write(USER_OVERRIDES)
+    except (OSError, IOError) as e:
+        log_error("Failed to write combined user.js", e)
+        return False, f"Failed to write user.js: {e}"
+
+    # Set ownership
+    try:
+        subprocess.run(
+            ['chown', f'{username}:{username}', str(userjs_path)],
+            check=True,
+            capture_output=True,
+            timeout=5
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        log_error("Failed to set ownership on user.js", e)
+        # Non-fatal — file was written successfully
+        pass
+
+    return True, None
+
+
 def install_tor_browser(username, script_dir, tui, row):
     """Install Tor Browser for the target user
 
@@ -1360,6 +1492,25 @@ def main_tui(stdscr):
         row += 4
     else:
         tui.show_progress(row, "Installing Firefox extensions...", success=True)
+        row += 1
+
+    # Configure Firefox user.js (Arkenfox + Luke Smith overrides)
+    tui.show_progress(row, "Configuring Firefox user.js...", success=None)
+    tui.stdscr.refresh()
+
+    success, error = configure_firefox_userjs(username)
+
+    if not success:
+        tui.show_progress(row, "Configuring Firefox user.js...", success=False)
+        tui.show_message(row + 1, 4, f"Error: {error}", color_pair=3)
+        tui.show_message(row + 2, 4, "Continue anyway? (y/n): ", color_pair=4)
+        tui.stdscr.refresh()
+        response = stdscr.getch()
+        if chr(response).lower() != 'y':
+            return
+        row += 4
+    else:
+        tui.show_progress(row, "Configuring Firefox user.js...", success=True)
         row += 1
 
     # Cleanup - remove unnecessary packages and clean apt cache
