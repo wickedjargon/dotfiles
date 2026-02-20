@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# usage: ./init-cpp-project-basic ex15
+
+PROJECT_NAME=$1
+
+if [ -z "$PROJECT_NAME" ]; then
+    echo "Usage: $0 <project_name>"
+    exit 1
+fi
+
+mkdir -p "$PROJECT_NAME"
+cd "$PROJECT_NAME" || exit
+
+cat <<EOF > main.cpp
+#include <print>
+
+int main(int argc, char* argv[]) {
+    // Your code goes here
+    return 0;
+}
+EOF
+
+# Note: The indented lines below MUST use hard tabs.
+cat <<EOF > Makefile
+CXX = clang++
+CXXFLAGS = -std=c++23 -Wall -Wextra
+
+TARGET = $PROJECT_NAME
+
+all: \$(TARGET)
+
+run: \$(TARGET)
+	./\$(TARGET)
+
+\$(TARGET): main.cpp
+	\$(CXX) \$(CXXFLAGS) -o \$(TARGET) main.cpp
+
+clean:
+	rm -f \$(TARGET)
+EOF
+
+echo "Created basic C++23 project: $PROJECT_NAME"

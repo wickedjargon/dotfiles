@@ -1,0 +1,124 @@
+#!/bin/bash
+
+# Check if project name is provided
+if [ -z "$1" ]; then
+    echo "Usage: init-cpp-project <project_name>"
+    exit 1
+fi
+
+PROJECT_NAME=$1
+mkdir -p "$PROJECT_NAME"/{src,include,build}
+cd "$PROJECT_NAME" || exit
+
+echo "Creating Modern C++23 project: $PROJECT_NAME..."
+
+# --- 1. Create Source Files ---
+
+# main.cpp (Using C++23 std::println)
+cat <<EOF > src/main.cpp
+#include <print>
+#include "hello.h"
+
+int main() {
+    std::println("Main: Starting application...");
+    Hello::say_hello();
+    return 0;
+}
+EOF
+
+# src/hello.cpp (Using C++23 std::println)
+cat <<EOF > src/hello.cpp
+#include <print>
+#include "hello.h"
+
+void Hello::say_hello() {
+    std::println("Hello: C++23 Project Initialized Successfully!");
+}
+EOF
+
+# include/hello.h
+cat <<EOF > include/hello.h
+#ifndef HELLO_H
+#define HELLO_H
+
+namespace Hello {
+    void say_hello();
+}
+
+#endif // HELLO_H
+EOF
+
+# --- 2. Create CMakeLists.txt ---
+# Defaults to C++23. If your compiler is too old, change 23 to 20.
+cat <<EOF > CMakeLists.txt
+cmake_minimum_required(VERSION 3.14)
+project($PROJECT_NAME)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# Generate compile_commands.json for LSP (editors)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Include directories
+include_directories(include)
+
+# Gather source files
+file(GLOB SOURCES "src/*.cpp")
+
+# Create executable
+add_executable($PROJECT_NAME \${SOURCES})
+EOF
+
+# --- 3. Create Makefile Wrapper ---
+cat <<EOF > Makefile
+BUILD_DIR = build
+EXEC = $PROJECT_NAME
+
+# Default target: Release build
+all:
+	@cmake -B \$(BUILD_DIR) -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+	@cmake --build \$(BUILD_DIR)
+
+# Debug build (for use with gdb/valgrind)
+debug:
+	@cmake -B \$(BUILD_DIR) -G "Ninja" -DCMAKE_BUILD_TYPE=Debug
+	@cmake --build \$(BUILD_DIR)
+
+# Run the application
+run: all
+	@./\$(BUILD_DIR)/\$(EXEC)
+
+# Run with Valgrind
+memcheck: debug
+	@valgrind --leak-check=full --track-origins=yes ./\$(BUILD_DIR)/\$(EXEC)
+
+# Run with GDB
+gdb: debug
+	@gdb ./\$(BUILD_DIR)/\$(EXEC)
+
+# Clean build files
+clean:
+	@rm -rf \$(BUILD_DIR)
+
+.PHONY: all debug run memcheck gdb clean
+EOF
+
+# --- 4. Create .gitignore ---
+cat <<EOF > .gitignore
+build/
+.cache/
+compile_commands.json
+.DS_Store
+EOF
+
+# --- 5. Initialize Git ---
+git init > /dev/null
+git add .
+git commit -m "Initial commit: Modern C++ setup" > /dev/null
+
+echo "------------------------------------------------"
+echo "Project '$PROJECT_NAME' created."
+echo "1. cd $PROJECT_NAME"
+echo "2. make run"
+echo "------------------------------------------------"
