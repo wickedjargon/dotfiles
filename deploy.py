@@ -1058,9 +1058,6 @@ def configure_firefox_userjs(username, _home_dir=None):
                   context=f"Checked {len(candidates)} dirs in {firefox_dir}")
         return True, None  # Not an error — just no profile yet
 
-    # Help static analysis know profile_dir is not None
-    assert profile_dir is not None
-
     userjs_path = profile_dir / 'user.js'
 
     # Backup existing user.js
