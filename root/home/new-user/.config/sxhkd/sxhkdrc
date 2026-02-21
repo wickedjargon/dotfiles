@@ -142,19 +142,27 @@ super + s
 
 # ========== VOLUME CONTROLS ==========
 
-# Volume up
+# Volume up (snap to nearest 5%)
 super + equal
     xob-volume up
 
 XF86AudioRaiseVolume
     xob-volume up
 
-# Volume down
+# Volume down (snap to nearest 5%)
 super + minus
     xob-volume down
 
 XF86AudioLowerVolume
     xob-volume down
+
+# Volume up (1% increment)
+super + shift + equal
+    xob-volume up1
+
+# Volume down (1% decrement)
+super + shift + minus
+    xob-volume down1
 
 # Mute toggle
 super + 0
