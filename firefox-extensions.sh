@@ -4,11 +4,12 @@
 
 set -e
 
-# Create the policies directory
+# Create the policies directory for both standard and ESR
 mkdir -p /etc/firefox/policies
+mkdir -p /etc/firefox-esr/policies
 
 # Create the policies.json file with all extensions
-cat > /etc/firefox/policies/policies.json << 'EOF'
+cat > /tmp/policies.json << 'EOF'
 {
   "policies": {
     "ExtensionSettings": {
@@ -51,8 +52,13 @@ cat > /etc/firefox/policies/policies.json << 'EOF'
   }
 }
 EOF
+EOF
 
-echo "Firefox extensions policy installed to /etc/firefox/policies/policies.json"
+cp /tmp/policies.json /etc/firefox/policies/policies.json
+cp /tmp/policies.json /etc/firefox-esr/policies/policies.json
+rm /tmp/policies.json
+
+echo "Firefox extensions policy installed to /etc/firefox/policies/ and /etc/firefox-esr/policies/"
 echo "Extensions will be automatically installed on next Firefox launch:"
 echo "  - uBlock Origin (ad blocker)"
 echo "  - Dark Reader (dark mode for websites)"
