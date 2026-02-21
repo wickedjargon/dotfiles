@@ -28,6 +28,18 @@ case "$1" in
         [ "$target" -lt 0 ] && target=0
         pactl set-sink-volume @DEFAULT_SINK@ "${target}%"
         ;;
+    up1)
+        # Increase by exactly 1%
+        target=$(( current + 1 ))
+        [ "$target" -gt 150 ] && target=150
+        pactl set-sink-volume @DEFAULT_SINK@ "${target}%"
+        ;;
+    down1)
+        # Decrease by exactly 1%
+        target=$(( current - 1 ))
+        [ "$target" -lt 0 ] && target=0
+        pactl set-sink-volume @DEFAULT_SINK@ "${target}%"
+        ;;
     mute)
         pactl set-sink-mute @DEFAULT_SINK@ toggle
         ;;
