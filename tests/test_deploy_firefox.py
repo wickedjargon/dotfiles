@@ -45,12 +45,14 @@ class TestConfigureFirefoxUserjs(unittest.TestCase):
         self.assertTrue(success)
         self.assertIsNone(error)
 
-    # --- Test: Prefers .default-release over .default ---
+    # --- Test: Prefers .default-release over .default-esr and .default ---
     def test_prefers_default_release(self):
         """Selects .default-release profile when both exist."""
         self.firefox_dir.mkdir(parents=True)
         default_dir = self.firefox_dir / "abc123.default"
         default_dir.mkdir()
+        esr_dir = self.firefox_dir / "def456.default-esr"
+        esr_dir.mkdir()
         release_dir = self.firefox_dir / "xyz789.default-release"
         release_dir.mkdir()
 
@@ -69,9 +71,36 @@ class TestConfigureFirefoxUserjs(unittest.TestCase):
         self.assertTrue(success)
         self.assertIsNone(error)
         self.assertTrue((release_dir / "user.js").exists())
+        self.assertFalse((esr_dir / "user.js").exists())
         self.assertFalse((default_dir / "user.js").exists())
 
-    # --- Test: Falls back to .default when no .default-release ---
+
+    # --- Test: Falls back to .default-esr when no .default-release ---
+    def test_falls_back_to_default_esr(self):
+        """Selects .default-esr profile when .default-release doesn't exist."""
+        self.firefox_dir.mkdir(parents=True)
+        default_dir = self.firefox_dir / "abc123.default"
+        default_dir.mkdir()
+        esr_dir = self.firefox_dir / "def456.default-esr"
+        esr_dir.mkdir()
+
+        mock_arkenfox = MagicMock()
+        mock_arkenfox.stdout = "// arkenfox\n"
+        mock_larbs = MagicMock()
+        mock_larbs.stdout = "// larbs\n"
+
+        with patch("deploy.run_command_with_retry",
+                   side_effect=[mock_arkenfox, mock_larbs]), \
+             patch("subprocess.run"):
+            success, error = deploy.configure_firefox_userjs(
+                self.username, _home_dir=self.home_dir
+            )
+
+        self.assertTrue(success)
+        self.assertTrue((esr_dir / "user.js").exists())
+        self.assertFalse((default_dir / "user.js").exists())
+
+    # --- Test: Falls back to .default when no .default-release or .default-esr ---
     def test_falls_back_to_default(self):
         """Selects .default profile when .default-release doesn't exist."""
         self.firefox_dir.mkdir(parents=True)

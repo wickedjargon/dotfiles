@@ -1044,8 +1044,8 @@ def configure_firefox_userjs(username, _home_dir=None):
         log_error("Failed to list Firefox profile directories", e)
         return False, f"Cannot read Firefox profiles: {e}"
 
-    # Prefer .default-release, fall back to .default
-    for suffix in ('.default-release', '.default'):
+    # Prefer .default-release, fall back to .default-esr, then .default
+    for suffix in ('.default-release', '.default-esr', '.default'):
         for d in candidates:
             if d.name.endswith(suffix):
                 profile_dir = d
