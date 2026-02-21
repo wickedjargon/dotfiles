@@ -1,0 +1,8 @@
+android-sdk
+android-sdk-build-tools
+android-sdk-debug
+android-sdk-platform-tools
+android-sdk-platform-tools-debug
+antigravity
+yay-bin
+yay-bin-debug
