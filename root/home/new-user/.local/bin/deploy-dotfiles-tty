@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+
+import subprocess
+import sys
+from pathlib import Path
+
+# Configuration
+# The repo path is relative to the user's home directory
+REPO_PATH = Path.home() / "d/projects/dotfiles"
+DOTFILES_DIR = REPO_PATH / "root" / "home" / "new-user"
+
+def deploy():
+    if not DOTFILES_DIR.exists():
+        print(f"Error: Dotfiles directory not found at {DOTFILES_DIR}")
+        sys.exit(1)
+
+    print("Starting deployment...")
+    
+    success_count = 0
+    error_count = 0
+
+    try:
+        # Iterate over all items in the dotfiles directory
+        for item in DOTFILES_DIR.iterdir():
+            rel_path = item.name
+            src = item
+            dst = Path.home() / rel_path
+            
+            # Prepare rsync command
+            # -a: archive (recursive, preserves permissions/times/etc)
+            # -v: verbose
+            cmd = ["rsync", "-av"]
+            
+            src_str = str(src)
+            dst_str = str(dst)
+            
+            # IMPORTANT: For directories, append trailing slash to src to merge contents
+            # instead of creating the directory inside the destination.
+            if src.is_dir():
+                if not src_str.endswith("/"):
+                    src_str += "/"
+            
+            cmd.extend([src_str, dst_str])
+            
+            print(f"Deploying {rel_path}...")
+            try:
+                subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                success_count += 1
+            except subprocess.CalledProcessError as e:
+                error_msg = e.stderr.decode() if e.stderr else str(e)
+                print(f"Error syncing {rel_path}: {error_msg}")
+                error_count += 1
+
+        summary = f"Deployment complete.\nSuccess: {success_count}\nErrors: {error_count}"
+        print(summary)
+
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    deploy()
