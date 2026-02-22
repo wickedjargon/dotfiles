@@ -1,5 +1,9 @@
 export PATH="$HOME/.local/bin:$PATH"
 
+# Start GNOME Keyring Daemon
+eval $(/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh)
+export SSH_AUTH_SOCK
+
 xset-settings
 
 # qt theme
