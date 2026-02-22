@@ -52,7 +52,6 @@ cat > /tmp/policies.json << 'EOF'
   }
 }
 EOF
-EOF
 
 cp /tmp/policies.json /etc/firefox/policies/policies.json
 cp /tmp/policies.json /etc/firefox-esr/policies/policies.json
