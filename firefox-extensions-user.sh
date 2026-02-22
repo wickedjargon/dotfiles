@@ -31,11 +31,11 @@ curl -L -o "$EXT_DIR/idcac-pub@guus.ninja.xpi" \
     "https://addons.mozilla.org/firefox/downloads/latest/istilldontcareaboutcookies/latest.xpi"
 
 # Read Aloud
-curl -L -o "$EXT_DIR/read-aloud@ken.loomis.org.xpi" \
+curl -L -o "$EXT_DIR/{ddc62400-f22d-4dd3-8b4a-05837de53c2e}.xpi" \
     "https://addons.mozilla.org/firefox/downloads/latest/read-aloud/latest.xpi"
 
 # Defund Wikipedia
-curl -L -o "$EXT_DIR/{ea2673bc-51ef-48a0-b81e-6b73e4f08cb5}.xpi" \
+curl -L -o "$EXT_DIR/{9d6e7f41-8d33-4145-a164-5ca4358c7960}.xpi" \
     "https://addons.mozilla.org/firefox/downloads/latest/defund-wikipedia/latest.xpi"
 
 echo ""

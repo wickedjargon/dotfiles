@@ -38,12 +38,12 @@ cat > /tmp/policies.json << 'EOF'
         "install_url": "https://addons.mozilla.org/firefox/downloads/latest/istilldontcareaboutcookies/latest.xpi",
         "private_browsing": true
       },
-      "read-aloud@ken.loomis.org": {
+      "{ddc62400-f22d-4dd3-8b4a-05837de53c2e}": {
         "installation_mode": "normal_installed",
         "install_url": "https://addons.mozilla.org/firefox/downloads/latest/read-aloud/latest.xpi",
         "private_browsing": true
       },
-      "{ea2673bc-51ef-48a0-b81e-6b73e4f08cb5}": {
+      "{9d6e7f41-8d33-4145-a164-5ca4358c7960}": {
         "installation_mode": "normal_installed",
         "install_url": "https://addons.mozilla.org/firefox/downloads/latest/defund-wikipedia/latest.xpi",
         "private_browsing": true
