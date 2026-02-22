@@ -4,6 +4,7 @@
     "editor.occurrencesHighlight": "off",
     "workbench.colorTheme": "GitHub Dark Colorblind (Beta)",
     "window.restoreWindows": "none",
+    "extensions.ignoreRecommendations": true
     // "files.readonlyInclude": {
     //     "**/*": true
     // }
