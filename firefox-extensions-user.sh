@@ -15,7 +15,7 @@ curl -L -o "$EXT_DIR/uBlock0@raymondhill.net.xpi" \
     "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
 
 # Dark Reader
-curl -L -o "$EXT_DIR/{82ac2b38-ddfa-4cb5-b2f1-c39e1beb95bd}.xpi" \
+curl -L -o "$EXT_DIR/addon@darkreader.org.xpi" \
     "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi"
 
 # Vimium

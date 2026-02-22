@@ -18,7 +18,7 @@ cat > /tmp/policies.json << 'EOF'
         "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi",
         "private_browsing": true
       },
-      "{82ac2b38-ddfa-4cb5-b2f1-c39e1beb95bd}": {
+      "addon@darkreader.org": {
         "installation_mode": "normal_installed",
         "install_url": "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi",
         "private_browsing": true
