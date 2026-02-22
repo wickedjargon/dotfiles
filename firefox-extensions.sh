@@ -1,52 +1,71 @@
 #!/bin/sh
-# Automated Firefox extension installation (User Level)
-# Installs all extensions without requiring root privileges.
+# Automated Firefox extension installation via Firefox Enterprise Policies
+# Installs all extensions listed in README.md
 
 set -e
 
-# The directory where user-level extensions are stored in Firefox
-EXT_DIR="$HOME/.mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
-mkdir -p "$EXT_DIR"
+# Create the policies directory for both standard and ESR
+mkdir -p /etc/firefox/policies
+mkdir -p /etc/firefox-esr/policies
 
-echo "Downloading extensions..."
+# Create the policies.json file with all extensions
+cat > /tmp/policies.json << 'EOF'
+{
+  "policies": {
+    "ExtensionSettings": {
+      "uBlock0@raymondhill.net": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi",
+        "private_browsing": true
+      },
+      "{82ac2b38-ddfa-4cb5-b2f1-c39e1beb95bd}": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi",
+        "private_browsing": true
+      },
+      "{d7742d87-e61d-4b78-b8a1-b469842139fa}": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/vimium-ff/latest.xpi",
+        "private_browsing": true
+      },
+      "sponsorBlocker@ajay.app": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/sponsorblock/latest.xpi",
+        "private_browsing": true
+      },
+      "idcac-pub@guus.ninja": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/istilldontcareaboutcookies/latest.xpi",
+        "private_browsing": true
+      },
+      "read-aloud@ken.loomis.org": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/read-aloud/latest.xpi",
+        "private_browsing": true
+      },
+      "{ea2673bc-51ef-48a0-b81e-6b73e4f08cb5}": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/defund-wikipedia/latest.xpi",
+        "private_browsing": true
+      }
+    }
+  }
+}
+EOF
+EOF
 
-# uBlock Origin
-curl -L -o "$EXT_DIR/uBlock0@raymondhill.net.xpi" \
-    "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+cp /tmp/policies.json /etc/firefox/policies/policies.json
+cp /tmp/policies.json /etc/firefox-esr/policies/policies.json
+rm /tmp/policies.json
 
-# Dark Reader
-curl -L -o "$EXT_DIR/{82ac2b38-ddfa-4cb5-b2f1-c39e1beb95bd}.xpi" \
-    "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi"
-
-# Vimium
-curl -L -o "$EXT_DIR/{d7742d87-e61d-4b78-b8a1-b469842139fa}.xpi" \
-    "https://addons.mozilla.org/firefox/downloads/latest/vimium-ff/latest.xpi"
-
-# SponsorBlock
-curl -L -o "$EXT_DIR/sponsorBlocker@ajay.app.xpi" \
-    "https://addons.mozilla.org/firefox/downloads/latest/sponsorblock/latest.xpi"
-
-# I Still Don't Care About Cookies
-curl -L -o "$EXT_DIR/idcac-pub@guus.ninja.xpi" \
-    "https://addons.mozilla.org/firefox/downloads/latest/istilldontcareaboutcookies/latest.xpi"
-
-# Read Aloud
-curl -L -o "$EXT_DIR/read-aloud@ken.loomis.org.xpi" \
-    "https://addons.mozilla.org/firefox/downloads/latest/read-aloud/latest.xpi"
-
-# Defund Wikipedia
-curl -L -o "$EXT_DIR/{ea2673bc-51ef-48a0-b81e-6b73e4f08cb5}.xpi" \
-    "https://addons.mozilla.org/firefox/downloads/latest/defund-wikipedia/latest.xpi"
-
-echo ""
-echo "Firefox extensions downloaded to $EXT_DIR"
-echo "They will be prompted for installation the next time you open Firefox:"
+echo "Firefox extensions policy installed to /etc/firefox/policies/ and /etc/firefox-esr/policies/"
+echo "Extensions will be automatically installed on next Firefox launch:"
 echo "  - uBlock Origin (ad blocker)"
-echo "  - Dark Reader (dark mode)"
+echo "  - Dark Reader (dark mode for websites)"
 echo "  - Vimium (keyboard navigation)"
 echo "  - SponsorBlock (skip YouTube sponsors)"
-echo "  - I Still Don't Care About Cookies"
-echo "  - Read Aloud"
-echo "  - Defund Wikipedia"
+echo "  - I Still Don't Care About Cookies (remove cookie banners)"
+echo "  - Read Aloud (text-to-speech)"
+echo "  - Defund Wikipedia (remove donation banners)"
 echo ""
-echo "Note: You must approve their installation inside Firefox."
+echo "Note: Extensions are enabled in private browsing mode by default"
