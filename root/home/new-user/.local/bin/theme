@@ -63,6 +63,10 @@ THEMES = {
         "dmenu_sf": "#ffffff",
         # Wallpaper
         "feh_bg": "#000000",
+        # Calibre
+        "calibre_theme": "sepia-dark",
+        # Zathura
+        "zathura_bg": "#0d0e1c",
         # Emacs
         "emacs_fn": "fff-theme-dark",
         # Antigravity (VS Code)
@@ -128,6 +132,10 @@ THEMES = {
         "dmenu_sf": "#333333",
         # Wallpaper
         "feh_bg": "#CCCCCC",
+        # Calibre
+        "calibre_theme": "sepia-light",
+        # Zathura
+        "zathura_bg": "#fbf1c7",
         # Emacs
         "emacs_fn": "fff-theme-light",
         # Antigravity (VS Code)
@@ -581,6 +589,31 @@ def switch_wallpaper(theme):
         print(f"  wallpaper → failed: {e.stderr.decode().strip()}")
 
 
+def switch_calibre(theme):
+    """Update ~/.config/calibre/viewer-webengine.json color scheme."""
+    path = os.path.join(HOME, ".config", "calibre", "viewer-webengine.json")
+    if not os.path.exists(path):
+        print("  calibre → skipped (config not found)")
+        return
+    replace_in_file(path, [
+        (r'("current_color_scheme":\s*)"[^"]+"', rf'\1"{theme["calibre_theme"]}"'),
+    ])
+    print(f"  calibre → {theme['calibre_theme']}")
+
+
+def switch_zathura(theme):
+    """Update ~/.config/zathura/zathurarc recolor background."""
+    path = os.path.join(HOME, ".config", "zathura", "zathurarc")
+    if not os.path.exists(path):
+        print("  zathura → skipped (config not found)")
+        return
+    replace_in_file(path, [
+        (r'(set\s+default-bg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
+        (r'(set\s+recolor-lightcolor\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
+    ])
+    print(f"  zathura → bg:{theme['zathura_bg']}")
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 
@@ -613,6 +646,8 @@ def apply_theme(mode):
     switch_alacritty(theme)
     switch_rofi(theme)
     switch_wallpaper(theme)
+    switch_calibre(theme)
+    switch_zathura(theme)
     restart_xdg_portal()
 
     write_state(mode)

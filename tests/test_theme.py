@@ -190,6 +190,26 @@ def fake_home(tmp_path, monkeypatch):
         '}\n'
     )
 
+    # Calibre
+    calibre = home / ".config" / "calibre"
+    calibre.mkdir(parents=True)
+    (calibre / "viewer-webengine.json").write_text(
+        '{\n'
+        '  "session_data": {\n'
+        '    "current_color_scheme": "sepia-dark"\n'
+        '  }\n'
+        '}\n'
+    )
+
+    # Zathura
+    zathura = home / ".config" / "zathura"
+    zathura.mkdir(parents=True)
+    (zathura / "zathurarc").write_text(
+        'set recolor true\n'
+        'set default-bg \\#0d0e1c\n'
+        'set recolor-lightcolor \\#0d0e1c\n'
+    )
+
     # Patch HOME in the module
     monkeypatch.setattr(theme_mod, "HOME", str(home))
     monkeypatch.setattr(theme_mod, "STATE_FILE", str(home / ".config" / "theme-mode"))
@@ -505,6 +525,44 @@ class TestWallpaper:
         theme_mod.switch_wallpaper(theme_mod.THEMES["dark"])
         assert any("convert" in c and "#000000" in c[3] for c in calls)
         assert any("feh" in c for c in calls)
+
+
+class TestCalibre:
+    def test_switch_to_light(self, fake_home):
+        theme_mod.switch_calibre(theme_mod.THEMES["light"])
+        path = fake_home / ".config" / "calibre" / "viewer-webengine.json"
+        settings = json.loads(path.read_text())
+        assert settings["session_data"]["current_color_scheme"] == "sepia-light"
+
+    def test_switch_to_dark(self, fake_home):
+        theme_mod.switch_calibre(theme_mod.THEMES["light"])
+        theme_mod.switch_calibre(theme_mod.THEMES["dark"])
+        path = fake_home / ".config" / "calibre" / "viewer-webengine.json"
+        settings = json.loads(path.read_text())
+        assert settings["session_data"]["current_color_scheme"] == "sepia-dark"
+
+    def test_missing_config(self, fake_home):
+        os.remove(str(fake_home / ".config" / "calibre" / "viewer-webengine.json"))
+        theme_mod.switch_calibre(theme_mod.THEMES["light"])
+
+
+class TestZathura:
+    def test_switch_to_light(self, fake_home):
+        theme_mod.switch_zathura(theme_mod.THEMES["light"])
+        content = (fake_home / ".config" / "zathura" / "zathurarc").read_text()
+        assert "set default-bg \\#fbf1c7" in content
+        assert "set recolor-lightcolor \\#fbf1c7" in content
+
+    def test_switch_to_dark(self, fake_home):
+        theme_mod.switch_zathura(theme_mod.THEMES["light"])
+        theme_mod.switch_zathura(theme_mod.THEMES["dark"])
+        content = (fake_home / ".config" / "zathura" / "zathurarc").read_text()
+        assert "set default-bg \\#0d0e1c" in content
+        assert "set recolor-lightcolor \\#0d0e1c" in content
+
+    def test_missing_config(self, fake_home):
+        os.remove(str(fake_home / ".config" / "zathura" / "zathurarc"))
+        theme_mod.switch_zathura(theme_mod.THEMES["light"])
 
 
 # ── Milestone 3 Tests ────────────────────────────────────────────────────────
