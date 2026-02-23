@@ -84,6 +84,7 @@ systemctl --user restart pulseaudio
 
 ## TODOS
 - [x] light/dark theme universal toggle. toggles (gtk/qt/bspwm/polybar/xob/emacs/antigravity/notification daemon /dmenu and gsettings/ xdg-desktop-portal-gtk in bspwm)
+- [ ] calibre still doesn't toggle light/dark theme. fix this.
 - [x] deploy.py should handle `.patch` files in a cleaner way. perhaps create a patches directory and have deploy.py apply them. script still uses old logic with non existing dir system-configs.
 - [ ] update deploy script to automatically add `contrib` and `non-free` components to `sources.list`
 - [ ] make a rofi version of dmenu-explorer where the second item is selected first (so not `..` which is parent directory). run as a pilot project to see if rofi is a viable replacement for dmenu.
