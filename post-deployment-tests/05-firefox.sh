@@ -13,17 +13,21 @@ fi
 
 HOME_DIR="/home/$TARGET_USER"
 FIREFOX_DIR="$HOME_DIR/.mozilla/firefox"
-POLICIES_JSON="/usr/share/firefox-esr/distribution/policies.json"
+POLICIES_JSON=""
+for p in "/usr/share/firefox-esr/distribution/policies.json" \
+         "/usr/share/firefox/distribution/policies.json" \
+         "/etc/firefox-esr/policies/policies.json" \
+         "/etc/firefox/policies/policies.json"; do
+    if [ -f "$p" ]; then
+        POLICIES_JSON="$p"
+        break
+    fi
+done
 USERJS_SRC="$SCRIPT_DIR/firefox-user.js"
 
 echo "Testing Firefox extensions configuration..."
 
-if [ ! -f "$POLICIES_JSON" ]; then
-    # Some Debian derivatives might use /usr/share/firefox, check fallback
-    POLICIES_JSON="/usr/share/firefox/distribution/policies.json"
-fi
-
-if [ ! -f "$POLICIES_JSON" ]; then
+if [ -z "$POLICIES_JSON" ]; then
     echo "  [FAIL] Firefox policies.json not found in standard system locations."
     FAILED=1
 else
