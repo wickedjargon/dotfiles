@@ -2,7 +2,8 @@
 
 Here are my dotfiles intended for use on a Debian-based system. 
 
-- `deploy.py` - deploys dotfiles and installs packages
+- `deploy.py` - deploys dotfiles and installs packages (TUI mode)
+- `deploy_cli.py` - deploys dotfiles and installs packages (CLI mode, for automation/LLMs)
 - `setup-ssh-repos.py` - converts wickedjargon repos to use SSH
 - `firefox-ui-config.sh` - to adjust firefox ui settings
 
@@ -17,6 +18,22 @@ apt install -y git python3
 git clone https://github.com/wickedjargon/dotfiles.git
 cd dotfiles
 python3 deploy.py
+```
+
+#### CLI Mode (for automation / LLM testing)
+
+```bash
+# Full deployment, non-interactive
+sudo python3 deploy_cli.py --username myuser --password mypass --yes
+
+# Deploy to existing user
+sudo python3 deploy_cli.py --username existinguser --yes
+
+# Preview what would happen (no root required)
+python3 deploy_cli.py --username myuser --dry-run
+
+# JSON output for LLM consumption
+python3 deploy_cli.py --username myuser --dry-run --json
 ```
 
 ### Step 2: Copy SSH Keys and files from old computer (optional)
