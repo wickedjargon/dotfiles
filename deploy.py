@@ -1070,8 +1070,11 @@ def install_firefox_userjs(username, script_dir, tui, row):
         # 2. Run Headless Firefox briefly
         # This forces Firefox-ESR to generate its true default profile and its installs.ini hashes
         try:
-            cmd = "timeout 5 firefox-esr --headless || timeout 5 firefox --headless"
-            subprocess.run(['su', '-', username, '-c', cmd], capture_output=True)
+            # We use Popen so that we don't block. We sleep to let it write profiles.ini.
+            # This exactly replicates the LARBS librewolf deployment method.
+            cmd = "firefox-esr --headless || firefox --headless"
+            p = subprocess.Popen(['su', '-', username, '-c', cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            time.sleep(4)
         except Exception as e:
             log_error(f"Failed to bootstrap firefox profile: {e}")
             
@@ -1092,6 +1095,14 @@ def install_firefox_userjs(username, script_dir, tui, row):
             shutil.copy2(userjs_src, dest)
             subprocess.run(['chown', f'{username}:{username}', str(dest)], check=True)
             installed = True
+
+        # 4. Kill the headless instance
+        subprocess.run(['pkill', '-u', username, '-f', 'firefox'], capture_output=True)
+        try:
+            p.terminate()
+            p.wait(timeout=2)
+        except Exception:
+            pass
 
         if not installed:
             tui.show_progress(row, "Installing Firefox user.js...", success=False)
