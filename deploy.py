@@ -1265,7 +1265,7 @@ def main_tui(stdscr):
     # Clone dotfile repos to home directory (before package installation)
     dotfiles_repos = read_git_dotfiles_file(script_dir)
     if dotfiles_repos:
-        tui.show_message(row, 4, f"Cloning dotfile repositories ({len(dotfiles_repos)} total):",
+        tui.show_message(row, 4, f"Cloning dotfile repositories:",
                         color_pair=1, bold=True)
         row += 1
         tui.stdscr.refresh()
