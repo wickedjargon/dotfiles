@@ -447,11 +447,12 @@
    ((eq system-type 'gnu/linux)
     (if (daemonp)
         (add-hook 'after-make-frame-functions
-                  (lambda (frame)
+                  (defun fff--daemon-initial-theme (frame)
                     (with-selected-frame frame
                       (if (display-graphic-p frame)
                           (load-theme 'ef-tritanopia-dark t)
-                        (load-theme 'tty-dark t)))))
+                        (load-theme 'tty-dark t)))
+                    (remove-hook 'after-make-frame-functions #'fff--daemon-initial-theme)))
       (if (display-graphic-p)
           (load-theme 'modus-vivendi-tinted t)
         (load-theme 'tty-dark t))))
@@ -1249,10 +1250,12 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   (erc-join-buffer 'window)
   (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
   (doom-modeline-irc nil)
+  (erc-nick "wickedjargon")
   (erc-autojoin-channels-alist
    '((".*\\.libera\\.chat"
       "#programming"
       "#emacs"
+      "#archlinux"
       "#devuan"
       "#python"
       "#javascript"
