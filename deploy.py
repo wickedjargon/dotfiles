@@ -1059,47 +1059,26 @@ def install_firefox_userjs(username, script_dir, tui, row):
 
     try:
         home_dir = Path(f'/home/{username}')
-        firefox_dir = home_dir / '.mozilla' / 'firefox'
+        # We learned that Firefox ESR on Debian ignores hardcoded profiles.ini setups 
+        # and instead creates hash-based locks (like Install3B6073811A6ABF12).
+        # We must let Firefox generate its profile naturally first, then inject.
         
-        # Ensure mozilla/firefox directory exists
+        # 1. Ensure mozilla/firefox directory exists with correct skeletal ownership
         firefox_dir.mkdir(parents=True, exist_ok=True)
         subprocess.run(['chown', '-R', f'{username}:{username}', str(home_dir / '.mozilla')], check=True)
-
-        # Instead of fighting Firefox's random profile names and ESR fallback behavior,
-        # we strictly define a profile folder and profiles.ini configuration so Firefox
-        # is forced to use exactly this directory.
-        profile_name = f"{username}.default-release"
-        profile_dir = firefox_dir / profile_name
         
-        # Create the profile directory
-        profile_dir.mkdir(parents=True, exist_ok=True)
-        subprocess.run(['chown', '-R', f'{username}:{username}', str(profile_dir)], check=True)
-        
-        # Write a rigid profiles.ini file
-        profiles_ini = firefox_dir / 'profiles.ini'
-        ini_content = f"""[Profile0]
-Name=default-release
-IsRelative=1
-Path={profile_name}
-Default=1
-
-[General]
-StartWithLastProfile=1
-Version=2
-"""
-        with open(profiles_ini, 'w') as f:
-            f.write(ini_content)
+        # 2. Run Headless Firefox briefly
+        # This forces Firefox-ESR to generate its true default profile and its installs.ini hashes
+        try:
+            cmd = "timeout 5 firefox-esr --headless || timeout 5 firefox --headless"
+            subprocess.run(['su', '-', username, '-c', cmd], capture_output=True)
+        except Exception as e:
+            log_error(f"Failed to bootstrap firefox profile: {e}")
             
-        subprocess.run(['chown', f'{username}:{username}', str(profiles_ini)], check=True)
+        # 3. Find whatever profiles it generated
+        import glob
+        profiles = glob.glob(str(firefox_dir / '*.default*'))
         
-        # Define installs.ini to lock this profile as default for all installations
-        installs_ini = firefox_dir / 'installs.ini'
-        # Get a dummy installation hash or just use a generic lock
-        # Firefox will still respect the profile if it's the only one and marked Default=1
-        
-        # Now we know exactly where the profile is.
-        profiles = [str(profile_dir)]
-
         installed = False
         for profile in profiles:
             dest = Path(profile) / 'user.js'
@@ -1115,10 +1094,8 @@ Version=2
             installed = True
 
         if not installed:
-            # Firefox not installed or profiles inaccessible
-            log_error("Failed to find or create a Firefox profile.")
             tui.show_progress(row, "Installing Firefox user.js...", success=False)
-            return False, "Failed to find or create a Firefox profile.", row + 1
+            return False, "Failed to find any Firefox profile directories.", row + 1
 
         tui.show_progress(row, "Installing Firefox user.js...", success=True)
         return True, None, row + 1
