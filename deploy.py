@@ -1065,30 +1065,40 @@ def install_firefox_userjs(username, script_dir, tui, row):
         firefox_dir.mkdir(parents=True, exist_ok=True)
         subprocess.run(['chown', '-R', f'{username}:{username}', str(home_dir / '.mozilla')], check=True)
 
-        # Check for existing profiles
-        import glob
-        profiles = glob.glob(str(firefox_dir / '*.default*'))
+        # Instead of fighting Firefox's random profile names and ESR fallback behavior,
+        # we strictly define a profile folder and profiles.ini configuration so Firefox
+        # is forced to use exactly this directory.
+        profile_name = f"{username}.default-release"
+        profile_dir = firefox_dir / profile_name
         
-        if not profiles:
-            # Create a profile headless by running firefox/firefox-esr once as the user
-            try:
-                # Need to use xvfb-run or similar if no display, but -CreateProfile works without X if given --headless
-                cmd = "firefox-esr --headless -CreateProfile default || firefox --headless -CreateProfile default"
-                result = subprocess.run(['su', '-', username, '-c', cmd], 
-                                        capture_output=True, timeout=10, text=True)
-                if result.returncode != 0:
-                    log_error(f"Profile creation failed: {result.stderr}")
-                    
-                # Firefox ESR often creates a specific .default-esr profile on graphical launch.
-                # Let's force it to initialize its default profiles by running it headlessly once 
-                # without args which generates both .default and .default-esr
-                cmd2 = "timeout 3 firefox-esr --headless || timeout 3 firefox --headless"
-                subprocess.run(['su', '-', username, '-c', cmd2], capture_output=True, text=True)
-                
-            except Exception as e:
-                log_error(f"Exception during profile creation: {e}")
+        # Create the profile directory
+        profile_dir.mkdir(parents=True, exist_ok=True)
+        subprocess.run(['chown', '-R', f'{username}:{username}', str(profile_dir)], check=True)
+        
+        # Write a rigid profiles.ini file
+        profiles_ini = firefox_dir / 'profiles.ini'
+        ini_content = f"""[Profile0]
+Name=default-release
+IsRelative=1
+Path={profile_name}
+Default=1
+
+[General]
+StartWithLastProfile=1
+Version=2
+"""
+        with open(profiles_ini, 'w') as f:
+            f.write(ini_content)
             
-            profiles = glob.glob(str(firefox_dir / '*default*'))
+        subprocess.run(['chown', f'{username}:{username}', str(profiles_ini)], check=True)
+        
+        # Define installs.ini to lock this profile as default for all installations
+        installs_ini = firefox_dir / 'installs.ini'
+        # Get a dummy installation hash or just use a generic lock
+        # Firefox will still respect the profile if it's the only one and marked Default=1
+        
+        # Now we know exactly where the profile is.
+        profiles = [str(profile_dir)]
 
         installed = False
         for profile in profiles:
