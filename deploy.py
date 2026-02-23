@@ -1072,8 +1072,8 @@ def install_firefox_userjs(username, script_dir, tui, row):
         if not profiles:
             # Create a profile headless by running firefox/firefox-esr once as the user
             try:
-                # Need to use xvfb-run or similar if no display, but -CreateProfile works without X
-                cmd = "firefox-esr -CreateProfile default || firefox -CreateProfile default"
+                # Need to use xvfb-run or similar if no display, but -CreateProfile works without X if given --headless
+                cmd = "firefox-esr --headless -CreateProfile default || firefox --headless -CreateProfile default"
                 result = subprocess.run(['su', '-', username, '-c', cmd], 
                                         capture_output=True, timeout=10, text=True)
                 if result.returncode != 0:
