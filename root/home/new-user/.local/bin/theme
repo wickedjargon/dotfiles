@@ -1,0 +1,645 @@
+#!/usr/bin/env python3
+"""
+Universal theme toggle for desktop environment.
+
+Usage:
+    theme --dark     Switch to dark theme
+    theme --light    Switch to light theme
+    theme --toggle   Toggle between dark and light
+"""
+
+import argparse
+import configparser
+import json
+import os
+import re
+import subprocess
+import sys
+
+HOME = os.path.expanduser("~")
+STATE_FILE = os.path.join(HOME, ".config", "theme-mode")
+
+# ── Theme definitions ────────────────────────────────────────────────────────
+
+THEMES = {
+    "dark": {
+        "gtk_theme": "Arc-Dark",
+        "gtk_prefer_dark": "true",
+        "qt_style": "kvantum-dark",
+        "kvantum_theme": "KvArcDark",
+        "color_scheme": "prefer-dark",
+        # Polybar
+        "polybar_bg": "#01010A",
+        "polybar_fg": "#ffffff",
+        # Polybar bspwm_custom.sh
+        "poly_focused_underline": "#FFFFFF",
+        "poly_foreground": "#B3B3B3",
+        "poly_empty": "#4D4D4D",
+        "poly_urgent": "#A5492F",
+        # BSPWM
+        "bspwm_normal_border": "#222222",
+        "bspwm_active_border": "#222222",
+        "bspwm_focused_border": "#8b1a1a",
+        "bspwm_presel_feedback": "#8b1a1a",
+        # XOB
+        "xob_fg": "#ffffff",
+        "xob_bg": "#000000",
+        "xob_border": "#222222",
+        "xob_alt_fg": "#555555",
+        "xob_overflow_fg": "#8b1a1a",
+        "xob_overflow_border": "#8b1a1a",
+        "xob_altoverflow_fg": "#550000",
+        "xob_altoverflow_border": "#550000",
+        # Dunst
+        "dunst_bg": "#000000",
+        "dunst_frame": "#000000",
+        "dunst_fg": "#ffffff",
+        "dunst_crit_bg": "#660000",
+        "dunst_crit_frame": "#660000",
+        # Dmenu
+        "dmenu_nb": "#000000",
+        "dmenu_nf": "#ffffff",
+        "dmenu_sb": "#222222",
+        "dmenu_sf": "#ffffff",
+        # Wallpaper
+        "feh_bg": "#000000",
+        # Emacs
+        "emacs_fn": "fff-theme-dark",
+        # Antigravity (VS Code)
+        "antigravity_theme": "GitHub Dark Colorblind (Beta)",
+        # Alacritty
+        "alacritty_bg": "#0d0e1c",
+        "alacritty_fg": "#ebdbb2",
+        "alacritty_normal": {
+            "black": "#1d2021", "red": "#cc241d", "green": "#98971a",
+            "yellow": "#d79921", "blue": "#458588", "magenta": "#b16286",
+            "cyan": "#689d6a", "white": "#a89984",
+        },
+        "alacritty_bright": {
+            "black": "#928374", "red": "#fb4934", "green": "#b8bb26",
+            "yellow": "#fabd2f", "blue": "#83a598", "magenta": "#d3869b",
+            "cyan": "#8ec07c", "white": "#ebdbb2",
+        },
+        # Rofi
+        "rofi_bg": "#000000",
+        "rofi_fg": "#ffffff",
+        "rofi_sel_bg": "#222222",
+        "rofi_sel_fg": "#ffffff",
+        "rofi_border": "#333333",
+    },
+    "light": {
+        "gtk_theme": "Arc",
+        "gtk_prefer_dark": "false",
+        "qt_style": "kvantum",
+        "kvantum_theme": "KvArc",
+        "color_scheme": "prefer-light",
+        # Polybar
+        "polybar_bg": "#E8E8EE",
+        "polybar_fg": "#333333",
+        # Polybar bspwm_custom.sh
+        "poly_focused_underline": "#333333",
+        "poly_foreground": "#555555",
+        "poly_empty": "#BBBBBB",
+        "poly_urgent": "#A5492F",
+        # BSPWM
+        "bspwm_normal_border": "#d0d0d0",
+        "bspwm_active_border": "#d0d0d0",
+        "bspwm_focused_border": "#5294e2",
+        "bspwm_presel_feedback": "#5294e2",
+        # XOB
+        "xob_fg": "#333333",
+        "xob_bg": "#E8E8EE",
+        "xob_border": "#CCCCCC",
+        "xob_alt_fg": "#999999",
+        "xob_overflow_fg": "#8b1a1a",
+        "xob_overflow_border": "#8b1a1a",
+        "xob_altoverflow_fg": "#550000",
+        "xob_altoverflow_border": "#550000",
+        # Dunst
+        "dunst_bg": "#E8E8EE",
+        "dunst_frame": "#CCCCCC",
+        "dunst_fg": "#333333",
+        "dunst_crit_bg": "#660000",
+        "dunst_crit_frame": "#660000",
+        # Dmenu
+        "dmenu_nb": "#E8E8EE",
+        "dmenu_nf": "#333333",
+        "dmenu_sb": "#CCCCCC",
+        "dmenu_sf": "#333333",
+        # Wallpaper
+        "feh_bg": "#CCCCCC",
+        # Emacs
+        "emacs_fn": "fff-theme-light",
+        # Antigravity (VS Code)
+        "antigravity_theme": "GitHub Light Colorblind (Beta)",
+        # Alacritty
+        "alacritty_bg": "#fbf1c7",
+        "alacritty_fg": "#3c3836",
+        "alacritty_normal": {
+            "black": "#fbf1c7", "red": "#cc241d", "green": "#98971a",
+            "yellow": "#d79921", "blue": "#458588", "magenta": "#b16286",
+            "cyan": "#689d6a", "white": "#7c6f64",
+        },
+        "alacritty_bright": {
+            "black": "#928374", "red": "#9d0006", "green": "#79740e",
+            "yellow": "#b57614", "blue": "#076678", "magenta": "#8f3f71",
+            "cyan": "#427b58", "white": "#3c3836",
+        },
+        # Rofi
+        "rofi_bg": "#E8E8EE",
+        "rofi_fg": "#333333",
+        "rofi_sel_bg": "#CCCCCC",
+        "rofi_sel_fg": "#333333",
+        "rofi_border": "#AAAAAA",
+    },
+}
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+
+def read_state():
+    """Read current theme from state file. Defaults to 'dark'."""
+    try:
+        with open(STATE_FILE) as f:
+            state = f.read().strip()
+            return state if state in ("dark", "light") else "dark"
+    except FileNotFoundError:
+        return "dark"
+
+
+def write_state(mode):
+    """Persist current theme mode."""
+    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+    with open(STATE_FILE, "w") as f:
+        f.write(mode + "\n")
+
+
+def set_ini_values(path, section, values):
+    """Set key=value pairs in an INI-style config file."""
+    config = configparser.ConfigParser()
+    config.optionxform = str  # preserve case
+    config.read(path)
+    if not config.has_section(section):
+        config.add_section(section)
+    for key, val in values.items():
+        config.set(section, key, val)
+    with open(path, "w") as f:
+        config.write(f)
+
+
+def replace_in_file(path, replacements):
+    """Apply a list of (pattern, replacement) regex substitutions to a file."""
+    with open(path) as f:
+        content = f.read()
+    for pattern, repl in replacements:
+        content = re.sub(pattern, repl, content)
+    with open(path, "w") as f:
+        f.write(content)
+
+
+def run_quiet(cmd):
+    """Run a command silently, ignoring errors."""
+    try:
+        subprocess.run(cmd, capture_output=True)
+    except FileNotFoundError:
+        pass
+
+
+# ── Switchers ────────────────────────────────────────────────────────────────
+
+
+def switch_gtkrc2(theme):
+    """Update ~/.gtkrc-2.0"""
+    path = os.path.join(HOME, ".gtkrc-2.0")
+    content = f'gtk-theme-name = "{theme["gtk_theme"]}"\n'
+    with open(path, "w") as f:
+        f.write(content)
+    print(f"  .gtkrc-2.0 → {theme['gtk_theme']}")
+
+
+def switch_gtk3(theme):
+    """Update ~/.config/gtk-3.0/settings.ini"""
+    path = os.path.join(HOME, ".config", "gtk-3.0", "settings.ini")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    set_ini_values(path, "Settings", {
+        "gtk-theme-name": theme["gtk_theme"],
+        "gtk-application-prefer-dark-theme": theme["gtk_prefer_dark"],
+    })
+    print(f"  gtk-3.0 → {theme['gtk_theme']}")
+
+
+def switch_gtk4(theme):
+    """Update ~/.config/gtk-4.0/settings.ini"""
+    path = os.path.join(HOME, ".config", "gtk-4.0", "settings.ini")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    set_ini_values(path, "Settings", {
+        "gtk-theme-name": theme["gtk_theme"],
+        "gtk-application-prefer-dark-theme": theme["gtk_prefer_dark"],
+    })
+    print(f"  gtk-4.0 → {theme['gtk_theme']}")
+
+
+def switch_qt(theme, version):
+    """Update ~/.config/qt{5,6}ct/qt{5,6}ct.conf"""
+    name = f"qt{version}ct"
+    path = os.path.join(HOME, ".config", name, f"{name}.conf")
+    if not os.path.exists(path):
+        print(f"  {name} → skipped (config not found)")
+        return
+    config = configparser.ConfigParser()
+    config.optionxform = str
+    config.read(path)
+    if config.has_section("Appearance"):
+        config.set("Appearance", "style", theme["qt_style"])
+    with open(path, "w") as f:
+        config.write(f)
+    print(f"  {name} → {theme['qt_style']}")
+
+
+def switch_kvantum(theme):
+    """Update ~/.config/Kvantum/kvantum.kvconfig"""
+    path = os.path.join(HOME, ".config", "Kvantum", "kvantum.kvconfig")
+    if not os.path.exists(path):
+        print(f"  Kvantum → skipped (config not found)")
+        return
+    set_ini_values(path, "General", {"theme": theme["kvantum_theme"]})
+    print(f"  Kvantum → {theme['kvantum_theme']}")
+
+
+def switch_gsettings(theme):
+    """Set GNOME color-scheme and gtk-theme via gsettings."""
+    try:
+        subprocess.run(
+            ["gsettings", "set", "org.gnome.desktop.interface",
+             "color-scheme", theme["color_scheme"]],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["gsettings", "set", "org.gnome.desktop.interface",
+             "gtk-theme", theme["gtk_theme"]],
+            check=True,
+            capture_output=True,
+        )
+        print(f"  gsettings → {theme['color_scheme']}, gtk-theme={theme['gtk_theme']}")
+    except FileNotFoundError:
+        print("  gsettings → skipped (gsettings not found)")
+    except subprocess.CalledProcessError as e:
+        print(f"  gsettings → failed: {e.stderr.decode().strip()}")
+
+
+def switch_polybar(theme):
+    """Update ~/.config/polybar/config.ini colors."""
+    path = os.path.join(HOME, ".config", "polybar", "config.ini")
+    if not os.path.exists(path):
+        print("  polybar → skipped (config not found)")
+        return
+    replace_in_file(path, [
+        (r'(background\s*=\s*)#[0-9a-fA-F]+', rf'\1{theme["polybar_bg"]}'),
+        (r'(foreground\s*=\s*)#[0-9a-fA-F]+', rf'\1{theme["polybar_fg"]}'),
+    ])
+    print(f"  polybar → bg:{theme['polybar_bg']} fg:{theme['polybar_fg']}")
+
+
+def switch_polybar_bspwm(theme):
+    """Update ~/.config/polybar/bspwm_custom.sh color variables."""
+    path = os.path.join(HOME, ".config", "polybar", "bspwm_custom.sh")
+    if not os.path.exists(path):
+        print("  polybar/bspwm_custom.sh → skipped (not found)")
+        return
+    replace_in_file(path, [
+        (r'(COLOR_FOCUSED_UNDERLINE=)"#[0-9a-fA-F]+"',
+         rf'\1"{theme["poly_focused_underline"]}"'),
+        (r'(COLOR_FOREGROUND=)"#[0-9a-fA-F]+"',
+         rf'\1"{theme["poly_foreground"]}"'),
+        (r'(COLOR_EMPTY=)"#[0-9a-fA-F]+"',
+         rf'\1"{theme["poly_empty"]}"'),
+        (r'(COLOR_URGENT=)"#[0-9a-fA-F]+"',
+         rf'\1"{theme["poly_urgent"]}"'),
+    ])
+    print(f"  polybar/bspwm_custom.sh → updated")
+
+
+def switch_bspwm(theme):
+    """Update BSPWM border colors (live via bspc + config file)."""
+    # Apply live
+    run_quiet(["bspc", "config", "normal_border_color", theme["bspwm_normal_border"]])
+    run_quiet(["bspc", "config", "active_border_color", theme["bspwm_active_border"]])
+    run_quiet(["bspc", "config", "focused_border_color", theme["bspwm_focused_border"]])
+    run_quiet(["bspc", "config", "presel_feedback_color", theme["bspwm_presel_feedback"]])
+    # Update config file
+    path = os.path.join(HOME, ".config", "bspwm", "bspwmrc")
+    if os.path.exists(path):
+        replace_in_file(path, [
+            (r'(normal_border_color\s+)"#[0-9a-fA-F]+"',
+             rf'\1"{theme["bspwm_normal_border"]}"'),
+            (r'(active_border_color\s+)"#[0-9a-fA-F]+"',
+             rf'\1"{theme["bspwm_active_border"]}"'),
+            (r'(focused_border_color\s+)"#[0-9a-fA-F]+"',
+             rf'\1"{theme["bspwm_focused_border"]}"'),
+            (r'(presel_feedback_color\s+)"#[0-9a-fA-F]+"',
+             rf'\1"{theme["bspwm_presel_feedback"]}"'),
+        ])
+    print(f"  bspwm → borders updated")
+
+
+def switch_xob(theme):
+    """Update ~/.config/xob/styles.cfg colors."""
+    path = os.path.join(HOME, ".config", "xob", "styles.cfg")
+    if not os.path.exists(path):
+        print("  xob → skipped (config not found)")
+        return
+    # Read file and rebuild with new colors by matching the nested structure
+    with open(path) as f:
+        content = f.read()
+    # Replace colors in order of appearance in the file:
+    # normal { fg, bg, border }, alt { fg, bg, border },
+    # overflow { fg, bg, border }, altoverflow { fg, bg, border }
+    sections = [
+        ("normal", theme["xob_fg"], theme["xob_bg"], theme["xob_border"]),
+        ("alt", theme["xob_alt_fg"], theme["xob_bg"], theme["xob_border"]),
+        ("overflow", theme["xob_overflow_fg"], theme["xob_bg"], theme["xob_overflow_border"]),
+        ("altoverflow", theme["xob_altoverflow_fg"], theme["xob_bg"], theme["xob_altoverflow_border"]),
+    ]
+    for name, fg, bg, border in sections:
+        # Match the named section and its three color values
+        pattern = (
+            rf'({name}\s*=\s*{{\s*'
+            rf'fg\s*=\s*)"#[0-9a-fA-F]+"'
+            rf'(;\s*bg\s*=\s*)"#[0-9a-fA-F]+"'
+            rf'(;\s*border\s*=\s*)"#[0-9a-fA-F]+"'
+        )
+        repl = rf'\1"{fg}"\2"{bg}"\3"{border}"'
+        content = re.sub(pattern, repl, content, flags=re.DOTALL)
+    with open(path, "w") as f:
+        f.write(content)
+    print(f"  xob → updated")
+
+
+def switch_dunst(theme):
+    """Update ~/.config/dunst/dunstrc colors."""
+    path = os.path.join(HOME, ".config", "dunst", "dunstrc")
+    if not os.path.exists(path):
+        print("  dunst → skipped (config not found)")
+        return
+    with open(path) as f:
+        content = f.read()
+    # Replace urgency_low and urgency_normal (same colors)
+    for section in ("urgency_low", "urgency_normal"):
+        pattern = (
+            rf'(\[{section}\]\s*'
+            rf'background\s*=\s*)"#[0-9a-fA-F]+"'
+            rf'(\s*frame_color\s*=\s*)"#[0-9a-fA-F]+"'
+            rf'(\s*foreground\s*=\s*)"#[0-9a-fA-F]+"'
+        )
+        repl = rf'\1"{theme["dunst_bg"]}"\2"{theme["dunst_frame"]}"\3"{theme["dunst_fg"]}"'
+        content = re.sub(pattern, repl, content, flags=re.DOTALL)
+    # Replace urgency_critical
+    pattern = (
+        r'(\[urgency_critical\]\s*'
+        r'background\s*=\s*)"#[0-9a-fA-F]+"'
+        r'(\s*frame_color\s*=\s*)"#[0-9a-fA-F]+"'
+        r'(\s*foreground\s*=\s*)"#[0-9a-fA-F]+"'
+    )
+    repl = rf'\1"{theme["dunst_crit_bg"]}"\2"{theme["dunst_crit_frame"]}"\3"{theme["dunst_fg"]}"'
+    content = re.sub(pattern, repl, content, flags=re.DOTALL)
+    with open(path, "w") as f:
+        f.write(content)
+    print(f"  dunst → bg:{theme['dunst_bg']} fg:{theme['dunst_fg']}")
+
+
+def switch_dmenu(theme):
+    """Update ~/.config/dmenu/config colors."""
+    path = os.path.join(HOME, ".config", "dmenu", "config")
+    if not os.path.exists(path):
+        print("  dmenu → skipped (config not found)")
+        return
+    replace_in_file(path, [
+        (r'-nb\s+#[0-9a-fA-F]+', f'-nb {theme["dmenu_nb"]}'),
+        (r'-nf\s+#[0-9a-fA-F]+', f'-nf {theme["dmenu_nf"]}'),
+        (r'-sb\s+#[0-9a-fA-F]+', f'-sb {theme["dmenu_sb"]}'),
+        (r'-sf\s+#[0-9a-fA-F]+', f'-sf {theme["dmenu_sf"]}'),
+    ])
+    print(f"  dmenu → nb:{theme['dmenu_nb']} nf:{theme['dmenu_nf']}")
+
+
+def restart_services():
+    """Restart desktop services to pick up theme changes."""
+    print("  Restarting services...")
+    # Polybar
+    run_quiet(["killall", "polybar"])
+    try:
+        subprocess.Popen(
+            ["polybar", "mybar"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except FileNotFoundError:
+        pass
+    # Dunst
+    run_quiet(["killall", "dunst"])
+    try:
+        subprocess.Popen(
+            ["dunst"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except FileNotFoundError:
+        pass
+    # XOB - kill and restart via the named pipe
+    run_quiet(["killall", "xob"])
+    if os.path.exists("/tmp/xobpipe"):
+        subprocess.Popen(
+            "tail -f /tmp/xobpipe | xob",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    print("  Services restarted (polybar, dunst, xob)")
+
+
+def switch_emacs(theme):
+    """Switch Emacs theme via emacsclient."""
+    fn = theme["emacs_fn"]
+    try:
+        subprocess.run(
+            ["emacsclient", "--eval", f"({fn})"],
+            capture_output=True,
+            timeout=5,
+        )
+        print(f"  emacs → {fn}")
+    except FileNotFoundError:
+        print("  emacs → skipped (emacsclient not found)")
+    except subprocess.TimeoutExpired:
+        print("  emacs → skipped (emacsclient timed out)")
+
+
+def switch_antigravity(theme):
+    """Update Antigravity (VS Code) color theme in settings.json."""
+    path = os.path.join(HOME, ".config", "Antigravity", "User", "settings.json")
+    if not os.path.exists(path):
+        print("  antigravity → skipped (settings.json not found)")
+        return
+    with open(path) as f:
+        raw = f.read()
+    # Strip // comments (single-line only) for JSON parsing
+    lines = []
+    for line in raw.splitlines():
+        stripped = line.lstrip()
+        if not stripped.startswith("//"):
+            lines.append(line)
+    cleaned = "\n".join(lines)
+    try:
+        settings = json.loads(cleaned)
+    except json.JSONDecodeError:
+        print("  antigravity → failed (could not parse settings.json)")
+        return
+    settings["workbench.colorTheme"] = theme["antigravity_theme"]
+    with open(path, "w") as f:
+        json.dump(settings, f, indent=4)
+        f.write("\n")
+    print(f"  antigravity → {theme['antigravity_theme']}")
+
+
+def restart_xdg_portal():
+    """Restart xdg-desktop-portal-gtk to pick up theme changes."""
+    try:
+        subprocess.run(
+            ["systemctl", "--user", "restart",
+             "xdg-desktop-portal-gtk", "xdg-desktop-portal"],
+            capture_output=True,
+            timeout=10,
+        )
+        print("  xdg-desktop-portal → restarted")
+    except FileNotFoundError:
+        print("  xdg-desktop-portal → skipped (systemctl not found)")
+    except subprocess.TimeoutExpired:
+        print("  xdg-desktop-portal → skipped (timed out)")
+
+
+def switch_alacritty(theme):
+    """Update ~/.config/alacritty/alacritty.toml colors."""
+    path = os.path.join(HOME, ".config", "alacritty", "alacritty.toml")
+    if not os.path.exists(path):
+        print("  alacritty → skipped (config not found)")
+        return
+    replace_in_file(path, [
+        (r'(\[colors\.primary\]\s*background\s*=\s*)"#[0-9a-fA-F]+"',
+         rf'\1"{theme["alacritty_bg"]}"'),
+        (r'(\[colors\.primary\]\s*background\s*=\s*"[^"]+"\s*foreground\s*=\s*)"#[0-9a-fA-F]+"',
+         rf'\1"{theme["alacritty_fg"]}"'),
+    ])
+    # Replace normal and bright ANSI colors
+    for section in ("normal", "bright"):
+        colors = theme[f"alacritty_{section}"]
+        for name, val in colors.items():
+            replace_in_file(path, [
+                (rf'(\[colors\.{section}\][\s\S]*?{name}\s*=\s*)"#[0-9a-fA-F]+"',
+                 rf'\1"{val}"'),
+            ])
+    print(f"  alacritty → bg:{theme['alacritty_bg']} fg:{theme['alacritty_fg']}")
+
+
+def switch_rofi(theme):
+    """Update ~/.config/rofi/config.rasi root-level color variables."""
+    path = os.path.join(HOME, ".config", "rofi", "config.rasi")
+    if not os.path.exists(path):
+        print("  rofi → skipped (config not found)")
+        return
+    replace_in_file(path, [
+        (r'(background:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_bg"]}'),
+        (r'(foreground:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_fg"]}'),
+        (r'(selected-background:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_sel_bg"]}'),
+        (r'(selected-foreground:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_sel_fg"]}'),
+        (r'(border-color:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_border"]}'),
+        (r'(separator-color:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_border"]}'),
+    ])
+    print(f"  rofi → bg:{theme['rofi_bg']} fg:{theme['rofi_fg']}")
+
+
+def switch_wallpaper(theme):
+    """Set solid color background using feh."""
+    color = theme["feh_bg"]
+    bg_path = "/tmp/theme_bg.png"
+    try:
+        # Create a tiny 1x1 solid color image using ImageMagick
+        subprocess.run(
+            ["convert", "-size", "1x1", f"xc:{color}", bg_path],
+            check=True,
+            capture_output=True
+        )
+        # Set it as wallpaper using feh
+        subprocess.run(
+            ["feh", "--bg-scale", bg_path],
+            check=True,
+            capture_output=True
+        )
+        print(f"  wallpaper → {color}")
+    except FileNotFoundError:
+        print("  wallpaper → skipped (feh or imagemagick not found)")
+    except subprocess.CalledProcessError as e:
+        print(f"  wallpaper → failed: {e.stderr.decode().strip()}")
+
+
+# ── Main ─────────────────────────────────────────────────────────────────────
+
+
+def apply_theme(mode):
+    """Apply the given theme mode ('dark' or 'light')."""
+    theme = THEMES[mode]
+    print(f"Switching to {mode} theme:")
+
+    # Milestone 1: GTK / Qt
+    switch_gtkrc2(theme)
+    switch_gtk3(theme)
+    switch_gtk4(theme)
+    switch_qt(theme, 5)
+    switch_qt(theme, 6)
+    switch_kvantum(theme)
+    switch_gsettings(theme)
+
+    # Milestone 2: Desktop components
+    switch_polybar(theme)
+    switch_polybar_bspwm(theme)
+    switch_bspwm(theme)
+    switch_xob(theme)
+    switch_dunst(theme)
+    switch_dmenu(theme)
+    restart_services()
+
+    # Milestone 3: Editors & portal
+    switch_emacs(theme)
+    switch_antigravity(theme)
+    switch_alacritty(theme)
+    switch_rofi(theme)
+    switch_wallpaper(theme)
+    restart_xdg_portal()
+
+    write_state(mode)
+    print(f"Done. Theme set to: {mode}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Toggle desktop theme between dark and light."
+    )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--dark", action="store_true", help="Switch to dark theme")
+    group.add_argument("--light", action="store_true", help="Switch to light theme")
+    group.add_argument("--toggle", action="store_true", help="Toggle theme")
+
+    args = parser.parse_args()
+
+    if args.dark:
+        mode = "dark"
+    elif args.light:
+        mode = "light"
+    else:
+        current = read_state()
+        mode = "light" if current == "dark" else "dark"
+
+    apply_theme(mode)
+
+
+if __name__ == "__main__":
+    main()

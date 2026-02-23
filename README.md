@@ -59,6 +59,7 @@ copy `credentials.json` to `~/.config/dmenu-gcal/`
 ### Step 6: Setup firefox extensions
 
 - launch firefox to trigger extension installation
+- In Dark Reader: click ⚙ Settings → Automation → enable **"System color scheme"** (so `theme --toggle` auto-disables Dark Reader in light mode)
 
 ### Step 7: set up bluetooth devices
 
@@ -76,12 +77,13 @@ systemctl --user restart pulseaudio
 ## Post-Install
 - run `post-deployment-tests/run_tests.sh` to verify everything is working
 - browse to https://septatrix.github.io/prefers-color-scheme-test/ to verify dark mode is working. This should be set in bspwmrc by `gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'`
+- In Dark Reader: click ⚙ Settings → Automation → enable **"System color scheme"** (so `theme --toggle` auto-disables Dark Reader in light mode)
 - Turn off Firefox hardware acceleration for PCs on older Sandy Bridge CPUs
 - make firefox compact (right click on address bar, customize, select `density`)
 - pair bluetooth devices
 
 ## TODOS
-- [ ] light/dark theme universal toggle. toggles (gtk/qt/bspwm/polybar/xob/emacs/antigravity/notification daemon /dmenu and gsettings/ xdg-desktop-portal-gtk in bspwm)
+- [x] light/dark theme universal toggle. toggles (gtk/qt/bspwm/polybar/xob/emacs/antigravity/notification daemon /dmenu and gsettings/ xdg-desktop-portal-gtk in bspwm)
 - [x] deploy.py should handle `.patch` files in a cleaner way. perhaps create a patches directory and have deploy.py apply them. script still uses old logic with non existing dir system-configs.
 - [ ] update deploy script to automatically add `contrib` and `non-free` components to `sources.list`
 - [ ] make a rofi version of dmenu-explorer where the second item is selected first (so not `..` which is parent directory). run as a pilot project to see if rofi is a viable replacement for dmenu.
@@ -93,7 +95,7 @@ names. determine if there is a better way to identify hotspot network connection
 - [ ] dosbox games
 - [ ] auto connect irc. irc notify-send notifications for tagged messages
 - [ ] create script that finds rss feed given youtube channel name
-- [ ] create toggle dark / light theme. changes it for all packages. (bspwm, polybar, xob, firefox, emacs, antigravity)
+- [x] create toggle dark / light theme. changes it for all packages. (bspwm, polybar, xob, firefox, emacs, antigravity)
 - [x] consider setting `FastConnectable = false` in `/etc/bluetooth/main.conf` after testing on current system
 - [x] reverting my shell from fish back to bash.
 - [x] poly-weather should not display anything when it has no internet connection
