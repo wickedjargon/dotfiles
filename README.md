@@ -57,7 +57,8 @@ systemctl --user restart pulseaudio
 ```
 
 ## Post-Install
-
+- run `post-deployment-tests/run_tests.sh` to verify everything is working
+- browse to https://septatrix.github.io/prefers-color-scheme-test/ to verify dark mode is working. This should be set in bspwmrc by `gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'`
 - Turn off Firefox hardware acceleration for PCs on older Sandy Bridge CPUs
 - make firefox compact (right click on address bar, customize, select `density`)
 - pair bluetooth devices

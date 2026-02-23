@@ -5,8 +5,16 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo "Starting Deployment Verification Tests"
-echo "======================================"
+TARGET_USER="$1"
+
+if [ -z "$TARGET_USER" ]; then
+    echo "Usage: $0 <username>"
+    echo "This script must be run with the target username as an argument."
+    exit 1
+fi
+
+echo "Starting Deployment Verification Tests for user '$TARGET_USER'"
+echo "============================================================"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
@@ -19,7 +27,7 @@ for test_script in $(ls "$SCRIPT_DIR"/[0-9]*.sh 2>/dev/null | sort); do
     echo -n "Running $test_name... "
     
     # Run the script and capture both stdout and stderr
-    output=$(bash "$test_script" 2>&1)
+    output=$(bash "$test_script" "$TARGET_USER" 2>&1)
     exit_code=$?
     
     if [ $exit_code -eq 0 ]; then

@@ -10,7 +10,12 @@ if [ ! -d "$ROOT_DIR" ]; then
 fi
 
 # Find the target user
-TARGET_USER=$(awk -F':' -v "limit=1000" '{ if ( $3 >= limit && $3 < 65534 && $6 ~ /^\/home\// ) print $1 }' /etc/passwd | head -n 1)
+TARGET_USER="$1"
+
+if [ -z "$TARGET_USER" ]; then
+    echo "Usage: $0 <username>"
+    exit 1
+fi
 
 if [ -z "$TARGET_USER" ]; then
     echo "Could not find a regular user to test."
