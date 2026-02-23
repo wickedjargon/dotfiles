@@ -610,6 +610,40 @@ def install_packages(packages, tui, start_row):
     if not packages:
         return True, None, start_row
 
+    # Enable non-free repositories
+    tui.show_progress(start_row, "Enabling non-free repositories...", success=None)
+    tui.stdscr.refresh()
+    
+    try:
+        # DEB822 format (Debian 12+)
+        sources_path = Path('/etc/apt/sources.list.d/debian.sources')
+        if sources_path.exists():
+            content = sources_path.read_text()
+            new_content = re.sub(r'^Components:\s*main\s*$', 'Components: main contrib non-free non-free-firmware', content, flags=re.MULTILINE)
+            if new_content != content:
+                sources_path.write_text(new_content)
+                
+        # Traditional format (Debian 11 and older)
+        list_path = Path('/etc/apt/sources.list')
+        if list_path.exists():
+            content = list_path.read_text()
+            lines = content.splitlines()
+            new_lines = []
+            for line in lines:
+                if line.strip().startswith('deb ') or line.strip().startswith('deb-src '):
+                    if ' main' in line and 'contrib' not in line:
+                        line = line + ' contrib non-free non-free-firmware'
+                new_lines.append(line)
+            new_content = '\n'.join(new_lines) + '\n'
+            if new_content != content:
+                list_path.write_text(new_content)
+                
+        tui.show_progress(start_row, "Enabling non-free repositories...", success=True)
+        start_row += 1
+    except Exception as e:
+        tui.show_progress(start_row, "Enabling non-free repositories...", success=False)
+        log_error("Failed to enable non-free repositories", e)
+
     # Update apt cache first
     tui.show_progress(start_row, "Updating package cache...", success=None)
     tui.stdscr.refresh()
