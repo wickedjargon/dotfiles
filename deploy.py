@@ -877,10 +877,10 @@ def deploy_patches(script_dir):
                 if dest_file.exists():
                     # Read existing config
                     with open(dest_file, 'r') as f:
-                        existing_content = f.read()
+                        existing_lines = [l.strip() for l in f.readlines()]
 
                     # Check if any patch lines are missing
-                    needs_update = any(line not in existing_content for line in patch_lines)
+                    needs_update = any(line not in existing_lines for line in patch_lines)
 
                     if needs_update:
                         # Backup original
@@ -891,7 +891,7 @@ def deploy_patches(script_dir):
                         with open(dest_file, 'a') as f:
                             f.write('\n# Added by dotfiles deployment\n')
                             for patch_line in patch_lines:
-                                if patch_line not in existing_content:
+                                if patch_line not in existing_lines:
                                     f.write(patch_line + '\n')
 
                         deployed_files.append(str(relative_path))

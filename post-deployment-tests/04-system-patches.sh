@@ -12,7 +12,7 @@ fi
 echo "Testing system patches..."
 
 # Find all files in the patches directory
-find "$PATCHES_DIR" -type f | while read -r patch_file; do
+while read -r patch_file; do
     # Determine the target system file by stripping $PATCHES_DIR
     rel_path="${patch_file#$PATCHES_DIR}"
     target_file="$rel_path" # It already starts with / e.g. /etc/systemd/...
@@ -30,13 +30,15 @@ find "$PATCHES_DIR" -type f | while read -r patch_file; do
         
         # We need to verify that this exact line exists in the target file.
         # This handles both active configuration lines and comments that we injected.
-        if ! grep -Fq "$line" "$target_file"; then
+        # Use -x to match the whole line, avoiding false positives where our patch
+        # is a substring of an existing commented out line.
+        if ! grep -Fxq "$line" "$target_file"; then
             echo "  [FAIL] Missing patched line in $target_file"
             echo "         Expected to find: '$line'"
             FAILED=1
         fi
     done < "$patch_file"
-done
+done < <(find "$PATCHES_DIR" -type f)
 
 if [ $FAILED -eq 1 ]; then
     exit 1
