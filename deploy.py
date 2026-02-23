@@ -1059,6 +1059,7 @@ def install_firefox_userjs(username, script_dir, tui, row):
 
     try:
         home_dir = Path(f'/home/{username}')
+        firefox_dir = home_dir / '.mozilla' / 'firefox'
         # We learned that Firefox ESR on Debian ignores hardcoded profiles.ini setups 
         # and instead creates hash-based locks (like Install3B6073811A6ABF12).
         # We must let Firefox generate its profile naturally first, then inject.
