@@ -3,7 +3,7 @@
 # Test 1: Verify the created user has the correct groups and home directory
 
 # Find the highest UID regular user (assuming it's the one created by deploy.py)
-TARGET_USER=$(awk -F':' -v "limit=1000" '{ if ( $3 >= limit && $3 < 65534 && $6 ~ /^\/home\// ) print $1 }' /etc/passwd | tail -n 1)
+TARGET_USER=$(awk -F':' -v "limit=1000" '{ if ( $3 >= limit && $3 < 65534 && $6 ~ /^\/home\// ) print $1 }' /etc/passwd | head -n 1)
 
 if [ -z "$TARGET_USER" ]; then
     echo "Could not find a regular user (UID >= 1000) in /home to test."

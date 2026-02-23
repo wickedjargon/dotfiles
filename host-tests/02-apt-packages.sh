@@ -58,7 +58,7 @@ while IFS= read -r line; do
         FAILED=1
     fi
     
-done < "$SCRIPT_DIR/third-party-packages"
+done < "$SCRIPT_DIR/third-party-apt-packages"
 
 if [ $FAILED -eq 1 ]; then
     exit 1
