@@ -1078,10 +1078,17 @@ def install_firefox_userjs(username, script_dir, tui, row):
                                         capture_output=True, timeout=10, text=True)
                 if result.returncode != 0:
                     log_error(f"Profile creation failed: {result.stderr}")
+                    
+                # Firefox ESR often creates a specific .default-esr profile on graphical launch.
+                # Let's force it to initialize its default profiles by running it headlessly once 
+                # without args which generates both .default and .default-esr
+                cmd2 = "timeout 3 firefox-esr --headless || timeout 3 firefox --headless"
+                subprocess.run(['su', '-', username, '-c', cmd2], capture_output=True, text=True)
+                
             except Exception as e:
                 log_error(f"Exception during profile creation: {e}")
             
-            profiles = glob.glob(str(firefox_dir / '*.default*'))
+            profiles = glob.glob(str(firefox_dir / '*default*'))
 
         installed = False
         for profile in profiles:
