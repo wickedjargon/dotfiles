@@ -26,19 +26,17 @@ if [ "$login_shell" != "/bin/bash" ]; then
 fi
 
 # 2. Check if .bashrc and .profile have syntax errors
-if sudo -u "$TARGET_USER" bash -n "$HOME_DIR/.bashrc" 2>/tmp/bashrc_err; then
-    :
-else
+bashrc_err=$(sudo -u "$TARGET_USER" bash -n "$HOME_DIR/.bashrc" 2>&1)
+if [ $? -ne 0 ]; then
     echo "  [FAIL] Syntax error in .bashrc"
-    while read -r line; do echo "    $line"; done < /tmp/bashrc_err
+    echo "$bashrc_err" | while read -r line; do echo "    $line"; done
     FAILED=1
 fi
 
-if sudo -u "$TARGET_USER" bash -n "$HOME_DIR/.profile" 2>/tmp/profile_err; then
-    :
-else
+profile_err=$(sudo -u "$TARGET_USER" bash -n "$HOME_DIR/.profile" 2>&1)
+if [ $? -ne 0 ]; then
     echo "  [FAIL] Syntax error in .profile"
-    while read -r line; do echo "    $line"; done < /tmp/profile_err
+    echo "$profile_err" | while read -r line; do echo "    $line"; done
     FAILED=1
 fi
 
