@@ -1045,6 +1045,68 @@ def install_firefox_extensions(script_dir):
 
 
 
+def install_firefox_userjs(username, script_dir, tui, row):
+    """Installs the custom user.js to all Firefox profiles.
+    Creates a default profile if none exist.
+    """
+    userjs_src = script_dir / 'firefox-user.js'
+    
+    if not userjs_src.exists():
+        return True, None, row
+
+    tui.show_progress(row, "Installing Firefox user.js...", success=None)
+    tui.stdscr.refresh()
+
+    try:
+        home_dir = Path(f'/home/{username}')
+        firefox_dir = home_dir / '.mozilla' / 'firefox'
+        
+        # Ensure mozilla/firefox directory exists
+        firefox_dir.mkdir(parents=True, exist_ok=True)
+        subprocess.run(['chown', '-R', f'{username}:{username}', str(home_dir / '.mozilla')], check=True)
+
+        # Check for existing profiles
+        import glob
+        profiles = glob.glob(str(firefox_dir / '*.default*'))
+        
+        if not profiles:
+            # Create a profile headless by running firefox once as the user
+            try:
+                # Need to use xvfb-run or similar if no display, but firefox -CreateProfile works without X
+                subprocess.run(['su', '-', username, '-c', 'firefox -CreateProfile default'], 
+                               capture_output=True, timeout=10)
+            except Exception:
+                pass
+            
+            profiles = glob.glob(str(firefox_dir / '*.default*'))
+
+        installed = False
+        for profile in profiles:
+            dest = Path(profile) / 'user.js'
+            
+            # Backup existing if present
+            if dest.exists():
+                backup = dest.with_name(f'user.js.backup.{int(time.time())}')
+                shutil.copy2(dest, backup)
+                subprocess.run(['chown', f'{username}:{username}', str(backup)], check=True)
+                
+            shutil.copy2(userjs_src, dest)
+            subprocess.run(['chown', f'{username}:{username}', str(dest)], check=True)
+            installed = True
+
+        if not installed:
+            # Firefox not installed or profiles inaccessible
+            tui.show_progress(row, "Installing Firefox user.js...", success=False)
+            return False, "Failed to find or create a Firefox profile.", row + 1
+
+        tui.show_progress(row, "Installing Firefox user.js...", success=True)
+        return True, None, row + 1
+
+    except Exception as e:
+        log_error("Failed to install Firefox user.js", e)
+        tui.show_progress(row, "Installing Firefox user.js...", success=False)
+        return False, str(e), row + 1
+
 
 def install_tor_browser(username, script_dir, tui, row):
     """Install Tor Browser for the target user
@@ -1398,6 +1460,18 @@ def main_tui(stdscr):
     else:
         tui.show_progress(row, "Installing Firefox extensions...", success=True)
         row += 1
+
+    # Install Firefox user.js
+    success, error, row = install_firefox_userjs(username, script_dir, tui, row)
+    if not success:
+        tui.show_message(row, 4, f"Error: {error[:50] if error else 'Unknown'}...", color_pair=3)
+        tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
+        tui.stdscr.refresh()
+        response = stdscr.getch()
+        if chr(response).lower() != 'y':
+            return
+        row += 3
+
 
 
 
