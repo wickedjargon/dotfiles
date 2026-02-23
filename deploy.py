@@ -1070,13 +1070,16 @@ def install_firefox_userjs(username, script_dir, tui, row):
         profiles = glob.glob(str(firefox_dir / '*.default*'))
         
         if not profiles:
-            # Create a profile headless by running firefox once as the user
+            # Create a profile headless by running firefox/firefox-esr once as the user
             try:
-                # Need to use xvfb-run or similar if no display, but firefox -CreateProfile works without X
-                subprocess.run(['su', '-', username, '-c', 'firefox -CreateProfile default'], 
-                               capture_output=True, timeout=10)
-            except Exception:
-                pass
+                # Need to use xvfb-run or similar if no display, but -CreateProfile works without X
+                cmd = "firefox-esr -CreateProfile default || firefox -CreateProfile default"
+                result = subprocess.run(['su', '-', username, '-c', cmd], 
+                                        capture_output=True, timeout=10, text=True)
+                if result.returncode != 0:
+                    log_error(f"Profile creation failed: {result.stderr}")
+            except Exception as e:
+                log_error(f"Exception during profile creation: {e}")
             
             profiles = glob.glob(str(firefox_dir / '*.default*'))
 
@@ -1096,6 +1099,7 @@ def install_firefox_userjs(username, script_dir, tui, row):
 
         if not installed:
             # Firefox not installed or profiles inaccessible
+            log_error("Failed to find or create a Firefox profile.")
             tui.show_progress(row, "Installing Firefox user.js...", success=False)
             return False, "Failed to find or create a Firefox profile.", row + 1
 
