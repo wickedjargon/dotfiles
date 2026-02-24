@@ -465,7 +465,20 @@
             (if (eq sys-theme 'light)
                 (load-theme 'ef-tritanopia-light t)
               (load-theme 'ef-tritanopia-dark t))
-          (load-theme 'tty-dark t)))))
+          (load-theme 'tty-dark t)))
+        
+      ;; file watcher for theme toggles to update running standalone instances
+      (require 'filenotify)
+      (when (file-exists-p (expand-file-name "~/.config/theme-mode"))
+        (file-notify-add-watch
+         (expand-file-name "~/.config/theme-mode")
+         '(change attribute-change)
+         (lambda (event)
+           (let ((new-sys-theme (if (string-match-p "light" (or (ignore-errors (with-temp-buffer (insert-file-contents "~/.config/theme-mode") (buffer-string))) "dark"))
+                                    'light 'dark)))
+             (if (eq new-sys-theme 'light)
+                 (fff-theme-light)
+               (fff-theme-dark)))))))
    ;; On Windows
    ((eq system-type 'windows-nt)
     ;; Delay theme loading until after frame is initialized
