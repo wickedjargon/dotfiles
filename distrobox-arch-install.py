@@ -5,8 +5,8 @@ import sys
 from datetime import datetime
 
 # Configuration
-PACMAN_FILE = "pacman_pkglist.txt"
-AUR_FILE = "aur_pkglist.txt"
+PACMAN_FILE = "distrobox-arch-pacman-pkglist.txt"
+AUR_FILE = "distrobox-arch-aur-pkglist.txt"
 LOG_FILE = f"/tmp/arch_install_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
 def log_message(message, to_file_only=False):
