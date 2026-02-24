@@ -3,7 +3,7 @@ base-devel
 bash-completion
 bc
 diffutils
-discord
+fastfetch
 git
 glibc-locales
 gradle
@@ -21,7 +21,12 @@ nss-mdns
 openssh
 pigz
 python
+python-pyflakes
+python-pytest
+qemu-desktop
+qemu-img
 rsync
+sshpass
 steam
 sudo
 tcpdump
