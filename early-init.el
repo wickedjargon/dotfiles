@@ -21,12 +21,16 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
-(setq default-frame-alist
-      (append
-       '((background-color . "#000000")
-         (foreground-color . "#ffffff")
-         (background-mode . dark))
-       default-frame-alist))
+(let* ((theme-mode (if (string-match-p "light" (or (ignore-errors (with-temp-buffer (insert-file-contents "~/.config/theme-mode") (buffer-string))) "dark"))
+                       'light 'dark))
+       (bg-color (if (eq theme-mode 'light) "#ffffff" "#000000"))
+       (fg-color (if (eq theme-mode 'light) "#000000" "#ffffff")))
+  (setq default-frame-alist
+        (append
+         `((background-color . ,bg-color)
+           (foreground-color . ,fg-color)
+           (background-mode . ,theme-mode))
+         default-frame-alist)))
 
 (defun fff-reapply-theme-to-new-frame (frame)
   "Reapply the current theme to FRAME so it overrides default-frame-alist colors."
