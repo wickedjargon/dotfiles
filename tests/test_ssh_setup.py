@@ -41,7 +41,7 @@ class TestSSHSetup(unittest.TestCase):
         self.assertFalse(ssh_setup.is_user_repo("https://github.com/other/dotfiles"))
         self.assertFalse(ssh_setup.is_user_repo("https://google.com"))
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 class TestConvertRepo(unittest.TestCase):
     def setUp(self):

@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
-import sys
 import os
 import importlib.util
 import importlib.machinery

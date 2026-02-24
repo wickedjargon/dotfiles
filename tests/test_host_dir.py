@@ -3,8 +3,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
 import os
-import socket
-import subprocess
 
 from helpers import import_script, get_script_path
 

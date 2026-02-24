@@ -1,7 +1,6 @@
 """Tests for dmenu-scripts (the script launcher)."""
 
 import unittest
-from unittest.mock import patch
 import os
 import stat
 import tempfile

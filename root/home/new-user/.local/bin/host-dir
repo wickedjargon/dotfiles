@@ -74,7 +74,7 @@ def main():
 
     try:
         with socketserver.TCPServer(("", port), handler) as httpd:
-            print(f"Serving current directory on:")
+            print("Serving current directory on:")
             print(f"  http://{ip}:{port}")
             print()
             print("Press Ctrl+C to stop.")

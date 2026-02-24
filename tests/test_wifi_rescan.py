@@ -1,7 +1,7 @@
 """Tests for wifi-rescan script."""
 
 import unittest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 import os
 import subprocess
 

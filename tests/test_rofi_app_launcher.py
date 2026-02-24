@@ -1,7 +1,6 @@
 """Tests for rofi-app-launcher script."""
 
 import unittest
-from unittest.mock import patch
 import os
 import tempfile
 import shutil

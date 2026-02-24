@@ -1,8 +1,6 @@
 import unittest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 import sys
-import shutil
-import subprocess
 from pathlib import Path
 
 # Add parent directory to path

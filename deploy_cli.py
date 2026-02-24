@@ -15,7 +15,6 @@ Usage:
 
 import argparse
 import json as json_mod
-import os
 import re
 import subprocess
 import sys

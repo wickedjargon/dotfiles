@@ -1,7 +1,6 @@
 
 import unittest
 from unittest.mock import patch, MagicMock, ANY
-import sys
 import os
 import subprocess
 from importlib.machinery import SourceFileLoader

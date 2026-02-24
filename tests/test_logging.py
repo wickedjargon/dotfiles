@@ -2,7 +2,6 @@
 import unittest
 import sys
 import os
-import shutil
 import subprocess
 import tempfile
 from unittest.mock import patch, MagicMock

@@ -1,7 +1,7 @@
 """Tests for dmenu-bookmarks script."""
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import os
 import tempfile
 

@@ -14,7 +14,6 @@ import json
 import os
 import re
 import subprocess
-import sys
 
 HOME = os.path.expanduser("~")
 STATE_FILE = os.path.join(HOME, ".config", "theme-mode")
@@ -270,7 +269,7 @@ def switch_kvantum(theme):
     """Update ~/.config/Kvantum/kvantum.kvconfig"""
     path = os.path.join(HOME, ".config", "Kvantum", "kvantum.kvconfig")
     if not os.path.exists(path):
-        print(f"  Kvantum → skipped (config not found)")
+        print("  Kvantum → skipped (config not found)")
         return
     set_ini_values(path, "General", {"theme": theme["kvantum_theme"]})
     print(f"  Kvantum → {theme['kvantum_theme']}")
@@ -327,7 +326,7 @@ def switch_polybar_bspwm(theme):
         (r'(COLOR_URGENT=)"#[0-9a-fA-F]+"',
          rf'\1"{theme["poly_urgent"]}"'),
     ])
-    print(f"  polybar/bspwm_custom.sh → updated")
+    print("  polybar/bspwm_custom.sh → updated")
 
 
 def switch_bspwm(theme):
@@ -350,7 +349,7 @@ def switch_bspwm(theme):
             (r'(presel_feedback_color\s+)"#[0-9a-fA-F]+"',
              rf'\1"{theme["bspwm_presel_feedback"]}"'),
         ])
-    print(f"  bspwm → borders updated")
+    print("  bspwm → borders updated")
 
 
 def switch_xob(theme):
@@ -383,7 +382,7 @@ def switch_xob(theme):
         content = re.sub(pattern, repl, content, flags=re.DOTALL)
     with open(path, "w") as f:
         f.write(content)
-    print(f"  xob → updated")
+    print("  xob → updated")
 
 
 def switch_dunst(theme):

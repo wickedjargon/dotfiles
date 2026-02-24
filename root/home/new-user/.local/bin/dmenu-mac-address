@@ -10,7 +10,6 @@ Uses 'pkexec' for privilege escalation.
 import subprocess
 import shutil
 import re
-import sys
 import os
 import shlex
 import logging

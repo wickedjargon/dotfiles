@@ -1,11 +1,9 @@
 import unittest
-from unittest.mock import MagicMock, patch, call
-import sys
+from unittest.mock import patch
 import os
 import importlib.util
 import importlib.machinery
 import json
-import subprocess
 
 def import_script(path):
     name = os.path.basename(path)

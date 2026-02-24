@@ -4,7 +4,6 @@ import unittest
 from unittest.mock import patch, MagicMock
 import sys
 import os
-import types
 
 # Mock gi and its components BEFORE importing the script
 # This is necessary because the script imports gi at the top level
