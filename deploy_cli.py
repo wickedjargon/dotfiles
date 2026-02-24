@@ -138,6 +138,13 @@ def parse_args(argv=None):
         help="Output results as JSON (for LLM/automation consumption)",
     )
 
+    parser.add_argument(
+        "--distrobox",
+        action="store_true",
+        default=False,
+        help="Also provision the Arch Linux distrobox (archbox)",
+    )
+
     return parser.parse_args(argv)
 
 
@@ -234,6 +241,13 @@ def dry_run_preview(args, script_dir):
 
     # Cleanup
     steps.append({"step": "cleanup", "action": "run", "detail": "apt-get clean && autoremove"})
+
+    # Distrobox (if requested)
+    pacman_pkgs = deploy.read_distrobox_packages(script_dir, 'distrobox-arch-pacman-pkglist.txt')
+    aur_pkgs = deploy.read_distrobox_packages(script_dir, 'distrobox-arch-aur-pkglist.txt')
+    if pacman_pkgs or aur_pkgs:
+        steps.append({"step": "distrobox", "action": "provision",
+                       "detail": f"Arch Linux distrobox: {len(pacman_pkgs)} pacman + {len(aur_pkgs)} AUR packages"})
 
     # Output
     if json_mode:
@@ -633,6 +647,27 @@ def main(argv=None):
             sys.exit(1)
         had_errors = True
         row += 3
+
+    # ── Distrobox (optional) ───────────────────────────────────────
+
+    if args.distrobox:
+        if not args.json:
+            print("\n  Setting up Arch Linux distrobox (archbox):")
+        row += 1
+
+        success, error, row = deploy.setup_distrobox(username, script_dir, cli, row)
+        if not success:
+            err = f"Distrobox setup failed: {error[:80] if error else 'Unknown'}"
+            json_result["errors"].append(err)
+            if not handle_error(args, cli, err):
+                json_result["success"] = False
+                if args.json:
+                    print(json_mod.dumps(json_result))
+                sys.exit(1)
+            had_errors = True
+            row += 3
+        else:
+            row += 1
 
     # ── Cleanup ────────────────────────────────────────────────────
 
