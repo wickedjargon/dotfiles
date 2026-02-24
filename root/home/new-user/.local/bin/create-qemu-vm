@@ -1,37 +1,40 @@
 #!/usr/bin/env python3
 import argparse
-import sys
+import glob
 import os
+import re
+import shutil
+import subprocess
+import sys
+
 
 def generate_vm_filename(name, arch, ram):
     """Generates the correct VM filename according to dmenu-explorer format."""
-    # Ensure RAM ends with 'G' or 'M' as is standard.
-    # dmenu-explorer expects name.arch.ram.qcow2
-    ram_str = str(ram).upper()
-    if ram_str.endswith('GB'):
-        ram_str = ram_str[:-1]
-    
+    # Normalize RAM string: strip trailing 'B' so GB→G, MB→M
+    ram_str = re.sub(r'B$', '', str(ram).upper())
     return f"{name}.{arch}.{ram_str}.qcow2"
+
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description="Create a virtual machine from an ISO.")
-    
-    # Milestone 1: Setup argument parser
-    parser.add_argument("iso_path", nargs="?", default=None, 
-                        help="Path to the ISO file (optional if searching in /tmp)")
-    parser.add_argument("--name", default="debian", 
+
+    parser.add_argument("iso_path", nargs="?", default=None,
+                        help="Path to the ISO file (optional if a Debian netinst ISO is found in /tmp)")
+    parser.add_argument("--name", default="debian",
                         help="Name of the VM (default: debian)")
-    parser.add_argument("--arch", default="x86_64", 
+    parser.add_argument("--arch", default="x86_64",
                         help="Architecture, e.g., x86_64 or aarch64 (default: x86_64)")
-    parser.add_argument("--ram", default="1G", 
+    parser.add_argument("--ram", default="1G",
                         help="Memory, e.g., 1G or 2G (default: 1G)")
-    parser.add_argument("--disk-size", default="12G", 
+    parser.add_argument("--disk-size", default="12G",
                         help="Disk size, e.g., 12G (default: 12G)")
-    
+    parser.add_argument("--vm-dir", default=None,
+                        help="Directory to store VM disk images (default: ~/virtual-machines)")
+    parser.add_argument("--ssh-port", type=int, default=None,
+                        help="Host port to forward to guest SSH port 22 (default: 2222 for x86_64, 2223 for aarch64)")
+
     return parser.parse_args(args)
 
-
-import subprocess
 
 def run_qemu_img(vm_path, disk_size):
     """Creates the qcow2 disk image."""
@@ -39,24 +42,27 @@ def run_qemu_img(vm_path, disk_size):
     print(f"Creating QEMU disk image: {vm_path} ({disk_size})...")
     subprocess.run(cmd, check=True)
 
-def run_qemu_system(arch, ram, vm_path, iso_path):
+
+def run_qemu_system(arch, ram, vm_path, iso_path, ssh_port):
     """Launches the VM using the correct architecture system command."""
     print(f"Starting QEMU for installation using ISO: {iso_path}")
     print(f"Booting with {ram} RAM. Use Ctrl+Alt+G to release mouse.")
-    
+    print(f"SSH port forwarding: host:{ssh_port} -> guest:22")
+
     cmd = [
         f"qemu-system-{arch}",
         "-m", ram,
     ]
-    
+
     if arch == "x86_64":
+        kvm_args = ["-enable-kvm"] if os.path.exists("/dev/kvm") else []
+        cmd.extend(kvm_args)
         cmd.extend([
             "-drive", f"file={vm_path},format=qcow2",
             "-cdrom", iso_path,
             "-boot", "d",
-            "-enable-kvm",
-            "-net", "user,hostfwd=tcp::2222-:22",
-            "-net", "nic",
+            "-netdev", f"user,id=net0,hostfwd=tcp::{ssh_port}-:22",
+            "-device", "virtio-net-pci,netdev=net0",
             "-display", "gtk,zoom-to-fit=on",
         ])
     elif arch == "aarch64":
@@ -66,8 +72,8 @@ def run_qemu_system(arch, ram, vm_path, iso_path):
             "-drive", f"file={vm_path},format=qcow2,if=virtio",
             "-cdrom", iso_path,
             "-boot", "d",
-            "-net", "user,hostfwd=tcp::2223-:22",
-            "-net", "nic,model=virtio",
+            "-netdev", f"user,id=net0,hostfwd=tcp::{ssh_port}-:22",
+            "-device", "virtio-net-pci,netdev=net0",
             "-display", "gtk,zoom-to-fit=on",
             "-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd",
             "-device", "virtio-gpu-pci",
@@ -76,24 +82,31 @@ def run_qemu_system(arch, ram, vm_path, iso_path):
             "-device", "usb-mouse",
         ])
     else:
-        print(f"Unsupported architecture: {arch} for automated boot options.")
+        print(f"Unsupported architecture: {arch}")
         sys.exit(1)
-        
-    subprocess.run(cmd, check=True)
 
-def find_default_iso():
-    """Finds a debian netinst ISO in /tmp if one is not provided."""
-    import glob
-    isos = glob.glob("/tmp/debian-*-amd64-netinst.iso")
+    result = subprocess.run(cmd)
+    if result.returncode not in (0, 1):
+        # Exit code 1 is common when the user closes the QEMU window normally.
+        print(f"QEMU exited with unexpected return code {result.returncode}.")
+        sys.exit(result.returncode)
+
+
+def find_default_iso(arch):
+    """Finds a Debian netinst ISO in /tmp matching the given architecture."""
+    arch_glob = "amd64" if arch == "x86_64" else "arm64"
+    isos = glob.glob(f"/tmp/debian-*-{arch_glob}-netinst.iso")
+    if not isos:
+        # Fall back to any ISO in /tmp
+        isos = glob.glob("/tmp/*.iso")
     if not isos:
         return None
-    # Sort to get the latest version if multiple exist
     isos.sort()
     return isos[-1]
 
+
 def check_dependencies(arch):
     """Ensures required QEMU utilities are installed."""
-    import shutil
     if not shutil.which("qemu-img"):
         print("Error: qemu-img is not installed.")
         sys.exit(1)
@@ -101,55 +114,56 @@ def check_dependencies(arch):
         print(f"Error: qemu-system-{arch} is not installed.")
         sys.exit(1)
 
+
 def main():
     args = parse_args()
-    
+
     # 1. Dependency checks
     check_dependencies(args.arch)
-    
-    # 2. ISO Discovery / Validation
+
+    # 2. ISO discovery / validation
     iso_path = args.iso_path
     if not iso_path:
-        iso_path = find_default_iso()
-    
-    # We allow running without an ISO just to create the image according to original script,
-    # but the prompt implies this should take in an ISO file as an argument and deploy a VM.
-    
-    # 3. Path Generation
-    vm_dir = os.path.join(os.environ.get("HOME", "/tmp"), "virtual-machines")
+        iso_path = find_default_iso(args.arch)
+
+    if iso_path and not os.path.exists(iso_path):
+        print(f"Error: ISO file not found at {iso_path}")
+        sys.exit(1)
+
+    # 3. Path generation
+    vm_dir = args.vm_dir or os.path.join(os.environ.get("HOME", "/tmp"), "virtual-machines")
     os.makedirs(vm_dir, exist_ok=True)
-    
+
     vm_filename = generate_vm_filename(args.name, args.arch, args.ram)
     vm_path = os.path.join(vm_dir, vm_filename)
-    
-    print(f"Generated VM Filename: {vm_filename}")
-    
-    # 4. State Validation
+
+    print(f"Generated VM filename: {vm_filename}")
+
+    # 4. State validation
     if os.path.exists(vm_path):
-        print(f"Error: VM disk {vm_path} already exists.")
+        print(f"Error: VM disk already exists: {vm_path}")
         sys.exit(1)
-        
-    # 5. Image Creation
+
+    # 5. Image creation
     try:
         run_qemu_img(vm_path, args.disk_size)
     except subprocess.CalledProcessError:
         print("Failed to create disk image.")
         sys.exit(1)
-        
+
     # 6. Boot ISO for installation
     if iso_path:
-        if not os.path.exists(iso_path):
-            print(f"Error: ISO file not found at {iso_path}")
-            sys.exit(1)
-        
+        default_ssh_port = 2222 if args.arch == "x86_64" else 2223
+        ssh_port = args.ssh_port if args.ssh_port is not None else default_ssh_port
         try:
-            run_qemu_system(args.arch, args.ram, vm_path, iso_path)
-        except subprocess.CalledProcessError:
-            print("VM exited with an error.")
+            run_qemu_system(args.arch, args.ram, vm_path, iso_path, ssh_port)
+        except Exception as e:
+            print(f"Unexpected error launching VM: {e}")
             sys.exit(1)
     else:
         print(f"VM disk created: {vm_path}")
-        print("To install an OS, run this script with the path to the ISO as an argument.")
+        print("To install an OS, run this script again with the path to the ISO as an argument.")
+
 
 if __name__ == "__main__":
     main()
