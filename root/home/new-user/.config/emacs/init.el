@@ -449,42 +449,53 @@
   (cond
    ;; On Linux
    ((eq system-type 'gnu/linux)
+
+    (defun fff--read-sys-theme ()
+      "Return 'light or 'dark based on ~/.config/theme-mode."
+      (if (string-match-p "light"
+                          (or (ignore-errors
+                                (with-temp-buffer
+                                  (insert-file-contents "~/.config/theme-mode")
+                                  (buffer-string)))
+                              "dark"))
+          'light 'dark))
+
     (defun fff--apply-theme-to-frame (frame)
-      "Apply the correct theme to FRAME based on whether it is graphical or TTY."
-      (let ((sys-theme (if (string-match-p "light" (or (ignore-errors (with-temp-buffer (insert-file-contents "~/.config/theme-mode") (buffer-string))) "dark"))
-                           'light 'dark)))
-        (with-selected-frame frame
-          (if (display-graphic-p frame)
-              (if (eq sys-theme 'light)
-                  (load-theme 'ef-tritanopia-light t)
-                (load-theme 'ef-tritanopia-dark t))
+      "Load the correct theme for FRAME.
+GUI frames get the ef-tritanopia variant that matches ~/.config/theme-mode.
+TTY frames (standalone non-daemon only) get tty-dark."
+      (with-selected-frame frame
+        (if (display-graphic-p frame)
+            (if (eq (fff--read-sys-theme) 'light)
+                (load-theme 'ef-tritanopia-light t)
+              (load-theme 'ef-tritanopia-dark t))
+          (unless (daemonp)
             (load-theme 'tty-dark t)))))
 
+    ;; Daemon: apply theme to new GUI frames only.
+    ;; Non-daemon: apply immediately to the starting frame.
     (if (daemonp)
         (add-hook 'after-make-frame-functions
-                  (defun fff--daemon-initial-theme (frame)
-                    (unless (and (not (display-graphic-p frame))
-                                 (not (frame-parameter frame 'client)))
+                  (defun fff--daemon-apply-theme (frame)
+                    (when (display-graphic-p frame)
                       (fff--apply-theme-to-frame frame))))
       (fff--apply-theme-to-frame (selected-frame)))
 
-    ;; file watcher for theme toggles to update all running frames
+    ;; File watcher: react to `theme --toggle` writing ~/.config/theme-mode.
+    ;; Switches between ef-tritanopia-dark and ef-tritanopia-light on GUI frames.
+    ;; TTY frames (standalone) are unaffected by this watcher.
     (require 'filenotify)
     (when (file-exists-p (expand-file-name "~/.config/theme-mode"))
       (file-notify-add-watch
        (expand-file-name "~/.config/theme-mode")
        '(change attribute-change)
-       (lambda (event)
-         (let ((new-sys-theme (if (string-match-p "light" (or (ignore-errors (with-temp-buffer (insert-file-contents "~/.config/theme-mode") (buffer-string))) "dark"))
-                                  'light 'dark)))
-           (mapc (lambda (frame)
-                   (with-selected-frame frame
-                     (if (display-graphic-p frame)
-                         (if (eq new-sys-theme 'light)
-                             (load-theme 'ef-tritanopia-light t)
-                           (load-theme 'ef-tritanopia-dark t))
-                       (load-theme 'tty-dark t))))
-                 (frame-list)))))))
+       (lambda (_event)
+         (let ((sys-theme (fff--read-sys-theme)))
+           (if (eq sys-theme 'light)
+               (progn (disable-theme 'ef-tritanopia-dark)
+                      (load-theme 'ef-tritanopia-light t))
+             (progn (disable-theme 'ef-tritanopia-light)
+                    (load-theme 'ef-tritanopia-dark t))))))))
    ;; On Windows
    ((eq system-type 'windows-nt)
     ;; Delay theme loading until after frame is initialized

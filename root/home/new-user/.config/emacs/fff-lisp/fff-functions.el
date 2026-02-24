@@ -1669,15 +1669,15 @@ previous kill as the second argument (B)."
     (select-window target)))
 
 (defun fff-theme-dark ()
-  "Switch to the dark theme (ef-tritanopia-dark)."
+  "Switch to ef-tritanopia-dark, disabling ef-tritanopia-light."
   (interactive)
-  (mapc #'disable-theme custom-enabled-themes)
+  (disable-theme 'ef-tritanopia-light)
   (load-theme 'ef-tritanopia-dark t)
   (message "Switched to dark theme: ef-tritanopia-dark"))
 
 (defun fff-theme-light ()
-  "Switch to the light theme (ef-tritanopia-light)."
+  "Switch to ef-tritanopia-light, disabling ef-tritanopia-dark."
   (interactive)
-  (mapc #'disable-theme custom-enabled-themes)
+  (disable-theme 'ef-tritanopia-dark)
   (load-theme 'ef-tritanopia-light t)
   (message "Switched to light theme: ef-tritanopia-light"))
