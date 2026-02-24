@@ -1682,8 +1682,9 @@ def main_tui(stdscr):
             return
         row += 3
 
-
     # Optional: Set up Arch Linux distrobox
+    tui.draw_header("ARCH LINUX DISTROBOX")
+    row = 4
     tui.show_message(row, 4, "Set up Arch Linux distrobox (archbox)? (y/n): ", color_pair=4)
     tui.stdscr.refresh()
     response = stdscr.getch()
