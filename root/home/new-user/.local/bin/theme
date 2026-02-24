@@ -67,8 +67,6 @@ THEMES = {
         # Zathura
         "zathura_bg": "#0d0e1c",
         "zathura_fg": "#ebdbb2",
-        # Emacs
-        "emacs_fn": "fff-theme-dark",
         # Antigravity (VS Code)
         "antigravity_theme": "GitHub Dark Colorblind (Beta)",
         # Alacritty
@@ -137,8 +135,6 @@ THEMES = {
         # Zathura
         "zathura_bg": "#fbf1c7",
         "zathura_fg": "#3c3836",
-        # Emacs
-        "emacs_fn": "fff-theme-light",
         # Antigravity (VS Code)
         "antigravity_theme": "GitHub Light Colorblind (Beta)",
         # Alacritty
@@ -467,22 +463,6 @@ def restart_services():
     print("  Services restarted (polybar, dunst, xob)")
 
 
-def switch_emacs(theme):
-    """Switch Emacs theme via emacsclient."""
-    fn = theme["emacs_fn"]
-    try:
-        subprocess.run(
-            ["emacsclient", "--eval", f"({fn})"],
-            capture_output=True,
-            timeout=5,
-        )
-        print(f"  emacs → {fn}")
-    except FileNotFoundError:
-        print("  emacs → skipped (emacsclient not found)")
-    except subprocess.TimeoutExpired:
-        print("  emacs → skipped (emacsclient timed out)")
-
-
 def switch_antigravity(theme):
     """Update Antigravity (VS Code) color theme in settings.json."""
     path = os.path.join(HOME, ".config", "Antigravity", "User", "settings.json")
@@ -646,7 +626,6 @@ def apply_theme(mode):
     restart_services()
 
     # Milestone 3: Editors & portal
-    switch_emacs(theme)
     switch_antigravity(theme)
     switch_alacritty(theme)
     switch_rofi(theme)
