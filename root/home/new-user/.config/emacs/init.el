@@ -349,6 +349,8 @@
   :config
   (setq dired-subtree-use-backgrounds nil))
 
+(use-package casual :straight t)
+
 (use-package ibuffer  :ensure nil
   :config
   (setq ibuffer-formats
