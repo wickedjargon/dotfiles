@@ -67,6 +67,7 @@ THEMES = {
         "calibre_theme": "sepia-dark",
         # Zathura
         "zathura_bg": "#0d0e1c",
+        "zathura_fg": "#ebdbb2",
         # Emacs
         "emacs_fn": "fff-theme-dark",
         # Antigravity (VS Code)
@@ -136,6 +137,7 @@ THEMES = {
         "calibre_theme": "sepia-light",
         # Zathura
         "zathura_bg": "#fbf1c7",
+        "zathura_fg": "#3c3836",
         # Emacs
         "emacs_fn": "fff-theme-light",
         # Antigravity (VS Code)
@@ -609,9 +611,11 @@ def switch_zathura(theme):
         return
     replace_in_file(path, [
         (r'(set\s+default-bg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
+        (r'(set\s+default-fg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_fg"]}'),
         (r'(set\s+recolor-lightcolor\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
+        (r'(set\s+recolor-darkcolor\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_fg"]}'),
     ])
-    print(f"  zathura → bg:{theme['zathura_bg']}")
+    print(f"  zathura → bg:{theme['zathura_bg']} fg:{theme['zathura_fg']}")
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
