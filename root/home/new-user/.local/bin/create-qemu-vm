@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+import argparse
+import sys
+import os
+
+def generate_vm_filename(name, arch, ram):
+    """Generates the correct VM filename according to dmenu-explorer format."""
+    # Ensure RAM ends with 'G' or 'M' as is standard.
+    # dmenu-explorer expects name.arch.ram.qcow2
+    ram_str = str(ram).upper()
+    if ram_str.endswith('GB'):
+        ram_str = ram_str[:-1]
+    
+    return f"{name}.{arch}.{ram_str}.qcow2"
+
+def parse_args(args=None):
+    parser = argparse.ArgumentParser(description="Create a virtual machine from an ISO.")
+    
+    # Milestone 1: Setup argument parser
+    parser.add_argument("iso_path", nargs="?", default=None, 
+                        help="Path to the ISO file (optional if searching in /tmp)")
+    parser.add_argument("--name", default="debian", 
+                        help="Name of the VM (default: debian)")
+    parser.add_argument("--arch", default="x86_64", 
+                        help="Architecture, e.g., x86_64 or aarch64 (default: x86_64)")
+    parser.add_argument("--ram", default="1G", 
+                        help="Memory, e.g., 1G or 2G (default: 1G)")
+    parser.add_argument("--disk-size", default="12G", 
+                        help="Disk size, e.g., 12G (default: 12G)")
+    
+    return parser.parse_args(args)
+
+
+import subprocess
+
+def run_qemu_img(vm_path, disk_size):
+    """Creates the qcow2 disk image."""
+    cmd = ["qemu-img", "create", "-f", "qcow2", str(vm_path), disk_size]
+    print(f"Creating QEMU disk image: {vm_path} ({disk_size})...")
+    subprocess.run(cmd, check=True)
+
+def run_qemu_system(arch, ram, vm_path, iso_path):
+    """Launches the VM using the correct architecture system command."""
+    print(f"Starting QEMU for installation using ISO: {iso_path}")
+    print(f"Booting with {ram} RAM. Use Ctrl+Alt+G to release mouse.")
+    
+    cmd = [
+        f"qemu-system-{arch}",
+        "-m", ram,
+    ]
+    
+    if arch == "x86_64":
+        cmd.extend([
+            "-drive", f"file={vm_path},format=qcow2",
+            "-cdrom", iso_path,
+            "-boot", "d",
+            "-enable-kvm",
+            "-net", "user,hostfwd=tcp::2222-:22",
+            "-net", "nic",
+            "-display", "gtk,zoom-to-fit=on",
+        ])
+    elif arch == "aarch64":
+        cmd.extend([
+            "-machine", "virt",
+            "-cpu", "cortex-a57",
+            "-drive", f"file={vm_path},format=qcow2,if=virtio",
+            "-cdrom", iso_path,
+            "-boot", "d",
+            "-net", "user,hostfwd=tcp::2223-:22",
+            "-net", "nic,model=virtio",
+            "-display", "gtk,zoom-to-fit=on",
+            "-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd",
+            "-device", "virtio-gpu-pci",
+            "-device", "qemu-xhci",
+            "-device", "usb-kbd",
+            "-device", "usb-mouse",
+        ])
+    else:
+        print(f"Unsupported architecture: {arch} for automated boot options.")
+        sys.exit(1)
+        
+    subprocess.run(cmd, check=True)
+
+def find_default_iso():
+    """Finds a debian netinst ISO in /tmp if one is not provided."""
+    import glob
+    isos = glob.glob("/tmp/debian-*-amd64-netinst.iso")
+    if not isos:
+        return None
+    # Sort to get the latest version if multiple exist
+    isos.sort()
+    return isos[-1]
+
+def check_dependencies(arch):
+    """Ensures required QEMU utilities are installed."""
+    import shutil
+    if not shutil.which("qemu-img"):
+        print("Error: qemu-img is not installed.")
+        sys.exit(1)
+    if not shutil.which(f"qemu-system-{arch}"):
+        print(f"Error: qemu-system-{arch} is not installed.")
+        sys.exit(1)
+
+def main():
+    args = parse_args()
+    
+    # 1. Dependency checks
+    check_dependencies(args.arch)
+    
+    # 2. ISO Discovery / Validation
+    iso_path = args.iso_path
+    if not iso_path:
+        iso_path = find_default_iso()
+    
+    # We allow running without an ISO just to create the image according to original script,
+    # but the prompt implies this should take in an ISO file as an argument and deploy a VM.
+    
+    # 3. Path Generation
+    vm_dir = os.path.join(os.environ.get("HOME", "/tmp"), "virtual-machines")
+    os.makedirs(vm_dir, exist_ok=True)
+    
+    vm_filename = generate_vm_filename(args.name, args.arch, args.ram)
+    vm_path = os.path.join(vm_dir, vm_filename)
+    
+    print(f"Generated VM Filename: {vm_filename}")
+    
+    # 4. State Validation
+    if os.path.exists(vm_path):
+        print(f"Error: VM disk {vm_path} already exists.")
+        sys.exit(1)
+        
+    # 5. Image Creation
+    try:
+        run_qemu_img(vm_path, args.disk_size)
+    except subprocess.CalledProcessError:
+        print("Failed to create disk image.")
+        sys.exit(1)
+        
+    # 6. Boot ISO for installation
+    if iso_path:
+        if not os.path.exists(iso_path):
+            print(f"Error: ISO file not found at {iso_path}")
+            sys.exit(1)
+        
+        try:
+            run_qemu_system(args.arch, args.ram, vm_path, iso_path)
+        except subprocess.CalledProcessError:
+            print("VM exited with an error.")
+            sys.exit(1)
+    else:
+        print(f"VM disk created: {vm_path}")
+        print("To install an OS, run this script with the path to the ISO as an argument.")
+
+if __name__ == "__main__":
+    main()
