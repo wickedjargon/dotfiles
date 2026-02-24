@@ -1687,6 +1687,7 @@ def main_tui(stdscr):
     row = 4
     tui.show_message(row, 4, "Set up Arch Linux distrobox (archbox)? (y/n): ", color_pair=4)
     tui.stdscr.refresh()
+    curses.flushinp()
     response = stdscr.getch()
     if chr(response).lower() == 'y':
         row += 1
@@ -1699,6 +1700,7 @@ def main_tui(stdscr):
             tui.show_message(row, 4, f"Error: {error[:60] if error else 'Unknown'}", color_pair=3)
             tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
             tui.stdscr.refresh()
+            curses.flushinp()
             response = stdscr.getch()
             if chr(response).lower() != 'y':
                 return
