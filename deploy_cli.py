@@ -213,7 +213,7 @@ def dry_run_preview(args, script_dir):
             steps.append({"step": "build_repo", "action": "clone+build", "detail": f"{name} ({url})"})
 
     # Tor Browser
-    if (script_dir / 'install-tor-browser').exists():
+    if (script_dir / 'scripts/install-tor-browser').exists():
         steps.append({"step": "tor_browser", "action": "install", "detail": "Download and install Tor Browser"})
 
     # Patches
@@ -227,9 +227,9 @@ def dry_run_preview(args, script_dir):
     steps.append({"step": "kbdrate", "action": "configure", "detail": "Enable kbdrate service"})
 
     # Firefox
-    if (script_dir / 'firefox-extensions.sh').exists():
+    if (script_dir / 'firefox/firefox-extensions.sh').exists():
         steps.append({"step": "firefox_extensions", "action": "install", "detail": "Install Firefox extensions via policy"})
-    if (script_dir / 'firefox-user.js').exists():
+    if (script_dir / 'firefox/firefox-user.js').exists():
         steps.append({"step": "firefox_userjs", "action": "install", "detail": "Deploy user.js to Firefox profiles"})
 
     # Cleanup

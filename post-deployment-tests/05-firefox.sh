@@ -28,7 +28,7 @@ for p in "/usr/share/firefox-esr/distribution/policies.json" \
         break
     fi
 done
-USERJS_SRC="$SCRIPT_DIR/firefox-user.js"
+USERJS_SRC="$SCRIPT_DIR/firefox/firefox-user.js"
 
 echo "Testing Firefox extensions configuration..."
 

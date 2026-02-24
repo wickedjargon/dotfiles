@@ -401,9 +401,9 @@ class TestXob:
     def test_switch_to_light(self, fake_home):
         theme_mod.switch_xob(theme_mod.THEMES["light"])
         content = (fake_home / ".config" / "xob" / "styles.cfg").read_text()
-        assert '"#333333"' in content
-        assert '"#E8E8EE"' in content
-        assert '"#CCCCCC"' in content
+        assert '"#5294e2"' in content  # xob_fg light (Arc blue)
+        assert '"#ffffff"' in content  # xob_bg light
+        assert '"#d0d0d0"' in content  # xob_border light
 
     def test_switch_to_dark(self, fake_home):
         theme_mod.switch_xob(theme_mod.THEMES["light"])
@@ -605,25 +605,6 @@ class TestAntigravity:
         theme_mod.switch_antigravity(theme_mod.THEMES["light"])
 
 
-class TestEmacs:
-    def test_switch_calls_emacsclient_light(self, fake_home, monkeypatch):
-        calls = []
-        def mock_run(cmd, **kwargs):
-            calls.append(cmd)
-            return subprocess.CompletedProcess(cmd, 0)
-        monkeypatch.setattr(theme_mod.subprocess, "run", mock_run)
-        theme_mod.switch_emacs(theme_mod.THEMES["light"])
-        assert any("fff-theme-light" in str(c) for c in calls)
-
-    def test_switch_calls_emacsclient_dark(self, fake_home, monkeypatch):
-        calls = []
-        def mock_run(cmd, **kwargs):
-            calls.append(cmd)
-            return subprocess.CompletedProcess(cmd, 0)
-        monkeypatch.setattr(theme_mod.subprocess, "run", mock_run)
-        theme_mod.switch_emacs(theme_mod.THEMES["dark"])
-        assert any("fff-theme-dark" in str(c) for c in calls)
-
 
 # ── Integration Tests ────────────────────────────────────────────────────────
 
@@ -631,7 +612,6 @@ class TestEmacs:
 def _mock_system(monkeypatch):
     """Mock all system-dependent calls for integration tests."""
     monkeypatch.setattr(theme_mod, "switch_gsettings", lambda t: None)
-    monkeypatch.setattr(theme_mod, "switch_emacs", lambda t: None)
     monkeypatch.setattr(theme_mod, "switch_wallpaper", lambda t: None)
     monkeypatch.setattr(theme_mod, "run_quiet", lambda cmd: None)
     monkeypatch.setattr(theme_mod, "restart_services", lambda: None)
