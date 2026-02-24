@@ -437,7 +437,11 @@
 
 ;;; Themes
 
-(use-package modus-themes
+(use-package modus-themes :straight t :defer t)
+
+(use-package doom-themes :straight t :defer t)
+
+(use-package ef-themes
   :defer nil
   :straight t
   :config
@@ -445,27 +449,29 @@
   (cond
    ;; On Linux
    ((eq system-type 'gnu/linux)
-    (if (daemonp)
-        (add-hook 'after-make-frame-functions
-                  (defun fff--daemon-initial-theme (frame)
-                    (with-selected-frame frame
-                      (if (display-graphic-p frame)
-                          (load-theme 'ef-tritanopia-dark t)
-                        (load-theme 'tty-dark t)))
-                    (remove-hook 'after-make-frame-functions #'fff--daemon-initial-theme)))
-      (if (display-graphic-p)
-          (load-theme 'modus-vivendi-tinted t)
-        (load-theme 'tty-dark t))))
+    (let ((sys-theme (if (string-match-p "light" (or (ignore-errors (with-temp-buffer (insert-file-contents "~/.config/theme-mode") (buffer-string))) "dark"))
+                         'light 'dark)))
+      (if (daemonp)
+          (add-hook 'after-make-frame-functions
+                    (defun fff--daemon-initial-theme (frame)
+                      (with-selected-frame frame
+                        (if (display-graphic-p frame)
+                            (if (eq sys-theme 'light)
+                                (load-theme 'ef-tritanopia-light t)
+                              (load-theme 'ef-tritanopia-dark t))
+                          (load-theme 'tty-dark t)))
+                      (remove-hook 'after-make-frame-functions #'fff--daemon-initial-theme)))
+        (if (display-graphic-p)
+            (if (eq sys-theme 'light)
+                (load-theme 'ef-tritanopia-light t)
+              (load-theme 'ef-tritanopia-dark t))
+          (load-theme 'tty-dark t)))))
    ;; On Windows
    ((eq system-type 'windows-nt)
     ;; Delay theme loading until after frame is initialized
     (add-hook 'emacs-startup-hook
               (lambda ()
                 (load-theme 'fogus t))))))
-
-(use-package doom-themes :straight t :defer t)
-
-(use-package ef-themes :straight t :defer t)
 
 (use-package sublime-themes :straight t :defer t)
 
