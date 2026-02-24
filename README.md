@@ -75,7 +75,7 @@ systemctl --user restart pulseaudio
 ```
 
 ## Post-Install
-- run `post-deployment-tests/run_tests.sh` to verify everything is working
+- run `tests-live/run_tests.sh` to verify everything is working
 - browse to https://septatrix.github.io/prefers-color-scheme-test/ to verify dark mode is working. This should be set in bspwmrc by `gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'`
 - In Dark Reader: click ⚙ Settings → Automation → enable **"System color scheme"** (so `theme --toggle` auto-disables Dark Reader in light mode)
 - Turn off Firefox hardware acceleration for PCs on older Sandy Bridge CPUs
