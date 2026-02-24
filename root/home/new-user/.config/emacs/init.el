@@ -1633,3 +1633,18 @@ With a prefix ARG always prompt for command to use."
   :ensure nil
   :custom
   (webjump-use-internal-browser t))
+
+(use-package gptel
+  :straight t
+  :config
+  (setq gptel-model 'llama-3.3-70b-versatile
+        gptel-backend (gptel-make-openai "Groq"
+                        :host "api.groq.com"
+                        :endpoint "/openai/v1/chat/completions"
+                        :stream t
+                        :key (with-temp-buffer
+                               (insert-file-contents (expand-file-name ".gptel-api-key" user-emacs-directory))
+                               (string-trim (buffer-string)))
+                        :models '(llama-3.3-70b-versatile
+                                  qwen/qwen3-32b
+                                  whisper-large-v3))))
