@@ -4,7 +4,7 @@ import importlib.util
 from pathlib import Path
 
 # setup-ssh-repos.py contains hyphens, so we need to import it using importlib
-file_path = Path(__file__).parent.parent / 'setup-ssh-repos.py'
+file_path = Path(__file__).parent.parent / 'scripts/setup-ssh-repos.py'
 spec = importlib.util.spec_from_file_location("setup_ssh_repos", file_path)
 ssh_setup = importlib.util.module_from_spec(spec)
 sys.modules["setup_ssh_repos"] = ssh_setup

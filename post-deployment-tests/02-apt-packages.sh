@@ -16,7 +16,7 @@ while IFS= read -r pkg; do
         echo "  [FAIL] Required package missing: $pkg"
         FAILED=1
     fi
-done < "$SCRIPT_DIR/apt-packages"
+done < "$SCRIPT_DIR/packages/apt-packages"
 
 echo "Testing third-party repositories and packages..."
 while IFS= read -r line; do
@@ -58,7 +58,7 @@ while IFS= read -r line; do
         FAILED=1
     fi
     
-done < "$SCRIPT_DIR/third-party-apt-packages"
+done < "$SCRIPT_DIR/packages/third-party-apt-packages"
 
 if [ $FAILED -eq 1 ]; then
     exit 1
