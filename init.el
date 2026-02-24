@@ -478,7 +478,7 @@
                                     'light 'dark)))
              (if (eq new-sys-theme 'light)
                  (fff-theme-light)
-               (fff-theme-dark)))))))
+               (fff-theme-dark))))))))
    ;; On Windows
    ((eq system-type 'windows-nt)
     ;; Delay theme loading until after frame is initialized
