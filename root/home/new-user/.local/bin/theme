@@ -610,10 +610,12 @@ def switch_zathura(theme):
         print("  zathura → skipped (config not found)")
         return
     replace_in_file(path, [
-        (r'(set\s+default-bg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
+        (r'(set\s+recolor-darkcolor\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_fg"]}'),
         (r'(set\s+default-fg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_fg"]}'),
         (r'(set\s+recolor-lightcolor\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
-        (r'(set\s+recolor-darkcolor\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_fg"]}'),
+        (r'(set\s+default-bg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
+        (r'(set\s+statusbar-bg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
+        (r'(set\s+statusbar-fg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_fg"]}'),
     ])
     print(f"  zathura → bg:{theme['zathura_bg']} fg:{theme['zathura_fg']}")
 
