@@ -83,6 +83,7 @@ systemctl --user restart pulseaudio
 - pair bluetooth devices
 
 ## TODOS
+- [x] move ~/.emacs.d/ to ~/.config/emacs
 - [ ] script should check if the distrobox containers are active and running and request the user to kill/stop them. present the user with the command to do so
 - [x] light/dark theme universal toggle. toggles (gtk/qt/bspwm/polybar/xob/emacs/antigravity/notification daemon /dmenu and gsettings/ xdg-desktop-portal-gtk in bspwm)
   - [ ] calibre still doesn't toggle light/dark theme. fix this.
