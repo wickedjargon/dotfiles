@@ -126,8 +126,9 @@ class TestSetupDistrobox(unittest.TestCase):
 
         success, error, row = deploy.setup_distrobox("testuser", Path("/fake"), tui, 0)
         self.assertTrue(success)
-        # create should not have been called
-        mock_run_user.assert_not_called()
+        # create should not have been called, but stop should have been
+        self.assertEqual(mock_run_user.call_count, 1)
+        self.assertIn("distrobox stop", mock_run_user.call_args[0][1])
 
     @patch("deploy._run_as_user")
     @patch("deploy._distrobox_exists")
