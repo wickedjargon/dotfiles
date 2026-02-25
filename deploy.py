@@ -34,18 +34,14 @@ def run_command_with_retry(cmd, max_retries=3, delay=2, **kwargs):
     return None  # Should not be reached due to raise
 
 def get_log_file_path():
-    """Determine log file path, creating new numbered file if necessary"""
-    base_path = Path('/tmp/dotfiles-deploy.log')
-    if not base_path.exists():
-        return str(base_path)
-    
-    counter = 1
-    while True:
-        # Check for next available numbered log file
-        log_path = base_path.parent / f"{base_path.name}.{counter}"
-        if not log_path.exists():
-            return str(log_path)
-        counter += 1
+    """Create a timestamped log file path for this run.
+
+    Each invocation gets its own file, e.g.
+    /tmp/dotfiles-deploy-2026-02-24_214718.log
+    Lexicographic ordering == chronological ordering.
+    """
+    stamp = datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S')
+    return f'/tmp/dotfiles-deploy-{stamp}.log'
 
 
 LOG_FILE = get_log_file_path()
