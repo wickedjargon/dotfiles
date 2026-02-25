@@ -224,7 +224,7 @@ def is_valid_git_url(url):
 
 def read_git_packages_src_file(script_dir):
     """Read git repository URLs from git-packages-src file"""
-    packages_file = script_dir / 'packages/git-packages-src'
+    packages_file = script_dir / 'packages/git-packages-src.txt'
     if not packages_file.exists():
         return []
 
@@ -267,7 +267,7 @@ def read_git_dotfiles_file(script_dir):
     """Read git repository URLs from git-dotfiles file
     Format: repo-url destination-directory
     """
-    packages_file = script_dir / 'packages/git-dotfiles'
+    packages_file = script_dir / 'packages/git-dotfiles.txt'
     if not packages_file.exists():
         return []
 
@@ -471,7 +471,7 @@ def clone_dotfiles_home(repos, username, tui, start_row):
 
 def read_packages_file(script_dir):
     """Read package names from apt-packages file"""
-    packages_file = script_dir / 'packages/apt-packages'
+    packages_file = script_dir / 'packages/apt-packages.txt'
     if not packages_file.exists():
         return []
 
@@ -515,7 +515,7 @@ def read_third_party_packages_file(script_dir):
     Format: package_name | key_url | repo_line
     Returns list of tuples: (package_name, key_url, repo_line)
     """
-    packages_file = script_dir / 'packages/third-party-apt-packages'
+    packages_file = script_dir / 'packages/third-party-apt-packages.txt'
     if not packages_file.exists():
         return []
 
@@ -1130,7 +1130,7 @@ def install_tor_browser(username, script_dir, tui, row):
     Runs the install-tor-browser script as the target user to ensure
     correct ownership of ~/.local/src/tor-browser and symlink.
     """
-    install_script = script_dir / 'scripts/install-tor-browser'
+    install_script = script_dir / 'scripts/install-tor-browser.sh'
 
     if not install_script.exists():
         return True, None, row  # Script not present, skip silently

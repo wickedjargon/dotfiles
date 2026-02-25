@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DEFAULT_PKG_FILE="$SCRIPT_DIR/../packages/arch-aur-packages"
+DEFAULT_PKG_FILE="$SCRIPT_DIR/../packages/arch-aur-packages.txt"
 PKG_FILE="${1:-$DEFAULT_PKG_FILE}"
 
 if ! command -v yay &>/dev/null; then

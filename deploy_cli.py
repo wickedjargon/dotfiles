@@ -213,7 +213,7 @@ def dry_run_preview(args, script_dir):
             steps.append({"step": "build_repo", "action": "clone+build", "detail": f"{name} ({url})"})
 
     # Tor Browser
-    if (script_dir / 'scripts/install-tor-browser').exists():
+    if (script_dir / 'scripts/install-tor-browser.sh').exists():
         steps.append({"step": "tor_browser", "action": "install", "detail": "Download and install Tor Browser"})
 
     # Patches

@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DEFAULT_PKG_FILE="$SCRIPT_DIR/../packages/arch-pacman-packages"
+DEFAULT_PKG_FILE="$SCRIPT_DIR/../packages/arch-pacman-packages.txt"
 PKG_FILE="${1:-$DEFAULT_PKG_FILE}"
 
 if [[ ! -f "$PKG_FILE" ]]; then
