@@ -695,7 +695,7 @@ def main(argv=None):
         print()
         if had_errors:
             print("\033[33m  Deployment complete (with some errors).\033[0m")
-            print("  Check /tmp/dotfiles-deploy.log for details.")
+            print(f"  Check {deploy.LOG_FILE} for details.")
         else:
             print("\033[32m  Deployment complete!\033[0m")
 
