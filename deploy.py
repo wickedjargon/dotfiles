@@ -793,13 +793,9 @@ def deploy_root(username, script_dir):
                         os.chmod(dest_file, 0o755)
 
                 # Set ownership for home directory files
-                if is_home_file:
-                    try:
-                        subprocess.run(
-                            ['chown', '-R', f'{username}:{username}', str(dest_file)],
-                            check=True, capture_output=True)
-                    except subprocess.CalledProcessError:
-                        pass  # Continue even if chown fails
+                # (Removed per-file chown: we now do a blanket chown of the entire
+                # home directory at the end of deploy_root to ensure parent directories
+                # like ~/.config correctly get user ownership)
 
             except (OSError, IOError, subprocess.CalledProcessError) as e:
                 log_error(f"Failed to deploy: {src_file} -> {dest_file}", e)
@@ -815,6 +811,14 @@ def deploy_root(username, script_dir):
                           check=True, capture_output=True)
         except subprocess.CalledProcessError:
             pass
+
+    # Change ownership of the entire home directory to ensure all newly created
+    # parent directories (like ~/.config) are owned by the user, not root.
+    try:
+        subprocess.run(['chown', '-R', f'{username}:{username}', str(home_dir)],
+                      check=True, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        log_error(f"Failed to chown home directory {home_dir}", e)
 
     # Update font cache
     try:
