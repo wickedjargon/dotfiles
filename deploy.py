@@ -1185,7 +1185,15 @@ def setup_distrobox(username, script_dir, tui, row):
 
     Returns (success, error_message, row).
     """
-    # 1. Create container
+    # 1. Stop existing container if running, to prevent corruption
+    tui.show_progress(row, f"Stopping existing {DISTROBOX_NAME} (if any)...", success=None)
+    tui.stdscr.refresh()
+    # It might fail if the container doesn't exist, so we just ignore errors
+    _run_as_user(username, f"distrobox stop --yes {DISTROBOX_NAME}", timeout=60)
+    tui.show_progress(row, f"Stopping existing {DISTROBOX_NAME} (if any)...", success=True)
+    row += 1
+
+    # 2. Create container
     tui.show_progress(row, "Creating archbox container...", success=None)
     tui.stdscr.refresh()
 
