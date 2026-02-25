@@ -1483,7 +1483,7 @@ def main_tui(stdscr):
             tui.show_message(row, 4, f"Failed to clone: {', '.join(failed_repos)}",
                            color_pair=3)
             row += 1
-            tui.show_message(row, 4, "Error details: /tmp/dotfiles-deploy.log",
+            tui.show_message(row, 4, f"Error details: {LOG_FILE}",
                            color_pair=4, bold=True)
             tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
             tui.stdscr.refresh()
@@ -1600,7 +1600,7 @@ def main_tui(stdscr):
             tui.show_message(row, 4, f"Failed to build: {', '.join(failed_repos)}",
                            color_pair=3)
             row += 1
-            tui.show_message(row, 4, "Error details: /tmp/dotfiles-deploy.log",
+            tui.show_message(row, 4, f"Error details: {LOG_FILE}",
                            color_pair=4, bold=True)
             tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
             tui.stdscr.refresh()
@@ -1746,7 +1746,7 @@ def main():
         except:
             pass
         print(f"CRITICAL ERROR: {e}")
-        print("See /tmp/dotfiles-deploy.log for details.")
+        print(f"See {LOG_FILE} for details.")
         sys.exit(1)
 
 
