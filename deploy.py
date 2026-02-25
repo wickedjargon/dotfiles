@@ -1192,10 +1192,13 @@ def setup_distrobox(username, script_dir, tui, row):
     if _distrobox_exists(username):
         tui.show_progress(row, "Creating archbox container... (already exists)", success=True)
     else:
-        cmd = f'distrobox create --name {DISTROBOX_NAME} --image {DISTROBOX_IMAGE} --yes'
+        distrobox_home = f'/home/{username}/.local/share/distrobox/{DISTROBOX_NAME}'
+        cmd = (f'distrobox create --name {DISTROBOX_NAME} --image {DISTROBOX_IMAGE}'
+               f' --home {distrobox_home} --yes')
         ok, _, stderr = _run_as_user(username, cmd, timeout=300)
         if not ok:
             tui.show_progress(row, "Creating archbox container...", success=False)
+            log_error(f"Failed to create distrobox container", context=f"stderr: {stderr}")
             return False, f"Could not create container: {stderr[:80]}", row + 1
         tui.show_progress(row, "Creating archbox container...", success=True)
     row += 1
