@@ -21,7 +21,7 @@ HOME_DIR="/home/$TARGET_USER"
 echo "Testing remaining system configurations..."
 
 # 1. Test Tor Browser installation (if script exists)
-if [ -f "$SCRIPT_DIR/scripts/install-tor-browser" ]; then
+if [ -f "$SCRIPT_DIR/scripts/install-debian-tor-browser.sh" ]; then
     tor_dir="$HOME_DIR/.local/src/tor-browser"
     
     if [ ! -d "$tor_dir" ]; then

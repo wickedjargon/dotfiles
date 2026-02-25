@@ -9,7 +9,7 @@ DEFAULT_PKG_FILE="$SCRIPT_DIR/../packages/arch-aur-packages.txt"
 PKG_FILE="${1:-$DEFAULT_PKG_FILE}"
 
 if ! command -v yay &>/dev/null; then
-    echo "Error: yay is not installed. Run install-yay first." >&2
+    echo "Error: yay is not installed. Run install-arch-yay.sh first." >&2
     exit 1
 fi
 
