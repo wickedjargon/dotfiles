@@ -121,8 +121,8 @@ THEMES = {
         "dunst_bg": "#E8E8EE",
         "dunst_frame": "#CCCCCC",
         "dunst_fg": "#333333",
-        "dunst_crit_bg": "#660000",
-        "dunst_crit_frame": "#660000",
+        "dunst_crit_bg": "#FFCCCC",
+        "dunst_crit_frame": "#FF0000",
         # Dmenu
         "dmenu_nb": "#E8E8EE",
         "dmenu_nf": "#333333",
