@@ -47,7 +47,7 @@ while IFS= read -r url; do
             FAILED=1
         fi
     fi
-done < "$SCRIPT_DIR/packages/git-packages-src"
+done < "$SCRIPT_DIR/packages/debian-git-packages-src.txt"
 
 
 echo "Testing dotfiles cloned from git-dotfiles..."
@@ -84,7 +84,7 @@ while IFS= read -r line; do
             FAILED=1
         fi
     fi
-done < "$SCRIPT_DIR/packages/git-dotfiles"
+done < "$SCRIPT_DIR/packages/debian-git-dotfiles.txt"
 
 if [ $FAILED -eq 1 ]; then
     exit 1
