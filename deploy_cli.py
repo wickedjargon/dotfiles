@@ -341,7 +341,7 @@ def main(argv=None):
     cli.draw_header("DOTFILES DEPLOYMENT (CLI)")
     row = 4
 
-    user_created = False
+
 
     if deploy.user_exists(username):
         if not args.json:
@@ -360,7 +360,7 @@ def main(argv=None):
                 print("\033[31mERROR: --password is required when creating a new user.\033[0m")
             sys.exit(1)
 
-        user_created = True
+
         cli.show_progress(row, f"Creating user '{username}'...", success=None)
         success, error_msg = deploy.create_user(username)
         if success:
