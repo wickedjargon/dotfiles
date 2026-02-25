@@ -1,7 +1,1 @@
-android-sdk
-android-sdk-build-tools
-android-sdk-platform-tools
-antigravity
-google-chrome
-yay-bin
-yay-bin-debug
+lolcat
