@@ -1127,10 +1127,10 @@ def install_firefox_userjs(username, script_dir, tui, row):
 def install_tor_browser(username, script_dir, tui, row):
     """Install Tor Browser for the target user
 
-    Runs the install-tor-browser script as the target user to ensure
+    Runs the install-debian-tor-browser.sh script as the target user to ensure
     correct ownership of ~/.local/src/tor-browser and symlink.
     """
-    install_script = script_dir / 'scripts/install-tor-browser.sh'
+    install_script = script_dir / 'scripts/install-debian-tor-browser.sh'
 
     if not install_script.exists():
         return True, None, row  # Script not present, skip silently
