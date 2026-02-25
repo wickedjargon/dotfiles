@@ -147,8 +147,9 @@ class TestSetupDistrobox(unittest.TestCase):
         tui = MagicMock()
         mock_exists.return_value = True
         mock_pkgs.return_value = []
-        # multilib check ok, keyring ok, sync fails
+        # init ok, multilib check ok, keyring ok, sync fails
         mock_run_box.side_effect = [
+            (True, "", ""),   # init container
             (True, "", ""),   # multilib check (already enabled)
             (True, "", ""),   # keyring init
             (False, "", "sync failed"),  # pacman -Syu fails
