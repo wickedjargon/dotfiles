@@ -1203,6 +1203,19 @@ def setup_distrobox(username, script_dir, tui, row):
         tui.show_progress(row, "Creating archbox container...", success=True)
     row += 1
 
+    # 1.5 Initialize container
+    # The first time 'distrobox enter' runs, it installs base packages like sudo.
+    # This can take 1-2 minutes. We must do this before running setup commands.
+    tui.show_progress(row, "Initializing container (this takes a minute)...", success=None)
+    tui.stdscr.refresh()
+    ok, _, stderr = _run_in_distrobox(username, "true", timeout=600)
+    if not ok:
+        tui.show_progress(row, "Initializing container (this takes a minute)...", success=False)
+        log_error(f"Failed to initialize distrobox container", context=f"stderr: {stderr}")
+        return False, f"Could not initialize container: {stderr[:80]}", row + 1
+    tui.show_progress(row, "Initializing container (this takes a minute)...", success=True)
+    row += 1
+
     # 2. Enable multilib
     tui.show_progress(row, "Enabling multilib (for Steam)...", success=None)
     tui.stdscr.refresh()
