@@ -3,9 +3,9 @@
 Here are my dotfiles intended for use on a Debian-based system. 
 
 - `deploy.py` - deploys dotfiles and installs packages (TUI mode)
-- `deploy_cli.py` - deploys dotfiles and installs packages (CLI mode, for automation/LLMs)
-- `setup-ssh-repos.py` - converts wickedjargon repos to use SSH
-- `firefox-ui-config.sh` - to adjust firefox ui settings
+- `deploy_cli.py` - deploys dotfiles and installs packages (CLI mode)
+- `scripts/setup-ssh-repos.py` - converts wickedjargon repos to use SSH
+- `scripts/distrobox-*` - scripts for distrobox
 
 ### Step 1: Deployment
 
