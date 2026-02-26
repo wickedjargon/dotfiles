@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # Set text colors
 GREEN='\033[0;32m'
@@ -16,36 +16,37 @@ fi
 echo "Starting Deployment Verification Tests for user '$TARGET_USER'"
 echo "============================================================"
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 
 passed=0
 failed=0
 
 # Iterate through all test scripts starting with a number
-for test_script in $(ls "$SCRIPT_DIR"/[0-9]*.sh 2>/dev/null | sort); do
+for test_script in "$SCRIPT_DIR"/[0-9]*.sh; do
+    [ -f "$test_script" ] || continue
     test_name=$(basename "$test_script")
-    echo -n "Running $test_name... "
+    printf "Running %s... " "$test_name"
     
     # Run the script and capture both stdout and stderr
-    output=$(bash "$test_script" "$TARGET_USER" 2>&1)
+    output=$(sh "$test_script" "$TARGET_USER" 2>&1)
     exit_code=$?
     
     if [ $exit_code -eq 0 ]; then
-        echo -e "${GREEN}PASS${NC}"
-        ((passed++))
+        printf '%sPASS%s\n' "$GREEN" "$NC"
+        passed=$((passed + 1))
     else
-        echo -e "${RED}FAIL${NC}"
+        printf '%sFAIL%s\n' "$RED" "$NC"
         # Print output nicely indented
         echo "  Output:"
-        while IFS= read -r line; do
+        printf '%s\n' "$output" | while IFS= read -r line; do
             echo "    $line"
-        done <<< "$output"
-        ((failed++))
+        done
+        failed=$((failed + 1))
     fi
 done
 
 echo "======================================"
-echo -e "Results: ${GREEN}$passed passed${NC}, ${RED}$failed failed${NC}"
+printf 'Results: %s%s passed%s, %s%s failed%s\n' "$GREEN" "$passed" "$NC" "$RED" "$failed" "$NC"
 
 if [ $failed -gt 0 ]; then
     exit 1

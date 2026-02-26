@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
 FAILED=0
 
 # Find the target user
@@ -22,9 +22,11 @@ SRC_DIR="$HOME_DIR/.local/src"
 echo "Testing built packages from git-packages-src..."
 while IFS= read -r url; do
     # Skip empty lines and comments
-    [[ -z "$url" || "$url" =~ ^[[:space:]]*# ]] && continue
+    case "$url" in
+        ''|'#'*) continue ;;
+    esac
     url=$(echo "$url" | sed 's/#.*//' | xargs)
-    [[ -z "$url" ]] && continue
+    [ -z "$url" ] && continue
     
     # Extract repo name from URL
     repo_name=$(basename -s .git "$url")
@@ -52,15 +54,17 @@ done < "$SCRIPT_DIR/packages/debian-git-packages-src.txt"
 
 echo "Testing dotfiles cloned from git-dotfiles..."
 while IFS= read -r line; do
-    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    case "$line" in
+        ''|'#'*) continue ;;
+    esac
     line=$(echo "$line" | sed 's/#.*//' | xargs)
-    [[ -z "$line" ]] && continue
+    [ -z "$line" ] && continue
     
     # Format: repo-url destination-path
     url=$(echo "$line" | awk '{print $1}')
     dest=$(echo "$line" | awk '{print $2}')
     
-    if [[ -z "$url" || -z "$dest" ]]; then
+    if [ -z "$url" ] || [ -z "$dest" ]; then
         continue
     fi
     

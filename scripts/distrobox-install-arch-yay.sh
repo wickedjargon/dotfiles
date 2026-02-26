@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 # Install yay (AUR helper) from the AUR.
 # Usage: ./install-yay
 
-set -euo pipefail
+set -eu
 
-if command -v yay &>/dev/null; then
+if command -v yay >/dev/null 2>&1; then
     echo "yay is already installed."
     exit 0
 fi

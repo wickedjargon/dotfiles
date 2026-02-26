@@ -1,6 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
 FAILED=0
 
 TARGET_USER="$1"

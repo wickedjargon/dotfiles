@@ -1,6 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
 FAILED=0
 
 TARGET_USER="$1"
@@ -42,11 +41,14 @@ fi
 
 # 3. Check if ~/.local/bin is in PATH for the user via login shell
 user_path_login=$(sudo -u "$TARGET_USER" bash -l -c 'echo $PATH' 2>/dev/null)
-if [[ "$user_path_login" != *"$HOME_DIR/.local/bin"* ]]; then
-    echo "  [FAIL] ~/.local/bin is not in PATH for $TARGET_USER"
-    echo "         PATH is: $user_path_login"
-    FAILED=1
-fi
+case "$user_path_login" in
+    *"$HOME_DIR/.local/bin"*) ;;
+    *)
+        echo "  [FAIL] ~/.local/bin is not in PATH for $TARGET_USER"
+        echo "         PATH is: $user_path_login"
+        FAILED=1
+        ;;
+esac
 
 if [ $FAILED -eq 1 ]; then
     exit 1
