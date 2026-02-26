@@ -68,8 +68,9 @@ class TestDmenuScreenshot(unittest.TestCase):
         patcher2 = patch('importlib.util.spec_from_loader')
         patcher3 = patch('importlib.util.module_from_spec')
         
-        MockLoader = patcher1.start()
-        mock_spec_from_loader = patcher2.start()
+        
+        _ = patcher1.start()
+        _ = patcher2.start()
         mock_module_from_spec = patcher3.start()
         
         # Ensure we clean up patches

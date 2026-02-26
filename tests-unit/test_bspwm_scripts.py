@@ -43,7 +43,7 @@ class TestBspwmScripts(unittest.TestCase):
             
             # Check state save
             mock_file.assert_called_with("/tmp/bspwm_smart_arrow_state.json", 'w')
-            handle = mock_file()
+            mock_file()
             # verify json dump? mocking write calls is tricky with json.dump
             
             # Check commands

@@ -169,7 +169,7 @@ class TestMainValidation(unittest.TestCase):
 
     def test_invalid_username_json(self):
         with self.assertRaises(SystemExit) as ctx:
-            with patch('sys.stdout', new_callable=StringIO) as mock_out:
+            with patch('sys.stdout', new_callable=StringIO) as _:
                 deploy_cli.main(['--username', 'INVALID!', '--password', 'test', '--json'])
         self.assertEqual(ctx.exception.code, 1)
 
@@ -182,7 +182,7 @@ class TestMainValidation(unittest.TestCase):
 
     @patch('deploy.check_root', return_value=False)
     def test_non_root_json_outputs_error(self, mock_root):
-        with self.assertRaises(SystemExit) as ctx:
+        with self.assertRaises(SystemExit) as _:
             with patch('sys.stdout', new_callable=StringIO) as mock_out:
                 deploy_cli.main(['--username', 'testuser', '--password', 'test', '--json'])
         output = mock_out.getvalue()
@@ -193,10 +193,10 @@ class TestMainValidation(unittest.TestCase):
     @patch('deploy.user_exists', return_value=False)
     @patch('deploy.check_root', return_value=True)
     def test_new_user_without_password_exits(self, mock_root, mock_exists):
-        with self.assertRaises(SystemExit) as ctx:
+        with self.assertRaises(SystemExit) as _:
             with patch('sys.stdout', new_callable=StringIO):
                 deploy_cli.main(['--username', 'newuser'])
-        self.assertEqual(ctx.exception.code, 1)
+        self.assertEqual(_.exception.code, 1)
 
 
 class TestDryRun(unittest.TestCase):

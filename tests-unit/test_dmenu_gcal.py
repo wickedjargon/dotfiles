@@ -178,7 +178,7 @@ class TestMain(unittest.TestCase):
 
         with patch.object(os.path, "exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="")):
-                with patch.object(self.mod, "get_calendar_service") as mock_svc:
+                with patch.object(self.mod, "get_calendar_service") as _:
                     with patch.object(self.mod, "add_event", return_value=mock_event):
                         self.mod.main()
 
