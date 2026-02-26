@@ -1,1 +1,2 @@
 https://github.com/tsujan/Kvantum.git .config/Kvantum/Kvantum
+https://github.com/wickedjargon/dotfiles.git d/projects/dotfiles
