@@ -21,6 +21,7 @@ pulseaudio-module-bluetooth  # Bluetooth audio support for PulseAudio
 alsa-utils               # ALSA utilities (alsamixer, aplay, etc)
 alsa-topology-conf       # ALSA topology configuration files
 alsa-ucm-conf            # ALSA Use Case Manager configuration
+speech-dispatcher-espeak-ng  # Text-to-speech for Emacs read-aloud (pulls in speech-dispatcher + espeak-ng)
 
 # Core System - X11
 xorg                     # X Window System meta-package
