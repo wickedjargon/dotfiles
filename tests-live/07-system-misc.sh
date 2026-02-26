@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
+SCRIPT_DIR="$( cd "$( dirname "$0" )/.." >/dev/null 2>&1 && pwd )"
 FAILED=0
 
 # Find the target user

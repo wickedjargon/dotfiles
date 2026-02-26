@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
 PATCHES_DIR="$SCRIPT_DIR/patches"
 FAILED=0
 
@@ -11,36 +11,42 @@ fi
 
 echo "Testing system patches..."
 
+# Use a temp file to track failures across subshell boundaries
+fail_flag=$(mktemp)
+echo 0 > "$fail_flag"
+
 # Find all files in the patches directory
-while read -r patch_file; do
+find "$PATCHES_DIR" -type f | while read -r patch_file; do
     # Determine the target system file by stripping $PATCHES_DIR
-    rel_path="${patch_file#$PATCHES_DIR}"
+    rel_path="${patch_file#"$PATCHES_DIR"}"
     target_file="$rel_path" # It already starts with / e.g. /etc/systemd/...
     
     if [ ! -f "$target_file" ]; then
         echo "  [FAIL] Target system file for patch does not exist: $target_file"
-        FAILED=1
+        echo 1 > "$fail_flag"
         continue
     fi
     
     # Read each non-empty, non-comment line from the patch file
     while IFS= read -r line || [ -n "$line" ]; do
         # Skip empty lines
-        [[ -z $(echo "$line" | xargs) ]] && continue
+        trimmed=$(echo "$line" | xargs)
+        [ -z "$trimmed" ] && continue
         
         # We need to verify that this exact line exists in the target file.
-        # This handles both active configuration lines and comments that we injected.
-        # Use -x to match the whole line, avoiding false positives where our patch
-        # is a substring of an existing commented out line.
+        # Use -x to match the whole line, avoiding false positives.
         if ! grep -Fxq "$line" "$target_file"; then
             echo "  [FAIL] Missing patched line in $target_file"
             echo "         Expected to find: '$line'"
-            FAILED=1
+            echo 1 > "$fail_flag"
         fi
     done < "$patch_file"
-done < <(find "$PATCHES_DIR" -type f)
+done
 
-if [ $FAILED -eq 1 ]; then
+FAILED=$(cat "$fail_flag")
+rm -f "$fail_flag"
+
+if [ "$FAILED" -eq 1 ]; then
     exit 1
 fi
 

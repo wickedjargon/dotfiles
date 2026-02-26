@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # Test 1: Verify the created user has the correct groups and home directory
 

@@ -1,16 +1,18 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
 FAILED=0
 
 echo "Testing standard APT packages..."
 while IFS= read -r pkg; do
     # Skip empty lines and comments
-    [[ -z "$pkg" || "$pkg" =~ ^[[:space:]]*# ]] && continue
-    
+    case "$pkg" in
+        ''|*'#'*) ;;
+        *) ;;
+    esac
     # Strip inline comments and whitespace
     pkg=$(echo "$pkg" | sed 's/#.*//' | xargs)
-    [[ -z "$pkg" ]] && continue
+    [ -z "$pkg" ] && continue
     
     if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "install ok installed"; then
         echo "  [FAIL] Required package missing: $pkg"
@@ -21,16 +23,17 @@ done < "$SCRIPT_DIR/packages/debian-apt-packages.txt"
 echo "Testing third-party repositories and packages..."
 while IFS= read -r line; do
     # Skip empty lines and comments
-    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    case "$line" in
+        ''|'#'*) continue ;;
+    esac
     
     # Parse format: package_name | key_url | repo_line
     pkg_name=$(echo "$line" | cut -d'|' -f1 | xargs)
-    key_url=$(echo "$line" | cut -d'|' -f2 | xargs)
-    repo_line=$(echo "$line" | cut -d'|' -f3 | xargs)
+    # key_url and repo_line parsed but only pkg_name needed for this test
     
     # Clean package name
     pkg_name=$(echo "$pkg_name" | sed 's/#.*//' | xargs)
-    [[ -z "$pkg_name" ]] && continue
+    [ -z "$pkg_name" ] && continue
     
     # Check package
     if ! dpkg-query -W -f='${Status}' "$pkg_name" 2>/dev/null | grep -q "install ok installed"; then
