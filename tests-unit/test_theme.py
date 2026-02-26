@@ -6,8 +6,7 @@ import os
 import subprocess
 
 import pytest
-
-from helpers import import_script, get_script_path
+from helpers import get_script_path, import_script
 
 # Import the theme script as a module
 theme_mod = import_script(get_script_path("theme"))
@@ -59,7 +58,7 @@ def fake_home(tmp_path, monkeypatch):
         "[bar/mybar]\nbackground = ${colors.background}\nforeground = ${colors.foreground}\n"
     )
     (polybar / "bspwm_custom.sh").write_text(
-        '#!/bin/bash\n'
+        "#!/bin/sh\n"
         'COLOR_FOCUSED_UNDERLINE="#FFFFFF"\n'
         'COLOR_FOREGROUND="#B3B3B3"\n'
         'COLOR_EMPTY="#4D4D4D"\n'
@@ -70,7 +69,7 @@ def fake_home(tmp_path, monkeypatch):
     bspwm = home / ".config" / "bspwm"
     bspwm.mkdir(parents=True)
     (bspwm / "bspwmrc").write_text(
-        '#!/bin/sh\n'
+        "#!/bin/sh\n"
         'bspc config normal_border_color  "#222222"\n'
         'bspc config active_border_color  "#222222"\n'
         'bspc config focused_border_color "#8b1a1a"\n'
@@ -81,49 +80,49 @@ def fake_home(tmp_path, monkeypatch):
     xob = home / ".config" / "xob"
     xob.mkdir(parents=True)
     (xob / "styles.cfg").write_text(
-        'default = {\n'
-        '    color = {\n'
-        '        normal = {\n'
+        "default = {\n"
+        "    color = {\n"
+        "        normal = {\n"
         '            fg = "#ffffff";\n'
         '            bg = "#000000";\n'
         '            border = "#222222";\n'
-        '        };\n'
-        '        alt = {\n'
+        "        };\n"
+        "        alt = {\n"
         '            fg = "#555555";\n'
         '            bg = "#000000";\n'
         '            border = "#222222";\n'
-        '        };\n'
-        '        overflow = {\n'
+        "        };\n"
+        "        overflow = {\n"
         '            fg = "#8b1a1a";\n'
         '            bg = "#000000";\n'
         '            border = "#8b1a1a";\n'
-        '        };\n'
-        '        altoverflow = {\n'
+        "        };\n"
+        "        altoverflow = {\n"
         '            fg = "#550000";\n'
         '            bg = "#000000";\n'
         '            border = "#550000";\n'
-        '        };\n'
-        '    };\n'
-        '};\n'
+        "        };\n"
+        "    };\n"
+        "};\n"
     )
 
     # Dunst
     dunst = home / ".config" / "dunst"
     dunst.mkdir(parents=True)
     (dunst / "dunstrc").write_text(
-        '[global]\n'
-        '    font = Monospace 10\n\n'
-        '[urgency_low]\n'
+        "[global]\n"
+        "    font = Monospace 10\n\n"
+        "[urgency_low]\n"
         '    background = "#000000"\n'
         '    frame_color = "#000000"\n'
         '    foreground = "#ffffff"\n'
-        '    timeout = 5\n\n'
-        '[urgency_normal]\n'
+        "    timeout = 5\n\n"
+        "[urgency_normal]\n"
         '    background = "#000000"\n'
         '    frame_color = "#000000"\n'
         '    foreground = "#ffffff"\n'
-        '    timeout = 5\n\n'
-        '[urgency_critical]\n'
+        "    timeout = 5\n\n"
+        "[urgency_critical]\n"
         '    background = "#660000"\n'
         '    frame_color = "#660000"\n'
         '    foreground = "#ffffff"\n'
@@ -140,21 +139,27 @@ def fake_home(tmp_path, monkeypatch):
     # Antigravity (VS Code)
     antigravity = home / ".config" / "Antigravity" / "User"
     antigravity.mkdir(parents=True)
-    (antigravity / "settings.json").write_text(json.dumps({
-        "editor.minimap.enabled": False,
-        "workbench.colorTheme": "GitHub Dark Colorblind (Beta)",
-        "window.restoreWindows": "none",
-    }, indent=4) + "\n")
+    (antigravity / "settings.json").write_text(
+        json.dumps(
+            {
+                "editor.minimap.enabled": False,
+                "workbench.colorTheme": "GitHub Dark Colorblind (Beta)",
+                "window.restoreWindows": "none",
+            },
+            indent=4,
+        )
+        + "\n"
+    )
 
     # Alacritty
     alacritty = home / ".config" / "alacritty"
     alacritty.mkdir(parents=True)
     (alacritty / "alacritty.toml").write_text(
-        '[colors]\n'
-        '[colors.primary]\n'
+        "[colors]\n"
+        "[colors.primary]\n"
         'background = "#0d0e1c"\n'
         'foreground = "#ebdbb2"\n\n'
-        '[colors.normal]\n'
+        "[colors.normal]\n"
         'black   = "#1d2021"\n'
         'red     = "#cc241d"\n'
         'green   = "#98971a"\n'
@@ -163,7 +168,7 @@ def fake_home(tmp_path, monkeypatch):
         'magenta = "#b16286"\n'
         'cyan    = "#689d6a"\n'
         'white   = "#a89984"\n\n'
-        '[colors.bright]\n'
+        "[colors.bright]\n"
         'black   = "#928374"\n'
         'red     = "#fb4934"\n'
         'green   = "#b8bb26"\n'
@@ -178,34 +183,34 @@ def fake_home(tmp_path, monkeypatch):
     rofi = home / ".config" / "rofi"
     rofi.mkdir(parents=True)
     (rofi / "config.rasi").write_text(
-        '* {\n'
-        '    background:                  #000000;\n'
-        '    foreground:                  #ffffff;\n'
-        '    selected-background:         #222222;\n'
-        '    selected-foreground:         #ffffff;\n'
-        '    border-color:                #333333;\n'
-        '    separator-color:             #333333;\n'
-        '}\n'
+        "* {\n"
+        "    background:                  #000000;\n"
+        "    foreground:                  #ffffff;\n"
+        "    selected-background:         #222222;\n"
+        "    selected-foreground:         #ffffff;\n"
+        "    border-color:                #333333;\n"
+        "    separator-color:             #333333;\n"
+        "}\n"
     )
 
     # Calibre
     calibre = home / ".config" / "calibre"
     calibre.mkdir(parents=True)
     (calibre / "viewer-webengine.json").write_text(
-        '{\n'
+        "{\n"
         '  "session_data": {\n'
         '    "current_color_scheme": "sepia-dark"\n'
-        '  }\n'
-        '}\n'
+        "  }\n"
+        "}\n"
     )
 
     # Zathura
     zathura = home / ".config" / "zathura"
     zathura.mkdir(parents=True)
     (zathura / "zathurarc").write_text(
-        'set recolor true\n'
-        'set default-bg \\#0d0e1c\n'
-        'set recolor-lightcolor \\#0d0e1c\n'
+        "set recolor true\n"
+        "set default-bg \\#0d0e1c\n"
+        "set recolor-lightcolor \\#0d0e1c\n"
     )
 
     # Patch HOME in the module
@@ -506,9 +511,11 @@ class TestRofi:
 class TestWallpaper:
     def test_switch_calls_convert_and_feh_light(self, fake_home, monkeypatch):
         calls = []
+
         def mock_run(cmd, **kwargs):
             calls.append(cmd)
             return subprocess.CompletedProcess(cmd, 0)
+
         monkeypatch.setattr(theme_mod.subprocess, "run", mock_run)
         theme_mod.switch_wallpaper(theme_mod.THEMES["light"])
         assert any("convert" in c and "#CCCCCC" in c[3] for c in calls)
@@ -516,9 +523,11 @@ class TestWallpaper:
 
     def test_switch_calls_convert_and_feh_dark(self, fake_home, monkeypatch):
         calls = []
+
         def mock_run(cmd, **kwargs):
             calls.append(cmd)
             return subprocess.CompletedProcess(cmd, 0)
+
         monkeypatch.setattr(theme_mod.subprocess, "run", mock_run)
         theme_mod.switch_wallpaper(theme_mod.THEMES["dark"])
         assert any("convert" in c and "#000000" in c[3] for c in calls)
@@ -591,10 +600,10 @@ class TestAntigravity:
         """Verify the script can handle // comments in settings.json."""
         path = fake_home / ".config" / "Antigravity" / "User" / "settings.json"
         path.write_text(
-            '{\n'
+            "{\n"
             '    "workbench.colorTheme": "GitHub Dark Colorblind (Beta)"\n'
             '    // "some.commented.setting": true\n'
-            '}\n'
+            "}\n"
         )
         theme_mod.switch_antigravity(theme_mod.THEMES["light"])
         settings = json.loads(path.read_text())
@@ -603,7 +612,6 @@ class TestAntigravity:
     def test_missing_config(self, fake_home):
         os.remove(str(fake_home / ".config" / "Antigravity" / "User" / "settings.json"))
         theme_mod.switch_antigravity(theme_mod.THEMES["light"])
-
 
 
 # ── Integration Tests ────────────────────────────────────────────────────────
