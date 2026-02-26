@@ -22,11 +22,13 @@ nss-mdns
 openssh
 pigz
 python
+python-black
 python-pyflakes
 python-pytest
 qemu-desktop
 qemu-img
 rsync
+shellcheck
 sshpass
 steam
 sudo
