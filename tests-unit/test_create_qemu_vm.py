@@ -1,5 +1,4 @@
 import unittest
-import sys
 import os
 
 # Load the script dynamically since it doesn't have a .py extension

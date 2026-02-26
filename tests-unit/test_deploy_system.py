@@ -56,7 +56,7 @@ class TestDeploySystem(unittest.TestCase):
     @patch('subprocess.run')
     def test_install_packages(self, mock_run, mock_log_error):
         # Setup TUI mock
-        mock_tui = MagicMock()
+        MagicMock()
         
         # Setup package installed check
         # We need to mock is_package_installed, but it's used inside the function.
@@ -68,7 +68,7 @@ class TestDeploySystem(unittest.TestCase):
     def test_install_packages_mixed(self, mock_run, mock_is_installed):
         # Test installing a mix of existing and new packages
         packages = ['already-there', 'new-pkg']
-        mock_tui = MagicMock()
+        MagicMock()
         
         # is_package_installed side effect
         def is_installed_side_effect(pkg):
@@ -77,7 +77,7 @@ class TestDeploySystem(unittest.TestCase):
         mock_is_installed.side_effect = is_installed_side_effect
         
         # Run
-        deploy.install_packages(packages, mock_tui, 0)
+        deploy.install_packages(packages, MagicMock(), 0)
         
         # Verify apt-get install called ONLY for new-pkg
         mock_run.assert_any_call(

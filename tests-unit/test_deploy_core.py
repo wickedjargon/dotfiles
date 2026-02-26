@@ -41,7 +41,7 @@ class TestDeployCore(unittest.TestCase):
             
             with patch('pathlib.Path.exists') as mock_exists:
                 with patch('pathlib.Path.is_dir') as mock_is_dir:
-                    with patch('pathlib.Path.mkdir') as mock_mkdir:
+                    with patch('pathlib.Path.mkdir') as _:
                         with patch('pathlib.Path.is_symlink') as mock_is_symlink:
                             with patch('deploy.get_backup_dir') as mock_get_backup:
                                 
