@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Control MPD volume and update xob
 # Usage: xob-mpd [up|down]
@@ -27,4 +27,4 @@ polybar-msg action "#mpd.hook.0" > /dev/null 2>&1
 vol=$(mpc volume | grep -o '[0-9]\+%' | tr -d '%')
 
 # Write to pipe
-timeout 0.2s bash -c "echo \"$vol\" > $PIPE"
+timeout 0.2s sh -c "echo \"$vol\" > $PIPE"

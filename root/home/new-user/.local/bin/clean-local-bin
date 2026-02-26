@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Clean up system .local/bin
 TARGET_DIR="$HOME/.local/bin"
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Check if project name is provided
 if [ -z "$1" ]; then
@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
 fi
 
 PROJECT_NAME=$1
-mkdir -p "$PROJECT_NAME"/{src,include,build}
+mkdir -p "$PROJECT_NAME/src" "$PROJECT_NAME/include" "$PROJECT_NAME/build"
 cd "$PROJECT_NAME" || exit
 
 echo "Creating Modern C++23 project: $PROJECT_NAME..."

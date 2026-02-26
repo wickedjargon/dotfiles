@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Get the focused node
 focused=$(bspc query -N -n focused)

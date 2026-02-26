@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/bin/sh
 
 # armbox - Wrapper to ensure the arm-assembly container is running before connecting
 
 CONTAINER="arm-assembly"
 
 # 1. Check if podman is installed
-if ! command -v podman &>/dev/null; then
+if ! command -v podman >/dev/null 2>&1; then
     echo "Error: 'podman' is not installed or not in PATH." >&2
     exit 1
 fi

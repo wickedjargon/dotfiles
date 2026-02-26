@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # mpd-notification: Send a notification with the currently playing MPD track.
 # Only sends a notification if MPD is in the 'playing' state.
