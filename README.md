@@ -1,11 +1,11 @@
 # My Dot Files
 
-Here are my dotfiles intended for use on a Debian-based system. 
+Here are my dotfiles intended for use on a Debian-based system. These notes are mainly for my own reference. If you wish to test run my dotfiles, ignore the (optional) steps as they would require you to have my ssh keys.
 
 - `deploy.py` - deploys dotfiles and installs packages (TUI mode)
 - `deploy_cli.py` - deploys dotfiles and installs packages (CLI mode)
 - `scripts/setup-ssh-repos.py` - converts wickedjargon repos to use SSH
-- `scripts/distrobox-*` - scripts for distrobox
+- `scripts/distrobox-*` - scripts for distrobox system deployment
 
 ### Step 1: Deployment
 
@@ -20,22 +20,6 @@ cd dotfiles
 python3 deploy.py
 ```
 
-#### CLI Mode (for automation / LLM testing)
-
-```bash
-# Full deployment, non-interactive
-sudo python3 deploy_cli.py --username myuser --password mypass --yes
-
-# Deploy to existing user
-sudo python3 deploy_cli.py --username existinguser --yes
-
-# Preview what would happen (no root required)
-python3 deploy_cli.py --username myuser --dry-run
-
-# JSON output for LLM consumption
-python3 deploy_cli.py --username myuser --dry-run --json
-```
-
 ### Step 2: Copy SSH Keys and files from old computer (optional)
 
 From your old computer, copy SSH keys to the new system:
@@ -44,7 +28,9 @@ From your old computer, copy SSH keys to the new system:
 scp -r ~/.ssh/ new_user@new_hostname:~/
 ```
 
-### Step 4: Setup SSH Repos (optional)
+### Step 3: Things that only apply to me
+
+#### a: Setup SSH Repos (optional)
 
 If you copied your SSH keys in Step 2, login to new user and convert your wickedjargon repos to use SSH:
 
@@ -52,16 +38,16 @@ If you copied your SSH keys in Step 2, login to new user and convert your wicked
 python3 setup-ssh-repos.py
 ```
 
-### Step 5: Setup Google API for dmenu-gcal
+#### b: Setup Google API for dmenu-gcal
 
 copy `credentials.json` to `~/.config/dmenu-gcal/`
 
-### Step 6: Setup firefox extensions
+#### c: Setup firefox extensions
 
 - launch firefox to trigger extension installation
 - In Dark Reader: click ⚙ Settings → Automation → enable **"System color scheme"** (so `theme --toggle` auto-disables Dark Reader in light mode)
 
-### Step 7: set up bluetooth devices
+#### d: set up bluetooth devices
 
 ```
 sudo systemctl enable --now bluetooth
@@ -74,13 +60,29 @@ bluetoothctl
 systemctl --user restart pulseaudio
 ```
 
-## Post-Install
-- run `tests-live/run_tests.sh` to verify everything is working
-- browse to https://septatrix.github.io/prefers-color-scheme-test/ to verify dark mode is working. This should be set in bspwmrc by `gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'`
+## Step 4: Post-Install
+- Run `tests-live/run_tests.sh` to verify everything is working
+- Browse to https://septatrix.github.io/prefers-color-scheme-test/ to verify dark mode is working. 
 - In Dark Reader: click ⚙ Settings → Automation → enable **"System color scheme"** (so `theme --toggle` auto-disables Dark Reader in light mode)
 - Turn off Firefox hardware acceleration for PCs on older Sandy Bridge CPUs
-- make firefox compact (right click on address bar, customize, select `density`)
-- pair bluetooth devices
+- Make Firefox compact (right click on address bar, customize, select `density`)
+- Pair bluetooth devices
+
+#### CLI Mode
+
+```bash
+# Full deployment, non-interactive
+sudo python3 deploy_cli.py --username myuser --password mypass --yes
+
+# Deploy to existing user
+sudo python3 deploy_cli.py --username existinguser --yes
+
+# Dry Run -- Preview what would happen
+python3 deploy_cli.py --username myuser --dry-run
+
+# JSON output
+python3 deploy_cli.py --username myuser --dry-run --json
+```
 
 ## TODOS
 - [x] move ~/.emacs.d/ to ~/.config/emacs
