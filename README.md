@@ -1,6 +1,6 @@
 # My Dot Files
 
-Here are my dotfiles intended for use on a Debian-based system. These notes are mainly for my own reference. If you wish to test run my dotfiles, ignore the (optional) steps as they would require you to have my ssh keys.
+Here are my dotfiles intended for use on a Debian-based system. These notes are mainly for my own reference. If you wish to test run my dotfiles, skip over step 3 completely as it only applies to me.
 
 - `deploy.py` - deploys dotfiles and installs packages (TUI mode)
 - `deploy_cli.py` - deploys dotfiles and installs packages (CLI mode)
@@ -20,7 +20,9 @@ cd dotfiles
 python3 deploy.py
 ```
 
-### Step 2: Copy SSH Keys and files from old computer (optional)
+### Step 2: Setting up SSH Keys/Repos (skip to step 3 if you are not me)
+
+#### a: Copy SSH Keys and files from old computer
 
 From your old computer, copy SSH keys to the new system:
 
@@ -28,9 +30,8 @@ From your old computer, copy SSH keys to the new system:
 scp -r ~/.ssh/ new_user@new_hostname:~/
 ```
 
-### Step 3: Things that only apply to me
 
-#### a: Setup SSH Repos (optional)
+#### b: Setup SSH Repos
 
 If you copied your SSH keys in Step 2, login to new user and convert your wickedjargon repos to use SSH:
 
@@ -38,16 +39,16 @@ If you copied your SSH keys in Step 2, login to new user and convert your wicked
 python3 setup-ssh-repos.py
 ```
 
-#### b: Setup Google API for dmenu-gcal
+#### c: Setup Google API for dmenu-gcal
 
 copy `credentials.json` to `~/.config/dmenu-gcal/`
 
-#### c: Setup firefox extensions
+#### d: Setup firefox extensions
 
 - launch firefox to trigger extension installation
 - In Dark Reader: click ⚙ Settings → Automation → enable **"System color scheme"** (so `theme --toggle` auto-disables Dark Reader in light mode)
 
-#### d: set up bluetooth devices
+#### e: set up bluetooth devices
 
 ```
 sudo systemctl enable --now bluetooth
@@ -60,7 +61,7 @@ bluetoothctl
 systemctl --user restart pulseaudio
 ```
 
-## Step 4: Post-Install
+## Step 3: Post-Install
 - Run `tests-live/run_tests.sh` to verify everything is working
 - Browse to https://septatrix.github.io/prefers-color-scheme-test/ to verify dark mode is working. 
 - In Dark Reader: click ⚙ Settings → Automation → enable **"System color scheme"** (so `theme --toggle` auto-disables Dark Reader in light mode)
@@ -68,7 +69,7 @@ systemctl --user restart pulseaudio
 - Make Firefox compact (right click on address bar, customize, select `density`)
 - Pair bluetooth devices
 
-#### CLI Mode
+## CLI Mode
 
 ```bash
 # Full deployment, non-interactive
