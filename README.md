@@ -14,4 +14,3 @@ git clone https://github.com/wickedjargon/dotfiles.git
 cd dotfiles
 python3 deploy.py
 ```
-
