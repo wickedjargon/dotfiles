@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-dmenu-gcal — Add events to Google Calendar via dmenu with natural language.
+dmenu-google-calendar — Add events to Google Calendar via dmenu with natural language.
 
 Uses Google Calendar's quickAdd() to parse natural language date/time strings
 (e.g. "Dentist next Tuesday at 10am").
@@ -12,12 +12,12 @@ SETUP
 3. Enable the "Google Calendar API".
 4. Go to Credentials → Create Credentials → OAuth client ID → Desktop app.
 5. Download the JSON and save it as:
-       ~/.config/dmenu-gcal/credentials.json
+       ~/.config/dmenu-google-calendar/credentials.json
 6. Make this script executable:
-       chmod +x ~/.local/bin/dmenu-gcal
+       chmod +x ~/.local/bin/dmenu-google-calendar
 7. On first run, a browser window will open for OAuth consent.
    After granting access, a token is cached at:
-       ~/.config/dmenu-gcal/token.json
+       ~/.config/dmenu-google-calendar/token.json
 8. (Optional) Bind to a key in sxhkdrc.
 
 DEBIAN 13 DEPENDENCIES
@@ -35,7 +35,7 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-CONFIG_DIR = Path.home() / ".config" / "dmenu-gcal"
+CONFIG_DIR = Path.home() / ".config" / "dmenu-google-calendar"
 CREDENTIALS_FILE = CONFIG_DIR / "credentials.json"
 TOKEN_FILE = CONFIG_DIR / "token.json"
 SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
