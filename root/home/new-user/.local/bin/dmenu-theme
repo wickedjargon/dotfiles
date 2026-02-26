@@ -1,13 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 
 # Load dmenu configuration
 [ -f "$HOME/.config/dmenu/config" ] && . "$HOME/.config/dmenu/config"
 
 # Define options
-OPTIONS="toggle\nlight\ndark"
-
-# Prompt user for choice
-CHOICE=$(echo -e "$OPTIONS" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -p "Theme:")
+CHOICE=$(printf '%s\n' "toggle" "light" "dark" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -p "Theme:")
 
 # Execute theme command based on choice
 case "$CHOICE" in

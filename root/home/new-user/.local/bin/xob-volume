@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Control volume and update xob
 # Usage: xob-volume [up|down|mute]
@@ -52,8 +52,11 @@ vol=$(pactl get-sink-volume @DEFAULT_SINK@ | head -n1 | grep -o '[0-9]\+%' | hea
 mute_status=$(pactl get-sink-mute @DEFAULT_SINK@)
 
 # Write to pipe with timeout to prevent hanging if xob isn't reading
-if [[ "$mute_status" == *"yes"* ]]; then
-    timeout 0.2s bash -c "echo \"${vol}!\" > $PIPE"
-else
-    timeout 0.2s bash -c "echo \"$vol\" > $PIPE"
-fi
+case "$mute_status" in
+    *yes*)
+        timeout 0.2s sh -c "echo \"${vol}!\" > $PIPE"
+        ;;
+    *)
+        timeout 0.2s sh -c "echo \"$vol\" > $PIPE"
+        ;;
+esac
