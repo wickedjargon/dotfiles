@@ -23,6 +23,7 @@ openssh
 pigz
 python
 python-black
+python-isort
 python-pyflakes
 python-pytest
 qemu-desktop
