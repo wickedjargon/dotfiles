@@ -29,14 +29,6 @@ if [ ! -p /tmp/xobpipe ]; then
 fi
 tail -f /tmp/xobpipe | xob &
 
-# Apply saved theme on startup
-if [ -f "$HOME/.config/theme-mode" ]; then
-    theme_mode=$(cat "$HOME/.config/theme-mode" | tr -d '[:space:]')
-    if [ "$theme_mode" = "light" ]; then
-        theme --light &
-    else
-        theme --dark &
-    fi
-fi
+apply-theme
 
 exec dbus-run-session bspwm

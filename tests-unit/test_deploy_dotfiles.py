@@ -81,7 +81,7 @@ class TestDeployDotfiles(unittest.TestCase):
             rsync_calls = [c for c in mock_run.call_args_list
                            if c[0][0][0] == 'rsync']
             self.assertTrue(len(rsync_calls) > 0)
-            src_arg = rsync_calls[0][0][0][2]
+            src_arg = rsync_calls[0][0][0][-2]
             self.assertTrue(src_arg.endswith('/'))
         finally:
             shutil.rmtree(tmpdir)
@@ -109,7 +109,7 @@ class TestDeployDotfiles(unittest.TestCase):
             rsync_calls = [c for c in mock_run.call_args_list
                            if c[0][0][0] == 'rsync']
             self.assertTrue(len(rsync_calls) > 0)
-            src_arg = rsync_calls[0][0][0][2]
+            src_arg = rsync_calls[0][0][0][-2]
             self.assertFalse(src_arg.endswith('/'))
         finally:
             shutil.rmtree(tmpdir)
