@@ -5,18 +5,16 @@ Creates user, sets up home directory, deploys dotfiles, installs packages
 """
 
 import curses
-import os
-import sys
-import subprocess
-import shutil
-import re
 import datetime
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
 import traceback
 from pathlib import Path
 
-
-
-import time
 
 def run_command_with_retry(cmd, max_retries=3, delay=2, **kwargs):
     """Run subprocess.run with retries"""
@@ -26,11 +24,12 @@ def run_command_with_retry(cmd, max_retries=3, delay=2, **kwargs):
         except subprocess.CalledProcessError as e:
             if attempt == max_retries - 1:
                 raise  # Re-raise on last attempt
-            
+
             # Log retry attempt
             log_error(f"Command failed (attempt {attempt + 1}/{max_retries}): {cmd}", e)
             time.sleep(delay)
     return None  # Should not be reached due to raise
+
 
 def get_log_file_path():
     """Create a timestamped log file path for this run.
@@ -39,8 +38,8 @@ def get_log_file_path():
     /tmp/dotfiles-deploy-2026-02-24_214718.log
     Lexicographic ordering == chronological ordering.
     """
-    stamp = datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S')
-    return f'/tmp/dotfiles-deploy-{stamp}.log'
+    stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    return f"/tmp/dotfiles-deploy-{stamp}.log"
 
 
 LOG_FILE = get_log_file_path()
@@ -48,23 +47,23 @@ LOG_FILE = get_log_file_path()
 
 def log_error(message, exception=None, context=None):
     """Log error to secure temporary file"""
-    
+
     try:
         # Create or append to log file
-        with open(LOG_FILE, 'a') as f:
+        with open(LOG_FILE, "a") as f:
             # Ensure secure permissions (only owner can read/write)
             try:
                 os.chmod(LOG_FILE, 0o600)
             except OSError:
                 pass  # Best effort
-                
-            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             f.write(f"\n{'-'*60}\n")
             f.write(f"[{timestamp}] ERROR: {message}\n")
-            
+
             if context:
                 f.write(f"Context: {context}\n")
-                
+
             if isinstance(exception, subprocess.CalledProcessError):
                 # Clean logging for subprocess errors - NO TRACEBACK
                 f.write(f"Command: {exception.cmd}\n")
@@ -77,11 +76,11 @@ def log_error(message, exception=None, context=None):
                 # Standard logging for other exceptions
                 f.write(f"Exception Type: {type(exception).__name__}\n")
                 f.write(f"Exception Message: {str(exception)}\n")
-                
+
                 # Write traceback for unexpected python exceptions
                 f.write("\nTraceback:\n")
                 traceback.print_tb(exception.__traceback__, file=f)
-                
+
             f.write(f"{'-'*60}\n")
     except Exception:
         # Failsafe: if logging fails, try to print to stderr (though curses might hide it)
@@ -102,8 +101,12 @@ class DeploymentTUI:
     def draw_header(self, title):
         """Draw header with title"""
         self.stdscr.clear()
-        self.stdscr.addstr(1, (self.width - len(title)) // 2, title,
-                          curses.color_pair(1) | curses.A_BOLD)
+        self.stdscr.addstr(
+            1,
+            (self.width - len(title)) // 2,
+            title,
+            curses.color_pair(1) | curses.A_BOLD,
+        )
 
     def show_message(self, y, x, message, color_pair=0, bold=False):
         """Display a message at given coordinates"""
@@ -130,7 +133,7 @@ class DeploymentTUI:
         curses.echo()
         input_y = y + 1
         self.stdscr.move(input_y, x)
-        user_input = self.stdscr.getstr(input_y, x, 30).decode('utf-8').strip()
+        user_input = self.stdscr.getstr(input_y, x, 30).decode("utf-8").strip()
         curses.noecho()
 
         return user_input
@@ -143,7 +146,7 @@ class DeploymentTUI:
         curses.noecho()
         input_y = y + 1
         self.stdscr.move(input_y, x)
-        password = self.stdscr.getstr(input_y, x, 50).decode('utf-8').strip()
+        password = self.stdscr.getstr(input_y, x, 50).decode("utf-8").strip()
 
         return password
 
@@ -165,7 +168,7 @@ def check_root():
 def user_exists(username):
     """Check if user already exists"""
     try:
-        subprocess.run(['id', username], capture_output=True, check=True)
+        subprocess.run(["id", username], capture_output=True, check=True)
         return True
     except subprocess.CalledProcessError:
         return False
@@ -175,12 +178,17 @@ def create_user(username):
     """Create a new user with home directory"""
     try:
         # Create user with home directory
-        subprocess.run([
-            'useradd',
-            '-m',  # Create home directory
-            '-s', '/bin/bash',  # Set default shell
-            username
-        ], check=True, capture_output=True)
+        subprocess.run(
+            [
+                "useradd",
+                "-m",  # Create home directory
+                "-s",
+                "/bin/bash",  # Set default shell
+                username,
+            ],
+            check=True,
+            capture_output=True,
+        )
         return True, None
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr.decode() if e.stderr else str(e)
@@ -192,8 +200,8 @@ def set_user_password(username, password):
     """Set password for user using chpasswd"""
     try:
         # Use chpasswd to set password
-        process = subprocess.Popen(['chpasswd'], stdin=subprocess.PIPE)
-        process.communicate(f'{username}:{password}'.encode())
+        process = subprocess.Popen(["chpasswd"], stdin=subprocess.PIPE)
+        process.communicate(f"{username}:{password}".encode())
         return process.returncode == 0
     except Exception as e:
         log_error(f"Failed to set password for user '{username}'", e)
@@ -203,8 +211,9 @@ def set_user_password(username, password):
 def add_user_to_sudo(username):
     """Add user to sudo group"""
     try:
-        subprocess.run(['usermod', '-aG', 'sudo', username],
-                      check=True, capture_output=True)
+        subprocess.run(
+            ["usermod", "-aG", "sudo", username], check=True, capture_output=True
+        )
         return True
     except subprocess.CalledProcessError as e:
         log_error(f"Failed to add user '{username}' to sudo group", e)
@@ -215,34 +224,37 @@ def is_valid_git_url(url):
     """Validate that a URL is a safe git repository URL"""
     # Allow https://, git://, and git@ SSH URLs
     valid_patterns = [
-        r'^https://[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9](/[-a-zA-Z0-9._]+)+(\.git)?$',
-        r'^git://[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9](/[-a-zA-Z0-9._]+)+(\.git)?$',
-        r'^git@[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9]:[-a-zA-Z0-9._/]+(\.git)?$',
+        r"^https://[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9](/[-a-zA-Z0-9._]+)+(\.git)?$",
+        r"^git://[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9](/[-a-zA-Z0-9._]+)+(\.git)?$",
+        r"^git@[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9]:[-a-zA-Z0-9._/]+(\.git)?$",
     ]
     return any(re.match(pattern, url) for pattern in valid_patterns)
 
 
 def read_git_packages_src_file(script_dir):
     """Read git repository URLs from git-packages-src file"""
-    packages_file = script_dir / 'packages/debian-git-packages-src.txt'
+    packages_file = script_dir / "packages/debian-git-packages-src.txt"
     if not packages_file.exists():
         return []
 
     repos = []
-    with open(packages_file, 'r') as f:
+    with open(packages_file, "r") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             # Skip empty lines and full-line comments
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
 
             # Handle inline comments
-            if '#' in line:
-                line = line.split('#')[0].strip()
+            if "#" in line:
+                line = line.split("#")[0].strip()
 
             if line:  # Validate and add URL
                 if not is_valid_git_url(line):
-                    print(f"Warning: Skipping invalid URL at line {line_num}: {line}", file=sys.stderr)
+                    print(
+                        f"Warning: Skipping invalid URL at line {line_num}: {line}",
+                        file=sys.stderr,
+                    )
                     continue
                 repos.append(line)
 
@@ -252,13 +264,13 @@ def read_git_packages_src_file(script_dir):
 def is_safe_dest_path(dest_path):
     """Validate that destination path doesn't escape home directory"""
     # Reject absolute paths and path traversal attempts
-    if dest_path.startswith('/'):
+    if dest_path.startswith("/"):
         return False
     # Normalize and check for .. components
     normalized = os.path.normpath(dest_path)
-    if normalized.startswith('..'):
+    if normalized.startswith(".."):
         return False
-    if '/..' in normalized or normalized == '..':
+    if "/.." in normalized or normalized == "..":
         return False
     return True
 
@@ -267,21 +279,21 @@ def read_git_dotfiles_file(script_dir):
     """Read git repository URLs from git-dotfiles file
     Format: repo-url destination-directory
     """
-    packages_file = script_dir / 'packages/debian-git-dotfiles.txt'
+    packages_file = script_dir / "packages/debian-git-dotfiles.txt"
     if not packages_file.exists():
         return []
 
     repos = []
-    with open(packages_file, 'r') as f:
+    with open(packages_file, "r") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             # Skip empty lines and full-line comments
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
 
             # Handle inline comments
-            if '#' in line:
-                line = line.split('#')[0].strip()
+            if "#" in line:
+                line = line.split("#")[0].strip()
 
             if line:  # Parse and validate URL and destination
                 parts = line.split()
@@ -289,11 +301,17 @@ def read_git_dotfiles_file(script_dir):
                     url, dest_dir = parts[0], parts[1]
                     # Validate URL
                     if not is_valid_git_url(url):
-                        print(f"Warning: Skipping invalid URL at line {line_num}: {url}", file=sys.stderr)
+                        print(
+                            f"Warning: Skipping invalid URL at line {line_num}: {url}",
+                            file=sys.stderr,
+                        )
                         continue
                     # Validate destination path
                     if not is_safe_dest_path(dest_dir):
-                        print(f"Warning: Skipping unsafe destination at line {line_num}: {dest_dir}", file=sys.stderr)
+                        print(
+                            f"Warning: Skipping unsafe destination at line {line_num}: {dest_dir}",
+                            file=sys.stderr,
+                        )
                         continue
                     repos.append((url, dest_dir))
 
@@ -305,17 +323,20 @@ def clone_and_build_repos(repos, username, tui, start_row):
     if not repos:
         return True, None, start_row
 
-    home_dir = Path(f'/home/{username}')
-    src_dir = home_dir / '.local' / 'src'
+    home_dir = Path(f"/home/{username}")
+    src_dir = home_dir / ".local" / "src"
 
     # Create .local/src directory
     src_dir.mkdir(parents=True, exist_ok=True)
 
     # Fix ownership of entire .local directory to prevent root-owned parent dirs
-    local_dir = home_dir / '.local'
+    local_dir = home_dir / ".local"
     try:
-        subprocess.run(['chown', '-R', f'{username}:{username}', str(local_dir)],
-                      check=True, capture_output=True)
+        subprocess.run(
+            ["chown", "-R", f"{username}:{username}", str(local_dir)],
+            check=True,
+            capture_output=True,
+        )
     except subprocess.CalledProcessError as e:
         # Non-fatal, but log it
         log_error(f"Warning: Failed to set ownership of {local_dir}", e)
@@ -326,7 +347,7 @@ def clone_and_build_repos(repos, username, tui, start_row):
 
     for i, repo_url in enumerate(repos, 1):
         # Extract repo name from URL
-        repo_name = repo_url.rstrip('/').split('/')[-1].replace('.git', '')
+        repo_name = repo_url.rstrip("/").split("/")[-1].replace(".git", "")
         repo_path = src_dir / repo_name
 
         # Update progress line
@@ -338,54 +359,72 @@ def clone_and_build_repos(repos, username, tui, start_row):
             # Clone the repository
             if not repo_path.exists():
                 subprocess.run(
-                    ['git', 'clone', repo_url, str(repo_path)],
+                    ["git", "clone", repo_url, str(repo_path)],
                     check=True,
                     capture_output=True,
                     text=True,
-                    timeout=300  # 5 minute timeout for clone
+                    timeout=300,  # 5 minute timeout for clone
                 )
                 # Set ownership
                 try:
-                    subprocess.run(['chown', '-R', f'{username}:{username}', str(repo_path)],
-                                  check=True, capture_output=True)
+                    subprocess.run(
+                        ["chown", "-R", f"{username}:{username}", str(repo_path)],
+                        check=True,
+                        capture_output=True,
+                    )
                 except subprocess.CalledProcessError:
                     pass  # Continue even if chown fails
 
             # Add safe.directory to allow root to access user-owned repo
             subprocess.run(
-                ['git', 'config', '--global', '--add', 'safe.directory', str(repo_path)],
+                [
+                    "git",
+                    "config",
+                    "--global",
+                    "--add",
+                    "safe.directory",
+                    str(repo_path),
+                ],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             # Check if Makefile exists before building
-            makefile_path = repo_path / 'Makefile'
+            makefile_path = repo_path / "Makefile"
             if not makefile_path.exists():
                 raise FileNotFoundError(f"No Makefile found in {repo_path}")
 
             # Build with make
             subprocess.run(
-                ['make'],
+                ["make"],
                 cwd=str(repo_path),
                 check=True,
                 capture_output=True,
                 text=True,
-                timeout=600  # 10 minute timeout for build
+                timeout=600,  # 10 minute timeout for build
             )
 
             # Install with sudo make install
             subprocess.run(
-                ['make', 'install'],
+                ["make", "install"],
                 cwd=str(repo_path),
                 check=True,
                 capture_output=True,
                 text=True,
-                timeout=300  # 5 minute timeout for install
+                timeout=300,  # 5 minute timeout for install
             )
 
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
+        except (
+            subprocess.CalledProcessError,
+            subprocess.TimeoutExpired,
+            FileNotFoundError,
+        ) as e:
             # Log error
-            log_error(f"Failed to build {repo_name}", e, context=f"Working directory: {repo_path}")
+            log_error(
+                f"Failed to build {repo_name}",
+                e,
+                context=f"Working directory: {repo_path}",
+            )
             failed_repos.append(repo_name)
 
     # Summary
@@ -400,7 +439,7 @@ def clone_dotfiles_home(repos, username, tui, start_row):
     if not repos:
         return True, None, None, [], start_row
 
-    home_dir = Path(f'/home/{username}')
+    home_dir = Path(f"/home/{username}")
 
     backup_dir = None
     backed_up_items = []
@@ -410,7 +449,7 @@ def clone_dotfiles_home(repos, username, tui, start_row):
 
     for i, (repo_url, dest_dir) in enumerate(repos, 1):
         # Extract repo name from URL for display
-        repo_name = repo_url.rstrip('/').split('/')[-1].replace('.git', '')
+        repo_name = repo_url.rstrip("/").split("/")[-1].replace(".git", "")
         repo_path = home_dir / dest_dir
 
         # Update progress line
@@ -435,17 +474,20 @@ def clone_dotfiles_home(repos, username, tui, start_row):
 
             # Clone the repository
             subprocess.run(
-                ['git', 'clone', repo_url, str(repo_path)],
+                ["git", "clone", repo_url, str(repo_path)],
                 check=True,
                 capture_output=True,
                 text=True,
-                timeout=300  # 5 minute timeout for clone
+                timeout=300,  # 5 minute timeout for clone
             )
 
             # Set ownership
             try:
-                subprocess.run(['chown', '-R', f'{username}:{username}', str(repo_path)],
-                              check=True, capture_output=True)
+                subprocess.run(
+                    ["chown", "-R", f"{username}:{username}", str(repo_path)],
+                    check=True,
+                    capture_output=True,
+                )
             except subprocess.CalledProcessError:
                 pass  # Continue even if chown fails
 
@@ -457,8 +499,11 @@ def clone_dotfiles_home(repos, username, tui, start_row):
     # Set ownership of backup directory if created
     if backup_dir and backup_dir.exists():
         try:
-            subprocess.run(['chown', '-R', f'{username}:{username}', str(backup_dir)],
-                          check=True, capture_output=True)
+            subprocess.run(
+                ["chown", "-R", f"{username}:{username}", str(backup_dir)],
+                check=True,
+                capture_output=True,
+            )
         except subprocess.CalledProcessError:
             pass  # Continue even if chown fails
 
@@ -471,21 +516,21 @@ def clone_dotfiles_home(repos, username, tui, start_row):
 
 def read_packages_file(script_dir):
     """Read package names from apt-packages file"""
-    packages_file = script_dir / 'packages/debian-apt-packages.txt'
+    packages_file = script_dir / "packages/debian-apt-packages.txt"
     if not packages_file.exists():
         return []
 
     packages = []
-    with open(packages_file, 'r') as f:
+    with open(packages_file, "r") as f:
         for line in f:
             line = line.strip()
             # Skip empty lines and full-line comments
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
 
             # Handle inline comments (e.g., "emacs  # text editor")
-            if '#' in line:
-                line = line.split('#')[0].strip()
+            if "#" in line:
+                line = line.split("#")[0].strip()
 
             if line:  # Only add if there's a package name
                 packages.append(line)
@@ -493,19 +538,16 @@ def read_packages_file(script_dir):
     return packages
 
 
-
-
-
 def is_package_installed(package_name):
     """Check if a package is already installed"""
     try:
         result = subprocess.run(
-            ['dpkg-query', '-W', '-f=${Status}', package_name],
+            ["dpkg-query", "-W", "-f=${Status}", package_name],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
-        return 'install ok installed' in result.stdout
+        return "install ok installed" in result.stdout
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False
 
@@ -515,22 +557,25 @@ def read_third_party_packages_file(script_dir):
     Format: package_name | key_url | repo_line
     Returns list of tuples: (package_name, key_url, repo_line)
     """
-    packages_file = script_dir / 'packages/debian-third-party-apt-packages.txt'
+    packages_file = script_dir / "packages/debian-third-party-apt-packages.txt"
     if not packages_file.exists():
         return []
 
     repos = []
-    with open(packages_file, 'r') as f:
+    with open(packages_file, "r") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             # Skip empty lines and comments
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
 
             # Parse the line
-            parts = [part.strip() for part in line.split('|')]
+            parts = [part.strip() for part in line.split("|")]
             if len(parts) != 3:
-                print(f"Warning: Skipping invalid line {line_num} in third-party-apt-packages", file=sys.stderr)
+                print(
+                    f"Warning: Skipping invalid line {line_num} in third-party-apt-packages",
+                    file=sys.stderr,
+                )
                 continue
 
             package_name, key_url, repo_line = parts
@@ -547,15 +592,17 @@ def setup_third_party_repos(repos, tui, start_row):
     tui.show_progress(start_row, "Setting up third-party repositories...", success=None)
     tui.stdscr.refresh()
 
-    keyrings_dir = Path('/etc/apt/keyrings')
-    sources_dir = Path('/etc/apt/sources.list.d')
+    keyrings_dir = Path("/etc/apt/keyrings")
+    sources_dir = Path("/etc/apt/sources.list.d")
 
     # Create keyrings directory if it doesn't exist
     try:
         keyrings_dir.mkdir(parents=True, exist_ok=True)
     except (OSError, IOError) as e:
         log_error("Failed to create keyrings directory", e)
-        tui.show_progress(start_row, "Setting up third-party repositories...", success=False)
+        tui.show_progress(
+            start_row, "Setting up third-party repositories...", success=False
+        )
         return False, f"Failed to create keyrings directory: {e}", start_row + 1
 
     failed_repos = []
@@ -568,24 +615,24 @@ def setup_third_party_repos(repos, tui, start_row):
 
             # Download key
             result = run_command_with_retry(
-                ['curl', '-fsSL', key_url],
+                ["curl", "-fsSL", key_url],
                 max_retries=3,
                 check=True,
                 capture_output=True,
-                timeout=30
+                timeout=30,
             )
 
             # Dearmor and save key
             subprocess.run(
-                ['gpg', '--dearmor', '--yes', '-o', str(key_path)],
+                ["gpg", "--dearmor", "--yes", "-o", str(key_path)],
                 input=result.stdout,
                 check=True,
-                timeout=10
+                timeout=10,
             )
 
             # Add repository to sources.list.d
             sources_file = sources_dir / f"{package_name}.list"
-            with open(sources_file, 'w') as f:
+            with open(sources_file, "w") as f:
                 f.write(f"{repo_line}\n")
 
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, IOError) as e:
@@ -594,7 +641,9 @@ def setup_third_party_repos(repos, tui, start_row):
             log_error(f"Failed to setup repository for {package_name}", e)
 
     if failed_repos:
-        tui.show_progress(start_row, "Setting up third-party repositories...", success=False)
+        tui.show_progress(
+            start_row, "Setting up third-party repositories...", success=False
+        )
         return False, failed_repos, start_row + 1
 
     tui.show_progress(start_row, "Setting up third-party repositories...", success=True)
@@ -609,31 +658,38 @@ def install_packages(packages, tui, start_row):
     # Enable non-free repositories
     tui.show_progress(start_row, "Enabling non-free repositories...", success=None)
     tui.stdscr.refresh()
-    
+
     try:
         # DEB822 format (Debian 12+)
-        sources_path = Path('/etc/apt/sources.list.d/debian.sources')
+        sources_path = Path("/etc/apt/sources.list.d/debian.sources")
         if sources_path.exists():
             content = sources_path.read_text()
-            new_content = re.sub(r'^Components:\s*main\s*$', 'Components: main contrib non-free non-free-firmware', content, flags=re.MULTILINE)
+            new_content = re.sub(
+                r"^Components:\s*main\s*$",
+                "Components: main contrib non-free non-free-firmware",
+                content,
+                flags=re.MULTILINE,
+            )
             if new_content != content:
                 sources_path.write_text(new_content)
-                
+
         # Traditional format (Debian 11 and older)
-        list_path = Path('/etc/apt/sources.list')
+        list_path = Path("/etc/apt/sources.list")
         if list_path.exists():
             content = list_path.read_text()
             lines = content.splitlines()
             new_lines = []
             for line in lines:
-                if line.strip().startswith('deb ') or line.strip().startswith('deb-src '):
-                    if ' main' in line and 'contrib' not in line:
-                        line = line + ' contrib non-free non-free-firmware'
+                if line.strip().startswith("deb ") or line.strip().startswith(
+                    "deb-src "
+                ):
+                    if " main" in line and "contrib" not in line:
+                        line = line + " contrib non-free non-free-firmware"
                 new_lines.append(line)
-            new_content = '\n'.join(new_lines) + '\n'
+            new_content = "\n".join(new_lines) + "\n"
             if new_content != content:
                 list_path.write_text(new_content)
-                
+
         tui.show_progress(start_row, "Enabling non-free repositories...", success=True)
         start_row += 1
     except Exception as e:
@@ -645,8 +701,12 @@ def install_packages(packages, tui, start_row):
     tui.stdscr.refresh()
 
     try:
-        subprocess.run(['apt-get', 'update'],
-                      check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            ["apt-get", "update"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         tui.show_progress(start_row, "Updating package cache...", success=True)
         start_row += 1
     except subprocess.CalledProcessError as e:
@@ -659,8 +719,12 @@ def install_packages(packages, tui, start_row):
     tui.stdscr.refresh()
 
     try:
-        subprocess.run(['apt-get', 'upgrade', '-y'],
-                      check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            ["apt-get", "upgrade", "-y"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         tui.show_progress(start_row, "Upgrading system packages...", success=True)
         start_row += 1
     except subprocess.CalledProcessError as e:
@@ -686,8 +750,12 @@ def install_packages(packages, tui, start_row):
 
         # Install the package
         try:
-            subprocess.run(['apt-get', 'install', '-y', package],
-                         check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                ["apt-get", "install", "-y", package],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
         except subprocess.CalledProcessError as e:
             log_error(f"Failed to install package: {package}", e)
             failed_packages.append(package)
@@ -699,16 +767,15 @@ def install_packages(packages, tui, start_row):
     return True, None, start_row
 
 
-
 def get_backup_dir(home_dir):
     """Find next available backup directory name"""
-    backup_base = home_dir / '.backup'
+    backup_base = home_dir / ".backup"
     if not backup_base.exists():
         return backup_base
 
     counter = 2
     while True:
-        backup_dir = home_dir / f'.backup{counter}'
+        backup_dir = home_dir / f".backup{counter}"
         if not backup_dir.exists():
             return backup_dir
         counter += 1
@@ -727,12 +794,12 @@ def deploy_root(username, script_dir):
 
     Returns: (success, error_message, backup_dir, backed_up_items)
     """
-    root_dir = script_dir / 'root'
+    root_dir = script_dir / "root"
 
     if not root_dir.exists():
         return False, "root/ directory doesn't exist", None, []
 
-    home_dir = Path(f'/home/{username}')
+    home_dir = Path(f"/home/{username}")
 
     backup_dir = None
     backed_up_items = []
@@ -749,8 +816,8 @@ def deploy_root(username, script_dir):
             # Determine if this is a home directory file
             is_home_file = (
                 len(relative_parts) > 2
-                and relative_parts[0] == 'home'
-                and relative_parts[1] == 'new-user'
+                and relative_parts[0] == "home"
+                and relative_parts[1] == "new-user"
             )
 
             if is_home_file:
@@ -759,7 +826,7 @@ def deploy_root(username, script_dir):
                 dest_file = home_dir / home_relative
             else:
                 # Map root/X -> /X
-                dest_file = Path('/') / relative_path
+                dest_file = Path("/") / relative_path
 
             try:
                 if is_home_file:
@@ -773,7 +840,7 @@ def deploy_root(username, script_dir):
                         backup_path.parent.mkdir(parents=True, exist_ok=True)
                         shutil.move(str(dest_file), str(backup_path))
 
-                        display = f'~/{home_relative}'
+                        display = f"~/{home_relative}"
                         backed_up_items.append(display)
 
                 # Create parent directories
@@ -784,11 +851,13 @@ def deploy_root(username, script_dir):
 
                 # Make scripts executable for system files
                 if not is_home_file:
-                    if (dest_file.suffix == '.sh'
-                            or 'bin' in dest_file.parts
-                            or 'dispatcher.d' in dest_file.parts
-                            or 'system-sleep' in dest_file.parts
-                            or 'acpi' in dest_file.parts):
+                    if (
+                        dest_file.suffix == ".sh"
+                        or "bin" in dest_file.parts
+                        or "dispatcher.d" in dest_file.parts
+                        or "system-sleep" in dest_file.parts
+                        or "acpi" in dest_file.parts
+                    ):
                         os.chmod(dest_file, 0o755)
 
                 # Set ownership for home directory files
@@ -801,39 +870,45 @@ def deploy_root(username, script_dir):
                 failed_files.append((str(relative_path), str(e)))
                 continue
 
-
-
     # Change ownership of backup directory if created
     if backup_dir and backup_dir.exists():
         try:
-            subprocess.run(['chown', '-R', f'{username}:{username}', str(backup_dir)],
-                          check=True, capture_output=True)
+            subprocess.run(
+                ["chown", "-R", f"{username}:{username}", str(backup_dir)],
+                check=True,
+                capture_output=True,
+            )
         except subprocess.CalledProcessError:
             pass
 
     # Change ownership of the entire home directory to ensure all newly created
     # parent directories (like ~/.config) are owned by the user, not root.
     try:
-        subprocess.run(['chown', '-R', f'{username}:{username}', str(home_dir)],
-                      check=True, capture_output=True)
+        subprocess.run(
+            ["chown", "-R", f"{username}:{username}", str(home_dir)],
+            check=True,
+            capture_output=True,
+        )
     except subprocess.CalledProcessError as e:
         log_error(f"Failed to chown home directory {home_dir}", e)
 
     # Update font cache
     try:
-        subprocess.run(['fc-cache', '-f'], check=True, capture_output=True)
+        subprocess.run(["fc-cache", "-f"], check=True, capture_output=True)
     except subprocess.CalledProcessError as e:
         log_error("Failed to update font cache", e)
 
     # Ensure fontconfig user configuration is enabled (50-user.conf)
-    user_conf_link = Path('/etc/fonts/conf.d/50-user.conf')
-    user_conf_target = Path('/usr/share/fontconfig/conf.avail/50-user.conf')
+    user_conf_link = Path("/etc/fonts/conf.d/50-user.conf")
+    user_conf_target = Path("/usr/share/fontconfig/conf.avail/50-user.conf")
 
     if not user_conf_link.exists() and user_conf_target.exists():
         try:
             user_conf_link.symlink_to(user_conf_target)
         except (OSError, IOError) as e:
-            log_error("Failed to enable fontconfig user configuration (50-user.conf)", e)
+            log_error(
+                "Failed to enable fontconfig user configuration (50-user.conf)", e
+            )
 
     if failed_files:
         error_msg = f"Failed to deploy: {', '.join([f[0] for f in failed_files])}"
@@ -851,7 +926,7 @@ def deploy_patches(script_dir):
 
     Returns: (success, error_message)
     """
-    patches_dir = script_dir / 'patches'
+    patches_dir = script_dir / "patches"
 
     if not patches_dir.exists():
         return True, None  # No patches to apply, not an error
@@ -866,41 +941,46 @@ def deploy_patches(script_dir):
 
             # Calculate destination path: patches/etc/foo/bar -> /etc/foo/bar
             relative_path = src_file.relative_to(patches_dir)
-            dest_file = Path('/') / relative_path
+            dest_file = Path("/") / relative_path
 
             try:
                 # Read patch content (non-empty, non-comment lines)
-                with open(src_file, 'r') as f:
-                    patch_lines = [line.strip() for line in f
-                                   if line.strip() and not line.strip().startswith('#')]
+                with open(src_file, "r") as f:
+                    patch_lines = [
+                        line.strip()
+                        for line in f
+                        if line.strip() and not line.strip().startswith("#")
+                    ]
 
                 if dest_file.exists():
                     # Read existing config
-                    with open(dest_file, 'r') as f:
+                    with open(dest_file, "r") as f:
                         existing_lines = [l.strip() for l in f.readlines()]
 
                     # Check if any patch lines are missing
-                    needs_update = any(line not in existing_lines for line in patch_lines)
+                    needs_update = any(
+                        line not in existing_lines for line in patch_lines
+                    )
 
                     if needs_update:
                         # Backup original
-                        backup_path = Path(str(dest_file) + '.bak')
+                        backup_path = Path(str(dest_file) + ".bak")
                         shutil.copy2(dest_file, backup_path)
 
                         # Append missing lines
-                        with open(dest_file, 'a') as f:
-                            f.write('\n# Added by dotfiles deployment\n')
+                        with open(dest_file, "a") as f:
+                            f.write("\n# Added by dotfiles deployment\n")
                             for patch_line in patch_lines:
                                 if patch_line not in existing_lines:
-                                    f.write(patch_line + '\n')
+                                    f.write(patch_line + "\n")
 
                         deployed_files.append(str(relative_path))
                 else:
                     # Create new file with patch content
                     dest_file.parent.mkdir(parents=True, exist_ok=True)
-                    with open(dest_file, 'w') as f:
+                    with open(dest_file, "w") as f:
                         for patch_line in patch_lines:
-                            f.write(patch_line + '\n')
+                            f.write(patch_line + "\n")
                     deployed_files.append(str(relative_path))
 
             except (IOError, OSError) as e:
@@ -909,7 +989,9 @@ def deploy_patches(script_dir):
                 continue
 
     if failed_files:
-        error_msg = f"Failed to apply patches: {', '.join([f[0] for f in failed_files])}"
+        error_msg = (
+            f"Failed to apply patches: {', '.join([f[0] for f in failed_files])}"
+        )
         return False, error_msg
 
     return True, None
@@ -917,92 +999,97 @@ def deploy_patches(script_dir):
 
 def configure_keyd():
     """Enable and restart keyd service to apply configuration.
-    
+
     Called after deploy_system_configs to apply the new keyd configuration.
     Returns: (success, error_message)
     """
     # Check if systemctl is available
-    if not shutil.which('systemctl'):
-         return True, None # Not a systemd system
+    if not shutil.which("systemctl"):
+        return True, None  # Not a systemd system
 
     # Check if keyd package is installed (Debian-specific)
     # Note: The binary may be named differently (e.g., keyd.rvaiya on Debian)
     # so we check for the package instead of the binary
     try:
         result = subprocess.run(
-            ['dpkg-query', '-W', '-f=${Status}', 'keyd'],
+            ["dpkg-query", "-W", "-f=${Status}", "keyd"],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
-        if 'install ok installed' not in result.stdout:
+        if "install ok installed" not in result.stdout:
             return True, None  # keyd not installed
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+    except (
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        FileNotFoundError,
+    ):
         return True, None  # dpkg not available or keyd not installed
 
     try:
         # Enable keyd service
         subprocess.run(
-            ['systemctl', 'enable', 'keyd'],
-            check=True,
-            capture_output=True,
-            timeout=10
+            ["systemctl", "enable", "keyd"], check=True, capture_output=True, timeout=10
         )
-        
+
         # Restart keyd to apply new config
         subprocess.run(
-            ['systemctl', 'restart', 'keyd'],
+            ["systemctl", "restart", "keyd"],
             check=True,
             capture_output=True,
-            timeout=10
+            timeout=10,
         )
         return True, None
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         error_msg = f"Failed to configure keyd: {str(e)}"
         log_error("Failed to configure keyd service", e)
-        # Don't fail the whole deployment if just the service restart fails, 
+        # Don't fail the whole deployment if just the service restart fails,
         # but return False so it can be reported
         return False, error_msg
 
 
 def configure_kbdrate():
     """Enable and start kbdrate service for TTY keyboard repeat configuration.
-    
+
     Called after deploy_system_configs to enable the kbdrate service.
     Returns: (success, error_message)
     """
     # Check if systemctl is available
-    if not shutil.which('systemctl'):
-         return True, None # Not a systemd system
+    if not shutil.which("systemctl"):
+        return True, None  # Not a systemd system
 
     # Check if kbd package is installed (provides kbdrate)
     try:
         result = subprocess.run(
-            ['dpkg-query', '-W', '-f=${Status}', 'kbd'],
+            ["dpkg-query", "-W", "-f=${Status}", "kbd"],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
-        if 'install ok installed' not in result.stdout:
+        if "install ok installed" not in result.stdout:
             return True, None  # kbd not installed
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+    except (
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        FileNotFoundError,
+    ):
         return True, None  # dpkg not available or kbd not installed
 
     try:
         # Enable kbdrate service
         subprocess.run(
-            ['systemctl', 'enable', 'kbdrate'],
+            ["systemctl", "enable", "kbdrate"],
             check=True,
             capture_output=True,
-            timeout=10
+            timeout=10,
         )
-        
+
         # Start kbdrate service
         subprocess.run(
-            ['systemctl', 'start', 'kbdrate'],
+            ["systemctl", "start", "kbdrate"],
             check=True,
             capture_output=True,
-            timeout=10
+            timeout=10,
         )
         return True, None
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
@@ -1011,13 +1098,12 @@ def configure_kbdrate():
         return False, error_msg
 
 
-
 def install_firefox_extensions(script_dir):
     """Install Firefox extensions via Enterprise Policies
 
     Returns: (success, error_message)
     """
-    firefox_script = script_dir / 'firefox/firefox-extensions.sh'
+    firefox_script = script_dir / "firefox/firefox-extensions.sh"
 
     if not firefox_script.exists():
         return True, None  # No script to run, not an error
@@ -1032,7 +1118,7 @@ def install_firefox_extensions(script_dir):
             check=True,
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         return True, None
@@ -1043,14 +1129,12 @@ def install_firefox_extensions(script_dir):
         return False, error_msg
 
 
-
-
 def install_firefox_userjs(username, script_dir, tui, row):
     """Installs the custom user.js to all Firefox profiles.
     Creates a default profile if none exist.
     """
-    userjs_src = script_dir / 'firefox/firefox-user.js'
-    
+    userjs_src = script_dir / "firefox/firefox-user.js"
+
     if not userjs_src.exists():
         return True, None, row
 
@@ -1058,47 +1142,57 @@ def install_firefox_userjs(username, script_dir, tui, row):
     tui.stdscr.refresh()
 
     try:
-        home_dir = Path(f'/home/{username}')
-        firefox_dir = home_dir / '.mozilla' / 'firefox'
-        # We learned that Firefox ESR on Debian ignores hardcoded profiles.ini setups 
+        home_dir = Path(f"/home/{username}")
+        firefox_dir = home_dir / ".mozilla" / "firefox"
+        # We learned that Firefox ESR on Debian ignores hardcoded profiles.ini setups
         # and instead creates hash-based locks (like Install3B6073811A6ABF12).
         # We must let Firefox generate its profile naturally first, then inject.
-        
+
         # 1. Ensure mozilla/firefox directory exists with correct skeletal ownership
         firefox_dir.mkdir(parents=True, exist_ok=True)
-        subprocess.run(['chown', '-R', f'{username}:{username}', str(home_dir / '.mozilla')], check=True)
-        
+        subprocess.run(
+            ["chown", "-R", f"{username}:{username}", str(home_dir / ".mozilla")],
+            check=True,
+        )
+
         # 2. Run Headless Firefox briefly
         # This forces Firefox-ESR to generate its true default profile and its installs.ini hashes
         try:
             # We use Popen so that we don't block. We sleep to let it write profiles.ini.
             # This exactly replicates the LARBS librewolf deployment method.
             cmd = "firefox-esr --headless || firefox --headless"
-            p = subprocess.Popen(['su', '-', username, '-c', cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            p = subprocess.Popen(
+                ["su", "-", username, "-c", cmd],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
             time.sleep(4)
         except Exception as e:
             log_error(f"Failed to bootstrap firefox profile: {e}")
-            
+
         # 3. Find whatever profiles it generated
         import glob
-        profiles = glob.glob(str(firefox_dir / '*.default*'))
-        
+
+        profiles = glob.glob(str(firefox_dir / "*.default*"))
+
         installed = False
         for profile in profiles:
-            dest = Path(profile) / 'user.js'
-            
+            dest = Path(profile) / "user.js"
+
             # Backup existing if present
             if dest.exists():
-                backup = dest.with_name(f'user.js.backup.{int(time.time())}')
+                backup = dest.with_name(f"user.js.backup.{int(time.time())}")
                 shutil.copy2(dest, backup)
-                subprocess.run(['chown', f'{username}:{username}', str(backup)], check=True)
-                
+                subprocess.run(
+                    ["chown", f"{username}:{username}", str(backup)], check=True
+                )
+
             shutil.copy2(userjs_src, dest)
-            subprocess.run(['chown', f'{username}:{username}', str(dest)], check=True)
+            subprocess.run(["chown", f"{username}:{username}", str(dest)], check=True)
             installed = True
 
         # 4. Kill the headless instance
-        subprocess.run(['pkill', '-u', username, '-f', 'firefox'], capture_output=True)
+        subprocess.run(["pkill", "-u", username, "-f", "firefox"], capture_output=True)
         try:
             p.terminate()
             p.wait(timeout=2)
@@ -1118,19 +1212,13 @@ def install_firefox_userjs(username, script_dir, tui, row):
         return False, str(e), row + 1
 
 
-
-
-
-
-
-
 def install_tor_browser(username, script_dir, tui, row):
     """Install Tor Browser for the target user
 
     Runs the install-debian-tor-browser.sh script as the target user to ensure
     correct ownership of ~/.local/src/tor-browser and symlink.
     """
-    install_script = script_dir / 'scripts/install-debian-tor-browser.sh'
+    install_script = script_dir / "scripts/install-debian-tor-browser.sh"
 
     if not install_script.exists():
         return True, None, row  # Script not present, skip silently
@@ -1141,23 +1229,27 @@ def install_tor_browser(username, script_dir, tui, row):
     try:
         # Read script content as root (who can access the dotfiles dir)
         # and pipe it to bash running as the target user
-        with open(install_script, 'r') as f:
+        with open(install_script, "r") as f:
             script_content = f.read()
 
         # Run as target user, passing script via stdin
         subprocess.run(
-            ['su', '-c', 'bash -s', username],
+            ["su", "-c", "bash -s", username],
             input=script_content.encode(),
             check=True,
             capture_output=True,
-            timeout=600  # 10 minute timeout for download
+            timeout=600,  # 10 minute timeout for download
         )
         tui.show_progress(row, "Installing Tor Browser...", success=True)
         return True, None, row + 1
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        error_msg = e.stderr.decode() if hasattr(e, 'stderr') and e.stderr else str(e)
-        
-        log_error(f"Tor Browser Installation Error for user {username}", e, context=f"Script: {install_script}")
+        error_msg = e.stderr.decode() if hasattr(e, "stderr") and e.stderr else str(e)
+
+        log_error(
+            f"Tor Browser Installation Error for user {username}",
+            e,
+            context=f"Script: {install_script}",
+        )
         tui.show_progress(row, "Installing Tor Browser...", success=False)
         return False, error_msg, row + 1
 
@@ -1170,7 +1262,9 @@ def main_tui(stdscr):
     # Check if running as root
     if not check_root():
         tui.draw_header("ERROR: ROOT REQUIRED")
-        tui.show_message(4, 4, "This script must be run as root (sudo).", color_pair=3, bold=True)
+        tui.show_message(
+            4, 4, "This script must be run as root (sudo).", color_pair=3, bold=True
+        )
         tui.show_message(6, 4, "Press any key to exit...")
         stdscr.getch()
         return
@@ -1186,9 +1280,11 @@ def main_tui(stdscr):
         return
 
     # Validate username (lowercase letters, digits, underscore, hyphen; must start with letter or underscore)
-    if not re.match(r'^[a-z_][a-z0-9_-]*[$]?$', username):
+    if not re.match(r"^[a-z_][a-z0-9_-]*[$]?$", username):
         tui.show_message(8, 4, "Invalid username format.", color_pair=3)
-        tui.show_message(9, 4, "Must start with lowercase letter or underscore.", color_pair=3)
+        tui.show_message(
+            9, 4, "Must start with lowercase letter or underscore.", color_pair=3
+        )
         tui.show_message(10, 4, "Press any key to exit...")
         stdscr.getch()
         return
@@ -1202,7 +1298,7 @@ def main_tui(stdscr):
         tui.show_message(9, 4, "Continue with deployment? (y/n): ", color_pair=4)
         tui.stdscr.refresh()
         response = stdscr.getch()
-        if chr(response).lower() != 'y':
+        if chr(response).lower() != "y":
             return
         user_created = False
     else:
@@ -1268,57 +1364,83 @@ def main_tui(stdscr):
         stdscr.getch()
         return
 
+    # ── Paragraph break ──
+    row += 1
+
     # Clone dotfile repos to home directory (before package installation)
     dotfiles_repos = read_git_dotfiles_file(script_dir)
     if dotfiles_repos:
-        tui.show_message(row, 4, "Cloning dotfile repositories:",
-                        color_pair=1, bold=True)
+        tui.show_message(
+            row, 4, "Cloning dotfile repositories:", color_pair=1, bold=True
+        )
         row += 1
         tui.stdscr.refresh()
 
-        success, failed_repos, dotfiles_backup_dir, dotfiles_backed_up, row = clone_dotfiles_home(dotfiles_repos, username, tui, row)
+        success, failed_repos, dotfiles_backup_dir, dotfiles_backed_up, row = (
+            clone_dotfiles_home(dotfiles_repos, username, tui, row)
+        )
 
         if success:
             # Success - show backup info if any
             row += 1
             if dotfiles_backup_dir and dotfiles_backed_up:
-                tui.show_message(row, 4, f"Backed up existing files to: {dotfiles_backup_dir.name}",
-                               color_pair=4, bold=True)
+                tui.show_message(
+                    row, 4, f"Backed up existing files to: {dotfiles_backup_dir.name}"
+                )
                 row += 1
         else:
             row += 1
-            tui.show_message(row, 4, f"Failed to clone: {', '.join(failed_repos)}",
-                           color_pair=3)
+            tui.show_message(
+                row, 4, f"Failed to clone: {', '.join(failed_repos)}", color_pair=3
+            )
             row += 1
-            tui.show_message(row, 4, f"Error details: {LOG_FILE}",
-                           color_pair=4, bold=True)
+            tui.show_message(
+                row, 4, f"Error details: {LOG_FILE}", color_pair=4, bold=True
+            )
             tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
             tui.stdscr.refresh()
             response = stdscr.getch()
-            if chr(response).lower() != 'y':
+            if chr(response).lower() != "y":
                 return
             row += 3
+
+    # ── Paragraph break ──
+    row += 1
 
     # Ensure dependencies for adding repositories (curl, gpg) are installed
     # These are needed for setup_third_party_repos below
     tui.show_progress(row, "Checking prerequisite packages...", success=None)
     tui.stdscr.refresh()
     try:
-        subprocess.run(['apt-get', 'install', '-y', 'curl', 'gpg'],
-                      check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            ["apt-get", "install", "-y", "curl", "gpg"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         tui.show_progress(row, "Checking prerequisite packages...", success=True)
         row += 1
     except subprocess.CalledProcessError:
         tui.show_progress(row, "Checking prerequisite packages...", success=False)
-        tui.show_message(row + 1, 4, "Failed to install curl/gpg. Third-party repos may fail.", color_pair=3)
+        tui.show_message(
+            row + 1,
+            4,
+            "Failed to install curl/gpg. Third-party repos may fail.",
+            color_pair=3,
+        )
         row += 2
 
     # Setup third-party repositories
     third_party_repos = read_third_party_packages_file(script_dir)
     third_party_package_names = []
     if third_party_repos:
-        tui.show_message(row, 4, f"Setting up third-party repositories ({len(third_party_repos)} total):",
-                        color_pair=1, bold=True)
+        tui.show_message(
+            row,
+            4,
+            f"Setting up third-party repositories ({len(third_party_repos)} total):",
+            color_pair=1,
+            bold=True,
+        )
         row += 1
         tui.stdscr.refresh()
 
@@ -1331,12 +1453,16 @@ def main_tui(stdscr):
         else:
             failed_repos = result
             row += 1
-            tui.show_message(row, 4, f"Failed to setup repos: {', '.join(failed_repos)}",
-                           color_pair=3)
+            tui.show_message(
+                row,
+                4,
+                f"Failed to setup repos: {', '.join(failed_repos)}",
+                color_pair=3,
+            )
             tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
             tui.stdscr.refresh()
             response = stdscr.getch()
-            if chr(response).lower() != 'y':
+            if chr(response).lower() != "y":
                 return
             row += 3
 
@@ -1345,8 +1471,13 @@ def main_tui(stdscr):
     # Add third-party package names to the installation list
     all_packages = packages + third_party_package_names
     if all_packages:
-        tui.show_message(row, 4, f"Installing packages ({len(all_packages)} total):",
-                        color_pair=1, bold=True)
+        tui.show_message(
+            row,
+            4,
+            f"Installing packages ({len(all_packages)} total):",
+            color_pair=1,
+            bold=True,
+        )
         row += 1
         tui.stdscr.refresh()
 
@@ -1358,14 +1489,18 @@ def main_tui(stdscr):
         else:
             failed_packages = result
             row += 1
-            tui.show_message(row, 4, f"Failed to install: {', '.join(failed_packages)}",
-                           color_pair=3)
+            tui.show_message(
+                row, 4, f"Failed to install: {', '.join(failed_packages)}", color_pair=3
+            )
             tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
             tui.stdscr.refresh()
             response = stdscr.getch()
-            if chr(response).lower() != 'y':
+            if chr(response).lower() != "y":
                 return
             row += 3
+
+    # ── Paragraph break ──
+    row += 1
 
     # Deploy all files from root/ (dotfiles + system configs)
     tui.show_progress(row, "Deploying from root/...", success=None)
@@ -1385,45 +1520,58 @@ def main_tui(stdscr):
 
         # Show backup info if files were backed up
         if backup_dir and backed_up_items:
-            tui.show_message(row, 4, f"Backed up existing files to: {backup_dir.name}",
-                           color_pair=4, bold=True)
+            tui.show_message(row, 4, f"Backed up existing files to: {backup_dir.name}")
             row += 1
 
     # Clone and build source repositories
     src_repos = read_git_packages_src_file(script_dir)
     if src_repos:
-        tui.show_message(row, 4, f"Cloning and building source repositories ({len(src_repos)} total):",
-                        color_pair=1, bold=True)
+        tui.show_message(
+            row,
+            4,
+            f"Cloning and building source repositories ({len(src_repos)} total):",
+            color_pair=1,
+            bold=True,
+        )
         row += 1
         tui.stdscr.refresh()
 
-        success, failed_repos, row = clone_and_build_repos(src_repos, username, tui, row)
+        success, failed_repos, row = clone_and_build_repos(
+            src_repos, username, tui, row
+        )
 
         if success:
             # Success - continue
             row += 1
         else:
             row += 1
-            tui.show_message(row, 4, f"Failed to build: {', '.join(failed_repos)}",
-                           color_pair=3)
+            tui.show_message(
+                row, 4, f"Failed to build: {', '.join(failed_repos)}", color_pair=3
+            )
             row += 1
-            tui.show_message(row, 4, f"Error details: {LOG_FILE}",
-                           color_pair=4, bold=True)
+            tui.show_message(
+                row, 4, f"Error details: {LOG_FILE}", color_pair=4, bold=True
+            )
             tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
             tui.stdscr.refresh()
             response = stdscr.getch()
-            if chr(response).lower() != 'y':
+            if chr(response).lower() != "y":
                 return
             row += 3
+
+    # ── Paragraph break ──
+    row += 1
 
     # Install Tor Browser
     success, error, row = install_tor_browser(username, script_dir, tui, row)
     if not success:
-        tui.show_message(row, 4, f"Error: {error[:50] if error else 'Unknown'}...", color_pair=3)
+        tui.show_message(
+            row, 4, f"Error: {error[:50] if error else 'Unknown'}...", color_pair=3
+        )
         tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
         tui.stdscr.refresh()
         response = stdscr.getch()
-        if chr(response).lower() != 'y':
+        if chr(response).lower() != "y":
             return
         row += 3
 
@@ -1439,7 +1587,7 @@ def main_tui(stdscr):
         tui.show_message(row + 2, 4, "Continue anyway? (y/n): ", color_pair=4)
         tui.stdscr.refresh()
         response = stdscr.getch()
-        if chr(response).lower() != 'y':
+        if chr(response).lower() != "y":
             return
         row += 4
     else:
@@ -1451,7 +1599,7 @@ def main_tui(stdscr):
     if not success:
         tui.show_message(row, 4, f"Warning: {error}", color_pair=3)
         row += 1
-    
+
     # Configure kbdrate service for TTY keyboard repeat
     success, error = configure_kbdrate()
     if not success:
@@ -1470,7 +1618,7 @@ def main_tui(stdscr):
         tui.show_message(row + 2, 4, "Continue anyway? (y/n): ", color_pair=4)
         tui.stdscr.refresh()
         response = stdscr.getch()
-        if chr(response).lower() != 'y':
+        if chr(response).lower() != "y":
             return
         row += 4
     else:
@@ -1480,21 +1628,23 @@ def main_tui(stdscr):
     # Install Firefox user.js
     success, error, row = install_firefox_userjs(username, script_dir, tui, row)
     if not success:
-        tui.show_message(row, 4, f"Error: {error[:50] if error else 'Unknown'}...", color_pair=3)
+        tui.show_message(
+            row, 4, f"Error: {error[:50] if error else 'Unknown'}...", color_pair=3
+        )
         tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
         tui.stdscr.refresh()
         response = stdscr.getch()
-        if chr(response).lower() != 'y':
+        if chr(response).lower() != "y":
             return
         row += 3
 
     # Cleanup - remove unnecessary packages and clean apt cache
     tui.show_progress(row, "Cleaning up...", success=None)
     tui.stdscr.refresh()
-    
+
     try:
-        subprocess.run(['apt-get', 'clean'], check=True, capture_output=True)
-        subprocess.run(['apt-get', 'autoremove', '-y'], check=True, capture_output=True)
+        subprocess.run(["apt-get", "clean"], check=True, capture_output=True)
+        subprocess.run(["apt-get", "autoremove", "-y"], check=True, capture_output=True)
         tui.show_progress(row, "Cleaning up...", success=True)
     except subprocess.CalledProcessError as e:
         log_error("Cleanup failed", e)
@@ -1529,5 +1679,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
