@@ -23,6 +23,17 @@ fi
 
 HOME_DIR="/home/$TARGET_USER"
 
+# Files managed by the theme script that are legitimately modified after deploy.
+# We still check existence and ownership, but skip content comparison.
+THEME_MANAGED_FILES="
+.config/gtk-3.0/settings.ini
+.config/gtk-4.0/settings.ini
+.config/Kvantum/kvantum.kvconfig
+.config/qt5ct/qt5ct.conf
+.config/qt6ct/qt6ct.conf
+.config/Antigravity/User/settings.json
+"
+
 echo "Testing root file overlays..."
 
 # Use a temp file to track failures across subshell boundaries
@@ -60,8 +71,23 @@ find "$ROOT_DIR" -type f | while read -r src_file; do
         echo 1 > "$fail_flag"
     fi
     
+    # Skip byte-for-byte content check for theme-managed files
+    skip_content=false
+    case "$rel_path" in
+        /home/new-user/*)
+            home_rel="${rel_path#/home/new-user/}"
+            for tf in $THEME_MANAGED_FILES; do
+                [ -z "$tf" ] && continue
+                if [ "$home_rel" = "$tf" ]; then
+                    skip_content=true
+                    break
+                fi
+            done
+            ;;
+    esac
+
     # Verify file content
-    if ! cmp -s "$src_file" "$target_file"; then
+    if [ "$skip_content" = false ] && ! cmp -s "$src_file" "$target_file"; then
         echo "  [FAIL] Content of $target_file does not exactly match source $src_file"
         echo 1 > "$fail_flag"
     fi
