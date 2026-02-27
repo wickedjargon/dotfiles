@@ -55,5 +55,5 @@ bspc subscribe report | while read -r line; do
                 ;;
         esac
     done
-    echo "$output"
+    printf '%s\n' "$output"
 done
