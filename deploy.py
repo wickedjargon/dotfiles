@@ -1319,7 +1319,7 @@ def main_tui(stdscr):
         user_created = True
 
     # Start deployment process
-    tui.draw_header("DEPLOYMENT IN PROGRESS")
+    tui.draw_header("DOTFILES DEPLOYMENT")
     row = 4
 
     # Create user if needed
