@@ -32,7 +32,7 @@ class CLIStdscr:
         pass
 
     def getch(self):
-        return ord('y')
+        return ord("y")
 
 
 class CLIReporter:
@@ -54,7 +54,9 @@ class CLIReporter:
         if self._json_mode:
             if success is not None:
                 status = "ok" if success else "failed"
-                self.events.append({"type": "progress", "message": message, "status": status})
+                self.events.append(
+                    {"type": "progress", "message": message, "status": status}
+                )
             return
 
         if success is True:
@@ -110,23 +112,27 @@ def parse_args(argv=None):
     )
 
     parser.add_argument(
-        "--username", "-u",
+        "--username",
+        "-u",
         required=True,
         help="Username to create or deploy to",
     )
     parser.add_argument(
-        "--password", "-p",
+        "--password",
+        "-p",
         default=None,
         help="Password for new user (not needed if user already exists)",
     )
     parser.add_argument(
-        "--yes", "-y",
+        "--yes",
+        "-y",
         action="store_true",
         default=False,
         help="Auto-confirm all prompts (required for non-interactive use)",
     )
     parser.add_argument(
-        "--dry-run", "-n",
+        "--dry-run",
+        "-n",
         action="store_true",
         default=False,
         help="Preview what would happen without making any changes",
@@ -151,28 +157,62 @@ def dry_run_preview(args, script_dir):
 
     # User creation
     if deploy.user_exists(username):
-        steps.append({"step": "user", "action": "skip", "detail": f"User '{username}' already exists"})
+        steps.append(
+            {
+                "step": "user",
+                "action": "skip",
+                "detail": f"User '{username}' already exists",
+            }
+        )
     else:
-        steps.append({"step": "user", "action": "create", "detail": f"Create user '{username}' with home directory"})
-        steps.append({"step": "password", "action": "set", "detail": f"Set password for '{username}'"})
+        steps.append(
+            {
+                "step": "user",
+                "action": "create",
+                "detail": f"Create user '{username}' with home directory",
+            }
+        )
+        steps.append(
+            {
+                "step": "password",
+                "action": "set",
+                "detail": f"Set password for '{username}'",
+            }
+        )
 
-    steps.append({"step": "sudo", "action": "add", "detail": f"Add '{username}' to sudo group"})
+    steps.append(
+        {"step": "sudo", "action": "add", "detail": f"Add '{username}' to sudo group"}
+    )
 
     # Dotfile repos
     dotfiles_repos = deploy.read_git_dotfiles_file(script_dir)
     if dotfiles_repos:
         for url, dest in dotfiles_repos:
-            steps.append({"step": "clone_dotfile", "action": "clone", "detail": f"{url} → ~/{dest}"})
+            steps.append(
+                {
+                    "step": "clone_dotfile",
+                    "action": "clone",
+                    "detail": f"{url} → ~/{dest}",
+                }
+            )
 
     # Prerequisites
-    steps.append({"step": "prerequisites", "action": "install", "detail": "Install curl, gpg"})
+    steps.append(
+        {"step": "prerequisites", "action": "install", "detail": "Install curl, gpg"}
+    )
 
     # Third-party repos
     third_party_repos = deploy.read_third_party_packages_file(script_dir)
     third_party_package_names = []
     if third_party_repos:
         for name, key_url, repo_line in third_party_repos:
-            steps.append({"step": "third_party_repo", "action": "setup", "detail": f"Add repo for {name}"})
+            steps.append(
+                {
+                    "step": "third_party_repo",
+                    "action": "setup",
+                    "detail": f"Add repo for {name}",
+                }
+            )
             third_party_package_names.append(name)
 
     # Packages
@@ -191,50 +231,105 @@ def dry_run_preview(args, script_dir):
             to_install.append(pkg)
 
     if to_install:
-        steps.append({"step": "packages", "action": "install",
-                       "detail": f"{len(to_install)} packages to install",
-                       "packages": to_install})
+        steps.append(
+            {
+                "step": "packages",
+                "action": "install",
+                "detail": f"{len(to_install)} packages to install",
+                "packages": to_install,
+            }
+        )
     if already_installed:
-        steps.append({"step": "packages", "action": "skip",
-                       "detail": f"{len(already_installed)} packages already installed",
-                       "packages": already_installed})
+        steps.append(
+            {
+                "step": "packages",
+                "action": "skip",
+                "detail": f"{len(already_installed)} packages already installed",
+                "packages": already_installed,
+            }
+        )
 
     # Root deployment
-    root_dir = script_dir / 'root'
+    root_dir = script_dir / "root"
     if root_dir.exists():
-        file_count = sum(1 for _ in root_dir.rglob('*') if _.is_file())
-        steps.append({"step": "deploy_root", "action": "copy", "detail": f"Deploy {file_count} files from root/"})
+        file_count = sum(1 for _ in root_dir.rglob("*") if _.is_file())
+        steps.append(
+            {
+                "step": "deploy_root",
+                "action": "copy",
+                "detail": f"Deploy {file_count} files from root/",
+            }
+        )
 
     # Source repos
     src_repos = deploy.read_git_packages_src_file(script_dir)
     if src_repos:
         for url in src_repos:
-            name = url.rstrip('/').split('/')[-1].replace('.git', '')
-            steps.append({"step": "build_repo", "action": "clone+build", "detail": f"{name} ({url})"})
+            name = url.rstrip("/").split("/")[-1].replace(".git", "")
+            steps.append(
+                {
+                    "step": "build_repo",
+                    "action": "clone+build",
+                    "detail": f"{name} ({url})",
+                }
+            )
 
     # Tor Browser
-    if (script_dir / 'scripts/install-debian-tor-browser.sh').exists():
-        steps.append({"step": "tor_browser", "action": "install", "detail": "Download and install Tor Browser"})
+    if (script_dir / "scripts/install-debian-tor-browser.sh").exists():
+        steps.append(
+            {
+                "step": "tor_browser",
+                "action": "install",
+                "detail": "Download and install Tor Browser",
+            }
+        )
 
     # Patches
-    patches_dir = script_dir / 'patches'
+    patches_dir = script_dir / "patches"
     if patches_dir.exists():
-        patch_count = sum(1 for _ in patches_dir.rglob('*') if _.is_file())
-        steps.append({"step": "patches", "action": "apply", "detail": f"Apply {patch_count} patch files"})
+        patch_count = sum(1 for _ in patches_dir.rglob("*") if _.is_file())
+        steps.append(
+            {
+                "step": "patches",
+                "action": "apply",
+                "detail": f"Apply {patch_count} patch files",
+            }
+        )
 
     # Services
-    steps.append({"step": "keyd", "action": "configure", "detail": "Enable and restart keyd service"})
-    steps.append({"step": "kbdrate", "action": "configure", "detail": "Enable kbdrate service"})
+    steps.append(
+        {
+            "step": "keyd",
+            "action": "configure",
+            "detail": "Enable and restart keyd service",
+        }
+    )
+    steps.append(
+        {"step": "kbdrate", "action": "configure", "detail": "Enable kbdrate service"}
+    )
 
     # Firefox
-    if (script_dir / 'firefox/firefox-extensions.sh').exists():
-        steps.append({"step": "firefox_extensions", "action": "install", "detail": "Install Firefox extensions via policy"})
-    if (script_dir / 'firefox/firefox-user.js').exists():
-        steps.append({"step": "firefox_userjs", "action": "install", "detail": "Deploy user.js to Firefox profiles"})
+    if (script_dir / "firefox/firefox-extensions.sh").exists():
+        steps.append(
+            {
+                "step": "firefox_extensions",
+                "action": "install",
+                "detail": "Install Firefox extensions via policy",
+            }
+        )
+    if (script_dir / "firefox/firefox-user.js").exists():
+        steps.append(
+            {
+                "step": "firefox_userjs",
+                "action": "install",
+                "detail": "Deploy user.js to Firefox profiles",
+            }
+        )
 
     # Cleanup
-    steps.append({"step": "cleanup", "action": "run", "detail": "apt-get clean && autoremove"})
-
+    steps.append(
+        {"step": "cleanup", "action": "run", "detail": "apt-get clean && autoremove"}
+    )
 
     # Output
     if json_mode:
@@ -256,12 +351,12 @@ def dry_run_preview(args, script_dir):
         print()
 
         for i, step in enumerate(steps, 1):
-            action = step['action'].upper()
-            detail = step['detail']
+            action = step["action"].upper()
+            detail = step["detail"]
             print(f"  {i:2d}. [{action:>12s}]  {detail}")
-            if 'packages' in step and step['action'] == 'install':
+            if "packages" in step and step["action"] == "install":
                 # Show first few packages
-                pkgs = step['packages']
+                pkgs = step["packages"]
                 if len(pkgs) <= 10:
                     for pkg in pkgs:
                         print(f"                        - {pkg}")
@@ -292,7 +387,7 @@ def handle_error(args, cli, message, is_fatal=False):
         return True
     else:
         response = input("  Continue anyway? [y/N]: ").strip().lower()
-        return response == 'y'
+        return response == "y"
 
 
 def main(argv=None):
@@ -313,9 +408,13 @@ def main(argv=None):
     # ── Pre-flight checks ──────────────────────────────────────────
 
     # Validate username format (do this before root check so --dry-run works)
-    if not re.match(r'^[a-z_][a-z0-9_-]*[$]?$', args.username):
+    if not re.match(r"^[a-z_][a-z0-9_-]*[$]?$", args.username):
         if args.json:
-            print(json_mod.dumps({"success": False, "error": f"Invalid username '{args.username}'"}))
+            print(
+                json_mod.dumps(
+                    {"success": False, "error": f"Invalid username '{args.username}'"}
+                )
+            )
         else:
             print(f"\033[31mERROR: Invalid username '{args.username}'.\033[0m")
             print("Must start with lowercase letter or underscore.")
@@ -328,7 +427,11 @@ def main(argv=None):
 
     if not deploy.check_root():
         if args.json:
-            print(json_mod.dumps({"success": False, "error": "Must be run as root (sudo)"}))
+            print(
+                json_mod.dumps(
+                    {"success": False, "error": "Must be run as root (sudo)"}
+                )
+            )
         else:
             print("\033[31mERROR: This script must be run as root (sudo).\033[0m")
         sys.exit(1)
@@ -341,25 +444,31 @@ def main(argv=None):
     cli.draw_header("DOTFILES DEPLOYMENT (CLI)")
     row = 4
 
-
-
     if deploy.user_exists(username):
         if not args.json:
             print(f"  User '{username}' already exists. Continuing with deployment.")
         if not args.yes:
             response = input("  Continue? [y/N]: ").strip().lower()
-            if response != 'y':
+            if response != "y":
                 if not args.json:
                     print("Aborted.")
                 sys.exit(0)
     else:
         if not password:
             if args.json:
-                print(json_mod.dumps({"success": False, "error": "--password is required when creating a new user"}))
+                print(
+                    json_mod.dumps(
+                        {
+                            "success": False,
+                            "error": "--password is required when creating a new user",
+                        }
+                    )
+                )
             else:
-                print("\033[31mERROR: --password is required when creating a new user.\033[0m")
+                print(
+                    "\033[31mERROR: --password is required when creating a new user.\033[0m"
+                )
             sys.exit(1)
-
 
         cli.show_progress(row, f"Creating user '{username}'...", success=None)
         success, error_msg = deploy.create_user(username)
@@ -410,8 +519,9 @@ def main(argv=None):
             print(f"\n  Cloning dotfile repositories ({len(dotfiles_repos)} total):")
         row += 1
 
-        success, failed_repos, dotfiles_backup_dir, dotfiles_backed_up, row = \
+        success, failed_repos, dotfiles_backup_dir, dotfiles_backed_up, row = (
             deploy.clone_dotfiles_home(dotfiles_repos, username, cli, row)
+        )
 
         if success:
             row += 1
@@ -433,15 +543,24 @@ def main(argv=None):
 
     # ── Prerequisite packages (curl, gpg) ──────────────────────────
 
+    if not args.json:
+        print()  # paragraph break
+
     cli.show_progress(row, "Checking prerequisite packages...", success=None)
     try:
-        subprocess.run(['apt-get', 'install', '-y', 'curl', 'gpg'],
-                      check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            ["apt-get", "install", "-y", "curl", "gpg"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         cli.show_progress(row, "Checking prerequisite packages...", success=True)
         row += 1
     except subprocess.CalledProcessError:
         cli.show_progress(row, "Checking prerequisite packages...", success=False)
-        json_result["warnings"].append("Failed to install curl/gpg. Third-party repos may fail.")
+        json_result["warnings"].append(
+            "Failed to install curl/gpg. Third-party repos may fail."
+        )
         if not args.json:
             print("  Failed to install curl/gpg. Third-party repos may fail.")
         row += 2
@@ -452,10 +571,14 @@ def main(argv=None):
     third_party_package_names = []
     if third_party_repos:
         if not args.json:
-            print(f"\n  Setting up third-party repositories ({len(third_party_repos)} total):")
+            print(
+                f"\n  Setting up third-party repositories ({len(third_party_repos)} total):"
+            )
         row += 1
 
-        success, result, row = deploy.setup_third_party_repos(third_party_repos, cli, row)
+        success, result, row = deploy.setup_third_party_repos(
+            third_party_repos, cli, row
+        )
 
         if success:
             third_party_package_names = [name for name, _, _ in third_party_repos]
@@ -501,9 +624,14 @@ def main(argv=None):
 
     # ── Deploy root/ files ─────────────────────────────────────────
 
+    if not args.json:
+        print()  # paragraph break
+
     cli.show_progress(row, "Deploying from root/...", success=None)
 
-    success, error, backup_dir, backed_up_items = deploy.deploy_root(username, script_dir)
+    success, error, backup_dir, backed_up_items = deploy.deploy_root(
+        username, script_dir
+    )
 
     if not success:
         cli.show_progress(row, "Deploying from root/...", success=False)
@@ -528,10 +656,14 @@ def main(argv=None):
     src_repos = deploy.read_git_packages_src_file(script_dir)
     if src_repos:
         if not args.json:
-            print(f"\n  Cloning and building source repositories ({len(src_repos)} total):")
+            print(
+                f"\n  Cloning and building source repositories ({len(src_repos)} total):"
+            )
         row += 1
 
-        success, failed_repos, row = deploy.clone_and_build_repos(src_repos, username, cli, row)
+        success, failed_repos, row = deploy.clone_and_build_repos(
+            src_repos, username, cli, row
+        )
 
         if success:
             row += 1
@@ -548,6 +680,9 @@ def main(argv=None):
             row += 3
 
     # ── Install Tor Browser ────────────────────────────────────────
+
+    if not args.json:
+        print()  # paragraph break
 
     success, error, row = deploy.install_tor_browser(username, script_dir, cli, row)
     if not success:
@@ -640,8 +775,8 @@ def main(argv=None):
     cli.show_progress(row, "Cleaning up...", success=None)
 
     try:
-        subprocess.run(['apt-get', 'clean'], check=True, capture_output=True)
-        subprocess.run(['apt-get', 'autoremove', '-y'], check=True, capture_output=True)
+        subprocess.run(["apt-get", "clean"], check=True, capture_output=True)
+        subprocess.run(["apt-get", "autoremove", "-y"], check=True, capture_output=True)
         cli.show_progress(row, "Cleaning up...", success=True)
     except subprocess.CalledProcessError as e:
         deploy.log_error("Cleanup failed", e)
@@ -668,5 +803,5 @@ def main(argv=None):
     sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
