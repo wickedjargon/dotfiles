@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # CONFIGURATION
 # Matches your polybar colors
@@ -55,5 +55,5 @@ bspc subscribe report | while read -r line; do
                 ;;
         esac
     done
-    printf '%s\n' "$output"
+    echo "$output"
 done
