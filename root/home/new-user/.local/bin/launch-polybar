@@ -7,4 +7,4 @@
     while pgrep -x polybar > /dev/null; do sleep 0.1; done
     polybar mybar &
     sleep 1
-) 9>/tmp/polybar-launch.lock
+) 9>"/tmp/polybar-launch-${USER:-$(id -un)}.lock"
