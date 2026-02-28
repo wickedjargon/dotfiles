@@ -53,14 +53,8 @@ apply-theme &
 # Launch SXHKD (keybinding daemon)
 pgrep -x sxhkd > /dev/null || SXHKD_SHELL=/bin/bash sxhkd &
 
-# Launch Polybar (flock serializes, kill-all handles restarts)
-(
-    flock 9
-    killall -9 polybar 2>/dev/null
-    while pgrep -x polybar > /dev/null; do sleep 0.1; done
-    polybar mybar &
-    sleep 1
-) 9>/tmp/polybar-launch.lock
+# Launch Polybar
+launch-polybar &
 
 # set Qalculate-gtk to float
 bspc rule -a Qalculate-gtk state=floating center=on rectangle=716x470+0+0
