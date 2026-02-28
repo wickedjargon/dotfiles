@@ -1382,7 +1382,7 @@ def main_tui(stdscr):
 
         if success:
             # Success - show backup info if any
-            row += 1
+            pass
             if dotfiles_backup_dir and dotfiles_backed_up:
                 tui.show_message(
                     row, 4, f"Backed up existing files to: {dotfiles_backup_dir.name}"
@@ -1485,7 +1485,7 @@ def main_tui(stdscr):
 
         if success:
             # Success - continue to dotfiles
-            row += 1
+            pass
         else:
             failed_packages = result
             row += 1
@@ -1516,7 +1516,7 @@ def main_tui(stdscr):
         return
     else:
         tui.show_progress(row, "Deploying from root/...", success=True)
-        row += 2
+        row += 1
 
         # Show backup info if files were backed up
         if backup_dir and backed_up_items:
@@ -1542,7 +1542,7 @@ def main_tui(stdscr):
 
         if success:
             # Success - continue
-            row += 1
+            pass
         else:
             row += 1
             tui.show_message(
