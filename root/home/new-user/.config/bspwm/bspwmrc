@@ -53,8 +53,14 @@ apply-theme &
 # Launch SXHKD (keybinding daemon)
 pgrep -x sxhkd > /dev/null || SXHKD_SHELL=/bin/bash sxhkd &
 
-# Launch Polybar
-pgrep -x polybar > /dev/null || polybar mybar &
+# Launch Polybar (flock serializes, kill-all handles restarts)
+(
+    flock 9
+    killall -q polybar
+    while pgrep -x polybar > /dev/null; do sleep 0.1; done
+    polybar mybar &
+    sleep 1
+) 9>/tmp/polybar-launch.lock
 
 # set Qalculate-gtk to float
 bspc rule -a Qalculate-gtk state=floating center=on rectangle=716x470+0+0
@@ -86,6 +92,7 @@ bspc rule -a Transmission-gtk state=floating center=on rectangle=900x600+0+0
 # AUTO-LAYER SCRIPT
 # Automatically lower floating windows when they lose focus, raise them when focused.
 # -----------------------------------------------------------------------------
+# shellcheck disable=SC2034
 bspc subscribe node_focus | while read -r _ _ _ node_id; do
     # 1. Find all floating windows on the current desktop that are NOT focused
     #    and set their layer to 'below'. They will disappear behind tiled windows.
