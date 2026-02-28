@@ -56,7 +56,7 @@ pgrep -x sxhkd > /dev/null || SXHKD_SHELL=/bin/bash sxhkd &
 # Launch Polybar (flock serializes, kill-all handles restarts)
 (
     flock 9
-    killall -q polybar
+    killall -9 polybar 2>/dev/null
     while pgrep -x polybar > /dev/null; do sleep 0.1; done
     polybar mybar &
     sleep 1
