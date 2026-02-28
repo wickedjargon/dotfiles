@@ -126,27 +126,27 @@ class DeploymentTUI:
             pass  # Silently ignore any remaining curses errors
 
     def get_input(self, prompt, y, x):
-        """Get user input with prompt"""
+        """Get user input with prompt on the same line"""
         self.show_message(y, x, prompt, color_pair=4, bold=True)
         self.stdscr.refresh()
 
         curses.echo()
-        input_y = y + 1
-        self.stdscr.move(input_y, x)
-        user_input = self.stdscr.getstr(input_y, x, 30).decode("utf-8").strip()
+        input_x = x + len(prompt)
+        self.stdscr.move(y, input_x)
+        user_input = self.stdscr.getstr(y, input_x, 30).decode("utf-8").strip()
         curses.noecho()
 
         return user_input
 
     def get_password(self, prompt, y, x):
-        """Get password input without echoing"""
+        """Get password input without echoing, on the same line as prompt"""
         self.show_message(y, x, prompt, color_pair=4, bold=True)
         self.stdscr.refresh()
 
         curses.noecho()
-        input_y = y + 1
-        self.stdscr.move(input_y, x)
-        password = self.stdscr.getstr(input_y, x, 50).decode("utf-8").strip()
+        input_x = x + len(prompt)
+        self.stdscr.move(y, input_x)
+        password = self.stdscr.getstr(y, input_x, 50).decode("utf-8").strip()
 
         return password
 
@@ -1271,21 +1271,21 @@ def main_tui(stdscr):
 
     # Welcome screen
     tui.draw_header("DOTFILES DEPLOYMENT")
-    username = tui.get_input("Enter username to create:", 4, 4)
+    username = tui.get_input("username: ", 4, 4)
 
     if not username:
-        tui.show_message(8, 4, "No username provided. Exiting.", color_pair=3)
-        tui.show_message(9, 4, "Press any key to exit...")
+        tui.show_message(6, 4, "No username provided. Exiting.", color_pair=3)
+        tui.show_message(7, 4, "Press any key to exit...")
         stdscr.getch()
         return
 
     # Validate username (lowercase letters, digits, underscore, hyphen; must start with letter or underscore)
     if not re.match(r"^[a-z_][a-z0-9_-]*[$]?$", username):
-        tui.show_message(8, 4, "Invalid username format.", color_pair=3)
+        tui.show_message(6, 4, "Invalid username format.", color_pair=3)
         tui.show_message(
-            9, 4, "Must start with lowercase letter or underscore.", color_pair=3
+            7, 4, "Must start with lowercase letter or underscore.", color_pair=3
         )
-        tui.show_message(10, 4, "Press any key to exit...")
+        tui.show_message(8, 4, "Press any key to exit...")
         stdscr.getch()
         return
 
@@ -1294,8 +1294,8 @@ def main_tui(stdscr):
     user_created = False
 
     if user_exists(username):
-        tui.show_message(8, 4, f"User '{username}' already exists.", color_pair=4)
-        tui.show_message(9, 4, "Continue with deployment? (y/n): ", color_pair=4)
+        tui.show_message(6, 4, f"User '{username}' already exists.", color_pair=4)
+        tui.show_message(7, 4, "Continue with deployment? (y/n): ", color_pair=4)
         tui.stdscr.refresh()
         response = stdscr.getch()
         if chr(response).lower() != "y":
@@ -1303,17 +1303,17 @@ def main_tui(stdscr):
         user_created = False
     else:
         # Get password for new user
-        password = tui.get_password("Enter password for new user:", 7, 4)
+        password = tui.get_password("password: ", 5, 4)
         if not password:
-            tui.show_message(10, 4, "No password provided. Exiting.", color_pair=3)
-            tui.show_message(11, 4, "Press any key to exit...")
+            tui.show_message(7, 4, "No password provided. Exiting.", color_pair=3)
+            tui.show_message(8, 4, "Press any key to exit...")
             stdscr.getch()
             return
 
-        password_confirm = tui.get_password("Confirm password:", 10, 4)
+        password_confirm = tui.get_password("password: ", 6, 4)
         if password != password_confirm:
-            tui.show_message(13, 4, "Passwords do not match. Exiting.", color_pair=3)
-            tui.show_message(14, 4, "Press any key to exit...")
+            tui.show_message(8, 4, "Passwords do not match. Exiting.", color_pair=3)
+            tui.show_message(9, 4, "Press any key to exit...")
             stdscr.getch()
             return
         user_created = True
