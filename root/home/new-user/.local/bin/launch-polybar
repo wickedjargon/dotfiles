@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Launch Polybar (flock serializes concurrent requests, kill-all handles restarts)
+(
+    flock 9
+    killall -9 polybar 2>/dev/null
+    while pgrep -x polybar > /dev/null; do sleep 0.1; done
+    polybar mybar &
+    sleep 1
+) 9>/tmp/polybar-launch.lock

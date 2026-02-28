@@ -73,14 +73,24 @@ THEMES = {
         "alacritty_bg": "#0d0e1c",
         "alacritty_fg": "#ebdbb2",
         "alacritty_normal": {
-            "black": "#1d2021", "red": "#cc241d", "green": "#98971a",
-            "yellow": "#d79921", "blue": "#458588", "magenta": "#b16286",
-            "cyan": "#689d6a", "white": "#a89984",
+            "black": "#1d2021",
+            "red": "#cc241d",
+            "green": "#98971a",
+            "yellow": "#d79921",
+            "blue": "#458588",
+            "magenta": "#b16286",
+            "cyan": "#689d6a",
+            "white": "#a89984",
         },
         "alacritty_bright": {
-            "black": "#928374", "red": "#fb4934", "green": "#b8bb26",
-            "yellow": "#fabd2f", "blue": "#83a598", "magenta": "#d3869b",
-            "cyan": "#8ec07c", "white": "#ebdbb2",
+            "black": "#928374",
+            "red": "#fb4934",
+            "green": "#b8bb26",
+            "yellow": "#fabd2f",
+            "blue": "#83a598",
+            "magenta": "#d3869b",
+            "cyan": "#8ec07c",
+            "white": "#ebdbb2",
         },
         # Rofi
         "rofi_bg": "#000000",
@@ -141,14 +151,24 @@ THEMES = {
         "alacritty_bg": "#fbf1c7",
         "alacritty_fg": "#3c3836",
         "alacritty_normal": {
-            "black": "#fbf1c7", "red": "#cc241d", "green": "#98971a",
-            "yellow": "#d79921", "blue": "#458588", "magenta": "#b16286",
-            "cyan": "#689d6a", "white": "#7c6f64",
+            "black": "#fbf1c7",
+            "red": "#cc241d",
+            "green": "#98971a",
+            "yellow": "#d79921",
+            "blue": "#458588",
+            "magenta": "#b16286",
+            "cyan": "#689d6a",
+            "white": "#7c6f64",
         },
         "alacritty_bright": {
-            "black": "#928374", "red": "#9d0006", "green": "#79740e",
-            "yellow": "#b57614", "blue": "#076678", "magenta": "#8f3f71",
-            "cyan": "#427b58", "white": "#3c3836",
+            "black": "#928374",
+            "red": "#9d0006",
+            "green": "#79740e",
+            "yellow": "#b57614",
+            "blue": "#076678",
+            "magenta": "#8f3f71",
+            "cyan": "#427b58",
+            "white": "#3c3836",
         },
         # Rofi
         "rofi_bg": "#E8E8EE",
@@ -226,10 +246,14 @@ def switch_gtk3(theme):
     """Update ~/.config/gtk-3.0/settings.ini"""
     path = os.path.join(HOME, ".config", "gtk-3.0", "settings.ini")
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    set_ini_values(path, "Settings", {
-        "gtk-theme-name": theme["gtk_theme"],
-        "gtk-application-prefer-dark-theme": theme["gtk_prefer_dark"],
-    })
+    set_ini_values(
+        path,
+        "Settings",
+        {
+            "gtk-theme-name": theme["gtk_theme"],
+            "gtk-application-prefer-dark-theme": theme["gtk_prefer_dark"],
+        },
+    )
     print(f"  gtk-3.0 → {theme['gtk_theme']}")
 
 
@@ -237,10 +261,14 @@ def switch_gtk4(theme):
     """Update ~/.config/gtk-4.0/settings.ini"""
     path = os.path.join(HOME, ".config", "gtk-4.0", "settings.ini")
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    set_ini_values(path, "Settings", {
-        "gtk-theme-name": theme["gtk_theme"],
-        "gtk-application-prefer-dark-theme": theme["gtk_prefer_dark"],
-    })
+    set_ini_values(
+        path,
+        "Settings",
+        {
+            "gtk-theme-name": theme["gtk_theme"],
+            "gtk-application-prefer-dark-theme": theme["gtk_prefer_dark"],
+        },
+    )
     print(f"  gtk-4.0 → {theme['gtk_theme']}")
 
 
@@ -275,14 +303,24 @@ def switch_gsettings(theme):
     """Set GNOME color-scheme and gtk-theme via gsettings."""
     try:
         subprocess.run(
-            ["gsettings", "set", "org.gnome.desktop.interface",
-             "color-scheme", theme["color_scheme"]],
+            [
+                "gsettings",
+                "set",
+                "org.gnome.desktop.interface",
+                "color-scheme",
+                theme["color_scheme"],
+            ],
             check=True,
             capture_output=True,
         )
         subprocess.run(
-            ["gsettings", "set", "org.gnome.desktop.interface",
-             "gtk-theme", theme["gtk_theme"]],
+            [
+                "gsettings",
+                "set",
+                "org.gnome.desktop.interface",
+                "gtk-theme",
+                theme["gtk_theme"],
+            ],
             check=True,
             capture_output=True,
         )
@@ -299,10 +337,13 @@ def switch_polybar(theme):
     if not os.path.exists(path):
         print("  polybar → skipped (config not found)")
         return
-    replace_in_file(path, [
-        (r'(background\s*=\s*)#[0-9a-fA-F]+', rf'\1{theme["polybar_bg"]}'),
-        (r'(foreground\s*=\s*)#[0-9a-fA-F]+', rf'\1{theme["polybar_fg"]}'),
-    ])
+    replace_in_file(
+        path,
+        [
+            (r"(background\s*=\s*)#[0-9a-fA-F]+", rf'\1{theme["polybar_bg"]}'),
+            (r"(foreground\s*=\s*)#[0-9a-fA-F]+", rf'\1{theme["polybar_fg"]}'),
+        ],
+    )
     print(f"  polybar → bg:{theme['polybar_bg']} fg:{theme['polybar_fg']}")
 
 
@@ -312,16 +353,18 @@ def switch_polybar_bspwm(theme):
     if not os.path.exists(path):
         print("  polybar/bspwm_custom.sh → skipped (not found)")
         return
-    replace_in_file(path, [
-        (r'(COLOR_FOCUSED_UNDERLINE=)"#[0-9a-fA-F]+"',
-         rf'\1"{theme["poly_focused_underline"]}"'),
-        (r'(COLOR_FOREGROUND=)"#[0-9a-fA-F]+"',
-         rf'\1"{theme["poly_foreground"]}"'),
-        (r'(COLOR_EMPTY=)"#[0-9a-fA-F]+"',
-         rf'\1"{theme["poly_empty"]}"'),
-        (r'(COLOR_URGENT=)"#[0-9a-fA-F]+"',
-         rf'\1"{theme["poly_urgent"]}"'),
-    ])
+    replace_in_file(
+        path,
+        [
+            (
+                r'(COLOR_FOCUSED_UNDERLINE=)"#[0-9a-fA-F]+"',
+                rf'\1"{theme["poly_focused_underline"]}"',
+            ),
+            (r'(COLOR_FOREGROUND=)"#[0-9a-fA-F]+"', rf'\1"{theme["poly_foreground"]}"'),
+            (r'(COLOR_EMPTY=)"#[0-9a-fA-F]+"', rf'\1"{theme["poly_empty"]}"'),
+            (r'(COLOR_URGENT=)"#[0-9a-fA-F]+"', rf'\1"{theme["poly_urgent"]}"'),
+        ],
+    )
     print("  polybar/bspwm_custom.sh → updated")
 
 
@@ -331,20 +374,33 @@ def switch_bspwm(theme):
     run_quiet(["bspc", "config", "normal_border_color", theme["bspwm_normal_border"]])
     run_quiet(["bspc", "config", "active_border_color", theme["bspwm_active_border"]])
     run_quiet(["bspc", "config", "focused_border_color", theme["bspwm_focused_border"]])
-    run_quiet(["bspc", "config", "presel_feedback_color", theme["bspwm_presel_feedback"]])
+    run_quiet(
+        ["bspc", "config", "presel_feedback_color", theme["bspwm_presel_feedback"]]
+    )
     # Update config file
     path = os.path.join(HOME, ".config", "bspwm", "bspwmrc")
     if os.path.exists(path):
-        replace_in_file(path, [
-            (r'(normal_border_color\s+)"#[0-9a-fA-F]+"',
-             rf'\1"{theme["bspwm_normal_border"]}"'),
-            (r'(active_border_color\s+)"#[0-9a-fA-F]+"',
-             rf'\1"{theme["bspwm_active_border"]}"'),
-            (r'(focused_border_color\s+)"#[0-9a-fA-F]+"',
-             rf'\1"{theme["bspwm_focused_border"]}"'),
-            (r'(presel_feedback_color\s+)"#[0-9a-fA-F]+"',
-             rf'\1"{theme["bspwm_presel_feedback"]}"'),
-        ])
+        replace_in_file(
+            path,
+            [
+                (
+                    r'(normal_border_color\s+)"#[0-9a-fA-F]+"',
+                    rf'\1"{theme["bspwm_normal_border"]}"',
+                ),
+                (
+                    r'(active_border_color\s+)"#[0-9a-fA-F]+"',
+                    rf'\1"{theme["bspwm_active_border"]}"',
+                ),
+                (
+                    r'(focused_border_color\s+)"#[0-9a-fA-F]+"',
+                    rf'\1"{theme["bspwm_focused_border"]}"',
+                ),
+                (
+                    r'(presel_feedback_color\s+)"#[0-9a-fA-F]+"',
+                    rf'\1"{theme["bspwm_presel_feedback"]}"',
+                ),
+            ],
+        )
     print("  bspwm → borders updated")
 
 
@@ -363,13 +419,23 @@ def switch_xob(theme):
     sections = [
         ("normal", theme["xob_fg"], theme["xob_bg"], theme["xob_border"]),
         ("alt", theme["xob_alt_fg"], theme["xob_bg"], theme["xob_border"]),
-        ("overflow", theme["xob_overflow_fg"], theme["xob_bg"], theme["xob_overflow_border"]),
-        ("altoverflow", theme["xob_altoverflow_fg"], theme["xob_bg"], theme["xob_altoverflow_border"]),
+        (
+            "overflow",
+            theme["xob_overflow_fg"],
+            theme["xob_bg"],
+            theme["xob_overflow_border"],
+        ),
+        (
+            "altoverflow",
+            theme["xob_altoverflow_fg"],
+            theme["xob_bg"],
+            theme["xob_altoverflow_border"],
+        ),
     ]
     for name, fg, bg, border in sections:
         # Match the named section and its three color values
         pattern = (
-            rf'({name}\s*=\s*{{\s*'
+            rf"({name}\s*=\s*{{\s*"
             rf'fg\s*=\s*)"#[0-9a-fA-F]+"'
             rf'(;\s*bg\s*=\s*)"#[0-9a-fA-F]+"'
             rf'(;\s*border\s*=\s*)"#[0-9a-fA-F]+"'
@@ -392,16 +458,18 @@ def switch_dunst(theme):
     # Replace urgency_low and urgency_normal (same colors)
     for section in ("urgency_low", "urgency_normal"):
         pattern = (
-            rf'(\[{section}\]\s*'
+            rf"(\[{section}\]\s*"
             rf'background\s*=\s*)"#[0-9a-fA-F]+"'
             rf'(\s*frame_color\s*=\s*)"#[0-9a-fA-F]+"'
             rf'(\s*foreground\s*=\s*)"#[0-9a-fA-F]+"'
         )
-        repl = rf'\1"{theme["dunst_bg"]}"\2"{theme["dunst_frame"]}"\3"{theme["dunst_fg"]}"'
+        repl = (
+            rf'\1"{theme["dunst_bg"]}"\2"{theme["dunst_frame"]}"\3"{theme["dunst_fg"]}"'
+        )
         content = re.sub(pattern, repl, content, flags=re.DOTALL)
     # Replace urgency_critical
     pattern = (
-        r'(\[urgency_critical\]\s*'
+        r"(\[urgency_critical\]\s*"
         r'background\s*=\s*)"#[0-9a-fA-F]+"'
         r'(\s*frame_color\s*=\s*)"#[0-9a-fA-F]+"'
         r'(\s*foreground\s*=\s*)"#[0-9a-fA-F]+"'
@@ -419,23 +487,25 @@ def switch_dmenu(theme):
     if not os.path.exists(path):
         print("  dmenu → skipped (config not found)")
         return
-    replace_in_file(path, [
-        (r'-nb\s+#[0-9a-fA-F]+', f'-nb {theme["dmenu_nb"]}'),
-        (r'-nf\s+#[0-9a-fA-F]+', f'-nf {theme["dmenu_nf"]}'),
-        (r'-sb\s+#[0-9a-fA-F]+', f'-sb {theme["dmenu_sb"]}'),
-        (r'-sf\s+#[0-9a-fA-F]+', f'-sf {theme["dmenu_sf"]}'),
-    ])
+    replace_in_file(
+        path,
+        [
+            (r"-nb\s+#[0-9a-fA-F]+", f'-nb {theme["dmenu_nb"]}'),
+            (r"-nf\s+#[0-9a-fA-F]+", f'-nf {theme["dmenu_nf"]}'),
+            (r"-sb\s+#[0-9a-fA-F]+", f'-sb {theme["dmenu_sb"]}'),
+            (r"-sf\s+#[0-9a-fA-F]+", f'-sf {theme["dmenu_sf"]}'),
+        ],
+    )
     print(f"  dmenu → nb:{theme['dmenu_nb']} nf:{theme['dmenu_nf']}")
 
 
 def restart_services():
     """Restart desktop services to pick up theme changes."""
     print("  Restarting services...")
-    # Polybar
-    run_quiet(["killall", "polybar"])
+    # Polybar - use synchronized launcher
     try:
         subprocess.Popen(
-            ["polybar", "mybar"],
+            ["launch-polybar"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -494,8 +564,13 @@ def restart_xdg_portal():
     """Restart xdg-desktop-portal-gtk to pick up theme changes."""
     try:
         subprocess.run(
-            ["systemctl", "--user", "restart",
-             "xdg-desktop-portal-gtk", "xdg-desktop-portal"],
+            [
+                "systemctl",
+                "--user",
+                "restart",
+                "xdg-desktop-portal-gtk",
+                "xdg-desktop-portal",
+            ],
             capture_output=True,
             timeout=10,
         )
@@ -512,20 +587,32 @@ def switch_alacritty(theme):
     if not os.path.exists(path):
         print("  alacritty → skipped (config not found)")
         return
-    replace_in_file(path, [
-        (r'(\[colors\.primary\]\s*background\s*=\s*)"#[0-9a-fA-F]+"',
-         rf'\1"{theme["alacritty_bg"]}"'),
-        (r'(\[colors\.primary\]\s*background\s*=\s*"[^"]+"\s*foreground\s*=\s*)"#[0-9a-fA-F]+"',
-         rf'\1"{theme["alacritty_fg"]}"'),
-    ])
+    replace_in_file(
+        path,
+        [
+            (
+                r'(\[colors\.primary\]\s*background\s*=\s*)"#[0-9a-fA-F]+"',
+                rf'\1"{theme["alacritty_bg"]}"',
+            ),
+            (
+                r'(\[colors\.primary\]\s*background\s*=\s*"[^"]+"\s*foreground\s*=\s*)"#[0-9a-fA-F]+"',
+                rf'\1"{theme["alacritty_fg"]}"',
+            ),
+        ],
+    )
     # Replace normal and bright ANSI colors
     for section in ("normal", "bright"):
         colors = theme[f"alacritty_{section}"]
         for name, val in colors.items():
-            replace_in_file(path, [
-                (rf'(\[colors\.{section}\][\s\S]*?{name}\s*=\s*)"#[0-9a-fA-F]+"',
-                 rf'\1"{val}"'),
-            ])
+            replace_in_file(
+                path,
+                [
+                    (
+                        rf'(\[colors\.{section}\][\s\S]*?{name}\s*=\s*)"#[0-9a-fA-F]+"',
+                        rf'\1"{val}"',
+                    ),
+                ],
+            )
     print(f"  alacritty → bg:{theme['alacritty_bg']} fg:{theme['alacritty_fg']}")
 
 
@@ -535,14 +622,23 @@ def switch_rofi(theme):
     if not os.path.exists(path):
         print("  rofi → skipped (config not found)")
         return
-    replace_in_file(path, [
-        (r'(background:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_bg"]}'),
-        (r'(foreground:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_fg"]}'),
-        (r'(selected-background:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_sel_bg"]}'),
-        (r'(selected-foreground:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_sel_fg"]}'),
-        (r'(border-color:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_border"]}'),
-        (r'(separator-color:\s*)#[0-9a-fA-F]+', rf'\g<1>{theme["rofi_border"]}'),
-    ])
+    replace_in_file(
+        path,
+        [
+            (r"(background:\s*)#[0-9a-fA-F]+", rf'\g<1>{theme["rofi_bg"]}'),
+            (r"(foreground:\s*)#[0-9a-fA-F]+", rf'\g<1>{theme["rofi_fg"]}'),
+            (
+                r"(selected-background:\s*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["rofi_sel_bg"]}',
+            ),
+            (
+                r"(selected-foreground:\s*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["rofi_sel_fg"]}',
+            ),
+            (r"(border-color:\s*)#[0-9a-fA-F]+", rf'\g<1>{theme["rofi_border"]}'),
+            (r"(separator-color:\s*)#[0-9a-fA-F]+", rf'\g<1>{theme["rofi_border"]}'),
+        ],
+    )
     print(f"  rofi → bg:{theme['rofi_bg']} fg:{theme['rofi_fg']}")
 
 
@@ -555,14 +651,10 @@ def switch_wallpaper(theme):
         subprocess.run(
             ["convert", "-size", "1x1", f"xc:{color}", bg_path],
             check=True,
-            capture_output=True
+            capture_output=True,
         )
         # Set it as wallpaper using feh
-        subprocess.run(
-            ["feh", "--bg-scale", bg_path],
-            check=True,
-            capture_output=True
-        )
+        subprocess.run(["feh", "--bg-scale", bg_path], check=True, capture_output=True)
         print(f"  wallpaper → {color}")
     except FileNotFoundError:
         print("  wallpaper → skipped (feh or imagemagick not found)")
@@ -576,9 +668,12 @@ def switch_calibre(theme):
     if not os.path.exists(path):
         print("  calibre → skipped (config not found)")
         return
-    replace_in_file(path, [
-        (r'("current_color_scheme":\s*)"[^"]+"', rf'\1"{theme["calibre_theme"]}"'),
-    ])
+    replace_in_file(
+        path,
+        [
+            (r'("current_color_scheme":\s*)"[^"]+"', rf'\1"{theme["calibre_theme"]}"'),
+        ],
+    )
     print(f"  calibre → {theme['calibre_theme']}")
 
 
@@ -588,14 +683,29 @@ def switch_zathura(theme):
     if not os.path.exists(path):
         print("  zathura → skipped (config not found)")
         return
-    replace_in_file(path, [
-        (r'(set\s+recolor-darkcolor\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_fg"]}'),
-        (r'(set\s+default-fg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_fg"]}'),
-        (r'(set\s+recolor-lightcolor\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
-        (r'(set\s+default-bg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
-        (r'(set\s+statusbar-bg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_bg"]}'),
-        (r'(set\s+statusbar-fg\s+\\*)#[0-9a-fA-F]+', rf'\g<1>{theme["zathura_fg"]}'),
-    ])
+    replace_in_file(
+        path,
+        [
+            (
+                r"(set\s+recolor-darkcolor\s+\\*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["zathura_fg"]}',
+            ),
+            (r"(set\s+default-fg\s+\\*)#[0-9a-fA-F]+", rf'\g<1>{theme["zathura_fg"]}'),
+            (
+                r"(set\s+recolor-lightcolor\s+\\*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["zathura_bg"]}',
+            ),
+            (r"(set\s+default-bg\s+\\*)#[0-9a-fA-F]+", rf'\g<1>{theme["zathura_bg"]}'),
+            (
+                r"(set\s+statusbar-bg\s+\\*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["zathura_bg"]}',
+            ),
+            (
+                r"(set\s+statusbar-fg\s+\\*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["zathura_fg"]}',
+            ),
+        ],
+    )
     print(f"  zathura → bg:{theme['zathura_bg']} fg:{theme['zathura_fg']}")
 
 
