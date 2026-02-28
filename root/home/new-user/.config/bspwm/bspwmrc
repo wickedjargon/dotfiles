@@ -54,7 +54,7 @@ apply-theme &
 pgrep -x sxhkd > /dev/null || SXHKD_SHELL=/bin/bash sxhkd &
 
 # Launch Polybar
-launch-polybar &
+~/.local/bin/launch-polybar &
 
 # set Qalculate-gtk to float
 bspc rule -a Qalculate-gtk state=floating center=on rectangle=716x470+0+0
