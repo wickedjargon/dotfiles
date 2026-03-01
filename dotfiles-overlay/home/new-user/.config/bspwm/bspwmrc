@@ -46,15 +46,23 @@ bspc config pointer_follows_focus false
 
 
 #### AUTOSTART ####
-systemctl --user import-environment DISPLAY XAUTHORITY
-systemctl --user restart xdg-desktop-portal-gtk xdg-desktop-portal
-apply-theme &
+# Only run autostart on initial bspwm launch (arg 0 or empty),
+# not on bspwm internal restarts (arg 3) which would pile up processes.
+if [ "${1:-0}" = "0" ]; then
+	systemctl --user import-environment DISPLAY XAUTHORITY
+	systemctl --user restart xdg-desktop-portal-gtk xdg-desktop-portal
 
-# Launch SXHKD (keybinding daemon)
-pgrep -x sxhkd > /dev/null || SXHKD_SHELL=/bin/bash sxhkd &
+	# Apply theme colors to config files BEFORE starting polybar.
+	# --no-restart prevents the theme script from also launching polybar,
+	# ensuring only one polybar instance is ever started.
+	apply-theme --no-restart 2>/dev/null
 
-# Launch Polybar
-~/.local/bin/launch-polybar &
+	# Launch SXHKD (keybinding daemon)
+	pgrep -x sxhkd > /dev/null || SXHKD_SHELL=/bin/bash sxhkd &
+
+	# Launch Polybar (single launch point — the ONLY place polybar starts on login)
+	~/.local/bin/launch-polybar &
+fi
 
 # set Qalculate-gtk to float
 bspc rule -a Qalculate-gtk state=floating center=on rectangle=716x470+0+0

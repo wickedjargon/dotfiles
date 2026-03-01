@@ -712,8 +712,14 @@ def switch_zathura(theme):
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 
-def apply_theme(mode):
-    """Apply the given theme mode ('dark' or 'light')."""
+def apply_theme(mode, no_restart=False):
+    """Apply the given theme mode ('dark' or 'light').
+
+    Args:
+        mode: 'dark' or 'light'
+        no_restart: If True, skip restarting services (polybar, dunst, xob).
+                    Used by bspwmrc to update config files before polybar starts.
+    """
     theme = THEMES[mode]
     print(f"Switching to {mode} theme:")
 
@@ -733,7 +739,8 @@ def apply_theme(mode):
     switch_xob(theme)
     switch_dunst(theme)
     switch_dmenu(theme)
-    restart_services()
+    if not no_restart:
+        restart_services()
 
     # Milestone 3: Editors & portal
     switch_antigravity(theme)
@@ -756,6 +763,12 @@ def main():
     group.add_argument("--dark", action="store_true", help="Switch to dark theme")
     group.add_argument("--light", action="store_true", help="Switch to light theme")
     group.add_argument("--toggle", action="store_true", help="Toggle theme")
+    parser.add_argument(
+        "--no-restart",
+        action="store_true",
+        help="Skip restarting services (polybar, dunst, xob). "
+        "Used during bspwm startup to update configs before polybar launches.",
+    )
 
     args = parser.parse_args()
 
@@ -767,7 +780,7 @@ def main():
         current = read_state()
         mode = "light" if current == "dark" else "dark"
 
-    apply_theme(mode)
+    apply_theme(mode, no_restart=args.no_restart)
 
 
 if __name__ == "__main__":
