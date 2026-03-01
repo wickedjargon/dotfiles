@@ -11,7 +11,7 @@ Here are my dotfiles intended for use on a Debian-based system. This repo is mai
 | `dotfiles-overlay/` | Filesystem mirror copied to matching system paths |
 | `dotfiles-patches/` | Patches applied to system files post-deploy |
 | `firefox/` | Firefox extensions and `user.js` config |
-| `packages/` | Package lists (apt, AUR, third-party, git source) |
+| `packages/` | Package lists |
 | `scripts/` | Install and setup helper scripts |
 | `tests-live/` | Shell-based integration tests |
 | `tests-unit/` | Python unit tests |
