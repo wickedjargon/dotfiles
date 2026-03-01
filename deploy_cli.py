@@ -254,14 +254,14 @@ def dry_run_preview(args, script_dir):
         )
 
     # Root deployment
-    root_dir = script_dir / "root"
-    if root_dir.exists():
-        file_count = sum(1 for _ in root_dir.rglob("*") if _.is_file())
+    overlay_dir = script_dir / "dotfiles-overlay"
+    if overlay_dir.exists():
+        file_count = sum(1 for _ in overlay_dir.rglob("*") if _.is_file())
         steps.append(
             {
-                "step": "deploy_root",
+                "step": "deploy_overlay",
                 "action": "copy",
-                "detail": f"Deploy {file_count} files from root/",
+                "detail": f"Deploy {file_count} files from dotfiles-overlay/",
             }
         )
 
@@ -289,7 +289,7 @@ def dry_run_preview(args, script_dir):
         )
 
     # Patches
-    patches_dir = script_dir / "patches"
+    patches_dir = script_dir / "dotfiles-patches"
     if patches_dir.exists():
         patch_count = sum(1 for _ in patches_dir.rglob("*") if _.is_file())
         steps.append(
@@ -642,17 +642,17 @@ def main(argv=None):
             had_errors = True
             row += 3
 
-    # ── Deploy root/ files ─────────────────────────────────────────
+    # ── Deploy dotfiles-overlay/ files ──────────────────────────────
 
-    cli.show_progress(row, "Deploying from root/...", success=None)
+    cli.show_progress(row, "Deploying from dotfiles-overlay/...", success=None)
 
-    success, error, backup_dir, backed_up_items = deploy.deploy_root(
+    success, error, backup_dir, backed_up_items = deploy.deploy_overlay(
         username, script_dir
     )
 
     if not success:
-        cli.show_progress(row, "Deploying from root/...", success=False)
-        err = f"Failed to deploy from root/: {error}"
+        cli.show_progress(row, "Deploying from dotfiles-overlay/...", success=False)
+        err = f"Failed to deploy from dotfiles-overlay/: {error}"
         json_result["success"] = False
         json_result["errors"].append(err)
         if args.json:
@@ -661,7 +661,7 @@ def main(argv=None):
             print(f"\033[31m  Error: {error}\033[0m")
         sys.exit(1)
     else:
-        cli.show_progress(row, "Deploying from root/...", success=True)
+        cli.show_progress(row, "Deploying from dotfiles-overlay/...", success=True)
         row += 2
         if backup_dir and backed_up_items:
             if not args.json:
@@ -708,7 +708,7 @@ def main(argv=None):
 
     cli.show_progress(row, "Applying system patches...", success=None)
 
-    success, error = deploy.deploy_patches(script_dir)
+    success, error = deploy.deploy_patches_to_system(script_dir)
 
     if not success:
         cli.show_progress(row, "Applying system patches...", success=False)

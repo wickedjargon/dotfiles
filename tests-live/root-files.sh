@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Verify: all files from root/ overlay are deployed with correct ownership.
+# Verify: all files from dotfiles-overlay/ are deployed with correct ownership.
 
 TARGET_USER="$1"
 if [ -z "$TARGET_USER" ]; then
@@ -9,10 +9,10 @@ if [ -z "$TARGET_USER" ]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
-ROOT_DIR="$SCRIPT_DIR/root"
+ROOT_DIR="$SCRIPT_DIR/dotfiles-overlay"
 
 if [ ! -d "$ROOT_DIR" ]; then
-    echo "No root overlay directory. Skipping."
+    echo "No dotfiles-overlay directory. Skipping."
     exit 0
 fi
 
@@ -29,7 +29,7 @@ THEME_MANAGED="
 .config/Antigravity/User/settings.json
 "
 
-echo "Testing root file overlays..."
+echo "Testing dotfiles-overlay file deployments..."
 
 fail_flag=$(mktemp)
 echo 0 > "$fail_flag"
@@ -85,5 +85,5 @@ FAILED=$(cat "$fail_flag")
 rm -f "$fail_flag"
 
 [ "$FAILED" -eq 1 ] && exit 1
-echo "All root overlays verified."
+echo "All dotfiles-overlay files verified."
 exit 0
