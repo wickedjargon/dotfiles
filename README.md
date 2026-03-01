@@ -2,7 +2,20 @@
 
 Here are my dotfiles intended for use on a Debian-based system. This repo is mainly for my own use, but feel free to test run them on your own system.
 
-I
+## Repository Structure
+
+| Path | Description |
+|---|---|
+| `deploy.py` | TUI that deploys dotfiles and installs packages |
+| `deploy_cli.py` | CLI that deploys dotfiles and installs packages |
+| `dotfiles-overlay/` | Filesystem mirror copied to matching system paths |
+| `dotfiles-patches/` | Patches applied to system files post-deploy |
+| `firefox/` | Firefox extensions and `user.js` config |
+| `packages/` | Package lists (apt, AUR, third-party, git source) |
+| `scripts/` | Install and setup helper scripts |
+| `tests-live/` | Shell-based integration tests |
+| `tests-unit/` | Python unit tests |
+
 
 ## Deployment
 
