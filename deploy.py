@@ -1522,8 +1522,8 @@ def main_tui(stdscr):
     # Install Tor Browser
     success, error, row = install_tor_browser(username, script_dir, tui, row)
     if not success:
-        error_first_line = error.splitlines()[0] if error else "Unknown"
-        tui.show_message(row, 4, f"Error: {error_first_line[:50]}...", color_pair=3)
+        error_last_line = error.strip().splitlines()[-1] if error else "Unknown"
+        tui.show_message(row, 4, f"Error: {error_last_line[:50]}...", color_pair=3)
         tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
         tui.stdscr.refresh()
         response = stdscr.getch()
@@ -1584,8 +1584,8 @@ def main_tui(stdscr):
     # Install Firefox user.js
     success, error, row = install_firefox_userjs(username, script_dir, tui, row)
     if not success:
-        error_first_line = error.splitlines()[0] if error else "Unknown"
-        tui.show_message(row, 4, f"Error: {error_first_line[:50]}...", color_pair=3)
+        error_last_line = error.strip().splitlines()[-1] if error else "Unknown"
+        tui.show_message(row, 4, f"Error: {error_last_line[:50]}...", color_pair=3)
         tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
         tui.stdscr.refresh()
         response = stdscr.getch()
