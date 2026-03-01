@@ -1472,7 +1472,7 @@ def main_tui(stdscr):
             row += 3
 
     # Deploy all files from root/ (dotfiles + system configs)
-    tui.show_progress(row, "Deploying from root/...", success=None)
+    tui.show_progress(row, "Deploying from root directory...", success=None)
     tui.stdscr.refresh()
 
     success, error, backup_dir, backed_up_items = deploy_root(username, script_dir)
