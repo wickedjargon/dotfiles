@@ -1,9 +1,11 @@
 #!/bin/sh
 
 # Launch Polybar (flock serializes concurrent requests, kill-all handles restarts)
+# Also kills orphaned bspwm_custom.sh processes left by previous polybar instances.
 (
     flock 9
     killall -9 polybar 2>/dev/null
+    pkill -f 'bspwm_custom\.sh' 2>/dev/null
     while pgrep -x polybar > /dev/null; do sleep 0.1; done
     polybar mybar &
     sleep 1

@@ -1,11 +1,19 @@
 #!/bin/sh
 
-# Apply saved theme on startup
+# Apply saved theme on startup.
+# Pass --no-restart to prevent the theme script from restarting services
+# (used by bspwmrc to apply colors before polybar starts).
+
+no_restart=""
+if [ "$1" = "--no-restart" ]; then
+    no_restart="--no-restart"
+fi
+
 if [ -f "$HOME/.config/theme-mode" ]; then
     theme_mode=$(cat "$HOME/.config/theme-mode" | tr -d '[:space:]')
     if [ "$theme_mode" = "light" ]; then
-        theme --light &
+        theme --light $no_restart
     else
-        theme --dark &
+        theme --dark $no_restart
     fi
 fi
