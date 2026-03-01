@@ -18,6 +18,7 @@ import json as json_mod
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 # Import all business logic from the existing deploy.py
@@ -78,6 +79,9 @@ class CLIReporter:
 
     def show_message(self, y, x, message, color_pair=0, bold=False):
         """Print a message to stdout. Row/column positioning is ignored."""
+        # A non-progress message breaks the overwrite chain
+        self._last_progress = None
+
         message = message.rstrip()
         if not message:
             return
@@ -350,10 +354,28 @@ def dry_run_preview(args, script_dir):
         print(f"  Total steps: {len(steps)}")
         print()
 
+        # Color map for action verbs
+        action_colors = {
+            "CREATE": "\033[32m",  # green
+            "INSTALL": "\033[32m",  # green
+            "SET": "\033[32m",  # green
+            "ADD": "\033[32m",  # green
+            "CLONE": "\033[36m",  # cyan
+            "CLONE+BUILD": "\033[36m",  # cyan
+            "COPY": "\033[36m",  # cyan
+            "SETUP": "\033[36m",  # cyan
+            "APPLY": "\033[36m",  # cyan
+            "CONFIGURE": "\033[36m",  # cyan
+            "RUN": "\033[36m",  # cyan
+            "SKIP": "\033[33m",  # yellow
+        }
+        reset = "\033[0m"
+
         for i, step in enumerate(steps, 1):
             action = step["action"].upper()
             detail = step["detail"]
-            print(f"  {i:2d}. [{action:>12s}]  {detail}")
+            color = action_colors.get(action, "")
+            print(f"  {i:2d}. [{color}{action:>12s}{reset if color else ''}]  {detail}")
             if "packages" in step and step["action"] == "install":
                 # Show first few packages
                 pkgs = step["packages"]
@@ -390,12 +412,35 @@ def handle_error(args, cli, message, is_fatal=False):
         return response == "y"
 
 
+def _json_exit(data, code=1):
+    """Print a consistent JSON result and exit.
+
+    Ensures every JSON output has the same top-level keys so that
+    automation consumers only need to handle one schema."""
+    out = {
+        "success": data.get("success", False),
+        "errors": data.get("errors", []),
+        "warnings": data.get("warnings", []),
+    }
+    # Merge any extra keys from the caller (username, error, events, ...)
+    for k, v in data.items():
+        if k not in out:
+            out[k] = v
+    # Promote a single 'error' string into the errors list for consistency
+    if "error" in out and out["error"] not in out["errors"]:
+        out["errors"].insert(0, out.pop("error"))
+    print(json_mod.dumps(out, indent=2))
+    sys.stdout.flush()
+    sys.exit(code)
+
+
 def main(argv=None):
     """CLI entry point — mirrors the orchestration logic of main_tui()."""
     args = parse_args(argv)
     cli = CLIReporter(json_mode=args.json)
     script_dir = Path(__file__).parent.resolve()
     had_errors = False
+    start_time = time.monotonic()
 
     # JSON result accumulator
     json_result = {
@@ -410,10 +455,8 @@ def main(argv=None):
     # Validate username format (do this before root check so --dry-run works)
     if not re.match(r"^[a-z_][a-z0-9_-]*[$]?$", args.username):
         if args.json:
-            print(
-                json_mod.dumps(
-                    {"success": False, "error": f"Invalid username '{args.username}'"}
-                )
+            _json_exit(
+                {"success": False, "error": f"Invalid username '{args.username}'"}
             )
         else:
             print(f"\033[31mERROR: Invalid username '{args.username}'.\033[0m")
@@ -427,11 +470,7 @@ def main(argv=None):
 
     if not deploy.check_root():
         if args.json:
-            print(
-                json_mod.dumps(
-                    {"success": False, "error": "Must be run as root (sudo)"}
-                )
-            )
+            _json_exit({"success": False, "error": "Must be run as root (sudo)"})
         else:
             print("\033[31mERROR: This script must be run as root (sudo).\033[0m")
         sys.exit(1)
@@ -456,13 +495,11 @@ def main(argv=None):
     else:
         if not password:
             if args.json:
-                print(
-                    json_mod.dumps(
-                        {
-                            "success": False,
-                            "error": "--password is required when creating a new user",
-                        }
-                    )
+                _json_exit(
+                    {
+                        "success": False,
+                        "error": "--password is required when creating a new user",
+                    }
                 )
             else:
                 print(
@@ -515,10 +552,6 @@ def main(argv=None):
 
     dotfiles_repos = deploy.read_git_dotfiles_file(script_dir)
     if dotfiles_repos:
-        if not args.json:
-            print(f"\n  Cloning dotfile repositories ({len(dotfiles_repos)} total):")
-        row += 1
-
         success, failed_repos, dotfiles_backup_dir, dotfiles_backed_up, row = (
             deploy.clone_dotfiles_home(dotfiles_repos, username, cli, row)
         )
@@ -542,9 +575,6 @@ def main(argv=None):
             row += 3
 
     # ── Prerequisite packages (curl, gpg) ──────────────────────────
-
-    if not args.json:
-        print()  # paragraph break
 
     cli.show_progress(row, "Checking prerequisite packages...", success=None)
     try:
@@ -570,12 +600,6 @@ def main(argv=None):
     third_party_repos = deploy.read_third_party_packages_file(script_dir)
     third_party_package_names = []
     if third_party_repos:
-        if not args.json:
-            print(
-                f"\n  Setting up third-party repositories ({len(third_party_repos)} total):"
-            )
-        row += 1
-
         success, result, row = deploy.setup_third_party_repos(
             third_party_repos, cli, row
         )
@@ -601,10 +625,6 @@ def main(argv=None):
     packages = deploy.read_packages_file(script_dir)
     all_packages = packages + third_party_package_names
     if all_packages:
-        if not args.json:
-            print(f"\n  Installing packages ({len(all_packages)} total):")
-        row += 1
-
         success, result, row = deploy.install_packages(all_packages, cli, row)
 
         if success:
@@ -623,9 +643,6 @@ def main(argv=None):
             row += 3
 
     # ── Deploy root/ files ─────────────────────────────────────────
-
-    if not args.json:
-        print()  # paragraph break
 
     cli.show_progress(row, "Deploying from root/...", success=None)
 
@@ -655,12 +672,6 @@ def main(argv=None):
 
     src_repos = deploy.read_git_packages_src_file(script_dir)
     if src_repos:
-        if not args.json:
-            print(
-                f"\n  Cloning and building source repositories ({len(src_repos)} total):"
-            )
-        row += 1
-
         success, failed_repos, row = deploy.clone_and_build_repos(
             src_repos, username, cli, row
         )
@@ -680,9 +691,6 @@ def main(argv=None):
             row += 3
 
     # ── Install Tor Browser ────────────────────────────────────────
-
-    if not args.json:
-        print()  # paragraph break
 
     success, error, row = deploy.install_tor_browser(username, script_dir, cli, row)
     if not success:
@@ -789,16 +797,22 @@ def main(argv=None):
         json_result["success"] = True  # partial success — we continued
         json_result["partial"] = True
 
+    elapsed = time.monotonic() - start_time
+    elapsed_str = f"{int(elapsed // 60)}m {int(elapsed % 60)}s"
+
     if args.json:
         json_result["events"] = cli.events
+        json_result["elapsed_seconds"] = round(elapsed, 1)
         print(json_mod.dumps(json_result, indent=2))
     else:
         print()
         if had_errors:
-            print("\033[33m  Deployment complete (with some errors).\033[0m")
+            print(
+                f"\033[33m  Deployment complete (with some errors) in {elapsed_str}.\033[0m"
+            )
             print(f"  Check {deploy.LOG_FILE} for details.")
         else:
-            print("\033[32m  Deployment complete!\033[0m")
+            print(f"\033[32m  Deployment complete in {elapsed_str}!\033[0m")
 
     sys.exit(0)
 
