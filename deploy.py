@@ -251,9 +251,9 @@ def read_git_packages_src_file(script_dir):
 
             if line:  # Validate and add URL
                 if not is_valid_git_url(line):
-                    print(
-                        f"Warning: Skipping invalid URL at line {line_num}: {line}",
-                        file=sys.stderr,
+                    log_error(
+                        f"Skipping invalid URL at line {line_num}",
+                        context=f"File: {packages_file}, URL: {line}",
                     )
                     continue
                 repos.append(line)
@@ -301,16 +301,16 @@ def read_git_dotfiles_file(script_dir):
                     url, dest_dir = parts[0], parts[1]
                     # Validate URL
                     if not is_valid_git_url(url):
-                        print(
-                            f"Warning: Skipping invalid URL at line {line_num}: {url}",
-                            file=sys.stderr,
+                        log_error(
+                            f"Skipping invalid URL at line {line_num}",
+                            context=f"File: {packages_file}, URL: {url}",
                         )
                         continue
                     # Validate destination path
                     if not is_safe_dest_path(dest_dir):
-                        print(
-                            f"Warning: Skipping unsafe destination at line {line_num}: {dest_dir}",
-                            file=sys.stderr,
+                        log_error(
+                            f"Skipping unsafe destination at line {line_num}",
+                            context=f"File: {packages_file}, dest: {dest_dir}",
                         )
                         continue
                     repos.append((url, dest_dir))
@@ -351,7 +351,7 @@ def clone_and_build_repos(repos, username, tui, start_row):
         repo_path = src_dir / repo_name
 
         # Update progress line
-        progress_msg = f"Repo {i}/{len(repos)}: {repo_name}"
+        progress_msg = f"Cloning Repo {i}/{len(repos)}: {repo_name}"
         tui.show_message(progress_row, 4, progress_msg.ljust(60), color_pair=0)
         tui.stdscr.refresh()
 
@@ -453,7 +453,7 @@ def clone_dotfiles_home(repos, username, tui, start_row):
         repo_path = home_dir / dest_dir
 
         # Update progress line
-        progress_msg = f"Repo {i}/{len(repos)}: {dest_dir}"
+        progress_msg = f"Cloning Repo {i}/{len(repos)}: {dest_dir}"
         tui.show_message(progress_row, 4, progress_msg.ljust(60), color_pair=0)
         tui.stdscr.refresh()
 
@@ -572,9 +572,9 @@ def read_third_party_packages_file(script_dir):
             # Parse the line
             parts = [part.strip() for part in line.split("|")]
             if len(parts) != 3:
-                print(
-                    f"Warning: Skipping invalid line {line_num} in third-party-apt-packages",
-                    file=sys.stderr,
+                log_error(
+                    f"Skipping invalid line {line_num} in third-party-apt-packages",
+                    context=f"File: {packages_file}, content: {line}",
                 )
                 continue
 
@@ -740,7 +740,7 @@ def install_packages(packages, tui, start_row):
 
     for i, package in enumerate(packages, 1):
         # Update progress line
-        progress_msg = f"Package {i}/{len(packages)}: {package[:30]}"
+        progress_msg = f"Installing Package {i}/{len(packages)}: {package[:30]}"
         tui.show_message(progress_row, 4, progress_msg.ljust(60), color_pair=0)
         tui.stdscr.refresh()
 
@@ -1258,6 +1258,7 @@ def main_tui(stdscr):
     """Main TUI application"""
     tui = DeploymentTUI(stdscr)
     script_dir = Path(__file__).parent.resolve()
+    start_time = time.time()
 
     # Check if running as root
     if not check_root():
@@ -1364,17 +1365,9 @@ def main_tui(stdscr):
         stdscr.getch()
         return
 
-    # ── Paragraph break ──
-    row += 1
-
     # Clone dotfile repos to home directory (before package installation)
     dotfiles_repos = read_git_dotfiles_file(script_dir)
     if dotfiles_repos:
-        tui.show_message(
-            row, 4, "Cloning dotfile repositories:", color_pair=1, bold=True
-        )
-        row += 1
-        tui.stdscr.refresh()
 
         success, failed_repos, dotfiles_backup_dir, dotfiles_backed_up, row = (
             clone_dotfiles_home(dotfiles_repos, username, tui, row)
@@ -1404,9 +1397,6 @@ def main_tui(stdscr):
                 return
             row += 3
 
-    # ── Paragraph break ──
-    row += 1
-
     # Ensure dependencies for adding repositories (curl, gpg) are installed
     # These are needed for setup_third_party_repos below
     tui.show_progress(row, "Checking prerequisite packages...", success=None)
@@ -1434,15 +1424,6 @@ def main_tui(stdscr):
     third_party_repos = read_third_party_packages_file(script_dir)
     third_party_package_names = []
     if third_party_repos:
-        tui.show_message(
-            row,
-            4,
-            f"Setting up third-party repositories ({len(third_party_repos)} total):",
-            color_pair=1,
-            bold=True,
-        )
-        row += 1
-        tui.stdscr.refresh()
 
         success, result, row = setup_third_party_repos(third_party_repos, tui, row)
 
@@ -1471,15 +1452,6 @@ def main_tui(stdscr):
     # Add third-party package names to the installation list
     all_packages = packages + third_party_package_names
     if all_packages:
-        tui.show_message(
-            row,
-            4,
-            f"Installing packages ({len(all_packages)} total):",
-            color_pair=1,
-            bold=True,
-        )
-        row += 1
-        tui.stdscr.refresh()
 
         success, result, row = install_packages(all_packages, tui, row)
 
@@ -1498,9 +1470,6 @@ def main_tui(stdscr):
             if chr(response).lower() != "y":
                 return
             row += 3
-
-    # ── Paragraph break ──
-    row += 1
 
     # Deploy all files from root/ (dotfiles + system configs)
     tui.show_progress(row, "Deploying from root/...", success=None)
@@ -1526,15 +1495,6 @@ def main_tui(stdscr):
     # Clone and build source repositories
     src_repos = read_git_packages_src_file(script_dir)
     if src_repos:
-        tui.show_message(
-            row,
-            4,
-            f"Cloning and building source repositories ({len(src_repos)} total):",
-            color_pair=1,
-            bold=True,
-        )
-        row += 1
-        tui.stdscr.refresh()
 
         success, failed_repos, row = clone_and_build_repos(
             src_repos, username, tui, row
@@ -1558,9 +1518,6 @@ def main_tui(stdscr):
             if chr(response).lower() != "y":
                 return
             row += 3
-
-    # ── Paragraph break ──
-    row += 1
 
     # Install Tor Browser
     success, error, row = install_tor_browser(username, script_dir, tui, row)
@@ -1654,7 +1611,13 @@ def main_tui(stdscr):
     # Final message - ensure it's visible even if row exceeds terminal height
     row += 2
     final_row = min(row, tui.height - 3)  # Leave room for both messages
-    tui.show_message(final_row, 4, "Deployment complete!", color_pair=2, bold=True)
+
+    elapsed = time.time() - start_time
+    elapsed_str = f"{int(elapsed // 60)}m {int(elapsed % 60)}s"
+
+    tui.show_message(
+        final_row, 4, f"Deployment complete! ({elapsed_str})", color_pair=2, bold=True
+    )
     tui.show_message(final_row + 1, 4, "Press any key to exit...")
     stdscr.refresh()
     stdscr.getch()
