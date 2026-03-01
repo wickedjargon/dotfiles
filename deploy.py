@@ -1311,7 +1311,7 @@ def main_tui(stdscr):
             stdscr.getch()
             return
 
-        password_confirm = tui.get_password("password: ", 6, 4)
+        password_confirm = tui.get_password("  repeat: ", 6, 4)
         if password != password_confirm:
             tui.show_message(8, 4, "Passwords do not match. Exiting.", color_pair=3)
             tui.show_message(9, 4, "Press any key to exit...")
