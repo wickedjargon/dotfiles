@@ -101,9 +101,7 @@ class CLIReporter:
             return
         width = 60
         print()
-        print("=" * width)
         print(f"  {title}")
-        print("=" * width)
         print()
 
 
@@ -480,7 +478,7 @@ def main(argv=None):
 
     # ── User creation / verification ───────────────────────────────
 
-    cli.draw_header("DOTFILES DEPLOYMENT (CLI)")
+    cli.draw_header("DOTFILES DEPLOYMENT")
     row = 4
 
     if deploy.user_exists(username):
@@ -694,7 +692,8 @@ def main(argv=None):
 
     success, error, row = deploy.install_tor_browser(username, script_dir, cli, row)
     if not success:
-        err = f"Tor Browser installation failed: {error[:80] if error else 'Unknown'}"
+        error_last_line = error.strip().splitlines()[-1] if error else "Unknown"
+        err = f"Tor Browser installation failed: {error_last_line}"
         json_result["errors"].append(err)
         if not handle_error(args, cli, err):
             json_result["success"] = False
@@ -768,7 +767,8 @@ def main(argv=None):
 
     success, error, row = deploy.install_firefox_userjs(username, script_dir, cli, row)
     if not success:
-        err = f"Failed to install Firefox user.js: {error[:80] if error else 'Unknown'}"
+        error_last_line = error.strip().splitlines()[-1] if error else "Unknown"
+        err = f"Failed to install Firefox user.js: {error_last_line}"
         json_result["errors"].append(err)
         if not handle_error(args, cli, err):
             json_result["success"] = False
