@@ -1,12 +1,12 @@
 #!/bin/sh
 
-# Verify: patch files from patches/ are applied to their system targets.
+# Verify: patch files from dotfiles-patches/ are applied to their system targets.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
-PATCHES_DIR="$SCRIPT_DIR/patches"
+PATCHES_DIR="$SCRIPT_DIR/dotfiles-patches"
 
 if [ ! -d "$PATCHES_DIR" ]; then
-    echo "No patches directory. Skipping."
+    echo "No dotfiles-patches directory. Skipping."
     exit 0
 fi
 

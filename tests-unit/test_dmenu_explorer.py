@@ -1,15 +1,22 @@
-
-import unittest
-from unittest.mock import patch, MagicMock, mock_open
 import os
 import subprocess
-from pathlib import Path
+import unittest
 from importlib.machinery import SourceFileLoader
+from pathlib import Path
+from unittest.mock import MagicMock, mock_open, patch
 
 # Load module from path
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(TEST_DIR)
-SCRIPT_PATH = os.path.join(PROJECT_ROOT, 'root', 'home', 'new-user', '.local', 'bin', 'dmenu-explorer')
+SCRIPT_PATH = os.path.join(
+    PROJECT_ROOT,
+    "dotfiles-overlay",
+    "home",
+    "new-user",
+    ".local",
+    "bin",
+    "dmenu-explorer",
+)
 
 if not os.path.exists(SCRIPT_PATH):
     raise FileNotFoundError(f"Could not find script at {SCRIPT_PATH}")
@@ -17,12 +24,14 @@ if not os.path.exists(SCRIPT_PATH):
 # Use SourceFileLoader directly to handle file without .py extension
 dmenu_explorer = SourceFileLoader("dmenu_explorer", SCRIPT_PATH).load_module()
 
+
 class TestDmenuExplorer(unittest.TestCase):
 
     def test_load_dmenu_config_valid(self):
         config_content = 'DMENU_BASIC_ARGS="-nb #000 -nf #fff"\nDMENU_FONT="mono-10"\n'
-        with patch("builtins.open", mock_open(read_data=config_content)), \
-             patch("os.path.exists", return_value=True):
+        with patch("builtins.open", mock_open(read_data=config_content)), patch(
+            "os.path.exists", return_value=True
+        ):
             args, font = dmenu_explorer.load_dmenu_config()
             self.assertEqual(font, "mono-10")
             self.assertIn("-nb", args)
@@ -39,7 +48,7 @@ class TestDmenuExplorer(unittest.TestCase):
         mock_proc = MagicMock()
         mock_proc.stdout = "Selected Option\n"
         mock_run.return_value = mock_proc
-        
+
         result = dmenu_explorer.dmenu_select(["Option 1", "Selected Option"], [], "")
         self.assertEqual(result, "Selected Option")
 
@@ -57,21 +66,21 @@ class TestDmenuExplorer(unittest.TestCase):
             entry1.name = "file.txt"
             entry1.is_dir.return_value = False
             entry1.path = "/path/file.txt"
-            
+
             entry2 = MagicMock()
             entry2.name = "folder"
             entry2.is_dir.return_value = True
             entry2.path = "/path/folder"
-            
+
             # Context manager for scandir
             mock_scandir.return_value.__enter__.return_value = [entry1, entry2]
-            
+
             options, mapping = dmenu_explorer.list_directory(Path("/path"))
-            
+
             self.assertIn("..", options)
             self.assertIn("folder/", options)
             self.assertIn("file.txt", options)
-            
+
             # Mapping check
             self.assertEqual(mapping["file.txt"], Path("/path/file.txt"))
             self.assertEqual(mapping["folder/"], Path("/path/folder"))
@@ -95,7 +104,7 @@ class TestDmenuExplorer(unittest.TestCase):
             args = mock_popen.call_args[0][0]
             self.assertEqual(args[0], "sxiv")
             self.assertIn(str(path), args)
-            
+
     @patch("subprocess.Popen")
     def test_open_file_video(self, mock_popen):
         path = Path("/path/to/video.mp4")
@@ -113,14 +122,15 @@ class TestDmenuExplorer(unittest.TestCase):
         mock_proc = MagicMock()
         mock_proc.stdout = "emacsclient\n"
         mock_run.return_value = mock_proc
-        
+
         path = Path("/home/user/d/projects/myproject")
         dmenu_explorer.open_project(path)
-        
+
         mock_popen.assert_called()
         args = mock_popen.call_args[0][0]
         self.assertEqual(args[0], "emacsclient")
         self.assertIn(str(path), args)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -781,23 +781,23 @@ def get_backup_dir(home_dir):
         counter += 1
 
 
-def deploy_root(username, script_dir):
-    """Deploy all files from root/ to their corresponding system locations
+def deploy_overlay(username, script_dir):
+    """Deploy all files from dotfiles-overlay/ to their corresponding system locations
 
-    The root/ directory is a filesystem mirror:
-      root/home/new-user/.bashrc  -> /home/<username>/.bashrc
-      root/etc/keyd/default.conf  -> /etc/keyd/default.conf
-      root/usr/local/bin/myscript -> /usr/local/bin/myscript
+    The dotfiles-overlay/ directory is a filesystem mirror:
+      dotfiles-overlay/home/new-user/.bashrc  -> /home/<username>/.bashrc
+      dotfiles-overlay/etc/keyd/default.conf  -> /etc/keyd/default.conf
+      dotfiles-overlay/usr/local/bin/myscript -> /usr/local/bin/myscript
 
-    Home directory files (root/home/new-user/) get backup + chown treatment.
+    Home directory files (dotfiles-overlay/home/new-user/) get backup + chown treatment.
     All other files are copied directly.
 
     Returns: (success, error_message, backup_dir, backed_up_items)
     """
-    root_dir = script_dir / "root"
+    overlay_dir = script_dir / "dotfiles-overlay"
 
-    if not root_dir.exists():
-        return False, "root/ directory doesn't exist", None, []
+    if not overlay_dir.exists():
+        return False, "dotfiles-overlay/ directory doesn't exist", None, []
 
     home_dir = Path(f"/home/{username}")
 
@@ -805,12 +805,12 @@ def deploy_root(username, script_dir):
     backed_up_items = []
     failed_files = []
 
-    for src_root, dirs, files in os.walk(root_dir):
+    for src_root, dirs, files in os.walk(overlay_dir):
         for file in files:
             src_file = Path(src_root) / file
 
-            # Calculate relative path from root/
-            relative_path = src_file.relative_to(root_dir)
+            # Calculate relative path from dotfiles-overlay/
+            relative_path = src_file.relative_to(overlay_dir)
             relative_parts = relative_path.parts
 
             # Determine if this is a home directory file
@@ -821,11 +821,11 @@ def deploy_root(username, script_dir):
             )
 
             if is_home_file:
-                # Map root/home/new-user/X -> /home/<username>/X
+                # Map dotfiles-overlay/home/new-user/X -> /home/<username>/X
                 home_relative = Path(*relative_parts[2:])  # strip home/new-user/
                 dest_file = home_dir / home_relative
             else:
-                # Map root/X -> /X
+                # Map dotfiles-overlay/X -> /X
                 dest_file = Path("/") / relative_path
 
             try:
@@ -862,7 +862,7 @@ def deploy_root(username, script_dir):
 
                 # Set ownership for home directory files
                 # (Removed per-file chown: we now do a blanket chown of the entire
-                # home directory at the end of deploy_root to ensure parent directories
+                # home directory at the end of deploy_overlay to ensure parent directories
                 # like ~/.config correctly get user ownership)
 
             except (OSError, IOError, subprocess.CalledProcessError) as e:
@@ -917,16 +917,16 @@ def deploy_root(username, script_dir):
     return True, None, backup_dir, backed_up_items
 
 
-def deploy_patches(script_dir):
-    """Apply patch files from patches/ to their corresponding system locations
+def deploy_patches_to_system(script_dir):
+    """Apply patch files from dotfiles-patches/ to their corresponding system locations
 
-    Files under patches/ contain key=value lines (and comments) that are
+    Files under dotfiles-patches/ contain key=value lines (and comments) that are
     merged into existing system files. The directory structure mirrors the
-    filesystem: patches/etc/systemd/logind.conf -> /etc/systemd/logind.conf
+    filesystem: dotfiles-patches/etc/systemd/logind.conf -> /etc/systemd/logind.conf
 
     Returns: (success, error_message)
     """
-    patches_dir = script_dir / "patches"
+    patches_dir = script_dir / "dotfiles-patches"
 
     if not patches_dir.exists():
         return True, None  # No patches to apply, not an error
@@ -934,12 +934,12 @@ def deploy_patches(script_dir):
     deployed_files = []
     failed_files = []
 
-    # Walk through patches/ directory
+    # Walk through dotfiles-patches/ directory
     for root, dirs, files in os.walk(patches_dir):
         for file in files:
             src_file = Path(root) / file
 
-            # Calculate destination path: patches/etc/foo/bar -> /etc/foo/bar
+            # Calculate destination path: dotfiles-patches/etc/foo/bar -> /etc/foo/bar
             relative_path = src_file.relative_to(patches_dir)
             dest_file = Path("/") / relative_path
 
@@ -1471,20 +1471,20 @@ def main_tui(stdscr):
                 return
             row += 3
 
-    # Deploy all files from root/ (dotfiles + system configs)
-    tui.show_progress(row, "Deploying from root directory...", success=None)
+    # Deploy all files from dotfiles-overlay/ (dotfiles + system configs)
+    tui.show_progress(row, "Deploying from dotfiles-overlay/...", success=None)
     tui.stdscr.refresh()
 
-    success, error, backup_dir, backed_up_items = deploy_root(username, script_dir)
+    success, error, backup_dir, backed_up_items = deploy_overlay(username, script_dir)
 
     if not success:
-        tui.show_progress(row, "Deploying from root/...", success=False)
+        tui.show_progress(row, "Deploying from dotfiles-overlay/...", success=False)
         tui.show_message(row + 2, 4, f"Error: {error}", color_pair=3)
         tui.show_message(row + 3, 4, "Press any key to exit...", color_pair=3)
         stdscr.getch()
         return
     else:
-        tui.show_progress(row, "Deploying from root/...", success=True)
+        tui.show_progress(row, "Deploying from dotfiles-overlay/...", success=True)
         row += 1
 
         # Show backup info if files were backed up
@@ -1536,7 +1536,7 @@ def main_tui(stdscr):
     tui.show_progress(row, "Applying system patches...", success=None)
     tui.stdscr.refresh()
 
-    success, error = deploy_patches(script_dir)
+    success, error = deploy_patches_to_system(script_dir)
 
     if not success:
         tui.show_progress(row, "Applying system patches...", success=False)
