@@ -27,6 +27,18 @@ THEME_MANAGED="
 .config/qt5ct/qt5ct.conf
 .config/qt6ct/qt6ct.conf
 .config/Antigravity/User/settings.json
+.gtkrc-2.0
+.config/calibre/viewer-webengine.json
+.config/polybar/config.ini
+.config/polybar/bspwm_custom.sh
+.config/alacritty/alacritty.toml
+.config/zathura/zathurarc
+.config/dunst/dunstrc
+.config/dmenu/config
+.config/xob/styles.cfg
+.config/theme-mode
+.config/bspwm/bspwmrc
+.config/rofi/config.rasi
 "
 
 echo "Testing dotfiles-overlay file deployments..."
