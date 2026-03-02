@@ -3,9 +3,6 @@
 # Run all deployment verification tests.
 # Usage: ./tests-live/run_tests.sh <username>
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m'
 
 TARGET_USER="$1"
 
@@ -34,10 +31,10 @@ for test_script in "$SCRIPT_DIR"/*.sh; do
     exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
-        printf '%sPASS%s\n' "$GREEN" "$NC"
+        printf 'PASS\n'
         passed=$((passed + 1))
     else
-        printf '%sFAIL%s\n' "$RED" "$NC"
+        printf 'FAIL\n'
         echo "  Output:"
         printf '%s\n' "$output" | while IFS= read -r line; do
             echo "    $line"
@@ -47,8 +44,8 @@ for test_script in "$SCRIPT_DIR"/*.sh; do
 done
 
 echo "=============================="
-printf 'Results: %s%s passed%s, %s%s failed%s\n' \
-    "$GREEN" "$passed" "$NC" "$RED" "$failed" "$NC"
+printf 'Results: %s passed, %s failed\n' \
+    "$passed" "$failed"
 
 if [ $failed -gt 0 ]; then
     exit 1
