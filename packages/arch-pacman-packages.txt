@@ -5,6 +5,7 @@ bc
 diffutils
 fastfetch
 git
+github-cli
 glibc-locales
 gradle
 imagemagick
