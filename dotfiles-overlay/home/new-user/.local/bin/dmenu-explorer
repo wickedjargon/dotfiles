@@ -11,15 +11,42 @@ Dmenu-based file navigator with basic file associations.
 
 import argparse
 import os
-import subprocess
 import shlex
+import subprocess
 from pathlib import Path
 
 TEXT_EXTENSIONS = {
-    ".txt", ".md", ".org", ".py", ".sh", ".c", ".h", ".rs", ".go",
-    ".js", ".ts", ".el", ".lisp", ".scm", ".clj", ".lua", ".rb",
-    ".html", ".css", ".json", ".yaml", ".yml", ".toml", ".ini",
-    ".conf", ".cfg", ".csv", ".xml", ".tex", ".rst", ".log",
+    ".txt",
+    ".md",
+    ".org",
+    ".py",
+    ".sh",
+    ".c",
+    ".h",
+    ".rs",
+    ".go",
+    ".js",
+    ".ts",
+    ".el",
+    ".lisp",
+    ".scm",
+    ".clj",
+    ".lua",
+    ".rb",
+    ".html",
+    ".css",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".toml",
+    ".ini",
+    ".conf",
+    ".cfg",
+    ".csv",
+    ".xml",
+    ".tex",
+    ".rst",
+    ".log",
 }
 
 DOCUMENT_EXTENSIONS = {".pdf", ".epub", ".djvu", ".mobi", ".cbz"}
@@ -32,6 +59,7 @@ VM_EXTENSIONS = {".qcow2"}
 BOOKMARKS_FILE = (Path.home() / "d" / "notes" / "bm.md").resolve()
 PROJECTS_DIR = (Path.home() / "d" / "projects").resolve()
 MUSIC_DIR = (Path.home() / "d" / "audio").resolve()
+
 
 def load_dmenu_config():
     """Load dmenu arguments from config file"""
@@ -50,6 +78,7 @@ def load_dmenu_config():
 
     return args, font
 
+
 def dmenu_select(options, args, font, prompt="Browse:"):
     """Present options in dmenu and return selected."""
     dmenu_input = "\n".join(options)
@@ -60,15 +89,12 @@ def dmenu_select(options, args, font, prompt="Browse:"):
 
     try:
         result = subprocess.run(
-            cmd,
-            input=dmenu_input,
-            capture_output=True,
-            text=True,
-            check=True
+            cmd, input=dmenu_input, capture_output=True, text=True, check=True
         )
         return result.stdout.strip()
     except subprocess.CalledProcessError:
         return None
+
 
 def list_directory(current_path):
     options = [".."]
@@ -90,6 +116,7 @@ def list_directory(current_path):
 
     return options, mapping
 
+
 def to_rel_path(path):
     """Convert path to be relative to MUSIC_DIR if it's inside it."""
     try:
@@ -97,22 +124,26 @@ def to_rel_path(path):
     except (ValueError, OSError):
         return path
 
+
 def run_mpc(args):
     """Run mpc command and notify on error."""
     try:
-        result = subprocess.run(
-            ["mpc"] + args,
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run(["mpc"] + args, capture_output=True, text=True)
         if result.returncode != 0:
             error_msg = result.stderr.strip() or "Unknown error"
-            subprocess.run(["notify-send", "MPD Error", f"Command: mpc {' '.join(args)}\n{error_msg}"])
+            subprocess.run(
+                [
+                    "notify-send",
+                    "MPD Error",
+                    f"Command: mpc {' '.join(args)}\n{error_msg}",
+                ]
+            )
             return False
         return True
     except FileNotFoundError:
         subprocess.run(["notify-send", "Error", "mpc not found"])
         return False
+
 
 def open_file(path, run_executables=False):
     resolved = path.resolve()
@@ -178,33 +209,58 @@ def open_file(path, run_executables=False):
         ram = parts[2].replace("GB", "G") if len(parts) >= 3 else "1G"
         cmd = [
             f"qemu-system-{arch}",
-            "-m", ram,
+            "-m",
+            ram,
         ]
         if arch == "x86_64":
-            cmd.extend([
-                "-drive", f"file={path},format=qcow2",
-                "-enable-kvm",
-                "-net", "user,hostfwd=tcp::2222-:22",
-                "-net", "nic",
-                "-display", "gtk,zoom-to-fit=on",
-            ])
+            cmd.extend(
+                [
+                    "-drive",
+                    f"file={path},format=qcow2",
+                    "-enable-kvm",
+                    "-net",
+                    "user,hostfwd=tcp::2222-:22",
+                    "-net",
+                    "nic",
+                    "-device",
+                    "intel-hda",
+                    "-device",
+                    "hda-output",
+                    "-display",
+                    "gtk,zoom-to-fit=on",
+                ]
+            )
         elif arch == "aarch64":
-            cmd.extend([
-                "-machine", "virt",
-                "-cpu", "cortex-a57",
-                "-drive", f"file={path},format=qcow2,if=virtio",
-                "-net", "user,hostfwd=tcp::2223-:22",
-                "-net", "nic,model=virtio",
-                "-display", "gtk,zoom-to-fit=on",
-                "-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd",
-                "-device", "virtio-gpu-pci",
-                "-device", "qemu-xhci",
-                "-device", "usb-kbd",
-                "-device", "usb-mouse",
-            ])
+            cmd.extend(
+                [
+                    "-machine",
+                    "virt",
+                    "-cpu",
+                    "cortex-a57",
+                    "-drive",
+                    f"file={path},format=qcow2,if=virtio",
+                    "-net",
+                    "user,hostfwd=tcp::2223-:22",
+                    "-net",
+                    "nic,model=virtio",
+                    "-display",
+                    "gtk,zoom-to-fit=on",
+                    "-bios",
+                    "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd",
+                    "-device",
+                    "virtio-gpu-pci",
+                    "-device",
+                    "qemu-xhci",
+                    "-device",
+                    "usb-kbd",
+                    "-device",
+                    "usb-mouse",
+                ]
+            )
         subprocess.Popen(cmd)
     else:
         subprocess.Popen(["xdg-open", str(path)])
+
 
 def is_project_dir(path):
     """Check if path is a direct subdirectory of ~/d/projects"""
@@ -215,23 +271,20 @@ def is_project_dir(path):
     except (ValueError, OSError):
         return False
 
+
 def open_project(path):
     """Prompt to open project in emacsclient or antigravity"""
     args, font = load_dmenu_config()
     options = ["emacsclient", "antigravity"]
     dmenu_input = "\n".join(options)
-    
+
     cmd = ["dmenu", "-p", "Open project with:", "-i"] + args
     if font:
         cmd.extend(["-fn", font])
-    
+
     try:
         result = subprocess.run(
-            cmd,
-            input=dmenu_input,
-            capture_output=True,
-            text=True,
-            check=True
+            cmd, input=dmenu_input, capture_output=True, text=True, check=True
         )
         choice = result.stdout.strip()
         if choice == "emacsclient":
@@ -241,9 +294,11 @@ def open_project(path):
     except subprocess.CalledProcessError:
         pass
 
+
 def normalize_path(raw_path):
     expanded = os.path.expandvars(os.path.expanduser(raw_path))
     return Path(expanded)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Dmenu-based file navigator")
@@ -302,6 +357,7 @@ def main():
 
         open_file(target, run_executables=args.run_executables)
         return
+
 
 if __name__ == "__main__":
     main()

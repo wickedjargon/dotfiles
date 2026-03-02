@@ -3,7 +3,7 @@
 MAC="41:42:AB:DD:51:37"
 
 # Check if the device is connected
-connected=$(bluetoothctl info "$MAC" | awk '/Connected:/ {print $2}')
+connected=$(timeout 1 bluetoothctl info "$MAC" 2>/dev/null | awk '/Connected:/ {print $2}')
 
 if [ "$connected" = "yes" ]; then
     # Get battery percentage

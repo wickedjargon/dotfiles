@@ -7,6 +7,7 @@
     killall -9 polybar 2>/dev/null
     pkill -f 'bspwm_custom\.sh' 2>/dev/null
     while pgrep -x polybar > /dev/null; do sleep 0.1; done
-    polybar mybar &
+    # Close fd 9 for the backgrounded polybar so it doesn't hold the lock forever
+    polybar mybar 9>&- &
     sleep 1
 ) 9>"/tmp/polybar-launch-${USER:-$(id -un)}.lock"
