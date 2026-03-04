@@ -9,7 +9,7 @@ from pathlib import Path
 # Configuration
 # The repo path is relative to the user's home directory
 REPO_PATH = Path.home() / "d/projects/dotfiles"
-DOTFILES_DIR = REPO_PATH / "root" / "home" / "new-user"
+DOTFILES_DIR = REPO_PATH / "dotfiles-overlay" / "home" / "new-user"
 
 def notify(message, urgency="normal"):
     """Send a notification using notify-send if available"""
