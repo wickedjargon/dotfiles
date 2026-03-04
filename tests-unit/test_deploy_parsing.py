@@ -8,7 +8,7 @@ from unittest.mock import patch, mock_open
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-import deploy
+import deploy_lib
 
 class TestDeployParsing(unittest.TestCase):
     @patch('pathlib.Path.exists')
@@ -22,10 +22,10 @@ https://github.com/user/repo1.git
 		
 """
         with patch('builtins.open', mock_open(read_data=content)):
-            # Warning: deploy.read_git_packages_src_file likely constructs Path(script_dir) / 'git-packages-src'
+            # Warning: deploy_lib.read_git_packages_src_file likely constructs Path(script_dir) / 'git-packages-src'
             # We need to make sure the open call catches that specific path or any path.
             
-            repos = deploy.read_git_packages_src_file(Path("/tmp"))
+            repos = deploy_lib.read_git_packages_src_file(Path("/tmp"))
             
             self.assertEqual(len(repos), 2)
             self.assertEqual(repos[0], "https://github.com/user/repo1.git")
@@ -41,7 +41,7 @@ https://github.com/user/vim.git .vim
 https://github.com/user/zsh.git .zsh    
 """
         with patch('builtins.open', mock_open(read_data=content)):
-            repos = deploy.read_git_dotfiles_file(Path("/tmp"))
+            repos = deploy_lib.read_git_dotfiles_file(Path("/tmp"))
             
             self.assertEqual(len(repos), 2)
             self.assertEqual(repos[0], ("https://github.com/user/vim.git", ".vim"))
@@ -64,7 +64,7 @@ https://github.com/user/zsh.git .zsh
         http://insecure.com/bad.git
         """
         with patch('builtins.open', mock_open(read_data=content_pkg)):
-            repos = deploy.read_git_packages_src_file(Path("/tmp"))
+            repos = deploy_lib.read_git_packages_src_file(Path("/tmp"))
             self.assertEqual(len(repos), 2)
             self.assertEqual(repos[0], "https://github.com/valid/repo.git")
             self.assertEqual(repos[1], "https://github.com/valid/repo2.git")
@@ -77,7 +77,7 @@ https://github.com/user/zsh.git .zsh
         http://bad.com/r.git .valid
         """
         with patch('builtins.open', mock_open(read_data=content_dot)):
-            repos = deploy.read_git_dotfiles_file(Path("/tmp"))
+            repos = deploy_lib.read_git_dotfiles_file(Path("/tmp"))
             # Should only get the first one
             self.assertEqual(len(repos), 1)
             self.assertEqual(repos[0], ("https://github.com/v/r.git", ".config"))

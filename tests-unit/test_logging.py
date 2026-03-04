@@ -7,11 +7,11 @@ import tempfile
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
-# Add parent directory to path so we can import deploy
+# Add parent directory to path so we can import deploy_lib
 sys.path.append(str(Path(__file__).parent.parent))
 
 # Import deploy module
-import deploy
+import deploy_lib
 
 class TestLogging(unittest.TestCase):
     def setUp(self):
@@ -21,7 +21,7 @@ class TestLogging(unittest.TestCase):
         self.log_file = self.temp_log.name
         
         # Patch the LOG_FILE in deploy module
-        self.patcher = patch('deploy.LOG_FILE', self.log_file)
+        self.patcher = patch('deploy_lib.LOG_FILE', self.log_file)
         self.patcher.start()
             
     def tearDown(self):
@@ -30,7 +30,7 @@ class TestLogging(unittest.TestCase):
             os.remove(self.log_file)
 
     def test_log_error_creates_file(self):
-        deploy.log_error("Test error message")
+        deploy_lib.log_error("Test error message")
         self.assertTrue(os.path.exists(self.log_file))
         
         with open(self.log_file, 'r') as f:
@@ -39,7 +39,7 @@ class TestLogging(unittest.TestCase):
             self.assertIn("ERROR:", content)
 
     def test_log_error_permissions(self):
-        deploy.log_error("Test permissions")
+        deploy_lib.log_error("Test permissions")
         stat = os.stat(self.log_file)
         # Check permissions are 600 (rw-------)
         # Note: on some systems/filesystems this might be approximate, but we set it explicitly
@@ -50,7 +50,7 @@ class TestLogging(unittest.TestCase):
         try:
             raise ValueError("Test generic exception")
         except ValueError as e:
-            deploy.log_error("Caught exception", e)
+            deploy_lib.log_error("Caught exception", e)
             
         with open(self.log_file, 'r') as f:
             content = f.read()
@@ -70,7 +70,7 @@ class TestLogging(unittest.TestCase):
         try:
             subprocess.run(cmd, check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
-            deploy.log_error("Subprocess failed", e)
+            deploy_lib.log_error("Subprocess failed", e)
             
         with open(self.log_file, 'r') as f:
             content = f.read()
@@ -90,7 +90,7 @@ class TestLogging(unittest.TestCase):
         with patch('subprocess.run') as mock_run:
             mock_run.side_effect = subprocess.CalledProcessError(1, ['useradd'], stderr=b"User exists")
             
-            success, msg = deploy.create_user("testuser")
+            success, msg = deploy_lib.create_user("testuser")
             
             self.assertFalse(success)
             
@@ -100,26 +100,26 @@ class TestLogging(unittest.TestCase):
                 self.assertIn("useradd", content)
 
 class TestLogFileTimestamp(unittest.TestCase):
-    @patch('deploy.datetime')
+    @patch('deploy_lib.datetime')
     def test_get_log_file_path_uses_timestamp(self, mock_dt):
         """Each call produces a timestamped filename."""
         mock_now = MagicMock()
         mock_now.strftime.return_value = '2026-02-24_214718'
         mock_dt.datetime.now.return_value = mock_now
 
-        result = deploy.get_log_file_path()
+        result = deploy_lib.get_log_file_path()
         self.assertEqual(result, '/tmp/dotfiles-deploy-2026-02-24_214718.log')
 
-    @patch('deploy.datetime')
+    @patch('deploy_lib.datetime')
     def test_different_times_produce_different_files(self, mock_dt):
         """Two runs at different times get different log files."""
         mock_now = MagicMock()
         mock_now.strftime.return_value = '2026-02-24_220000'
         mock_dt.datetime.now.return_value = mock_now
-        first = deploy.get_log_file_path()
+        first = deploy_lib.get_log_file_path()
 
         mock_now.strftime.return_value = '2026-02-24_220001'
-        second = deploy.get_log_file_path()
+        second = deploy_lib.get_log_file_path()
 
         self.assertNotEqual(first, second)
         self.assertIn('2026-02-24_220000', first)

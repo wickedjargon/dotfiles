@@ -1,1358 +1,577 @@
 #!/usr/bin/env python3
 """
-Auto-deploy script for my dotfiles
-Creates user, sets up home directory, deploys dotfiles, installs packages
+Command-line interface for dotfiles deployment.
+
+Business logic lives in deploy_lib.py; this file is the sole entry point.
+All inputs are provided via command-line arguments, making it suitable
+for both interactive use and automation/LLM testing.
+
+Usage:
+    sudo python3 deploy.py --username myuser --password mypass
+    sudo python3 deploy.py --username existinguser --yes
+    sudo python3 deploy.py --username myuser --password mypass --yes --json
+    python3 deploy.py --username myuser --dry-run
 """
 
-import curses
-import datetime
-import os
+import argparse
+import json as json_mod
 import re
-import shutil
 import subprocess
 import sys
 import time
-import traceback
 from pathlib import Path
 
-
-def run_command_with_retry(cmd, max_retries=3, delay=2, **kwargs):
-    """Run subprocess.run with retries"""
-    for attempt in range(max_retries):
-        try:
-            return subprocess.run(cmd, **kwargs)
-        except subprocess.CalledProcessError as e:
-            if attempt == max_retries - 1:
-                raise  # Re-raise on last attempt
-
-            # Log retry attempt
-            log_error(f"Command failed (attempt {attempt + 1}/{max_retries}): {cmd}", e)
-            time.sleep(delay)
-    return None  # Should not be reached due to raise
+# Import all business logic from deploy_lib.py
+import deploy_lib
 
 
-def get_log_file_path():
-    """Create a timestamped log file path for this run.
+class CLIStdscr:
+    """No-op stand-in for curses stdscr, needed because business logic
+    calls reporter.stdscr.refresh() in several places."""
 
-    Each invocation gets its own file, e.g.
-    /tmp/dotfiles-deploy-2026-02-24_214718.log
-    Lexicographic ordering == chronological ordering.
-    """
-    stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    return f"/tmp/dotfiles-deploy-{stamp}.log"
-
-
-LOG_FILE = get_log_file_path()
-
-
-def log_error(message, exception=None, context=None):
-    """Log error to secure temporary file"""
-
-    try:
-        # Create or append to log file
-        with open(LOG_FILE, "a") as f:
-            # Ensure secure permissions (only owner can read/write)
-            try:
-                os.chmod(LOG_FILE, 0o600)
-            except OSError:
-                pass  # Best effort
-
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"\n{'-'*60}\n")
-            f.write(f"[{timestamp}] ERROR: {message}\n")
-
-            if context:
-                f.write(f"Context: {context}\n")
-
-            if isinstance(exception, subprocess.CalledProcessError):
-                # Clean logging for subprocess errors - NO TRACEBACK
-                f.write(f"Command: {exception.cmd}\n")
-                f.write(f"Return Code: {exception.returncode}\n")
-                if exception.stdout:
-                    f.write(f"STDOUT:\n{exception.stdout}\n")
-                if exception.stderr:
-                    f.write(f"STDERR:\n{exception.stderr}\n")
-            elif exception:
-                # Standard logging for other exceptions
-                f.write(f"Exception Type: {type(exception).__name__}\n")
-                f.write(f"Exception Message: {str(exception)}\n")
-
-                # Write traceback for unexpected python exceptions
-                f.write("\nTraceback:\n")
-                traceback.print_tb(exception.__traceback__, file=f)
-
-            f.write(f"{'-'*60}\n")
-    except Exception:
-        # Failsafe: if logging fails, try to print to stderr (though curses might hide it)
-        # but don't crash the program
+    def refresh(self):
         pass
 
+    def getch(self):
+        return ord("y")
 
-class DeploymentTUI:
-    def __init__(self, stdscr):
-        self.stdscr = stdscr
-        self.height, self.width = stdscr.getmaxyx()
-        curses.curs_set(1)  # Show cursor
-        curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
-        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
-        curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
-    def draw_header(self, title):
-        """Draw header with title"""
-        self.stdscr.clear()
-        self.stdscr.addstr(
-            1,
-            (self.width - len(title)) // 2,
-            title,
-            curses.color_pair(1) | curses.A_BOLD,
-        )
+class CLIReporter:
+    """Reporter that prints deployment progress to stdout.
 
-    def show_message(self, y, x, message, color_pair=0, bold=False):
-        """Display a message at given coordinates"""
-        # Bounds checking to prevent curses errors
-        if y >= self.height - 1 or y < 0 or x >= self.width or x < 0:
-            return
-        # Truncate message if it would extend past the screen
-        max_len = self.width - x - 1
-        if len(message) > max_len:
-            message = message[:max_len]
-        attr = curses.color_pair(color_pair)
-        if bold:
-            attr |= curses.A_BOLD
-        try:
-            self.stdscr.addstr(y, x, message, attr)
-        except curses.error:
-            pass  # Silently ignore any remaining curses errors
+    Implements the same interface that deploy_lib.py business logic functions
+    expect: show_progress(), show_message(), and stdscr.refresh().
+    """
 
-    def get_input(self, prompt, y, x):
-        """Get user input with prompt on the same line"""
-        self.show_message(y, x, prompt, color_pair=4, bold=True)
-        self.stdscr.refresh()
-
-        curses.echo()
-        input_x = x + len(prompt)
-        self.stdscr.move(y, input_x)
-        user_input = self.stdscr.getstr(y, input_x, 30).decode("utf-8").strip()
-        curses.noecho()
-
-        return user_input
-
-    def get_password(self, prompt, y, x):
-        """Get password input without echoing, on the same line as prompt"""
-        self.show_message(y, x, prompt, color_pair=4, bold=True)
-        self.stdscr.refresh()
-
-        curses.noecho()
-        input_x = x + len(prompt)
-        self.stdscr.move(y, input_x)
-        password = self.stdscr.getstr(y, input_x, 50).decode("utf-8").strip()
-
-        return password
+    def __init__(self, json_mode=False):
+        self.stdscr = CLIStdscr()
+        self._last_progress = None
+        self._json_mode = json_mode
+        # Accumulate structured events when in JSON mode
+        self.events = []
 
     def show_progress(self, y, message, success=None):
-        """Show progress message with optional success/failure indicator"""
-        self.show_message(y, 4, message)
+        """Print a progress line with status indicator."""
+        if self._json_mode:
+            if success is not None:
+                status = "ok" if success else "failed"
+                self.events.append(
+                    {"type": "progress", "message": message, "status": status}
+                )
+            return
+
         if success is True:
-            self.show_message(y, self.width - 10, "[OK]", color_pair=2, bold=True)
+            status = "\033[32m[OK]\033[0m"
         elif success is False:
-            self.show_message(y, self.width - 12, "[FAILED]", color_pair=3, bold=True)
-        self.stdscr.refresh()
-
-
-def check_root():
-    """Check if script is running as root"""
-    return os.geteuid() == 0
-
-
-def user_exists(username):
-    """Check if user already exists"""
-    try:
-        subprocess.run(["id", username], capture_output=True, check=True)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-
-
-def create_user(username):
-    """Create a new user with home directory"""
-    try:
-        # Create user with home directory
-        subprocess.run(
-            [
-                "useradd",
-                "-m",  # Create home directory
-                "-s",
-                "/bin/bash",  # Set default shell
-                username,
-            ],
-            check=True,
-            capture_output=True,
-        )
-        return True, None
-    except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.decode() if e.stderr else str(e)
-        log_error(f"Failed to create user '{username}'", e)
-        return False, error_msg
-
-
-def set_user_password(username, password):
-    """Set password for user using chpasswd"""
-    try:
-        # Use chpasswd to set password
-        process = subprocess.Popen(["chpasswd"], stdin=subprocess.PIPE)
-        process.communicate(f"{username}:{password}".encode())
-        return process.returncode == 0
-    except Exception as e:
-        log_error(f"Failed to set password for user '{username}'", e)
-        return False
-
-
-def add_user_to_sudo(username):
-    """Add user to sudo group"""
-    try:
-        subprocess.run(
-            ["usermod", "-aG", "sudo", username], check=True, capture_output=True
-        )
-        return True
-    except subprocess.CalledProcessError as e:
-        log_error(f"Failed to add user '{username}' to sudo group", e)
-        return False
-
-
-def is_valid_git_url(url):
-    """Validate that a URL is a safe git repository URL"""
-    # Allow https://, git://, and git@ SSH URLs
-    valid_patterns = [
-        r"^https://[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9](/[-a-zA-Z0-9._]+)+(\.git)?$",
-        r"^git://[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9](/[-a-zA-Z0-9._]+)+(\.git)?$",
-        r"^git@[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9]:[-a-zA-Z0-9._/]+(\.git)?$",
-    ]
-    return any(re.match(pattern, url) for pattern in valid_patterns)
-
-
-def read_git_packages_src_file(script_dir):
-    """Read git repository URLs from git-packages-src file"""
-    packages_file = script_dir / "packages/debian-git-packages-src.txt"
-    if not packages_file.exists():
-        return []
-
-    repos = []
-    with open(packages_file, "r") as f:
-        for line_num, line in enumerate(f, 1):
-            line = line.strip()
-            # Skip empty lines and full-line comments
-            if not line or line.startswith("#"):
-                continue
-
-            # Handle inline comments
-            if "#" in line:
-                line = line.split("#")[0].strip()
-
-            if line:  # Validate and add URL
-                if not is_valid_git_url(line):
-                    log_error(
-                        f"Skipping invalid URL at line {line_num}",
-                        context=f"File: {packages_file}, URL: {line}",
-                    )
-                    continue
-                repos.append(line)
-
-    return repos
-
-
-def is_safe_dest_path(dest_path):
-    """Validate that destination path doesn't escape home directory"""
-    # Reject absolute paths and path traversal attempts
-    if dest_path.startswith("/"):
-        return False
-    # Normalize and check for .. components
-    normalized = os.path.normpath(dest_path)
-    if normalized.startswith(".."):
-        return False
-    if "/.." in normalized or normalized == "..":
-        return False
-    return True
-
-
-def read_git_dotfiles_file(script_dir):
-    """Read git repository URLs from git-dotfiles file
-    Format: repo-url destination-directory
-    """
-    packages_file = script_dir / "packages/debian-git-dotfiles.txt"
-    if not packages_file.exists():
-        return []
-
-    repos = []
-    with open(packages_file, "r") as f:
-        for line_num, line in enumerate(f, 1):
-            line = line.strip()
-            # Skip empty lines and full-line comments
-            if not line or line.startswith("#"):
-                continue
-
-            # Handle inline comments
-            if "#" in line:
-                line = line.split("#")[0].strip()
-
-            if line:  # Parse and validate URL and destination
-                parts = line.split()
-                if len(parts) >= 2:
-                    url, dest_dir = parts[0], parts[1]
-                    # Validate URL
-                    if not is_valid_git_url(url):
-                        log_error(
-                            f"Skipping invalid URL at line {line_num}",
-                            context=f"File: {packages_file}, URL: {url}",
-                        )
-                        continue
-                    # Validate destination path
-                    if not is_safe_dest_path(dest_dir):
-                        log_error(
-                            f"Skipping unsafe destination at line {line_num}",
-                            context=f"File: {packages_file}, dest: {dest_dir}",
-                        )
-                        continue
-                    repos.append((url, dest_dir))
-
-    return repos
-
-
-def clone_and_build_repos(repos, username, tui, start_row):
-    """Clone git repos to ~/.local/src and build them"""
-    if not repos:
-        return True, None, start_row
-
-    home_dir = Path(f"/home/{username}")
-    src_dir = home_dir / ".local" / "src"
-
-    # Create .local/src directory
-    src_dir.mkdir(parents=True, exist_ok=True)
-
-    # Fix ownership of entire .local directory to prevent root-owned parent dirs
-    local_dir = home_dir / ".local"
-    try:
-        subprocess.run(
-            ["chown", "-R", f"{username}:{username}", str(local_dir)],
-            check=True,
-            capture_output=True,
-        )
-    except subprocess.CalledProcessError as e:
-        # Non-fatal, but log it
-        log_error(f"Warning: Failed to set ownership of {local_dir}", e)
-
-    failed_repos = []
-    progress_row = start_row
-    start_row += 1
-
-    for i, repo_url in enumerate(repos, 1):
-        # Extract repo name from URL
-        repo_name = repo_url.rstrip("/").split("/")[-1].replace(".git", "")
-        repo_path = src_dir / repo_name
-
-        # Update progress line
-        progress_msg = f"Cloning Repo {i}/{len(repos)}: {repo_name}"
-        tui.show_message(progress_row, 4, progress_msg.ljust(60), color_pair=0)
-        tui.stdscr.refresh()
-
-        try:
-            # Clone the repository
-            if not repo_path.exists():
-                subprocess.run(
-                    ["git", "clone", repo_url, str(repo_path)],
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                    timeout=300,  # 5 minute timeout for clone
-                )
-                # Set ownership
-                try:
-                    subprocess.run(
-                        ["chown", "-R", f"{username}:{username}", str(repo_path)],
-                        check=True,
-                        capture_output=True,
-                    )
-                except subprocess.CalledProcessError:
-                    pass  # Continue even if chown fails
-
-            # Add safe.directory to allow root to access user-owned repo
-            subprocess.run(
-                [
-                    "git",
-                    "config",
-                    "--global",
-                    "--add",
-                    "safe.directory",
-                    str(repo_path),
-                ],
-                check=True,
-                capture_output=True,
-            )
-
-            # Check if Makefile exists before building
-            makefile_path = repo_path / "Makefile"
-            if not makefile_path.exists():
-                raise FileNotFoundError(f"No Makefile found in {repo_path}")
-
-            # Build with make
-            subprocess.run(
-                ["make"],
-                cwd=str(repo_path),
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=600,  # 10 minute timeout for build
-            )
-
-            # Install with sudo make install
-            subprocess.run(
-                ["make", "install"],
-                cwd=str(repo_path),
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=300,  # 5 minute timeout for install
-            )
-
-        except (
-            subprocess.CalledProcessError,
-            subprocess.TimeoutExpired,
-            FileNotFoundError,
-        ) as e:
-            # Log error
-            log_error(
-                f"Failed to build {repo_name}",
-                e,
-                context=f"Working directory: {repo_path}",
-            )
-            failed_repos.append(repo_name)
-
-    # Summary
-    if failed_repos:
-        return False, failed_repos, start_row
-
-    return True, None, start_row
-
-
-def clone_dotfiles_home(repos, username, tui, start_row):
-    """Clone git repos directly to home directory (no build)"""
-    if not repos:
-        return True, None, None, [], start_row
-
-    home_dir = Path(f"/home/{username}")
-
-    backup_dir = None
-    backed_up_items = []
-    failed_repos = []
-    progress_row = start_row
-    start_row += 1
-
-    for i, (repo_url, dest_dir) in enumerate(repos, 1):
-        # Extract repo name from URL for display
-        repo_name = repo_url.rstrip("/").split("/")[-1].replace(".git", "")
-        repo_path = home_dir / dest_dir
-
-        # Update progress line
-        progress_msg = f"Cloning Repo {i}/{len(repos)}: {dest_dir}"
-        tui.show_message(progress_row, 4, progress_msg.ljust(60), color_pair=0)
-        tui.stdscr.refresh()
-
-        try:
-            # Back up existing directory if it exists
-            if repo_path.exists():
-                if backup_dir is None:
-                    backup_dir = get_backup_dir(home_dir)
-                    backup_dir.mkdir(parents=True, exist_ok=True)
-
-                # Back up to preserve structure
-                backup_path = backup_dir / dest_dir
-                backup_path.parent.mkdir(parents=True, exist_ok=True)
-
-                # Move existing directory to backup
-                shutil.move(str(repo_path), str(backup_path))
-                backed_up_items.append(dest_dir)
-
-            # Clone the repository
-            subprocess.run(
-                ["git", "clone", repo_url, str(repo_path)],
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=300,  # 5 minute timeout for clone
-            )
-
-            # Set ownership
-            try:
-                subprocess.run(
-                    ["chown", "-R", f"{username}:{username}", str(repo_path)],
-                    check=True,
-                    capture_output=True,
-                )
-            except subprocess.CalledProcessError:
-                pass  # Continue even if chown fails
-
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-            # Log error
-            log_error(f"Failed to clone {repo_name} to {dest_dir}", e)
-            failed_repos.append(dest_dir)
-
-    # Set ownership of backup directory if created
-    if backup_dir and backup_dir.exists():
-        try:
-            subprocess.run(
-                ["chown", "-R", f"{username}:{username}", str(backup_dir)],
-                check=True,
-                capture_output=True,
-            )
-        except subprocess.CalledProcessError:
-            pass  # Continue even if chown fails
-
-    # Summary
-    if failed_repos:
-        return False, failed_repos, backup_dir, backed_up_items, start_row
-
-    return True, None, backup_dir, backed_up_items, start_row
-
-
-def read_packages_file(script_dir):
-    """Read package names from apt-packages file"""
-    packages_file = script_dir / "packages/debian-apt-packages.txt"
-    if not packages_file.exists():
-        return []
-
-    packages = []
-    with open(packages_file, "r") as f:
-        for line in f:
-            line = line.strip()
-            # Skip empty lines and full-line comments
-            if not line or line.startswith("#"):
-                continue
-
-            # Handle inline comments (e.g., "emacs  # text editor")
-            if "#" in line:
-                line = line.split("#")[0].strip()
-
-            if line:  # Only add if there's a package name
-                packages.append(line)
-
-    return packages
-
-
-def is_package_installed(package_name):
-    """Check if a package is already installed"""
-    try:
-        result = subprocess.run(
-            ["dpkg-query", "-W", "-f=${Status}", package_name],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        return "install ok installed" in result.stdout
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
-        return False
-
-
-def read_third_party_packages_file(script_dir):
-    """Read third-party package repository configurations
-    Format: package_name | key_url | repo_line
-    Returns list of tuples: (package_name, key_url, repo_line)
-    """
-    packages_file = script_dir / "packages/debian-third-party-apt-packages.txt"
-    if not packages_file.exists():
-        return []
-
-    repos = []
-    with open(packages_file, "r") as f:
-        for line_num, line in enumerate(f, 1):
-            line = line.strip()
-            # Skip empty lines and comments
-            if not line or line.startswith("#"):
-                continue
-
-            # Parse the line
-            parts = [part.strip() for part in line.split("|")]
-            if len(parts) != 3:
-                log_error(
-                    f"Skipping invalid line {line_num} in third-party-apt-packages",
-                    context=f"File: {packages_file}, content: {line}",
-                )
-                continue
-
-            package_name, key_url, repo_line = parts
-            repos.append((package_name, key_url, repo_line))
-
-    return repos
-
-
-def setup_third_party_repos(repos, tui, start_row):
-    """Setup third-party APT repositories"""
-    if not repos:
-        return True, None, start_row
-
-    tui.show_progress(start_row, "Setting up third-party repositories...", success=None)
-    tui.stdscr.refresh()
-
-    keyrings_dir = Path("/etc/apt/keyrings")
-    sources_dir = Path("/etc/apt/sources.list.d")
-
-    # Create keyrings directory if it doesn't exist
-    try:
-        keyrings_dir.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError) as e:
-        log_error("Failed to create keyrings directory", e)
-        tui.show_progress(
-            start_row, "Setting up third-party repositories...", success=False
-        )
-        return False, f"Failed to create keyrings directory: {e}", start_row + 1
-
-    failed_repos = []
-
-    for package_name, key_url, repo_line in repos:
-        try:
-            # Download and install GPG key
-            key_filename = f"{package_name}-repo-key.gpg"
-            key_path = keyrings_dir / key_filename
-
-            # Download key
-            result = run_command_with_retry(
-                ["curl", "-fsSL", key_url],
-                max_retries=3,
-                check=True,
-                capture_output=True,
-                timeout=30,
-            )
-
-            # Dearmor and save key
-            subprocess.run(
-                ["gpg", "--dearmor", "--yes", "-o", str(key_path)],
-                input=result.stdout,
-                check=True,
-                timeout=10,
-            )
-
-            # Add repository to sources.list.d
-            sources_file = sources_dir / f"{package_name}.list"
-            with open(sources_file, "w") as f:
-                f.write(f"{repo_line}\n")
-
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, IOError) as e:
-            failed_repos.append(package_name)
-            # Log error but continue with other repos
-            log_error(f"Failed to setup repository for {package_name}", e)
-
-    if failed_repos:
-        tui.show_progress(
-            start_row, "Setting up third-party repositories...", success=False
-        )
-        return False, failed_repos, start_row + 1
-
-    tui.show_progress(start_row, "Setting up third-party repositories...", success=True)
-    return True, None, start_row + 1
-
-
-def install_packages(packages, tui, start_row):
-    """Install packages using apt, showing progress for each one"""
-    if not packages:
-        return True, None, start_row
-
-    # Enable non-free repositories
-    tui.show_progress(start_row, "Enabling non-free repositories...", success=None)
-    tui.stdscr.refresh()
-
-    try:
-        # DEB822 format (Debian 12+)
-        sources_path = Path("/etc/apt/sources.list.d/debian.sources")
-        if sources_path.exists():
-            content = sources_path.read_text()
-            new_content = re.sub(
-                r"^Components:\s*main\s*$",
-                "Components: main contrib non-free non-free-firmware",
-                content,
-                flags=re.MULTILINE,
-            )
-            if new_content != content:
-                sources_path.write_text(new_content)
-
-        # Traditional format (Debian 11 and older)
-        list_path = Path("/etc/apt/sources.list")
-        if list_path.exists():
-            content = list_path.read_text()
-            lines = content.splitlines()
-            new_lines = []
-            for line in lines:
-                if line.strip().startswith("deb ") or line.strip().startswith(
-                    "deb-src "
-                ):
-                    if " main" in line and "contrib" not in line:
-                        line = line + " contrib non-free non-free-firmware"
-                new_lines.append(line)
-            new_content = "\n".join(new_lines) + "\n"
-            if new_content != content:
-                list_path.write_text(new_content)
-
-        tui.show_progress(start_row, "Enabling non-free repositories...", success=True)
-        start_row += 1
-    except Exception as e:
-        tui.show_progress(start_row, "Enabling non-free repositories...", success=False)
-        log_error("Failed to enable non-free repositories", e)
-
-    # Update apt cache first
-    tui.show_progress(start_row, "Updating package cache...", success=None)
-    tui.stdscr.refresh()
-
-    try:
-        subprocess.run(
-            ["apt-get", "update"],
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        tui.show_progress(start_row, "Updating package cache...", success=True)
-        start_row += 1
-    except subprocess.CalledProcessError as e:
-        tui.show_progress(start_row, "Updating package cache...", success=False)
-        log_error("Failed to update package cache", e)
-        return False, "Failed to update package cache", start_row + 1
-
-    # Upgrade existing packages
-    tui.show_progress(start_row, "Upgrading system packages...", success=None)
-    tui.stdscr.refresh()
-
-    try:
-        subprocess.run(
-            ["apt-get", "upgrade", "-y"],
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        tui.show_progress(start_row, "Upgrading system packages...", success=True)
-        start_row += 1
-    except subprocess.CalledProcessError as e:
-        tui.show_progress(start_row, "Upgrading system packages...", success=False)
-        log_error("Failed to upgrade system packages", e)
-        return False, "Failed to upgrade system packages", start_row + 1
-
-    # Install packages one by one
-    failed_packages = []
-
-    progress_row = start_row
-    start_row += 1
-
-    for i, package in enumerate(packages, 1):
-        # Update progress line
-        progress_msg = f"Installing Package {i}/{len(packages)}: {package[:30]}"
-        tui.show_message(progress_row, 4, progress_msg.ljust(60), color_pair=0)
-        tui.stdscr.refresh()
-
-        # Check if already installed
-        if is_package_installed(package):
-            continue
-
-        # Install the package
-        try:
-            subprocess.run(
-                ["apt-get", "install", "-y", package],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        except subprocess.CalledProcessError as e:
-            log_error(f"Failed to install package: {package}", e)
-            failed_packages.append(package)
-
-    # Summary
-    if failed_packages:
-        return False, failed_packages, start_row
-
-    return True, None, start_row
-
-
-def get_backup_dir(home_dir):
-    """Find next available backup directory name"""
-    backup_base = home_dir / ".backup"
-    if not backup_base.exists():
-        return backup_base
-
-    counter = 2
-    while True:
-        backup_dir = home_dir / f".backup{counter}"
-        if not backup_dir.exists():
-            return backup_dir
-        counter += 1
-
-
-def deploy_overlay(username, script_dir):
-    """Deploy all files from dotfiles-overlay/ to their corresponding system locations
-
-    The dotfiles-overlay/ directory is a filesystem mirror:
-      dotfiles-overlay/home/new-user/.bashrc  -> /home/<username>/.bashrc
-      dotfiles-overlay/etc/keyd/default.conf  -> /etc/keyd/default.conf
-      dotfiles-overlay/usr/local/bin/myscript -> /usr/local/bin/myscript
-
-    Home directory files (dotfiles-overlay/home/new-user/) get backup + chown treatment.
-    All other files are copied directly.
-
-    Returns: (success, error_message, backup_dir, backed_up_items)
-    """
-    overlay_dir = script_dir / "dotfiles-overlay"
-
-    if not overlay_dir.exists():
-        return False, "dotfiles-overlay/ directory doesn't exist", None, []
-
-    home_dir = Path(f"/home/{username}")
-
-    backup_dir = None
-    backed_up_items = []
-    failed_files = []
-
-    for src_root, dirs, files in os.walk(overlay_dir):
-        for file in files:
-            src_file = Path(src_root) / file
-
-            # Calculate relative path from dotfiles-overlay/
-            relative_path = src_file.relative_to(overlay_dir)
-            relative_parts = relative_path.parts
-
-            # Determine if this is a home directory file
-            is_home_file = (
-                len(relative_parts) > 2
-                and relative_parts[0] == "home"
-                and relative_parts[1] == "new-user"
-            )
-
-            if is_home_file:
-                # Map dotfiles-overlay/home/new-user/X -> /home/<username>/X
-                home_relative = Path(*relative_parts[2:])  # strip home/new-user/
-                dest_file = home_dir / home_relative
-            else:
-                # Map dotfiles-overlay/X -> /X
-                dest_file = Path("/") / relative_path
-
-            try:
-                if is_home_file:
-                    # Back up existing home directory files
-                    if dest_file.exists() or dest_file.is_symlink():
-                        if backup_dir is None:
-                            backup_dir = get_backup_dir(home_dir)
-                            backup_dir.mkdir(parents=True, exist_ok=True)
-
-                        backup_path = backup_dir / home_relative
-                        backup_path.parent.mkdir(parents=True, exist_ok=True)
-                        shutil.move(str(dest_file), str(backup_path))
-
-                        display = f"~/{home_relative}"
-                        backed_up_items.append(display)
-
-                # Create parent directories
-                dest_file.parent.mkdir(parents=True, exist_ok=True)
-
-                # Copy file
-                shutil.copy2(src_file, dest_file)
-
-                # Make scripts executable for system files
-                if not is_home_file:
-                    if (
-                        dest_file.suffix == ".sh"
-                        or "bin" in dest_file.parts
-                        or "dispatcher.d" in dest_file.parts
-                        or "system-sleep" in dest_file.parts
-                        or "acpi" in dest_file.parts
-                    ):
-                        os.chmod(dest_file, 0o755)
-
-                # Set ownership for home directory files
-                # (Removed per-file chown: we now do a blanket chown of the entire
-                # home directory at the end of deploy_overlay to ensure parent directories
-                # like ~/.config correctly get user ownership)
-
-            except (OSError, IOError, subprocess.CalledProcessError) as e:
-                log_error(f"Failed to deploy: {src_file} -> {dest_file}", e)
-                failed_files.append((str(relative_path), str(e)))
-                continue
-
-    # Change ownership of backup directory if created
-    if backup_dir and backup_dir.exists():
-        try:
-            subprocess.run(
-                ["chown", "-R", f"{username}:{username}", str(backup_dir)],
-                check=True,
-                capture_output=True,
-            )
-        except subprocess.CalledProcessError:
-            pass
-
-    # Change ownership of the entire home directory to ensure all newly created
-    # parent directories (like ~/.config) are owned by the user, not root.
-    try:
-        subprocess.run(
-            ["chown", "-R", f"{username}:{username}", str(home_dir)],
-            check=True,
-            capture_output=True,
-        )
-    except subprocess.CalledProcessError as e:
-        log_error(f"Failed to chown home directory {home_dir}", e)
-
-    # Update font cache
-    try:
-        subprocess.run(["fc-cache", "-f"], check=True, capture_output=True)
-    except subprocess.CalledProcessError as e:
-        log_error("Failed to update font cache", e)
-
-    # Ensure fontconfig user configuration is enabled (50-user.conf)
-    user_conf_link = Path("/etc/fonts/conf.d/50-user.conf")
-    user_conf_target = Path("/usr/share/fontconfig/conf.avail/50-user.conf")
-
-    if not user_conf_link.exists() and user_conf_target.exists():
-        try:
-            user_conf_link.symlink_to(user_conf_target)
-        except (OSError, IOError) as e:
-            log_error(
-                "Failed to enable fontconfig user configuration (50-user.conf)", e
-            )
-
-    if failed_files:
-        error_msg = f"Failed to deploy: {', '.join([f[0] for f in failed_files])}"
-        return False, error_msg, backup_dir, backed_up_items
-
-    return True, None, backup_dir, backed_up_items
-
-
-def deploy_patches_to_system(script_dir):
-    """Apply patch files from dotfiles-patches/ to their corresponding system locations
-
-    Files under dotfiles-patches/ contain key=value lines (and comments) that are
-    merged into existing system files. The directory structure mirrors the
-    filesystem: dotfiles-patches/etc/systemd/logind.conf -> /etc/systemd/logind.conf
-
-    Returns: (success, error_message)
-    """
-    patches_dir = script_dir / "dotfiles-patches"
-
-    if not patches_dir.exists():
-        return True, None  # No patches to apply, not an error
-
-    deployed_files = []
-    failed_files = []
-
-    # Walk through dotfiles-patches/ directory
-    for root, dirs, files in os.walk(patches_dir):
-        for file in files:
-            src_file = Path(root) / file
-
-            # Calculate destination path: dotfiles-patches/etc/foo/bar -> /etc/foo/bar
-            relative_path = src_file.relative_to(patches_dir)
-            dest_file = Path("/") / relative_path
-
-            try:
-                # Read patch content (non-empty, non-comment lines)
-                with open(src_file, "r") as f:
-                    patch_lines = [
-                        line.strip()
-                        for line in f
-                        if line.strip() and not line.strip().startswith("#")
-                    ]
-
-                if dest_file.exists():
-                    # Read existing config
-                    with open(dest_file, "r") as f:
-                        existing_lines = [l.strip() for l in f.readlines()]
-
-                    # Check if any patch lines are missing
-                    needs_update = any(
-                        line not in existing_lines for line in patch_lines
-                    )
-
-                    if needs_update:
-                        # Backup original
-                        backup_path = Path(str(dest_file) + ".bak")
-                        shutil.copy2(dest_file, backup_path)
-
-                        # Append missing lines
-                        with open(dest_file, "a") as f:
-                            f.write("\n# Added by dotfiles deployment\n")
-                            for patch_line in patch_lines:
-                                if patch_line not in existing_lines:
-                                    f.write(patch_line + "\n")
-
-                        deployed_files.append(str(relative_path))
-                else:
-                    # Create new file with patch content
-                    dest_file.parent.mkdir(parents=True, exist_ok=True)
-                    with open(dest_file, "w") as f:
-                        for patch_line in patch_lines:
-                            f.write(patch_line + "\n")
-                    deployed_files.append(str(relative_path))
-
-            except (IOError, OSError) as e:
-                log_error(f"Failed to apply patch: {relative_path}", e)
-                failed_files.append((str(relative_path), str(e)))
-                continue
-
-    if failed_files:
-        error_msg = (
-            f"Failed to apply patches: {', '.join([f[0] for f in failed_files])}"
-        )
-        return False, error_msg
-
-    return True, None
-
-
-def configure_keyd():
-    """Enable and restart keyd service to apply configuration.
-
-    Called after deploy_system_configs to apply the new keyd configuration.
-    Returns: (success, error_message)
-    """
-    # Check if systemctl is available
-    if not shutil.which("systemctl"):
-        return True, None  # Not a systemd system
-
-    # Check if keyd package is installed (Debian-specific)
-    # Note: The binary may be named differently (e.g., keyd.rvaiya on Debian)
-    # so we check for the package instead of the binary
-    try:
-        result = subprocess.run(
-            ["dpkg-query", "-W", "-f=${Status}", "keyd"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if "install ok installed" not in result.stdout:
-            return True, None  # keyd not installed
-    except (
-        subprocess.CalledProcessError,
-        subprocess.TimeoutExpired,
-        FileNotFoundError,
-    ):
-        return True, None  # dpkg not available or keyd not installed
-
-    try:
-        # Enable keyd service
-        subprocess.run(
-            ["systemctl", "enable", "keyd"], check=True, capture_output=True, timeout=10
-        )
-
-        # Restart keyd to apply new config
-        subprocess.run(
-            ["systemctl", "restart", "keyd"],
-            check=True,
-            capture_output=True,
-            timeout=10,
-        )
-        return True, None
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        error_msg = f"Failed to configure keyd: {str(e)}"
-        log_error("Failed to configure keyd service", e)
-        # Don't fail the whole deployment if just the service restart fails,
-        # but return False so it can be reported
-        return False, error_msg
-
-
-
-
-def install_firefox_extensions(script_dir):
-    """Install Firefox extensions via Enterprise Policies
-
-    Returns: (success, error_message)
-    """
-    firefox_script = script_dir / "firefox/firefox-extensions.sh"
-
-    if not firefox_script.exists():
-        return True, None  # No script to run, not an error
-
-    try:
-        # Make script executable
-        os.chmod(firefox_script, 0o755)
-
-        # Run the script
-        subprocess.run(
-            [str(firefox_script)],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-
-        return True, None
-
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
-        error_msg = f"Failed to install Firefox extensions: {str(e)}"
-        log_error("Failed to install Firefox extensions", e)
-        return False, error_msg
-
-
-def install_firefox_userjs(username, script_dir, tui, row):
-    """Installs the custom user.js to all Firefox profiles.
-    Creates a default profile if none exist.
-    """
-    userjs_src = script_dir / "firefox/firefox-user.js"
-
-    if not userjs_src.exists():
-        return True, None, row
-
-    tui.show_progress(row, "Installing Firefox user.js...", success=None)
-    tui.stdscr.refresh()
-
-    try:
-        home_dir = Path(f"/home/{username}")
-        firefox_dir = home_dir / ".mozilla" / "firefox"
-        # We learned that Firefox ESR on Debian ignores hardcoded profiles.ini setups
-        # and instead creates hash-based locks (like Install3B6073811A6ABF12).
-        # We must let Firefox generate its profile naturally first, then inject.
-
-        # 1. Ensure mozilla/firefox directory exists with correct skeletal ownership
-        firefox_dir.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            ["chown", "-R", f"{username}:{username}", str(home_dir / ".mozilla")],
-            check=True,
-        )
-
-        # 2. Run Headless Firefox briefly
-        # This forces Firefox-ESR to generate its true default profile and its installs.ini hashes
-        try:
-            # We use Popen so that we don't block. We sleep to let it write profiles.ini.
-            # This exactly replicates the LARBS librewolf deployment method.
-            cmd = "firefox-esr --headless || firefox --headless"
-            p = subprocess.Popen(
-                ["su", "-", username, "-c", cmd],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            time.sleep(4)
-        except Exception as e:
-            log_error(f"Failed to bootstrap firefox profile: {e}")
-
-        # 3. Find whatever profiles it generated
-        import glob
-
-        profiles = glob.glob(str(firefox_dir / "*.default*"))
-
-        installed = False
-        for profile in profiles:
-            dest = Path(profile) / "user.js"
-
-            # Backup existing if present
-            if dest.exists():
-                backup = dest.with_name(f"user.js.backup.{int(time.time())}")
-                shutil.copy2(dest, backup)
-                subprocess.run(
-                    ["chown", f"{username}:{username}", str(backup)], check=True
-                )
-
-            shutil.copy2(userjs_src, dest)
-            subprocess.run(["chown", f"{username}:{username}", str(dest)], check=True)
-            installed = True
-
-        # 4. Kill the headless instance
-        subprocess.run(["pkill", "-u", username, "-f", "firefox"], capture_output=True)
-        try:
-            p.terminate()
-            p.wait(timeout=2)
-        except Exception:
-            pass
-
-        if not installed:
-            tui.show_progress(row, "Installing Firefox user.js...", success=False)
-            return False, "Failed to find any Firefox profile directories.", row + 1
-
-        tui.show_progress(row, "Installing Firefox user.js...", success=True)
-        return True, None, row + 1
-
-    except Exception as e:
-        log_error("Failed to install Firefox user.js", e)
-        tui.show_progress(row, "Installing Firefox user.js...", success=False)
-        return False, str(e), row + 1
-
-
-def install_tor_browser(username, script_dir, tui, row):
-    """Install Tor Browser for the target user
-
-    Runs the install-debian-tor-browser.sh script as the target user to ensure
-    correct ownership of ~/.local/src/tor-browser and symlink.
-    """
-    install_script = script_dir / "scripts/install-debian-tor-browser.sh"
-
-    if not install_script.exists():
-        return True, None, row  # Script not present, skip silently
-
-    tui.show_progress(row, "Installing Tor Browser...", success=None)
-    tui.stdscr.refresh()
-
-    try:
-        # Read script content as root (who can access the dotfiles dir)
-        # and pipe it to bash running as the target user
-        with open(install_script, "r") as f:
-            script_content = f.read()
-
-        # Run as target user, passing script via stdin
-        subprocess.run(
-            ["su", "-c", "bash -s", username],
-            input=script_content.encode(),
-            check=True,
-            capture_output=True,
-            timeout=600,  # 10 minute timeout for download
-        )
-        tui.show_progress(row, "Installing Tor Browser...", success=True)
-        return True, None, row + 1
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        error_msg = e.stderr.decode() if hasattr(e, "stderr") and e.stderr else str(e)
-
-        log_error(
-            f"Tor Browser Installation Error for user {username}",
-            e,
-            context=f"Script: {install_script}",
-        )
-        tui.show_progress(row, "Installing Tor Browser...", success=False)
-        return False, error_msg, row + 1
-
-
-def main_tui(stdscr):
-    """Main TUI application"""
-    tui = DeploymentTUI(stdscr)
-    script_dir = Path(__file__).parent.resolve()
-    start_time = time.time()
-
-    # Check if running as root
-    if not check_root():
-        tui.draw_header("ERROR: ROOT REQUIRED")
-        tui.show_message(
-            4, 4, "This script must be run as root (sudo).", color_pair=3, bold=True
-        )
-        tui.show_message(6, 4, "Press any key to exit...")
-        stdscr.getch()
-        return
-
-    # Welcome screen
-    tui.draw_header("DOTFILES DEPLOYMENT")
-    username = tui.get_input("username: ", 4, 4)
-
-    if not username:
-        tui.show_message(6, 4, "No username provided. Exiting.", color_pair=3)
-        tui.show_message(7, 4, "Press any key to exit...")
-        stdscr.getch()
-        return
-
-    # Validate username (lowercase letters, digits, underscore, hyphen; must start with letter or underscore)
-    if not re.match(r"^[a-z_][a-z0-9_-]*[$]?$", username):
-        tui.show_message(6, 4, "Invalid username format.", color_pair=3)
-        tui.show_message(
-            7, 4, "Must start with lowercase letter or underscore.", color_pair=3
-        )
-        tui.show_message(8, 4, "Press any key to exit...")
-        stdscr.getch()
-        return
-
-    # Check if user exists and handle accordingly
-    password = None
-    user_created = False
-
-    if user_exists(username):
-        tui.show_message(6, 4, f"User '{username}' already exists.", color_pair=4)
-        tui.show_message(7, 4, "Continue with deployment? (y/n): ", color_pair=4)
-        tui.stdscr.refresh()
-        response = stdscr.getch()
-        if chr(response).lower() != "y":
+            status = "\033[31m[FAILED]\033[0m"
+        else:
+            status = "\033[33m[..]\033[0m"
+
+        line = f"  {status} {message}"
+
+        if self._last_progress == message and success is not None:
+            sys.stdout.write(f"\033[A\033[2K{line}\n")
+        else:
+            print(line)
+
+        sys.stdout.flush()
+        self._last_progress = message
+
+    def show_message(self, y, x, message, color_pair=0, bold=False):
+        """Print a message to stdout. Row/column positioning is ignored."""
+        # A non-progress message breaks the overwrite chain
+        self._last_progress = None
+
+        message = message.rstrip()
+        if not message:
             return
-        user_created = False
+        if "Press any key" in message:
+            return
+
+        if self._json_mode:
+            self.events.append({"type": "message", "message": message})
+            return
+
+        print(f"  {message}")
+        sys.stdout.flush()
+
+    def draw_header(self, title):
+        """Print a section header."""
+        if self._json_mode:
+            return
+        width = 60
+        print()
+        print(f"  {title}")
+        print()
+
+
+def parse_args(argv=None):
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Deploy dotfiles — command-line interface",
+        epilog="Example: sudo python3 deploy.py --username myuser --password mypass --yes",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    parser.add_argument(
+        "--username",
+        "-u",
+        required=True,
+        help="Username to create or deploy to",
+    )
+    parser.add_argument(
+        "--password",
+        "-p",
+        default=None,
+        help="Password for new user (not needed if user already exists)",
+    )
+    parser.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        default=False,
+        help="Auto-confirm all prompts (required for non-interactive use)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        "-n",
+        action="store_true",
+        default=False,
+        help="Preview what would happen without making any changes",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output results as JSON (for LLM/automation consumption)",
+    )
+
+    return parser.parse_args(argv)
+
+
+def dry_run_preview(args, script_dir):
+    """Show what the deployment would do without making any changes.
+    Does not require root."""
+    username = args.username
+    json_mode = args.json
+
+    steps = []
+
+    # User creation
+    if deploy_lib.user_exists(username):
+        steps.append(
+            {
+                "step": "user",
+                "action": "skip",
+                "detail": f"User '{username}' already exists",
+            }
+        )
     else:
-        # Get password for new user
-        password = tui.get_password("password: ", 5, 4)
-        if not password:
-            tui.show_message(7, 4, "No password provided. Exiting.", color_pair=3)
-            tui.show_message(8, 4, "Press any key to exit...")
-            stdscr.getch()
-            return
+        steps.append(
+            {
+                "step": "user",
+                "action": "create",
+                "detail": f"Create user '{username}' with home directory",
+            }
+        )
+        steps.append(
+            {
+                "step": "password",
+                "action": "set",
+                "detail": f"Set password for '{username}'",
+            }
+        )
 
-        password_confirm = tui.get_password("  repeat: ", 6, 4)
-        if password != password_confirm:
-            tui.show_message(8, 4, "Passwords do not match. Exiting.", color_pair=3)
-            tui.show_message(9, 4, "Press any key to exit...")
-            stdscr.getch()
-            return
-        user_created = True
+    steps.append(
+        {"step": "sudo", "action": "add", "detail": f"Add '{username}' to sudo group"}
+    )
 
-    # Start deployment process
-    tui.draw_header("DOTFILES DEPLOYMENT")
+    # Dotfile repos
+    dotfiles_repos = deploy_lib.read_git_dotfiles_file(script_dir)
+    if dotfiles_repos:
+        for url, dest in dotfiles_repos:
+            steps.append(
+                {
+                    "step": "clone_dotfile",
+                    "action": "clone",
+                    "detail": f"{url} → ~/{dest}",
+                }
+            )
+
+    # Prerequisites
+    steps.append(
+        {"step": "prerequisites", "action": "install", "detail": "Install curl, gpg"}
+    )
+
+    # Third-party repos
+    third_party_repos = deploy_lib.read_third_party_packages_file(script_dir)
+    third_party_package_names = []
+    if third_party_repos:
+        for name, key_url, repo_line in third_party_repos:
+            steps.append(
+                {
+                    "step": "third_party_repo",
+                    "action": "setup",
+                    "detail": f"Add repo for {name}",
+                }
+            )
+            third_party_package_names.append(name)
+
+    # Packages
+    packages = deploy_lib.read_packages_file(script_dir)
+    all_packages = packages + third_party_package_names
+    already_installed = []
+    to_install = []
+    for pkg in all_packages:
+        try:
+            if deploy_lib.is_package_installed(pkg):
+                already_installed.append(pkg)
+            else:
+                to_install.append(pkg)
+        except FileNotFoundError:
+            # dpkg-query not available (non-Debian host) — assume not installed
+            to_install.append(pkg)
+
+    if to_install:
+        steps.append(
+            {
+                "step": "packages",
+                "action": "install",
+                "detail": f"{len(to_install)} packages to install",
+                "packages": to_install,
+            }
+        )
+    if already_installed:
+        steps.append(
+            {
+                "step": "packages",
+                "action": "skip",
+                "detail": f"{len(already_installed)} packages already installed",
+                "packages": already_installed,
+            }
+        )
+
+    # Root deployment
+    overlay_dir = script_dir / "dotfiles-overlay"
+    if overlay_dir.exists():
+        file_count = sum(1 for _ in overlay_dir.rglob("*") if _.is_file())
+        steps.append(
+            {
+                "step": "deploy_overlay",
+                "action": "copy",
+                "detail": f"Deploy {file_count} files from dotfiles-overlay/",
+            }
+        )
+
+    # Source repos
+    src_repos = deploy_lib.read_git_packages_src_file(script_dir)
+    if src_repos:
+        for url in src_repos:
+            name = url.rstrip("/").split("/")[-1].replace(".git", "")
+            steps.append(
+                {
+                    "step": "build_repo",
+                    "action": "clone+build",
+                    "detail": f"{name} ({url})",
+                }
+            )
+
+    # Tor Browser
+    if (script_dir / "scripts/install-debian-tor-browser.sh").exists():
+        steps.append(
+            {
+                "step": "tor_browser",
+                "action": "install",
+                "detail": "Download and install Tor Browser",
+            }
+        )
+
+    # Patches
+    patches_dir = script_dir / "dotfiles-patches"
+    if patches_dir.exists():
+        patch_count = sum(1 for _ in patches_dir.rglob("*") if _.is_file())
+        steps.append(
+            {
+                "step": "patches",
+                "action": "apply",
+                "detail": f"Apply {patch_count} patch files",
+            }
+        )
+
+    # Services
+    steps.append(
+        {
+            "step": "keyd",
+            "action": "configure",
+            "detail": "Enable and restart keyd service",
+        }
+    )
+
+    # Firefox
+    if (script_dir / "firefox/firefox-extensions.sh").exists():
+        steps.append(
+            {
+                "step": "firefox_extensions",
+                "action": "install",
+                "detail": "Install Firefox extensions via policy",
+            }
+        )
+    if (script_dir / "firefox/firefox-user.js").exists():
+        steps.append(
+            {
+                "step": "firefox_userjs",
+                "action": "install",
+                "detail": "Deploy user.js to Firefox profiles",
+            }
+        )
+
+    # Cleanup
+    steps.append(
+        {"step": "cleanup", "action": "run", "detail": "apt-get clean && autoremove"}
+    )
+
+    # Output
+    if json_mode:
+        result = {
+            "dry_run": True,
+            "username": username,
+            "steps": steps,
+            "total_steps": len(steps),
+        }
+        print(json_mod.dumps(result, indent=2))
+    else:
+        print()
+        print("=" * 60)
+        print("  DRY RUN — no changes will be made")
+        print("=" * 60)
+        print()
+        print(f"  Target user: {username}")
+        print(f"  Total steps: {len(steps)}")
+        print()
+
+        # Color map for action verbs
+        action_colors = {
+            "CREATE": "\033[32m",  # green
+            "INSTALL": "\033[32m",  # green
+            "SET": "\033[32m",  # green
+            "ADD": "\033[32m",  # green
+            "CLONE": "\033[36m",  # cyan
+            "CLONE+BUILD": "\033[36m",  # cyan
+            "COPY": "\033[36m",  # cyan
+            "SETUP": "\033[36m",  # cyan
+            "APPLY": "\033[36m",  # cyan
+            "CONFIGURE": "\033[36m",  # cyan
+            "RUN": "\033[36m",  # cyan
+            "SKIP": "\033[33m",  # yellow
+        }
+        reset = "\033[0m"
+
+        for i, step in enumerate(steps, 1):
+            action = step["action"].upper()
+            detail = step["detail"]
+            color = action_colors.get(action, "")
+            print(f"  {i:2d}. [{color}{action:>12s}{reset if color else ''}]  {detail}")
+            if "packages" in step and step["action"] == "install":
+                # Show first few packages
+                pkgs = step["packages"]
+                if len(pkgs) <= 10:
+                    for pkg in pkgs:
+                        print(f"                        - {pkg}")
+                else:
+                    for pkg in pkgs[:8]:
+                        print(f"                        - {pkg}")
+                    print(f"                        ... and {len(pkgs) - 8} more")
+
+        print()
+        print("  Run without --dry-run to execute.")
+        print()
+
+
+def handle_error(args, cli, message, is_fatal=False):
+    """Handle an error: print, ask for confirmation or auto-continue.
+    Returns True if should continue, False if should abort."""
+    if cli._json_mode:
+        cli.events.append({"type": "error", "message": message, "fatal": is_fatal})
+    else:
+        print(f"\033[31m  {message}\033[0m")
+
+    if is_fatal:
+        return False
+
+    if args.yes:
+        if not cli._json_mode:
+            print("  --yes: continuing despite errors")
+        return True
+    else:
+        response = input("  Continue anyway? [y/N]: ").strip().lower()
+        return response == "y"
+
+
+def _json_exit(data, code=1):
+    """Print a consistent JSON result and exit.
+
+    Ensures every JSON output has the same top-level keys so that
+    automation consumers only need to handle one schema."""
+    out = {
+        "success": data.get("success", False),
+        "errors": data.get("errors", []),
+        "warnings": data.get("warnings", []),
+    }
+    # Merge any extra keys from the caller (username, error, events, ...)
+    for k, v in data.items():
+        if k not in out:
+            out[k] = v
+    # Promote a single 'error' string into the errors list for consistency
+    if "error" in out and out["error"] not in out["errors"]:
+        out["errors"].insert(0, out.pop("error"))
+    print(json_mod.dumps(out, indent=2))
+    sys.stdout.flush()
+    sys.exit(code)
+
+
+def main(argv=None):
+    """CLI entry point — orchestrates the full deployment pipeline."""
+    args = parse_args(argv)
+    cli = CLIReporter(json_mode=args.json)
+    script_dir = Path(__file__).parent.resolve()
+    had_errors = False
+    start_time = time.monotonic()
+
+    # JSON result accumulator
+    json_result = {
+        "success": True,
+        "username": args.username,
+        "errors": [],
+        "warnings": [],
+    }
+
+    # ── Pre-flight checks ──────────────────────────────────────────
+
+    # Validate username format (do this before root check so --dry-run works)
+    if not re.match(r"^[a-z_][a-z0-9_-]*[$]?$", args.username):
+        if args.json:
+            _json_exit(
+                {"success": False, "error": f"Invalid username '{args.username}'"}
+            )
+        else:
+            print(f"\033[31mERROR: Invalid username '{args.username}'.\033[0m")
+            print("Must start with lowercase letter or underscore.")
+        sys.exit(1)
+
+    # Dry-run mode — preview and exit (does not require root)
+    if args.dry_run:
+        dry_run_preview(args, script_dir)
+        sys.exit(0)
+
+    if not deploy_lib.check_root():
+        if args.json:
+            _json_exit({"success": False, "error": "Must be run as root (sudo)"})
+        else:
+            print("\033[31mERROR: This script must be run as root (sudo).\033[0m")
+        sys.exit(1)
+
+    username = args.username
+    password = args.password
+
+    # ── User creation / verification ───────────────────────────────
+
+    cli.draw_header("DOTFILES DEPLOYMENT")
     row = 4
 
-    # Create user if needed
-    if user_created:
-        tui.show_progress(row, f"Creating user '{username}'...", success=None)
-        tui.stdscr.refresh()
+    if deploy_lib.user_exists(username):
+        if not args.json:
+            print(f"  User '{username}' already exists. Continuing with deployment.")
+        if not args.yes:
+            response = input("  Continue? [y/N]: ").strip().lower()
+            if response != "y":
+                if not args.json:
+                    print("Aborted.")
+                sys.exit(0)
+    else:
+        if not password:
+            if args.json:
+                _json_exit(
+                    {
+                        "success": False,
+                        "error": "--password is required when creating a new user",
+                    }
+                )
+            else:
+                print(
+                    "\033[31mERROR: --password is required when creating a new user.\033[0m"
+                )
+            sys.exit(1)
 
-        success, error_msg = create_user(username)
+        cli.show_progress(row, f"Creating user '{username}'...", success=None)
+        success, error_msg = deploy_lib.create_user(username)
         if success:
-            tui.show_progress(row, f"Creating user '{username}'...", success=True)
+            cli.show_progress(row, f"Creating user '{username}'...", success=True)
             row += 1
 
-            # Set password
-            tui.show_progress(row, "Setting password...", success=None)
-            tui.stdscr.refresh()
-            if set_user_password(username, password):
-                tui.show_progress(row, "Setting password...", success=True)
+            cli.show_progress(row, "Setting password...", success=None)
+            if deploy_lib.set_user_password(username, password):
+                cli.show_progress(row, "Setting password...", success=True)
                 row += 1
             else:
-                tui.show_progress(row, "Setting password...", success=False)
-                tui.show_message(row + 1, 4, "Press any key to exit...", color_pair=3)
-                stdscr.getch()
-                return
+                cli.show_progress(row, "Setting password...", success=False)
+                json_result["success"] = False
+                json_result["errors"].append("Failed to set password")
+                if args.json:
+                    print(json_mod.dumps(json_result))
+                sys.exit(1)
         else:
-            tui.show_progress(row, f"Creating user '{username}'...", success=False)
-            if error_msg:
-                tui.show_message(row + 1, 4, f"Error: {error_msg[:60]}", color_pair=3)
-                row += 1
-            tui.show_message(row + 1, 4, "Press any key to exit...", color_pair=3)
-            stdscr.getch()
-            return
+            cli.show_progress(row, f"Creating user '{username}'...", success=False)
+            json_result["success"] = False
+            json_result["errors"].append(f"Failed to create user: {error_msg}")
+            if args.json:
+                print(json_mod.dumps(json_result))
+            elif error_msg:
+                print(f"  Error: {error_msg}")
+            sys.exit(1)
 
-    # Add to sudo group (for both new and existing users)
-    tui.show_progress(row, "Adding to sudo group...", success=None)
-    tui.stdscr.refresh()
-    if add_user_to_sudo(username):
-        tui.show_progress(row, "Adding to sudo group...", success=True)
+    # ── Add to sudo group ──────────────────────────────────────────
+
+    cli.show_progress(row, "Adding to sudo group...", success=None)
+    if deploy_lib.add_user_to_sudo(username):
+        cli.show_progress(row, "Adding to sudo group...", success=True)
         row += 1
     else:
-        tui.show_progress(row, "Adding to sudo group...", success=False)
-        tui.show_message(row + 1, 4, "Press any key to exit...", color_pair=3)
-        stdscr.getch()
-        return
+        cli.show_progress(row, "Adding to sudo group...", success=False)
+        json_result["success"] = False
+        json_result["errors"].append("Failed to add user to sudo group")
+        if args.json:
+            print(json_mod.dumps(json_result))
+        sys.exit(1)
 
-    # Clone dotfile repos to home directory (before package installation)
-    dotfiles_repos = read_git_dotfiles_file(script_dir)
+    # ── Clone dotfile repos to home ────────────────────────────────
+
+    dotfiles_repos = deploy_lib.read_git_dotfiles_file(script_dir)
     if dotfiles_repos:
-
         success, failed_repos, dotfiles_backup_dir, dotfiles_backed_up, row = (
-            clone_dotfiles_home(dotfiles_repos, username, tui, row)
+            deploy_lib.clone_dotfiles_home(dotfiles_repos, username, cli, row)
         )
 
         if success:
-            # Success - show backup info if any
-            pass
+            row += 1
             if dotfiles_backup_dir and dotfiles_backed_up:
-                tui.show_message(
-                    row, 4, f"Backed up existing files to: {dotfiles_backup_dir.name}"
-                )
+                if not args.json:
+                    print(f"  Backed up existing files to: {dotfiles_backup_dir.name}")
                 row += 1
         else:
             row += 1
-            tui.show_message(
-                row, 4, f"Failed to clone: {', '.join(failed_repos)}", color_pair=3
-            )
-            row += 1
-            tui.show_message(
-                row, 4, f"Error details: {LOG_FILE}", color_pair=4, bold=True
-            )
-            tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
-            tui.stdscr.refresh()
-            response = stdscr.getch()
-            if chr(response).lower() != "y":
-                return
+            err = f"Failed to clone: {', '.join(failed_repos)}"
+            json_result["errors"].append(err)
+            if not handle_error(args, cli, err):
+                json_result["success"] = False
+                if args.json:
+                    print(json_mod.dumps(json_result))
+                sys.exit(1)
+            had_errors = True
             row += 3
 
-    # Ensure dependencies for adding repositories (curl, gpg) are installed
-    # These are needed for setup_third_party_repos below
-    tui.show_progress(row, "Checking prerequisite packages...", success=None)
-    tui.stdscr.refresh()
+    # ── Prerequisite packages (curl, gpg) ──────────────────────────
+
+    cli.show_progress(row, "Checking prerequisite packages...", success=None)
     try:
         subprocess.run(
             ["apt-get", "install", "-y", "curl", "gpg"],
@@ -1360,231 +579,231 @@ def main_tui(stdscr):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        tui.show_progress(row, "Checking prerequisite packages...", success=True)
+        cli.show_progress(row, "Checking prerequisite packages...", success=True)
         row += 1
     except subprocess.CalledProcessError:
-        tui.show_progress(row, "Checking prerequisite packages...", success=False)
-        tui.show_message(
-            row + 1,
-            4,
-            "Failed to install curl/gpg. Third-party repos may fail.",
-            color_pair=3,
+        cli.show_progress(row, "Checking prerequisite packages...", success=False)
+        json_result["warnings"].append(
+            "Failed to install curl/gpg. Third-party repos may fail."
         )
+        if not args.json:
+            print("  Failed to install curl/gpg. Third-party repos may fail.")
         row += 2
 
-    # Setup third-party repositories
-    third_party_repos = read_third_party_packages_file(script_dir)
+    # ── Setup third-party repositories ─────────────────────────────
+
+    third_party_repos = deploy_lib.read_third_party_packages_file(script_dir)
     third_party_package_names = []
     if third_party_repos:
-
-        success, result, row = setup_third_party_repos(third_party_repos, tui, row)
+        success, result, row = deploy_lib.setup_third_party_repos(
+            third_party_repos, cli, row
+        )
 
         if success:
-            # Extract package names to install later
             third_party_package_names = [name for name, _, _ in third_party_repos]
             row += 1
         else:
             failed_repos = result
             row += 1
-            tui.show_message(
-                row,
-                4,
-                f"Failed to setup repos: {', '.join(failed_repos)}",
-                color_pair=3,
-            )
-            tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
-            tui.stdscr.refresh()
-            response = stdscr.getch()
-            if chr(response).lower() != "y":
-                return
+            err = f"Failed to setup repos: {', '.join(failed_repos)}"
+            json_result["errors"].append(err)
+            if not handle_error(args, cli, err):
+                json_result["success"] = False
+                if args.json:
+                    print(json_mod.dumps(json_result))
+                sys.exit(1)
+            had_errors = True
             row += 3
 
-    # Install packages
-    packages = read_packages_file(script_dir)
-    # Add third-party package names to the installation list
+    # ── Install packages ───────────────────────────────────────────
+
+    packages = deploy_lib.read_packages_file(script_dir)
     all_packages = packages + third_party_package_names
     if all_packages:
-
-        success, result, row = install_packages(all_packages, tui, row)
+        success, result, row = deploy_lib.install_packages(all_packages, cli, row)
 
         if success:
-            # Success - continue to dotfiles
-            pass
+            row += 1
         else:
             failed_packages = result
             row += 1
-            tui.show_message(
-                row, 4, f"Failed to install: {', '.join(failed_packages)}", color_pair=3
-            )
-            tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
-            tui.stdscr.refresh()
-            response = stdscr.getch()
-            if chr(response).lower() != "y":
-                return
+            err = f"Failed to install: {', '.join(failed_packages)}"
+            json_result["errors"].append(err)
+            if not handle_error(args, cli, err):
+                json_result["success"] = False
+                if args.json:
+                    print(json_mod.dumps(json_result))
+                sys.exit(1)
+            had_errors = True
             row += 3
 
-    # Deploy all files from dotfiles-overlay/ (dotfiles + system configs)
-    tui.show_progress(row, "Deploying from dotfiles-overlay/...", success=None)
-    tui.stdscr.refresh()
+    # ── Deploy dotfiles-overlay/ files ──────────────────────────────
 
-    success, error, backup_dir, backed_up_items = deploy_overlay(username, script_dir)
+    cli.show_progress(row, "Deploying from dotfiles-overlay/...", success=None)
+
+    success, error, backup_dir, backed_up_items = deploy_lib.deploy_overlay(
+        username, script_dir
+    )
 
     if not success:
-        tui.show_progress(row, "Deploying from dotfiles-overlay/...", success=False)
-        tui.show_message(row + 2, 4, f"Error: {error}", color_pair=3)
-        tui.show_message(row + 3, 4, "Press any key to exit...", color_pair=3)
-        stdscr.getch()
-        return
+        cli.show_progress(row, "Deploying from dotfiles-overlay/...", success=False)
+        err = f"Failed to deploy from dotfiles-overlay/: {error}"
+        json_result["success"] = False
+        json_result["errors"].append(err)
+        if args.json:
+            print(json_mod.dumps(json_result))
+        else:
+            print(f"\033[31m  Error: {error}\033[0m")
+        sys.exit(1)
     else:
-        tui.show_progress(row, "Deploying from dotfiles-overlay/...", success=True)
-        row += 1
-
-        # Show backup info if files were backed up
+        cli.show_progress(row, "Deploying from dotfiles-overlay/...", success=True)
+        row += 2
         if backup_dir and backed_up_items:
-            tui.show_message(row, 4, f"Backed up existing files to: {backup_dir.name}")
+            if not args.json:
+                print(f"  Backed up existing files to: {backup_dir.name}")
             row += 1
 
-    # Clone and build source repositories
-    src_repos = read_git_packages_src_file(script_dir)
-    if src_repos:
+    # ── Clone and build source repos ───────────────────────────────
 
-        success, failed_repos, row = clone_and_build_repos(
-            src_repos, username, tui, row
+    src_repos = deploy_lib.read_git_packages_src_file(script_dir)
+    if src_repos:
+        success, failed_repos, row = deploy_lib.clone_and_build_repos(
+            src_repos, username, cli, row
         )
 
         if success:
-            # Success - continue
-            pass
+            row += 1
         else:
             row += 1
-            tui.show_message(
-                row, 4, f"Failed to build: {', '.join(failed_repos)}", color_pair=3
-            )
-            row += 1
-            tui.show_message(
-                row, 4, f"Error details: {LOG_FILE}", color_pair=4, bold=True
-            )
-            tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
-            tui.stdscr.refresh()
-            response = stdscr.getch()
-            if chr(response).lower() != "y":
-                return
+            err = f"Failed to build: {', '.join(failed_repos)}"
+            json_result["errors"].append(err)
+            if not handle_error(args, cli, err):
+                json_result["success"] = False
+                if args.json:
+                    print(json_mod.dumps(json_result))
+                sys.exit(1)
+            had_errors = True
             row += 3
 
-    # Install Tor Browser
-    success, error, row = install_tor_browser(username, script_dir, tui, row)
+    # ── Install Tor Browser ────────────────────────────────────────
+
+    success, error, row = deploy_lib.install_tor_browser(username, script_dir, cli, row)
     if not success:
         error_last_line = error.strip().splitlines()[-1] if error else "Unknown"
-        tui.show_message(row, 4, f"Error: {error_last_line[:50]}...", color_pair=3)
-        tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
-        tui.stdscr.refresh()
-        response = stdscr.getch()
-        if chr(response).lower() != "y":
-            return
+        err = f"Tor Browser installation failed: {error_last_line}"
+        json_result["errors"].append(err)
+        if not handle_error(args, cli, err):
+            json_result["success"] = False
+            if args.json:
+                print(json_mod.dumps(json_result))
+            sys.exit(1)
+        had_errors = True
         row += 3
 
-    # Apply system patches
-    tui.show_progress(row, "Applying system patches...", success=None)
-    tui.stdscr.refresh()
+    # ── Apply system patches ───────────────────────────────────────
 
-    success, error = deploy_patches_to_system(script_dir)
+    cli.show_progress(row, "Applying system patches...", success=None)
+
+    success, error = deploy_lib.deploy_patches_to_system(script_dir)
 
     if not success:
-        tui.show_progress(row, "Applying system patches...", success=False)
-        tui.show_message(row + 1, 4, f"Error: {error}", color_pair=3)
-        tui.show_message(row + 2, 4, "Continue anyway? (y/n): ", color_pair=4)
-        tui.stdscr.refresh()
-        response = stdscr.getch()
-        if chr(response).lower() != "y":
-            return
+        cli.show_progress(row, "Applying system patches...", success=False)
+        err = f"Failed to apply patches: {error}"
+        json_result["errors"].append(err)
+        if not handle_error(args, cli, err):
+            json_result["success"] = False
+            if args.json:
+                print(json_mod.dumps(json_result))
+            sys.exit(1)
+        had_errors = True
         row += 4
     else:
-        tui.show_progress(row, "Applying system patches...", success=True)
+        cli.show_progress(row, "Applying system patches...", success=True)
         row += 1
 
-    # Configure keyd to apply new configuration
-    success, error = configure_keyd()
+    # ── Configure keyd ─────────────────────────────────────────────
+
+    success, error = deploy_lib.configure_keyd()
     if not success:
-        tui.show_message(row, 4, f"Warning: {error}", color_pair=3)
+        json_result["warnings"].append(f"keyd: {error}")
+        if not args.json:
+            print(f"\033[33m  Warning: {error}\033[0m")
         row += 1
 
 
-    # Install Firefox extensions
-    tui.show_progress(row, "Installing Firefox extensions...", success=None)
-    tui.stdscr.refresh()
+    # ── Install Firefox extensions ─────────────────────────────────
 
-    success, error = install_firefox_extensions(script_dir)
+    cli.show_progress(row, "Installing Firefox extensions...", success=None)
+
+    success, error = deploy_lib.install_firefox_extensions(script_dir)
 
     if not success:
-        tui.show_progress(row, "Installing Firefox extensions...", success=False)
-        tui.show_message(row + 1, 4, f"Error: {error}", color_pair=3)
-        tui.show_message(row + 2, 4, "Continue anyway? (y/n): ", color_pair=4)
-        tui.stdscr.refresh()
-        response = stdscr.getch()
-        if chr(response).lower() != "y":
-            return
+        cli.show_progress(row, "Installing Firefox extensions...", success=False)
+        err = f"Failed to install Firefox extensions: {error}"
+        json_result["errors"].append(err)
+        if not handle_error(args, cli, err):
+            json_result["success"] = False
+            if args.json:
+                print(json_mod.dumps(json_result))
+            sys.exit(1)
+        had_errors = True
         row += 4
     else:
-        tui.show_progress(row, "Installing Firefox extensions...", success=True)
+        cli.show_progress(row, "Installing Firefox extensions...", success=True)
         row += 1
 
-    # Install Firefox user.js
-    success, error, row = install_firefox_userjs(username, script_dir, tui, row)
+    # ── Install Firefox user.js ────────────────────────────────────
+
+    success, error, row = deploy_lib.install_firefox_userjs(username, script_dir, cli, row)
     if not success:
         error_last_line = error.strip().splitlines()[-1] if error else "Unknown"
-        tui.show_message(row, 4, f"Error: {error_last_line[:50]}...", color_pair=3)
-        tui.show_message(row + 1, 4, "Continue anyway? (y/n): ", color_pair=4)
-        tui.stdscr.refresh()
-        response = stdscr.getch()
-        if chr(response).lower() != "y":
-            return
+        err = f"Failed to install Firefox user.js: {error_last_line}"
+        json_result["errors"].append(err)
+        if not handle_error(args, cli, err):
+            json_result["success"] = False
+            if args.json:
+                print(json_mod.dumps(json_result))
+            sys.exit(1)
+        had_errors = True
         row += 3
 
-    # Cleanup - remove unnecessary packages and clean apt cache
-    tui.show_progress(row, "Cleaning up...", success=None)
-    tui.stdscr.refresh()
+    # ── Cleanup ────────────────────────────────────────────────────
+
+    cli.show_progress(row, "Cleaning up...", success=None)
 
     try:
         subprocess.run(["apt-get", "clean"], check=True, capture_output=True)
         subprocess.run(["apt-get", "autoremove", "-y"], check=True, capture_output=True)
-        tui.show_progress(row, "Cleaning up...", success=True)
+        cli.show_progress(row, "Cleaning up...", success=True)
     except subprocess.CalledProcessError as e:
-        log_error("Cleanup failed", e)
-        tui.show_progress(row, "Cleaning up...", success=False)
+        deploy_lib.log_error("Cleanup failed", e)
+        cli.show_progress(row, "Cleaning up...", success=False)
     row += 1
 
-    # Final message - ensure it's visible even if row exceeds terminal height
-    row += 2
-    final_row = min(row, tui.height - 3)  # Leave room for both messages
+    # ── Done ───────────────────────────────────────────────────────
 
-    elapsed = time.time() - start_time
+    if had_errors:
+        json_result["success"] = True  # partial success — we continued
+        json_result["partial"] = True
+
+    elapsed = time.monotonic() - start_time
     elapsed_str = f"{int(elapsed // 60)}m {int(elapsed % 60)}s"
 
-    tui.show_message(
-        final_row, 4, f"Deployment complete! ({elapsed_str})", color_pair=2, bold=True
-    )
-    tui.show_message(final_row + 1, 4, "Press any key to exit...")
-    stdscr.refresh()
-    stdscr.getch()
+    if args.json:
+        json_result["events"] = cli.events
+        json_result["elapsed_seconds"] = round(elapsed, 1)
+        print(json_mod.dumps(json_result, indent=2))
+    else:
+        print()
+        if had_errors:
+            print(
+                f"\033[33m  Deployment complete (with some errors) in {elapsed_str}.\033[0m"
+            )
+            print(f"  Check {deploy_lib.LOG_FILE} for details.")
+        else:
+            print(f"\033[32m  Deployment complete in {elapsed_str}!\033[0m")
 
-
-def main():
-    """Entry point"""
-    try:
-        curses.wrapper(main_tui)
-    except KeyboardInterrupt:
-        print("\nDeployment cancelled.")
-        sys.exit(1)
-    except Exception as e:
-        log_error("Unhandled exception in main application", e)
-        # Try to restore terminal state if curses was active
-        try:
-            curses.endwin()
-        except:
-            pass
-        print(f"CRITICAL ERROR: {e}")
-        print(f"See {LOG_FILE} for details.")
-        sys.exit(1)
+    sys.exit(0)
 
 
 if __name__ == "__main__":
