@@ -29,4 +29,4 @@ if [ ! -p /tmp/xobpipe ]; then
 fi
 tail -f /tmp/xobpipe | xob &
 
-exec dbus-run-session bspwm
+exec bspwm
