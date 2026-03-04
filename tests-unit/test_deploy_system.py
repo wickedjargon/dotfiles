@@ -7,11 +7,11 @@ from unittest.mock import patch, MagicMock
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-import deploy
+import deploy_lib
 
 class TestDeploySystem(unittest.TestCase):
     """
-    Test system interaction functions in deploy.py.
+    Test system interaction functions in deploy_lib.py.
     """
 
     @patch('subprocess.run')
@@ -20,7 +20,7 @@ class TestDeploySystem(unittest.TestCase):
         mock_run.return_value = MagicMock(returncode=0)
         
         username = "testuser"
-        success, msg = deploy.create_user(username)
+        success, msg = deploy_lib.create_user(username)
         
         self.assertTrue(success)
         self.assertIsNone(msg)
@@ -37,14 +37,14 @@ class TestDeploySystem(unittest.TestCase):
         # Setup mock for failure
         mock_run.side_effect = subprocess.CalledProcessError(1, ['useradd'], stderr=b"User exists")
         
-        success, msg = deploy.create_user("testuser")
+        success, msg = deploy_lib.create_user("testuser")
         
         self.assertFalse(success)
         self.assertEqual(msg, "User exists")
 
     @patch('subprocess.run')
     def test_add_user_to_sudo(self, mock_run):
-        deploy.add_user_to_sudo("testuser")
+        deploy_lib.add_user_to_sudo("testuser")
         
         mock_run.assert_called_with(
             ['usermod', '-aG', 'sudo', 'testuser'],
@@ -52,7 +52,7 @@ class TestDeploySystem(unittest.TestCase):
             capture_output=True
         )
 
-    @patch('deploy.log_error')
+    @patch('deploy_lib.log_error')
     @patch('subprocess.run')
     def test_install_packages(self, mock_run, mock_log_error):
         # Setup TUI mock
@@ -60,10 +60,10 @@ class TestDeploySystem(unittest.TestCase):
         
         # Setup package installed check
         # We need to mock is_package_installed, but it's used inside the function.
-        # It's cleaner to mock deploy.is_package_installed directly.
+        # It's cleaner to mock deploy_lib.is_package_installed directly.
         pass
 
-    @patch('deploy.is_package_installed')
+    @patch('deploy_lib.is_package_installed')
     @patch('subprocess.run')
     def test_install_packages_mixed(self, mock_run, mock_is_installed):
         # Test installing a mix of existing and new packages
@@ -77,7 +77,7 @@ class TestDeploySystem(unittest.TestCase):
         mock_is_installed.side_effect = is_installed_side_effect
         
         # Run
-        deploy.install_packages(packages, MagicMock(), 0)
+        deploy_lib.install_packages(packages, MagicMock(), 0)
         
         # Verify apt-get install called ONLY for new-pkg
         mock_run.assert_any_call(
@@ -106,7 +106,7 @@ class TestDeploySystem(unittest.TestCase):
         process_mock.returncode = 0
         mock_popen.return_value = process_mock
         
-        success = deploy.set_user_password("user", "pass")
+        success = deploy_lib.set_user_password("user", "pass")
         
         self.assertTrue(success)
         mock_popen.assert_called_with(['chpasswd'], stdin=subprocess.PIPE)

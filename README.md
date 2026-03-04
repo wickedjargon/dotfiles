@@ -6,8 +6,8 @@ Here are my dotfiles intended for use on a Debian-based system. This repo is mai
 
 | Path | Description |
 |---|---|
-| `deploy.py` | TUI that deploys dotfiles and installs packages |
-| `deploy_cli.py` | CLI that deploys dotfiles and installs packages |
+| `deploy.py` | CLI entry point — deploys dotfiles and installs packages |
+| `deploy_lib.py` | Business logic library used by `deploy.py` |
 | `dotfiles-overlay/` | Filesystem mirror copied to matching system paths |
 | `dotfiles-patches/` | Patches applied to system files post-deploy |
 | `firefox/` | Firefox extensions and `user.js` config |
@@ -27,5 +27,10 @@ apt update && apt upgrade -y
 apt install -y git python3
 git clone https://github.com/wickedjargon/dotfiles.git
 cd dotfiles
-python3 deploy.py
+python3 deploy.py --username myuser --password mypass --yes
 ```
+
+
+# TODOs
+- [ ] get emacs to install all use-package packages and skip over the ones that failed
+- [ ] set day/night and brightness changes to be user accessible (no sudo needed)

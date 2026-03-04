@@ -6,12 +6,12 @@ from unittest.mock import MagicMock, patch
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-import deploy
+import deploy_lib
 
 
 class TestDeployCore(unittest.TestCase):
     """
-    Test core deployment logic in deploy.py:
+    Test core deployment logic in deploy_lib.py:
     - deploy_dotfiles
     - clone_and_build_repos
     """
@@ -44,7 +44,7 @@ class TestDeployCore(unittest.TestCase):
                 with patch("pathlib.Path.is_dir") as mock_is_dir:
                     with patch("pathlib.Path.mkdir") as _:
                         with patch("pathlib.Path.is_symlink") as mock_is_symlink:
-                            with patch("deploy.get_backup_dir") as mock_get_backup:
+                            with patch("deploy_lib.get_backup_dir") as mock_get_backup:
 
                                 # Home exists, Dest exists (trigger backup)
                                 mock_exists.return_value = True
@@ -54,7 +54,7 @@ class TestDeployCore(unittest.TestCase):
                                 mock_backup_dir = MagicMock()
                                 mock_get_backup.return_value = mock_backup_dir
 
-                                success, error, backup, items = deploy.deploy_overlay(
+                                success, error, backup, items = deploy_lib.deploy_overlay(
                                     self.username, script_dir
                                 )
 
@@ -71,7 +71,7 @@ class TestDeployCore(unittest.TestCase):
             # 2. Makefile exists (needs build)
             mock_exists.side_effect = [False, True]
 
-            success, failed, row = deploy.clone_and_build_repos(
+            success, failed, row = deploy_lib.clone_and_build_repos(
                 repos, self.username, tui, 0
             )
 
@@ -123,7 +123,7 @@ class TestDeployCore(unittest.TestCase):
             # 2. Makefile MISSING
             mock_exists.side_effect = [False, False]
 
-            success, failed, row = deploy.clone_and_build_repos(
+            success, failed, row = deploy_lib.clone_and_build_repos(
                 repos, self.username, tui, 0
             )
 

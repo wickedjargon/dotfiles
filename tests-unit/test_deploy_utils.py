@@ -6,20 +6,20 @@ from unittest.mock import patch, MagicMock
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-import deploy
+import deploy_lib
 
 class TestDeployUtils(unittest.TestCase):
     def test_is_valid_git_url(self):
         # Valid URLs
-        self.assertTrue(deploy.is_valid_git_url("https://github.com/user/repo.git"))
-        self.assertTrue(deploy.is_valid_git_url("git@github.com:user/repo.git"))
-        self.assertTrue(deploy.is_valid_git_url("https://gitlab.com/user/repo"))
+        self.assertTrue(deploy_lib.is_valid_git_url("https://github.com/user/repo.git"))
+        self.assertTrue(deploy_lib.is_valid_git_url("git@github.com:user/repo.git"))
+        self.assertTrue(deploy_lib.is_valid_git_url("https://gitlab.com/user/repo"))
         
         # Invalid URLs
-        self.assertFalse(deploy.is_valid_git_url("http://insecure.com/repo.git"))
-        self.assertFalse(deploy.is_valid_git_url("ftp://server/repo.git"))
-        self.assertFalse(deploy.is_valid_git_url("; rm -rf /"))  # command injection attempt
-        self.assertFalse(deploy.is_valid_git_url("file:///etc/passwd")) # local file access
+        self.assertFalse(deploy_lib.is_valid_git_url("http://insecure.com/repo.git"))
+        self.assertFalse(deploy_lib.is_valid_git_url("ftp://server/repo.git"))
+        self.assertFalse(deploy_lib.is_valid_git_url("; rm -rf /"))  # command injection attempt
+        self.assertFalse(deploy_lib.is_valid_git_url("file:///etc/passwd")) # local file access
 
     def test_is_safe_dest_path(self):
         # We need to mock Path.home() to have a consistent test environment
@@ -27,16 +27,16 @@ class TestDeployUtils(unittest.TestCase):
             mock_home.return_value = Path('/home/testuser')
             
             # Safe paths
-            self.assertTrue(deploy.is_safe_dest_path(".config/myapp"))
-            self.assertTrue(deploy.is_safe_dest_path("projects/code"))
+            self.assertTrue(deploy_lib.is_safe_dest_path(".config/myapp"))
+            self.assertTrue(deploy_lib.is_safe_dest_path("projects/code"))
             
             # Unsafe paths
-            self.assertFalse(deploy.is_safe_dest_path("../escape"))
-            self.assertFalse(deploy.is_safe_dest_path("/etc/shadow"))
-            self.assertFalse(deploy.is_safe_dest_path("/home/otheruser/.bashrc"))
+            self.assertFalse(deploy_lib.is_safe_dest_path("../escape"))
+            self.assertFalse(deploy_lib.is_safe_dest_path("/etc/shadow"))
+            self.assertFalse(deploy_lib.is_safe_dest_path("/home/otheruser/.bashrc"))
 
 class TestBackupDir(unittest.TestCase):
-    @patch('deploy.Path')
+    @patch('deploy_lib.Path')
     def test_rotation(self, mock_path_cls):
         # Test that get_backup_dir correctly rotates to .2 if .1 exists
         
@@ -79,7 +79,7 @@ class TestBackupDir(unittest.TestCase):
         mock_home.__truediv__.side_effect = home_div_side_effect
         
         # Run - Pass the mock_home directly as the function expects a Path-like object
-        result = deploy.get_backup_dir(mock_home)
+        result = deploy_lib.get_backup_dir(mock_home)
         
         # Assert
         self.assertEqual(str(result), '/home/u/.backup3')
