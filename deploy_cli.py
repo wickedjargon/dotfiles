@@ -306,9 +306,6 @@ def dry_run_preview(args, script_dir):
             "detail": "Enable and restart keyd service",
         }
     )
-    steps.append(
-        {"step": "kbdrate", "action": "configure", "detail": "Enable kbdrate service"}
-    )
 
     # Firefox
     if (script_dir / "firefox/firefox-extensions.sh").exists():
@@ -733,14 +730,6 @@ def main(argv=None):
             print(f"\033[33m  Warning: {error}\033[0m")
         row += 1
 
-    # ── Configure kbdrate ──────────────────────────────────────────
-
-    success, error = deploy.configure_kbdrate()
-    if not success:
-        json_result["warnings"].append(f"kbdrate: {error}")
-        if not args.json:
-            print(f"\033[33m  Warning: {error}\033[0m")
-        row += 1
 
     # ── Install Firefox extensions ─────────────────────────────────
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Verify: systemd services (keyd, kbdrate) and user systemd service files.
+# Verify: systemd services (keyd) and user systemd service files.
 # Also verifies Tor Browser installation.
 
 TARGET_USER="$1"
@@ -60,13 +60,6 @@ if command -v systemctl >/dev/null 2>&1 && systemctl is-system-running >/dev/nul
         fi
     fi
 
-    # kbdrate
-    if dpkg-query -W -f='${Status}' kbd 2>/dev/null | grep -q "install ok installed"; then
-        if ! systemctl is-enabled kbdrate >/dev/null 2>&1; then
-            echo "  [FAIL] kbdrate service not enabled"
-            FAILED=1
-        fi
-    fi
 fi
 
 # ── User systemd services ───────────────────────────────────────

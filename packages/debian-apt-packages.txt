@@ -4,7 +4,6 @@ upower                   # Power management tool (battery status)
 acpi                     # ACPI utilities (battery status)
 brightnessctl            # Control backlight brightness
 udisks2                  # Disk management daemon (non-root mounting)
-kbd                      # Keyboard utilities (includes kbdrate for TTY repeat config)
 keyd                     # Key remapping daemon (works in TTY and X11)
 
 # Core System - Network
