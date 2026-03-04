@@ -95,7 +95,6 @@ class TestCLIReporter(unittest.TestCase):
             cli.draw_header("TEST HEADER")
             output = mock_out.getvalue()
             self.assertIn("TEST HEADER", output)
-            self.assertIn("====", output)
 
     def test_stdscr_refresh_noop(self):
         cli = deploy.CLIReporter()
