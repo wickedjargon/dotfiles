@@ -1048,54 +1048,6 @@ def configure_keyd():
         return False, error_msg
 
 
-def configure_kbdrate():
-    """Enable and start kbdrate service for TTY keyboard repeat configuration.
-
-    Called after deploy_system_configs to enable the kbdrate service.
-    Returns: (success, error_message)
-    """
-    # Check if systemctl is available
-    if not shutil.which("systemctl"):
-        return True, None  # Not a systemd system
-
-    # Check if kbd package is installed (provides kbdrate)
-    try:
-        result = subprocess.run(
-            ["dpkg-query", "-W", "-f=${Status}", "kbd"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if "install ok installed" not in result.stdout:
-            return True, None  # kbd not installed
-    except (
-        subprocess.CalledProcessError,
-        subprocess.TimeoutExpired,
-        FileNotFoundError,
-    ):
-        return True, None  # dpkg not available or kbd not installed
-
-    try:
-        # Enable kbdrate service
-        subprocess.run(
-            ["systemctl", "enable", "kbdrate"],
-            check=True,
-            capture_output=True,
-            timeout=10,
-        )
-
-        # Start kbdrate service
-        subprocess.run(
-            ["systemctl", "start", "kbdrate"],
-            check=True,
-            capture_output=True,
-            timeout=10,
-        )
-        return True, None
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        error_msg = f"Failed to configure kbdrate: {str(e)}"
-        log_error("Failed to configure kbdrate service", e)
-        return False, error_msg
 
 
 def install_firefox_extensions(script_dir):
@@ -1556,11 +1508,6 @@ def main_tui(stdscr):
         tui.show_message(row, 4, f"Warning: {error}", color_pair=3)
         row += 1
 
-    # Configure kbdrate service for TTY keyboard repeat
-    success, error = configure_kbdrate()
-    if not success:
-        tui.show_message(row, 4, f"Warning: {error}", color_pair=3)
-        row += 1
 
     # Install Firefox extensions
     tui.show_progress(row, "Installing Firefox extensions...", success=None)
