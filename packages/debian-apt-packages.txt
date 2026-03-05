@@ -139,3 +139,4 @@ glibc-doc                # GNU C Library documentation
 make-doc                 # GNU Make documentation
 gdb-doc                  # GNU Debugger documentation
 binutils-doc             # GNU binutils documentation
+tealdeer                 # Simplified, example-based man pages (tldr)
