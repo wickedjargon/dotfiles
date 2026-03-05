@@ -140,6 +140,10 @@ super + comma
 super + s
     dmenu-explorer "~/.local/bin/" --run-executables
 
+# Instant fullscreen screenshot
+super + Home
+    instant-screenshot
+
 # ========== VOLUME CONTROLS ==========
 
 # Volume up (snap to nearest 5%)
