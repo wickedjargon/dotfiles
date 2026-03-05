@@ -32,22 +32,37 @@
 
 ;;; Initialization
 
-;; bootstrap straight.el
-(defvar bootstrap-version)
+;; Load straight.el (installed by scripts/emacs-sync-packages.sh)
 (let ((bootstrap-file
        (expand-file-name
         "straight/repos/straight.el/bootstrap.el"
         (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
+            user-emacs-directory))))
   (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
+    (error "straight.el is not installed. Run scripts/emacs-sync-packages.sh first"))
   (load bootstrap-file nil 'nomessage))
+
+;; Don't auto-clone packages — use scripts/emacs-sync-packages.sh instead.
+;; Missing packages are skipped gracefully and reported after startup.
+(defvar fff-missing-packages '()
+  "List of packages that were not installed during init.")
+
+(advice-add 'straight--clone-repository :override
+  (lambda (recipe &optional _cause)
+    (straight--with-plist recipe (package)
+      (push package fff-missing-packages)
+      (message "⚠ Skipping %s (not installed)" package))))
+
+(add-hook 'emacs-startup-hook
+  (lambda ()
+    (when fff-missing-packages
+      (message "")
+      (message "══════════════════════════════════════════════════════════")
+      (message "  ⚠ %d package(s) not installed:" (length fff-missing-packages))
+      (dolist (pkg (reverse fff-missing-packages))
+        (message "    • %s" pkg))
+      (message "  Run scripts/emacs-sync-packages.sh to install them.")
+      (message "══════════════════════════════════════════════════════════"))))
 
 (use-package emacs :ensure nil
   :config
