@@ -32,5 +32,4 @@ python3 deploy.py --username myuser --password mypass --yes
 
 
 # TODOs
-- [ ] get emacs to install all use-package packages and skip over the ones that failed
 - [ ] set day/night and brightness changes to be user accessible (no sudo needed)
