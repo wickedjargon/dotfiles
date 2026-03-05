@@ -185,6 +185,9 @@ def dry_run_preview(args, script_dir):
     steps.append(
         {"step": "sudo", "action": "add", "detail": f"Add '{username}' to sudo group"}
     )
+    steps.append(
+        {"step": "video", "action": "add", "detail": f"Add '{username}' to video group (backlight control)"}
+    )
 
     # Dotfile repos
     dotfiles_repos = deploy_lib.read_git_dotfiles_file(script_dir)
@@ -542,6 +545,23 @@ def main(argv=None):
         if args.json:
             print(json_mod.dumps(json_result))
         sys.exit(1)
+
+    # ── Add to video group (backlight control) ─────────────────────
+
+    cli.show_progress(row, "Adding to video group...", success=None)
+    if deploy_lib.add_user_to_video(username):
+        cli.show_progress(row, "Adding to video group...", success=True)
+        row += 1
+    else:
+        cli.show_progress(row, "Adding to video group...", success=False)
+        json_result["errors"].append("Failed to add user to video group")
+        if not handle_error(args, cli, "Failed to add user to video group"):
+            json_result["success"] = False
+            if args.json:
+                print(json_mod.dumps(json_result))
+            sys.exit(1)
+        had_errors = True
+        row += 3
 
     # ── Clone dotfile repos to home ────────────────────────────────
 

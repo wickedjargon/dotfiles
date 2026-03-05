@@ -154,6 +154,18 @@ def add_user_to_sudo(username):
         return False
 
 
+def add_user_to_video(username):
+    """Add user to video group for backlight control (brightnessctl)"""
+    try:
+        subprocess.run(
+            ["usermod", "-aG", "video", username], check=True, capture_output=True
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        log_error(f"Failed to add user '{username}' to video group", e)
+        return False
+
+
 def is_valid_git_url(url):
     """Validate that a URL is a safe git repository URL"""
     # Allow https://, git://, and git@ SSH URLs

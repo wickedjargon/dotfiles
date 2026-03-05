@@ -52,6 +52,16 @@ class TestDeploySystem(unittest.TestCase):
             capture_output=True
         )
 
+    @patch('subprocess.run')
+    def test_add_user_to_video(self, mock_run):
+        deploy_lib.add_user_to_video("testuser")
+        
+        mock_run.assert_called_with(
+            ['usermod', '-aG', 'video', 'testuser'],
+            check=True,
+            capture_output=True
+        )
+
     @patch('deploy_lib.log_error')
     @patch('subprocess.run')
     def test_install_packages(self, mock_run, mock_log_error):
