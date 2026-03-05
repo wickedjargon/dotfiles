@@ -39,7 +39,7 @@
         (or (bound-and-true-p straight-base-dir)
             user-emacs-directory))))
   (unless (file-exists-p bootstrap-file)
-    (error "straight.el is not installed. Run scripts/emacs-sync-packages.sh first"))
+    (error "straight.el is not installed. Run the following command first:\n\n  ~/d/projects/dotfiles/scripts/emacs-sync-packages.sh"))
   (load bootstrap-file nil 'nomessage))
 
 ;; Don't auto-clone packages — use scripts/emacs-sync-packages.sh instead.
@@ -57,12 +57,14 @@
   (lambda ()
     (when fff-missing-packages
       (message "")
-      (message "══════════════════════════════════════════════════════════")
-      (message "  ⚠ %d package(s) not installed:" (length fff-missing-packages))
+      (message "⚠ %d package(s) not installed:" (length fff-missing-packages))
       (dolist (pkg (reverse fff-missing-packages))
-        (message "    • %s" pkg))
-      (message "  Run scripts/emacs-sync-packages.sh to install them.")
-      (message "══════════════════════════════════════════════════════════"))))
+        (message "  • %s" pkg))
+      (message "")
+      (message "Run the following command to install them:")
+      (message "")
+      (message "  ~/d/projects/dotfiles/scripts/emacs-sync-packages.sh")
+      (message ""))))
 
 (use-package emacs :ensure nil
   :config

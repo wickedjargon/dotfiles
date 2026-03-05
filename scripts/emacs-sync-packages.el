@@ -77,8 +77,12 @@ Each element is either a symbol (package name) or a list (recipe)."
                      ((eq straight-val t)
                       (push name packages))
                      ;; :straight (recipe ...) → use the recipe
+                     ;; If it's a plist (starts with keyword like :host),
+                     ;; prepend the package name so straight gets a proper recipe
                      ((and straight-val (listp straight-val))
-                      (push straight-val packages))
+                      (if (keywordp (car straight-val))
+                          (push (cons name straight-val) packages)
+                        (push straight-val packages)))
                      ;; :ensure nil or no :straight → skip (built-in)
                      ))))
             (error (goto-char (1+ form-start)))))))
@@ -103,9 +107,7 @@ straight-use-package is a no-op for already-cloned repos."
 (defun fff-sync--main ()
   "Main entry point for the sync script."
   (message "")
-  (message "═══════════════════════════════════════════")
-  (message "  Emacs Package Sync (straight.el)")
-  (message "═══════════════════════════════════════════")
+  (message "Emacs Package Sync (straight.el)")
   (message "")
 
   (unless (file-exists-p fff-sync--init-file)
@@ -123,9 +125,7 @@ straight-use-package is a no-op for already-cloned repos."
 
     ;; Summary
     (message "")
-    (message "═══════════════════════════════════════════")
-    (message "  Summary")
-    (message "═══════════════════════════════════════════")
+    (message "Summary")
     (message "  Total:     %d" (length packages))
     (message "  Succeeded: %d" (length fff-sync--succeeded))
     (message "  Failed:    %d" (length fff-sync--failed))
