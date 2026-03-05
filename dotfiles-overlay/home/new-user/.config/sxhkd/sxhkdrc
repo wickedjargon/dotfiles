@@ -141,7 +141,7 @@ super + s
     dmenu-explorer "~/.local/bin/" --run-executables
 
 # Instant fullscreen screenshot
-super + Home
+Home
     instant-screenshot
 
 # ========== VOLUME CONTROLS ==========
