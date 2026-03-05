@@ -8,7 +8,7 @@ export QT_QPA_PLATFORMTHEME=qt5ct
 export QT_QPA_PLATFORMTHEME_QT6=qt6ct
 
 # Android / Java
-export ANDROID_HOME="$HOME/Android/Sdk"
+export ANDROID_HOME="/opt/android-sdk"
 export JAVA_HOME="/usr/lib/jvm/java-17-openjdk"
 
 # PATH env variable
@@ -17,7 +17,7 @@ paths=(
   "/sbin"
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
-  "$ANDROID_HOME/cmdline-tools/latest/bin"
+  "$ANDROID_HOME/tools/bin"
   "$ANDROID_HOME/platform-tools"
 )
 
