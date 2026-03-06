@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+import os
+import re
+import subprocess
+import sys
+import glob
+
+DMENU_CONFIG_PATH = os.path.expanduser("~/.config/dmenu/config")
+WG_DIR = "/etc/wireguard"
+
+
+def notify(title, msg):
+    subprocess.run(["notify-send", title, msg])
+
+
+def get_dmenu_args():
+    dmenu_args = []
+    font = ""
+    if os.path.exists(DMENU_CONFIG_PATH):
+        with open(DMENU_CONFIG_PATH, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("DMENU_BASIC_ARGS="):
+                    match = re.search(r'DMENU_BASIC_ARGS="([^"]+)"', line)
+                    if match:
+                        dmenu_args = match.group(1).split()
+                elif line.startswith("DMENU_FONT="):
+                    match = re.search(r'DMENU_FONT="([^"]+)"', line)
+                    if match:
+                        font = match.group(1)
+    cmd = ["dmenu"] + dmenu_args
+    if font:
+        cmd.extend(["-fn", font])
+    cmd.extend(["-i", "-p"])
+    return cmd
+
+
+def run_dmenu(options, prompt):
+    cmd = get_dmenu_args() + [prompt]
+    try:
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, _ = p.communicate(input="\n".join(options).encode("utf-8"))
+        return stdout.decode("utf-8").strip()
+    except FileNotFoundError:
+        notify("Error", "dmenu not found")
+        sys.exit(1)
+
+
+def is_connected(interface="mullvad"):
+    result = subprocess.run(["sudo", "wg", "show", interface], capture_output=True)
+    return result.returncode == 0
+
+
+def get_configs():
+    """Find all .conf files in /etc/wireguard/"""
+    try:
+        confs = subprocess.run(
+            ["sudo", "ls", WG_DIR],
+            capture_output=True, text=True
+        )
+        if confs.returncode != 0:
+            return []
+        return [f.replace(".conf", "") for f in confs.stdout.strip().split("\n") if f.endswith(".conf")]
+    except Exception:
+        return []
+
+
+def vpn_up(interface):
+    result = subprocess.run(["sudo", "wg-quick", "up", interface], capture_output=True, text=True)
+    if result.returncode == 0:
+        notify("VPN", f"Connected to {interface}")
+    else:
+        notify("VPN", f"Failed to connect: {result.stderr.strip()}")
+
+
+def vpn_down(interface):
+    result = subprocess.run(["sudo", "wg-quick", "down", interface], capture_output=True, text=True)
+    if result.returncode == 0:
+        notify("VPN", f"Disconnected from {interface}")
+    else:
+        notify("VPN", f"Failed to disconnect: {result.stderr.strip()}")
+
+
+def main():
+    configs = get_configs()
+    if not configs:
+        configs = ["mullvad"]
+
+    # Check which interfaces are currently active
+    active = [c for c in configs if is_connected(c)]
+
+    options = []
+    if active:
+        status = ", ".join(active)
+        for a in active:
+            options.append(f"Disconnect {a}")
+        options.append(f"Status [{status}]")
+    else:
+        options.append("Status [OFF]")
+
+    # Offer connections to inactive configs
+    inactive = [c for c in configs if c not in active]
+    for c in inactive:
+        options.append(f"Connect {c}")
+
+    choice = run_dmenu(options, "VPN:")
+    if not choice:
+        return
+
+    if choice.startswith("Connect "):
+        interface = choice.replace("Connect ", "")
+        vpn_up(interface)
+    elif choice.startswith("Disconnect "):
+        interface = choice.replace("Disconnect ", "")
+        vpn_down(interface)
+    elif choice.startswith("Status"):
+        if active:
+            notify("VPN", f"Connected to: {', '.join(active)}")
+        else:
+            notify("VPN", "Not connected")
+
+
+if __name__ == "__main__":
+    main()
