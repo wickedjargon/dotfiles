@@ -13,6 +13,7 @@ bluez                    # Bluetooth tools and daemons
 syncthing                # Open Source Continuous File Synchronization
 wireguard                # Fast, modern, secure VPN tunnel
 openresolv               # Used by wg-quick for DNS management
+gir1.2-nm-1.0            # NetworkManager GObject introspection (for dmenu-network-manager)
 
 
 # Core System - Audio
