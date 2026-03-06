@@ -1,0 +1,9 @@
+#!/bin/sh
+# Polybar hook script for VPN status
+# Outputs 🛡️ if any WireGuard interface is active, empty string otherwise
+
+if sudo -n wg show > /dev/null 2>&1 && [ -n "$(sudo -n wg show)" ]; then
+    echo "🛡️"
+else
+    echo ""
+fi
