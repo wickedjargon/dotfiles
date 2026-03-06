@@ -1449,7 +1449,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   :straight t
   :defer t
   :init
-  (setq terminal-here-linux-terminal-command 'st)
+  (setq terminal-here-linux-terminal-command 'alacritty)
   (setq terminal-here-windows-terminal-command 'powershell)
   :config
   (with-eval-after-load 'terminal-here
