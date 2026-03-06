@@ -1,0 +1,13 @@
+#!/bin/sh
+. ~/.config/dmenu/config
+
+case "$(printf "Connect to WiFi Network\nRescan WiFi Networks\nShow Current WiFi Network\nDisconnect from WiFi Network\nDelete WiFi Connection\nShow Password of WiFi Connection\nVPN" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Internet:')" in
+    'Connect to WiFi Network') dmenu-connect-to-network ;;
+    'Rescan WiFi Networks') wifi-rescan ;;
+    'Show Current WiFi Network') wifi-current-network ;;
+    'Disconnect from WiFi Network') wifi-disconnect ;;
+    'Delete WiFi Connection') dmenu-wifi-delete-connection ;;
+    'Show Password of WiFi Connection') wifi-show-password ;;
+    'VPN') dmenu-vpn ;;
+    *) exit 1 ;;
+esac

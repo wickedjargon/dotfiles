@@ -120,9 +120,9 @@ super + BackSpace
 super + c
     clipmenu
 
-# WiFi menu
+# Internet menu
 super + i
-    dmenu-wifi-menu
+    dmenu-internet
 
 # File explorer
 super + e
@@ -137,7 +137,7 @@ super + s
     dmenu-explorer "~/.local/bin/" --run-executables
 
 # Instant fullscreen screenshot
-Home
+F12
     instant-screenshot
 
 # ========== VOLUME CONTROLS ==========
