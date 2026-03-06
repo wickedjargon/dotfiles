@@ -69,6 +69,7 @@ def vpn_up(interface):
     result = subprocess.run(["sudo", "wg-quick", "up", interface], capture_output=True, text=True)
     if result.returncode == 0:
         notify("VPN", f"Connected to {interface}")
+        subprocess.run(["polybar-msg", "action", "vpn", "hook", "0"])
     else:
         notify("VPN", f"Failed to connect: {result.stderr.strip()}")
 
@@ -77,6 +78,7 @@ def vpn_down(interface):
     result = subprocess.run(["sudo", "wg-quick", "down", interface], capture_output=True, text=True)
     if result.returncode == 0:
         notify("VPN", f"Disconnected from {interface}")
+        subprocess.run(["polybar-msg", "action", "vpn", "hook", "0"])
     else:
         notify("VPN", f"Failed to disconnect: {result.stderr.strip()}")
 
@@ -90,6 +92,12 @@ def main():
     active = [c for c in configs if is_connected(c)]
 
     options = []
+
+    # Offer connections to inactive configs first
+    inactive = [c for c in configs if c not in active]
+    for c in inactive:
+        options.append(f"Connect {c}")
+
     if active:
         status = ", ".join(active)
         for a in active:
@@ -97,11 +105,6 @@ def main():
         options.append(f"Status [{status}]")
     else:
         options.append("Status [OFF]")
-
-    # Offer connections to inactive configs
-    inactive = [c for c in configs if c not in active]
-    for c in inactive:
-        options.append(f"Connect {c}")
 
     choice = run_dmenu(options, "VPN:")
     if not choice:
