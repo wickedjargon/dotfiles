@@ -11,6 +11,8 @@ network-manager          # Network connection manager
 openssh-server           # SSH server for remote access
 bluez                    # Bluetooth tools and daemons
 syncthing                # Open Source Continuous File Synchronization
+wireguard                # Fast, modern, secure VPN tunnel
+openresolv               # Used by wg-quick for DNS management
 
 
 # Core System - Audio
