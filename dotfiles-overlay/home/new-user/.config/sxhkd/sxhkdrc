@@ -124,10 +124,6 @@ super + c
 super + i
     dmenu-wifi-menu
 
-# Night/day mode
-super + n
-    dmenu-night-and-day
-
 # File explorer
 super + e
     dmenu-explorer
