@@ -32,6 +32,7 @@ xorg                     # X Window System meta-package
 xserver-xorg             # X server for graphical display
 xinit                    # X server initialization tool (startx)
 x11-xserver-utils        # X server utilities (xrandr, xset, etc)
+xinput                   # X11 input device tracking and configuration
 grabc                    # Command-line screen pixel color picker
 maim                     # Screenshot utility
 xclip                    # Command-line clipboard utility
