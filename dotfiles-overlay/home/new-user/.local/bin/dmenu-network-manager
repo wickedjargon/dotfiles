@@ -24,6 +24,10 @@ import subprocess
 import sys
 import uuid
 
+# If running inside a distrobox container, re-exec on the host
+if os.path.exists("/run/.containerenv") and which("distrobox-host-exec"):
+    os.execvp("distrobox-host-exec", ["distrobox-host-exec"] + sys.argv)
+
 import gi
 
 gi.require_version("NM", "1.0")
