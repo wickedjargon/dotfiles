@@ -10,3 +10,6 @@ xset -b           # disable terminal bell
 
 # display cursor when no window is active
 xsetroot -cursor_name left_ptr
+
+# Disable the trackpad (BIOS disable only works for PS/2, I2C still passes through)
+xinput disable "Elan Touchpad" 2>/dev/null
