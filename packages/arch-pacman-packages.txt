@@ -8,6 +8,7 @@ git
 github-cli
 glibc-locales
 gradle
+hugo
 imagemagick
 inetutils
 jdk17-openjdk
@@ -29,12 +30,14 @@ python-pyflakes
 python-pytest
 qemu-desktop
 qemu-img
+rnote
 rsync
 shellcheck
 sshpass
 steam
 sudo
 tcpdump
+telegram-desktop
 time
 traceroute
 tree

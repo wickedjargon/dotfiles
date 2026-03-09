@@ -73,6 +73,7 @@ binfmt-support           # Support for extra binary formats (for transparent emu
 usbutils                 # USB utilities (lsusb, etc)
 rsync                    # Remote sync utility
 fastfetch                # System information display tool
+rclone                   # Cloud storage sync utility
 
 # Graphical Applications
 firefox-esr              # Web browser (Extended Support Release)
