@@ -1,0 +1,3 @@
+#!/bin/sh
+
+rclone sync ~/d/ gdrive:Backup/d/ --exclude "node_modules/**" --exclude "projects/**" --progress
