@@ -1,6 +1,6 @@
 # My Dot Files
 
-Here are my dotfiles intended for use on a Debian-based system. This repo is mainly for my own use, but feel free to test run them on your own system.
+Here are my dotfiles intended for use on a Debian-based system. Feel free to use them if you like. Use `Super + /` to get the keybindings.
 
 ## Repository Structure
 
