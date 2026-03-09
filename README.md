@@ -30,6 +30,30 @@ cd dotfiles
 python3 deploy.py --username myuser --password mypass --yes
 ```
 
+## Post-Deployment
 
-# TODOs
-- [ ] set day/night and brightness changes to be user accessible (no sudo needed)
+After successfully running the deployment script, complete these manual steps:
+
+### 1. Bluetooth Setup
+
+Pair and trust your Bluetooth devices via `bluetoothctl`:
+
+```bash
+bluetoothctl
+power on
+agent on
+default-agent
+scan on
+pair XX:XX:XX:XX:XX:XX
+trust XX:XX:XX:XX:XX:XX
+connect XX:XX:XX:XX:XX:XX
+```
+
+### 2. Restore Private Files
+
+Configure `rclone` to authenticate with Google Drive, then pull down your private `~/d/` directory:
+
+```bash
+distrobox-host-exec rclone config
+rclone copy gdrive:Backup/d/ ~/d/ --progress
+```
