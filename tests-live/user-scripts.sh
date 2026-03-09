@@ -22,7 +22,7 @@ echo "Testing user scripts in ~/.local/bin/..."
 fail_flag=$(mktemp)
 echo 0 > "$fail_flag"
 
-find "$LOCAL_BIN" -type f | while read -r script_file; do
+find "$LOCAL_BIN" -type f -not -path '*/__pycache__/*' | while read -r script_file; do
     script_name=$(basename "$script_file")
     
     # Ownership check
