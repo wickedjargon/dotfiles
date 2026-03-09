@@ -34,7 +34,25 @@ python3 deploy.py --username myuser --password mypass --yes
 
 After successfully running the deployment script, complete these manual steps:
 
-### 1. Bluetooth Setup
+### 1. Firmware Update
+
+Update system firmware Keep laptop on AC power.
+
+```bash
+fwupdmgr refresh --force
+fwupdmgr get-updates
+fwupdmgr update
+```
+
+Reboot computer to apply firmware updates.
+
+Verify the Thunderbolt NVM version is ≥ 20.0 (critical for T480s to prevent USB-C port failure):
+
+```bash
+cat /sys/bus/thunderbolt/devices/*/nvm_version
+```
+
+### 2. Bluetooth Setup
 
 Pair and trust your Bluetooth devices via `bluetoothctl`:
 
@@ -49,7 +67,7 @@ trust XX:XX:XX:XX:XX:XX
 connect XX:XX:XX:XX:XX:XX
 ```
 
-### 2. Restore Private Files
+### 3. Restore Private Files
 
 Configure `rclone` to authenticate with Google Drive, then pull down your private files:
 
@@ -62,7 +80,7 @@ chmod 700 ~/.ssh ~/.gnupg
 chmod 600 ~/.ssh/id_ed25519
 ```
 
-### 3. Password Manager
+### 4. Password Manager
 
 Import the restored GPG key and clone the password store:
 
@@ -71,7 +89,7 @@ gpg --import  # key is already restored from gdrive backup above
 pass git clone git@github.com:wickedjargon/pass-store.git ~/.password-store
 ```
 
-### 4. Android Password Sync
+### 5. Android Password Sync
 
 Install the following from F-Droid:
 

@@ -5,6 +5,7 @@ acpi                     # ACPI utilities (battery status)
 brightnessctl            # Control backlight brightness
 udisks2                  # Disk management daemon (non-root mounting)
 keyd                     # Key remapping daemon (works in TTY and X11)
+fwupd                    # Firmware update daemon (BIOS, Thunderbolt, EC)
 
 # Core System - Network
 network-manager          # Network connection manager
