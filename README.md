@@ -51,9 +51,36 @@ connect XX:XX:XX:XX:XX:XX
 
 ### 2. Restore Private Files
 
-Configure `rclone` to authenticate with Google Drive, then pull down your private `~/d/` directory:
+Configure `rclone` to authenticate with Google Drive, then pull down your private files:
 
 ```bash
 distrobox-host-exec rclone config
-rclone copy gdrive:Backup/d/ ~/d/ --progress
+rclone sync gdrive:Backup/new-user/d/      ~/d/      --progress
+rclone sync gdrive:Backup/new-user/.ssh/   ~/.ssh/   --progress
+rclone sync gdrive:Backup/new-user/.gnupg/ ~/.gnupg/ --progress
+chmod 700 ~/.ssh ~/.gnupg
+chmod 600 ~/.ssh/id_ed25519
+```
+
+### 3. Password Manager
+
+Import the restored GPG key and clone the password store:
+
+```bash
+gpg --import  # key is already restored from gdrive backup above
+pass git clone git@github.com:wickedjargon/pass-store.git ~/.password-store
+```
+
+### 4. Android Password Sync
+
+Install the following from F-Droid:
+
+- [OpenKeychain](https://f-droid.org/packages/org.sufficientlysecure.keychain/)
+- [Password Store](https://f-droid.org/packages/dev.msfjarvis.aps/)
+
+Export and transfer the GPG key to the phone:
+
+```bash
+gpg --armor --export-secret-keys > /tmp/private-key.asc
+adb push /tmp/private-key.asc /sdcard/Download/private-key.asc
 ```

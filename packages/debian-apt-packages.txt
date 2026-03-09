@@ -52,6 +52,7 @@ zip                      # Zip archive utility
 unrar-free               # Unrar utility
 p7zip-full               # 7z and other archive support
 git                      # Version control system
+gh                       # GitHub CLI
 curl                     # Command-line data transfer tool
 wget                     # Network downloader
 net-tools                # Network tools (ifconfig, netstat, etc)
@@ -71,9 +72,11 @@ flatpak                  # Application sandboxing and distribution (needed for d
 qemu-user-static         # QEMU user mode emulation binaries (static)
 binfmt-support           # Support for extra binary formats (for transparent emulation)
 usbutils                 # USB utilities (lsusb, etc)
+adb                      # Android Debug Bridge (USB file transfer, debugging)
 rsync                    # Remote sync utility
 fastfetch                # System information display tool
 rclone                   # Cloud storage sync utility
+pass                     # Standard unix password manager (GPG-encrypted)
 
 # Graphical Applications
 firefox-esr              # Web browser (Extended Support Release)

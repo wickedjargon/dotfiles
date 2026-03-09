@@ -1,3 +1,5 @@
 #!/bin/sh
 
-rclone sync ~/d/ gdrive:Backup/d/ --exclude "node_modules/**" --exclude "projects/**" --progress
+rclone sync ~/d/          gdrive:Backup/new-user/d/      --exclude "node_modules/**" --exclude "projects/**" --progress
+rclone sync ~/.ssh/        gdrive:Backup/new-user/.ssh/   --progress
+rclone sync ~/.gnupg/      gdrive:Backup/new-user/.gnupg/ --progress
