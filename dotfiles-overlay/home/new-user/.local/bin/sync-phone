@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# sync-phone — rsync ~/d/ dirs to/from phone over Tailscale
+# Requires: rsync, ssh, tailscale
+# Phone runs Termux with sshd on port 8022
+
+set -euo pipefail
+
+PHONE_HOST="pixel-8"  # Tailscale MagicDNS hostname
+PHONE_PORT=8022
+PHONE_BASE="/data/data/com.termux/files/home/storage/shared"
+
+# Directories to sync: local_path -> phone_path
+declare -A SYNC_DIRS=(
+    ["$HOME/d/audio"]="$PHONE_BASE/Music"
+    ["$HOME/d/images"]="$PHONE_BASE/DCIM"
+    ["$HOME/d/notes"]="$PHONE_BASE/Notes"
+    ["$HOME/d/other"]="$PHONE_BASE/Other"
+    ["$HOME/d/screenshots"]="$PHONE_BASE/Pictures/Screenshots"
+    ["$HOME/d/video"]="$PHONE_BASE/Movies"
+)
+
+RSYNC_OPTS=(
+    -avz
+    --progress
+    --delete
+    -e "ssh -p $PHONE_PORT"
+)
+
+usage() {
+    echo "Usage: sync-phone [push|pull]"
+    echo ""
+    echo "  push   Laptop → Phone (overwrite phone with laptop files)"
+    echo "  pull   Phone → Laptop (overwrite laptop with phone files)"
+    echo ""
+    echo "Synced directories:"
+    for local in "${!SYNC_DIRS[@]}"; do
+        echo "  $(basename "$local")  →  ${SYNC_DIRS[$local]}"
+    done
+    exit 1
+}
+
+check_connection() {
+    echo "Checking connection to $PHONE_HOST..."
+    if ! ssh -o ConnectTimeout=10 -p "$PHONE_PORT" "$PHONE_HOST" "echo ok" &>/dev/null; then
+        echo "ERROR: Cannot reach $PHONE_HOST."
+        echo "Make sure Tailscale is active on both devices and sshd is running in Termux."
+        exit 1
+    fi
+    echo "Phone is reachable."
+    echo ""
+}
+
+do_push() {
+    echo "=== PUSHING: Laptop → Phone ==="
+    echo ""
+    for local in "${!SYNC_DIRS[@]}"; do
+        remote="${SYNC_DIRS[$local]}"
+        dir_name=$(basename "$local")
+        echo "--- $dir_name ---"
+
+        # Create remote dir if needed
+        ssh -p "$PHONE_PORT" "$PHONE_HOST" "mkdir -p '$remote'" 2>/dev/null
+
+        rsync "${RSYNC_OPTS[@]}" "$local/" "$PHONE_HOST:$remote/"
+        echo ""
+    done
+    echo "Push complete."
+}
+
+do_pull() {
+    echo "=== PULLING: Phone → Laptop ==="
+    echo ""
+    for local in "${!SYNC_DIRS[@]}"; do
+        remote="${SYNC_DIRS[$local]}"
+        dir_name=$(basename "$local")
+        echo "--- $dir_name ---"
+
+        mkdir -p "$local"
+        rsync "${RSYNC_OPTS[@]}" "$PHONE_HOST:$remote/" "$local/"
+        echo ""
+    done
+    echo "Pull complete."
+}
+
+# --- Main ---
+[[ $# -lt 1 ]] && usage
+
+check_connection
+
+case "$1" in
+    push) do_push ;;
+    pull) do_pull ;;
+    *)    usage ;;
+esac
