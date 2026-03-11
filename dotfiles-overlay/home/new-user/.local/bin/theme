@@ -98,6 +98,9 @@ THEMES = {
         "rofi_sel_bg": "#222222",
         "rofi_sel_fg": "#ffffff",
         "rofi_border": "#333333",
+        # sxiv
+        "sxiv_bg": "#000000",
+        "sxiv_fg": "#ffffff",
     },
     "light": {
         "gtk_theme": "Arc",
@@ -176,6 +179,9 @@ THEMES = {
         "rofi_sel_bg": "#CCCCCC",
         "rofi_sel_fg": "#333333",
         "rofi_border": "#AAAAAA",
+        # sxiv
+        "sxiv_bg": "#ffffff",
+        "sxiv_fg": "#000000",
     },
 }
 
@@ -709,6 +715,39 @@ def switch_zathura(theme):
     print(f"  zathura → bg:{theme['zathura_bg']} fg:{theme['zathura_fg']}")
 
 
+def switch_sxiv(theme):
+    """Update sxiv/nsxiv colors via Xresources (xrdb -merge).
+
+    Stock sxiv only has Sxiv.background (window bg + bar fg) and
+    Sxiv.foreground (window fg + bar bg), so both areas can't share
+    the same background color. We prioritize the window background.
+
+    nsxiv adds Nsxiv.window.* and Nsxiv.bar.* for independent control,
+    so both the window and bar get the correct colors.
+    """
+    resources = (
+        # sxiv resources (window bg prioritized; bar will be inverted)
+        f"Sxiv.background: {theme['sxiv_bg']}\n"
+        f"Sxiv.foreground: {theme['sxiv_fg']}\n"
+        # nsxiv window resources
+        f"Nsxiv.window.background: {theme['sxiv_bg']}\n"
+        f"Nsxiv.window.foreground: {theme['sxiv_fg']}\n"
+        # nsxiv bar resources (same bg as window)
+        f"Nsxiv.bar.background: {theme['sxiv_bg']}\n"
+        f"Nsxiv.bar.foreground: {theme['sxiv_fg']}\n"
+    )
+    try:
+        subprocess.run(
+            ["xrdb", "-merge"],
+            input=resources,
+            text=True,
+            capture_output=True,
+        )
+        print(f"  sxiv → bg:{theme['sxiv_bg']} fg:{theme['sxiv_fg']}")
+    except FileNotFoundError:
+        print("  sxiv → skipped (xrdb not found)")
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 
@@ -749,6 +788,7 @@ def apply_theme(mode, no_restart=False):
     switch_wallpaper(theme)
     switch_calibre(theme)
     switch_zathura(theme)
+    switch_sxiv(theme)
     restart_xdg_portal()
 
     write_state(mode)
