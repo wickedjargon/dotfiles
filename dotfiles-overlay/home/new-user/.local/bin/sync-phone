@@ -85,6 +85,13 @@ do_pull() {
 # --- Main ---
 [[ $# -lt 1 ]] && usage
 
+# Tailscale must be running (VPN disables it)
+if ! tailscale status &>/dev/null; then
+    echo "ERROR: Tailscale is not running."
+    echo "Disconnect your VPN first (dmenu-vpn → Disconnect), then try again."
+    exit 1
+fi
+
 check_connection
 
 case "$1" in

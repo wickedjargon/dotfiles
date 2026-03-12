@@ -1,0 +1,1 @@
+"ff" ALL=(root) NOPASSWD: /usr/bin/cp /home/ff/.config/mullvad/mullvad-next.conf /etc/wireguard/mullvad.conf

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# my-location — show your current IP location (useful for verifying VPN)
+# Uses ipinfo.io free API (no key needed, 50k requests/month)
+
+set -euo pipefail
+
+data=$(curl -s --max-time 10 https://ipinfo.io/json)
+
+ip=$(echo "$data" | grep -oP '"ip": *"\K[^"]+')
+city=$(echo "$data" | grep -oP '"city": *"\K[^"]+')
+region=$(echo "$data" | grep -oP '"region": *"\K[^"]+')
+country=$(echo "$data" | grep -oP '"country": *"\K[^"]+')
+org=$(echo "$data" | grep -oP '"org": *"\K[^"]+')
+
+echo "IP:       $ip"
+echo "Location: $city, $region, $country"
+echo "ISP:      $org"
+
+# If notify-send is available, also show a desktop notification
+if command -v notify-send &>/dev/null; then
+    notify-send "My Location" "$city, $region, $country\n$ip ($org)"
+fi

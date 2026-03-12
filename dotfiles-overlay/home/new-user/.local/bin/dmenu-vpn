@@ -4,12 +4,32 @@ import re
 import subprocess
 import sys
 import glob
+import json
+import random
+try:
+    from urllib.request import urlopen, Request
+    from urllib.error import URLError
+except ImportError:
+    pass
 
 DMENU_CONFIG_PATH = os.path.expanduser("~/.config/dmenu/config")
 WG_DIR = "/etc/wireguard"
+MULLVAD_API = "https://api.mullvad.net/www/relays/wireguard/"
+MULLVAD_CONF = os.path.join(WG_DIR, "mullvad.conf")
+LOG_FILE = "/tmp/dmenu-vpn.log"
+
+
+def log(msg):
+    from datetime import datetime
+    try:
+        with open(LOG_FILE, "a") as f:
+            f.write(f"[{datetime.now().isoformat()}] {msg}\n")
+    except Exception:
+        pass
 
 
 def notify(title, msg):
+    log(f"{title}: {msg}")
     subprocess.run(["notify-send", title, msg])
 
 
@@ -47,15 +67,16 @@ def run_dmenu(options, prompt):
 
 
 def is_connected(interface="mullvad"):
-    result = subprocess.run(["sudo", "wg", "show", interface], capture_output=True)
+    result = subprocess.run(["sudo", "-n", "wg", "show", interface], capture_output=True)
     return result.returncode == 0
+
 
 
 def get_configs():
     """Find all .conf files in /etc/wireguard/"""
     try:
         confs = subprocess.run(
-            ["sudo", "ls", WG_DIR],
+            ["sudo", "-n", "ls", WG_DIR],
             capture_output=True, text=True
         )
         if confs.returncode != 0:
@@ -66,7 +87,7 @@ def get_configs():
 
 
 def vpn_up(interface):
-    result = subprocess.run(["sudo", "wg-quick", "up", interface], capture_output=True, text=True)
+    result = subprocess.run(["sudo", "-n", "wg-quick", "up", interface], capture_output=True, text=True)
     if result.returncode == 0:
         notify("VPN", f"Connected to {interface}")
         subprocess.run(["polybar-msg", "action", "vpn", "hook", "0"])
@@ -74,13 +95,117 @@ def vpn_up(interface):
         notify("VPN", f"Failed to connect: {result.stderr.strip()}")
 
 
+
 def vpn_down(interface):
-    result = subprocess.run(["sudo", "wg-quick", "down", interface], capture_output=True, text=True)
+    result = subprocess.run(["sudo", "-n", "wg-quick", "down", interface], capture_output=True, text=True)
     if result.returncode == 0:
         notify("VPN", f"Disconnected from {interface}")
         subprocess.run(["polybar-msg", "action", "vpn", "hook", "0"])
     else:
         notify("VPN", f"Failed to disconnect: {result.stderr.strip()}")
+
+
+def fetch_servers():
+    """Fetch Mullvad WireGuard server list from public API"""
+    try:
+        req = Request(MULLVAD_API, headers={"User-Agent": "dmenu-vpn/1.0"})
+        with urlopen(req, timeout=10) as resp:
+            return json.loads(resp.read().decode())
+    except Exception as e:
+        notify("VPN", f"Failed to fetch servers: {e}")
+        return []
+
+
+def read_current_config():
+    """Read PrivateKey and Address from user-owned identity file"""
+    identity_path = os.path.expanduser("~/.config/mullvad/identity.conf")
+    try:
+        with open(identity_path, "r") as f:
+            content = f.read()
+    except FileNotFoundError:
+        notify("VPN", f"Identity file not found: {identity_path}")
+        return None, None
+    private_key = None
+    address = None
+    for line in content.splitlines():
+        line = line.strip()
+        if line.startswith("PrivateKey"):
+            private_key = line.split("=", 1)[1].strip()
+        elif line.startswith("Address"):
+            address = line.split("=", 1)[1].strip()
+    return private_key, address
+
+
+def build_config(private_key, address, peer_pubkey, endpoint):
+    """Build a mullvad.conf string"""
+    return f"""[Interface]
+PrivateKey = {private_key}
+Address = {address}
+DNS = 10.64.0.1
+PostUp = systemctl stop tailscaled
+PostDown = systemctl start tailscaled
+
+[Peer]
+PublicKey = {peer_pubkey}
+AllowedIPs = 0.0.0.0/0,::0/0
+Endpoint = {endpoint}:51820
+"""
+
+
+def change_location():
+    """Let user pick a Mullvad server city, rewrite config, and connect"""
+    # Read identity (no sudo needed)
+    private_key, address = read_current_config()
+    if not private_key or not address:
+        notify("VPN", "Cannot read existing config (PrivateKey/Address missing)")
+        return
+
+    notify("VPN", "Fetching server list...")
+    servers = fetch_servers()
+    if not servers:
+        return
+
+    # Group active servers by "Country — City"
+    cities = {}
+    for s in servers:
+        if not s.get("active", False):
+            continue
+        label = f"{s['country_name']} — {s['city_name']}"
+        cities.setdefault(label, []).append(s)
+
+    sorted_cities = sorted(cities.keys())
+
+    choice = run_dmenu(sorted_cities, "Location:")
+    if not choice or choice not in cities:
+        return
+
+    server = random.choice(cities[choice])
+
+    # Disconnect if currently connected
+    if is_connected("mullvad"):
+        vpn_down("mullvad")
+
+    # Write config to temp file (no sudo needed)
+    config = build_config(private_key, address, server["pubkey"], server["ipv4_addr_in"])
+    tmp_path = os.path.expanduser("~/.config/mullvad/mullvad-next.conf")
+    with open(tmp_path, "w") as f:
+        f.write(config)
+
+    # Copy config into place (separate sudo call — sh -c fails without a terminal)
+    notify("VPN", f"Switching to {choice} ({server['hostname']})")
+    cp_result = subprocess.run(
+        ["sudo", "-n", "/usr/bin/cp", tmp_path, MULLVAD_CONF],
+        capture_output=True, text=True
+    )
+    os.unlink(tmp_path)
+
+    if cp_result.returncode != 0:
+        log(f"sudo cp failed (rc={cp_result.returncode})")
+        log(f"stderr: {cp_result.stderr}")
+        notify("VPN", f"Failed to write config: {cp_result.stderr.strip()}")
+        return
+
+    vpn_up("mullvad")
 
 
 def main():
@@ -106,11 +231,15 @@ def main():
     else:
         options.append("Status [OFF]")
 
+    options.append("Change Location")
+
     choice = run_dmenu(options, "VPN:")
     if not choice:
         return
 
-    if choice.startswith("Connect "):
+    if choice == "Change Location":
+        change_location()
+    elif choice.startswith("Connect "):
         interface = choice.replace("Connect ", "")
         vpn_up(interface)
     elif choice.startswith("Disconnect "):
