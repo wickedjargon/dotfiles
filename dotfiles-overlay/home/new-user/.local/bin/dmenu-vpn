@@ -6,6 +6,7 @@ import sys
 import glob
 import json
 import random
+import math
 try:
     from urllib.request import urlopen, Request
     from urllib.error import URLError
@@ -116,6 +117,45 @@ def fetch_servers():
         return []
 
 
+def fetch_locations():
+    """Fetch city-level lat/lon from the Mullvad app relay endpoint.
+    Returns a dict keyed by '{country_code}-{city_code}' with latitude and longitude."""
+    try:
+        req = Request("https://api.mullvad.net/app/v1/relays", headers={"User-Agent": "dmenu-vpn/1.0"})
+        with urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode())
+            return data.get("locations", {})
+    except Exception as e:
+        log(f"Failed to fetch locations: {e}")
+        return {}
+
+
+def get_current_location():
+    """Get current IP location using ipinfo.io"""
+    try:
+        req = Request("https://ipinfo.io/json", headers={"User-Agent": "dmenu-vpn/1.0"})
+        with urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+            loc = data.get("loc", "")
+            if loc:
+                lat, lon = map(float, loc.split(","))
+                return lat, lon
+    except Exception as e:
+        log(f"Failed to get current location: {e}")
+    return None, None
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    """Calculate the great circle distance in km between two points on the earth."""
+    R = 6371.0
+    lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
+    lat2_rad, lon2_rad = math.radians(lat2), math.radians(lon2)
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+    a = math.sin(dlat / 2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2)**2
+    return 2 * R * math.asin(math.sqrt(a))
+
+
 def read_current_config():
     """Read PrivateKey and Address from user-owned identity file"""
     identity_path = os.path.expanduser("~/.config/mullvad/identity.conf")
@@ -152,9 +192,36 @@ Endpoint = {endpoint}:51820
 """
 
 
+def connect_to_server(choice_label, server, private_key, address):
+    # Disconnect if currently connected
+    if is_connected("mullvad"):
+        vpn_down("mullvad")
+
+    # Write config to temp file (no sudo needed)
+    config = build_config(private_key, address, server["pubkey"], server["ipv4_addr_in"])
+    tmp_path = os.path.expanduser("~/.config/mullvad/mullvad-next.conf")
+    with open(tmp_path, "w") as f:
+        f.write(config)
+
+    # Copy config into place (separate sudo call — sh -c fails without a terminal)
+    notify("VPN", f"Switching to {choice_label} ({server['hostname']})")
+    cp_result = subprocess.run(
+        ["sudo", "-n", "/usr/bin/cp", tmp_path, MULLVAD_CONF],
+        capture_output=True, text=True
+    )
+    os.unlink(tmp_path)
+
+    if cp_result.returncode != 0:
+        log(f"sudo cp failed (rc={cp_result.returncode})")
+        log(f"stderr: {cp_result.stderr}")
+        notify("VPN", f"Failed to write config: {cp_result.stderr.strip()}")
+        return
+
+    vpn_up("mullvad")
+
+
 def change_location():
     """Let user pick a Mullvad server city, rewrite config, and connect"""
-    # Read identity (no sudo needed)
     private_key, address = read_current_config()
     if not private_key or not address:
         notify("VPN", "Cannot read existing config (PrivateKey/Address missing)")
@@ -180,32 +247,59 @@ def change_location():
         return
 
     server = random.choice(cities[choice])
+    connect_to_server(choice, server, private_key, address)
 
-    # Disconnect if currently connected
-    if is_connected("mullvad"):
-        vpn_down("mullvad")
 
-    # Write config to temp file (no sudo needed)
-    config = build_config(private_key, address, server["pubkey"], server["ipv4_addr_in"])
-    tmp_path = os.path.expanduser("~/.config/mullvad/mullvad-next.conf")
-    with open(tmp_path, "w") as f:
-        f.write(config)
-
-    # Copy config into place (separate sudo call — sh -c fails without a terminal)
-    notify("VPN", f"Switching to {choice} ({server['hostname']})")
-    cp_result = subprocess.run(
-        ["sudo", "-n", "/usr/bin/cp", tmp_path, MULLVAD_CONF],
-        capture_output=True, text=True
-    )
-    os.unlink(tmp_path)
-
-    if cp_result.returncode != 0:
-        log(f"sudo cp failed (rc={cp_result.returncode})")
-        log(f"stderr: {cp_result.stderr}")
-        notify("VPN", f"Failed to write config: {cp_result.stderr.strip()}")
+def connect_to_nearest():
+    """Calculate geographically closest Mullvad server and connect"""
+    private_key, address = read_current_config()
+    if not private_key or not address:
+        notify("VPN", "Cannot read existing config (PrivateKey/Address missing)")
         return
 
-    vpn_up("mullvad")
+    notify("VPN", "Finding nearest server...")
+    user_lat, user_lon = get_current_location()
+    if user_lat is None:
+        notify("VPN", "Failed to determine current location")
+        return
+
+    servers = fetch_servers()
+    locations = fetch_locations()
+    if not servers or not locations:
+        return
+
+    closest_server = None
+    min_dist = float('inf')
+
+    for s in servers:
+        if not s.get("active", False):
+            continue
+        loc_key = f"{s.get('country_code', '')}-{s.get('city_code', '')}"
+        loc = locations.get(loc_key)
+        if not loc:
+            continue
+        try:
+            s_lat = float(loc["latitude"])
+            s_lon = float(loc["longitude"])
+            dist = haversine(user_lat, user_lon, s_lat, s_lon)
+            if dist < min_dist:
+                min_dist = dist
+                closest_server = s
+        except (ValueError, KeyError, TypeError):
+            continue
+
+    if not closest_server:
+        notify("VPN", "No valid servers found for distance check")
+        return
+
+    label = f"{closest_server['country_name']} — {closest_server['city_name']} (~{int(min_dist)}km)"
+    connect_to_server(label, closest_server, private_key, address)
+
+
+def verify_location():
+    """Runs the external my-location script to notify user of current IP and city."""
+    notify("VPN", "Verifying location...")
+    subprocess.Popen(["my-location"])
 
 
 def main():
@@ -231,7 +325,11 @@ def main():
     else:
         options.append("Status [OFF]")
 
-    options.append("Change Location")
+    options.extend([
+        "Change Location",
+        "Connect to Nearest",
+        "Verify Location"
+    ])
 
     choice = run_dmenu(options, "VPN:")
     if not choice:
@@ -239,6 +337,10 @@ def main():
 
     if choice == "Change Location":
         change_location()
+    elif choice == "Connect to Nearest":
+        connect_to_nearest()
+    elif choice == "Verify Location":
+        verify_location()
     elif choice.startswith("Connect "):
         interface = choice.replace("Connect ", "")
         vpn_up(interface)
