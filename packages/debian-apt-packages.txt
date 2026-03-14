@@ -3,6 +3,7 @@ acpid                    # ACPI event daemon (for battery monitoring)
 upower                   # Power management tool (battery status)
 acpi                     # ACPI utilities (battery status)
 brightnessctl            # Control backlight brightness
+linux-cpupower           # CPU frequency scaling tools (cpupower)
 udisks2                  # Disk management daemon (non-root mounting)
 keyd                     # Key remapping daemon (works in TTY and X11)
 fwupd                    # Firmware update daemon (BIOS, Thunderbolt, EC)
@@ -20,9 +21,11 @@ python3-google-auth-oauthlib  # Google OAuth2 authentication (for dmenu-google-c
 
 
 # Core System - Audio
-pulseaudio               # PulseAudio sound server
-pulseaudio-utils         # PulseAudio command-line tools (pactl)
-pulseaudio-module-bluetooth  # Bluetooth audio support for PulseAudio
+pipewire                 # The core PipeWire multimedia server
+pipewire-audio-client-libraries # Client libraries
+pipewire-pulse           # PulseAudio drop-in compatibility layer
+wireplumber              # The modern session and policy manager for PipeWire
+libspa-0.2-bluetooth     # Bluetooth plugin for PipeWire
 alsa-utils               # ALSA utilities (alsamixer, aplay, etc)
 alsa-topology-conf       # ALSA topology configuration files
 alsa-ucm-conf            # ALSA Use Case Manager configuration
