@@ -27,10 +27,10 @@ RSYNC_OPTS=(
 )
 
 usage() {
-    echo "Usage: sync-phone [push|pull]"
+    echo "Usage: sync-phone [push|pull|--push|--pull]"
     echo ""
-    echo "  push   Laptop → Phone (overwrite phone with laptop files)"
-    echo "  pull   Phone → Laptop (overwrite laptop with phone files)"
+    echo "  push, --push   Laptop → Phone (overwrite phone with laptop files)"
+    echo "  pull, --pull   Phone → Laptop (overwrite laptop with phone files)"
     echo ""
     echo "Synced directories:"
     for local in "${!SYNC_DIRS[@]}"; do
@@ -95,7 +95,7 @@ fi
 check_connection
 
 case "$1" in
-    push) do_push ;;
-    pull) do_pull ;;
+    push|--push) do_push ;;
+    pull|--pull) do_pull ;;
     *)    usage ;;
 esac
