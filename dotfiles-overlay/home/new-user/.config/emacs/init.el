@@ -620,6 +620,7 @@ TTY frames (standalone non-daemon only) get tty-dark."
   (evil-leader/set-key "m m" 'magit)
 
   ;; f: shortcut to file or dired buffer
+  (evil-leader/set-key "f f" 'fff-transient-find)
   (evil-leader/set-key "f b" 'fff-access-bookmarks)
   (evil-leader/set-key "f n" 'fff-access-notes)
   (evil-leader/set-key "f B" 'fff-access-books)
