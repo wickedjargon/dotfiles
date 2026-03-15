@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-"""Upload the primary X selection to 0x0.st, falling back to u.fftp.io."""
+"""Upload the primary X selection (highlighted text) to 0x0.st and copy the URL."""
 
-import os
 import subprocess
 import sys
-
-UPLOAD_URL = "https://u.fftp.io/upload"
-API_KEY_FILE = os.path.expanduser("~/.config/u/api_key")
 
 
 def notify(title, message):
@@ -55,39 +51,6 @@ def upload_to_0x0(content):
         return None
 
 
-def read_api_key():
-    try:
-        with open(API_KEY_FILE) as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        return None
-
-
-def upload_to_u(content):
-    api_key = read_api_key()
-    if not api_key:
-        return None
-    try:
-        result = subprocess.run(
-            [
-                "curl", "-fsS",
-                "--connect-timeout", "5",
-                "--max-time", "30",
-                "-H", f"Authorization: Bearer {api_key}",
-                "-F", "file=@-;filename=paste.txt",
-                UPLOAD_URL,
-            ],
-            input=content,
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            return result.stdout.strip()
-        return None
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return None
-
-
 def main():
     content = get_selection()
     if not content:
@@ -100,16 +63,8 @@ def main():
     if url:
         copy_to_clipboard(url)
         notify("Upload Successful", f"URL copied: {url}")
-        return
-
-    notify("0x0.st failed", "Falling back to u.fftp.io...")
-
-    url = upload_to_u(content)
-    if url:
-        copy_to_clipboard(url)
-        notify("Upload Successful", f"URL copied (via u.fftp.io): {url}")
     else:
-        notify("Upload Failed", "Both 0x0.st and u.fftp.io failed")
+        notify("Upload Failed", "Could not upload to 0x0.st")
         sys.exit(1)
 
 
