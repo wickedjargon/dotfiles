@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+import importlib.machinery
+import importlib.util
+import os
+import sys
+import argparse
+
+
+def _import_upload_selection():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "upload-selection")
+    loader = importlib.machinery.SourceFileLoader("upload_selection", path)
+    spec = importlib.util.spec_from_loader("upload_selection", loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    return mod
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Upload a file (image or other)")
+    parser.add_argument("file", help="File to upload")
+    parser.add_argument("--preserve-filename", action="store_true",
+                        help="Keep the original filename on the server")
+    parser.add_argument("--keep-exif", action="store_true",
+                        help="Skip EXIF stripping and GPS injection")
+    args = parser.parse_args()
+
+    filepath = args.file
+    if not os.path.isfile(filepath):
+        print(f"Error: file not found: {filepath}", file=sys.stderr)
+        sys.exit(1)
+
+    mod = _import_upload_selection()
+
+    # EXIF stripping + Pyongyang GPS injection (default behavior)
+    upload_path = filepath
+    tmp_path = None
+    if not args.keep_exif:
+        processed = mod.strip_exif_and_troll(filepath)
+        if processed != filepath:
+            upload_path = processed
+            tmp_path = processed
+
+    # Try 0x0.st first
+    url = mod.upload_file_to_0x0(upload_path)
+    dest = "0x0.st"
+
+    # Fallback to personal service
+    if not url:
+        url = mod.upload_to_personal_service(
+            upload_path, preserve_filename=args.preserve_filename
+        )
+        dest = "u.fftp.io"
+
+    # Cleanup temp file
+    if tmp_path and os.path.exists(tmp_path):
+        os.unlink(tmp_path)
+
+    if url:
+        mod.copy_to_clipboard(url)
+        print(f"[{dest}] {url}")
+    else:
+        print("Error: upload failed (both 0x0.st and u.fftp.io)", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

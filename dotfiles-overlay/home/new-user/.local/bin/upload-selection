@@ -2,6 +2,25 @@
 
 import subprocess
 import sys
+import os
+import argparse
+import tempfile
+import shutil
+
+PERSONAL_UPLOAD_URL = "https://u.fftp.io/upload"
+API_KEY_FILE = os.path.expanduser("~/.config/u/api_key")
+
+# Pyongyang, North Korea GPS coordinates
+PYONGYANG_LAT = (39, 1, 27.48)    # 39° 1' 27.48" N
+PYONGYANG_LON = (125, 45, 12.6)   # 125° 45' 12.6" E
+
+
+def _read_api_key():
+    try:
+        with open(API_KEY_FILE, "r") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return None
 
 
 def notify(title, message):
@@ -32,7 +51,50 @@ def copy_to_clipboard(text):
     return result.returncode == 0
 
 
+def _deg_to_rational(deg, minutes, seconds):
+    """Convert degrees to EXIF rational format for piexif."""
+    return (
+        (int(deg), 1),
+        (int(minutes), 1),
+        (int(seconds * 100), 100),
+    )
+
+
+def strip_exif_and_troll(filepath):
+    """Strip EXIF data from image and inject Pyongyang GPS coordinates.
+    Returns path to modified temp file, or original filepath if not an image."""
+    ext = os.path.splitext(filepath)[1].lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".tiff", ".webp"):
+        return filepath
+
+    try:
+        import piexif
+        from PIL import Image
+
+        img = Image.open(filepath)
+
+        # Build GPS EXIF with Pyongyang coordinates
+        gps_ifd = {
+            piexif.GPSIFD.GPSLatitudeRef: b"N",
+            piexif.GPSIFD.GPSLatitude: _deg_to_rational(*PYONGYANG_LAT),
+            piexif.GPSIFD.GPSLongitudeRef: b"E",
+            piexif.GPSIFD.GPSLongitude: _deg_to_rational(*PYONGYANG_LON),
+        }
+        exif_dict = {"GPS": gps_ifd}
+        exif_bytes = piexif.dump(exif_dict)
+
+        tmp = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+        img.save(tmp.name, exif=exif_bytes)
+        return tmp.name
+    except ImportError:
+        # Pillow/piexif not installed — upload as-is
+        return filepath
+    except Exception:
+        return filepath
+
+
 def upload_to_0x0(content):
+    """Upload text content to 0x0.st via stdin."""
     try:
         result = subprocess.run(
             [
@@ -60,6 +122,7 @@ def upload_to_0x0(content):
 
 
 def upload_file_to_0x0(filepath):
+    """Upload a file to 0x0.st."""
     try:
         result = subprocess.run(
             [
@@ -85,6 +148,32 @@ def upload_file_to_0x0(filepath):
         return None
 
 
+def upload_to_personal_service(filepath, preserve_filename=False):
+    """Upload a file to personal u.fftp.io service as fallback."""
+    api_key = _read_api_key()
+    if not api_key:
+        return None
+
+    cmd = [
+        "curl", "-fsS",
+        "--connect-timeout", "5",
+        "--max-time", "60",
+        "-H", f"Authorization: Bearer {api_key}",
+        "-F", f"file=@{filepath}",
+    ]
+    if preserve_filename:
+        cmd += ["-F", "preserve_filename=true"]
+    cmd.append(PERSONAL_UPLOAD_URL)
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+        return None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
 def main():
     content = get_selection()
     if not content:
@@ -94,11 +183,23 @@ def main():
     notify("Uploading...", "Uploading selection to 0x0.st")
 
     url = upload_to_0x0(content)
+    dest = "0x0.st"
+
+    if not url:
+        # Fallback: write to temp file and upload to personal service
+        notify("Fallback...", "0x0.st failed, trying u.fftp.io")
+        tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
+        tmp.write(content)
+        tmp.close()
+        url = upload_to_personal_service(tmp.name)
+        os.unlink(tmp.name)
+        dest = "u.fftp.io"
+
     if url:
         copy_to_clipboard(url)
-        notify("Upload Successful", f"URL copied to clipboard: {url}")
+        notify("Upload Successful", f"[{dest}] URL copied: {url}")
     else:
-        notify("Upload Failed", "Could not upload to 0x0.st")
+        notify("Upload Failed", "Could not upload to 0x0.st or u.fftp.io")
         sys.exit(1)
 
 
