@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""Upload a file to u.fftp.io with EXIF stripping and Pyongyang GPS injection."""
+
+import argparse
+import os
+import subprocess
+import sys
+import tempfile
+
+UPLOAD_URL = "https://u.fftp.io/upload"
+API_KEY_FILE = os.path.expanduser("~/.config/u/api_key")
+
+# Pyongyang, North Korea
+PYONGYANG_LAT = (39, 1, 27.48)
+PYONGYANG_LON = (125, 45, 12.6)
+
+
+def _read_api_key():
+    try:
+        with open(API_KEY_FILE) as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        print(f"Error: API key not found at {API_KEY_FILE}", file=sys.stderr)
+        sys.exit(1)
+
+
+def copy_to_clipboard(text):
+    subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True)
+
+
+def _deg_to_rational(deg, minutes, seconds):
+    return (
+        (int(deg), 1),
+        (int(minutes), 1),
+        (int(seconds * 100), 100),
+    )
+
+
+def strip_exif_and_troll(filepath):
+    """Strip EXIF and inject Pyongyang GPS. Returns path to modified temp file."""
+    ext = os.path.splitext(filepath)[1].lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".tiff", ".webp"):
+        return filepath
+
+    try:
+        import piexif
+        from PIL import Image
+
+        img = Image.open(filepath)
+        gps_ifd = {
+            piexif.GPSIFD.GPSLatitudeRef: b"N",
+            piexif.GPSIFD.GPSLatitude: _deg_to_rational(*PYONGYANG_LAT),
+            piexif.GPSIFD.GPSLongitudeRef: b"E",
+            piexif.GPSIFD.GPSLongitude: _deg_to_rational(*PYONGYANG_LON),
+        }
+        exif_bytes = piexif.dump({"GPS": gps_ifd})
+        tmp = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+        img.save(tmp.name, exif=exif_bytes)
+        return tmp.name
+    except ImportError:
+        return filepath
+    except Exception:
+        return filepath
+
+
+def upload_file(filepath, preserve_filename=False):
+    api_key = _read_api_key()
+    cmd = [
+        "curl", "-fsS",
+        "--connect-timeout", "5",
+        "--max-time", "60",
+        "-H", f"Authorization: Bearer {api_key}",
+        "-F", f"file=@{filepath}",
+    ]
+    if preserve_filename:
+        cmd += ["-F", "preserve_filename=true"]
+    cmd.append(UPLOAD_URL)
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+        return None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Upload a file to u.fftp.io")
+    parser.add_argument("file", help="File to upload")
+    parser.add_argument("--preserve-filename", action="store_true",
+                        help="Keep the original filename on the server")
+    parser.add_argument("--keep-exif", action="store_true",
+                        help="Skip EXIF stripping and GPS injection")
+    args = parser.parse_args()
+
+    if not os.path.isfile(args.file):
+        print(f"Error: file not found: {args.file}", file=sys.stderr)
+        sys.exit(1)
+
+    upload_path = args.file
+    tmp_path = None
+
+    if not args.keep_exif:
+        processed = strip_exif_and_troll(args.file)
+        if processed != args.file:
+            upload_path = processed
+            tmp_path = processed
+
+    url = upload_file(upload_path, preserve_filename=args.preserve_filename)
+
+    if tmp_path and os.path.exists(tmp_path):
+        os.unlink(tmp_path)
+
+    if url:
+        copy_to_clipboard(url)
+        print(url)
+    else:
+        print("Error: upload to u.fftp.io failed", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
