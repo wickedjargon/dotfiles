@@ -11,19 +11,22 @@ DMENU_CONFIG_PATH = os.path.expanduser("~/.config/dmenu/config")
 SCREENSHOT_DIR = "/tmp"
 
 
-def _import_upload_selection():
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "upload-selection")
-    loader = importlib.machinery.SourceFileLoader("upload_selection", path)
-    spec = importlib.util.spec_from_loader("upload_selection", loader)
+def _import_upload_file():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "upload-file")
+    loader = importlib.machinery.SourceFileLoader("upload_file", path)
+    spec = importlib.util.spec_from_loader("upload_file", loader)
     mod = importlib.util.module_from_spec(spec)
     loader.exec_module(mod)
     return mod
 
 
-_upload_mod = _import_upload_selection()
-upload_file_to_0x0 = _upload_mod.upload_file_to_0x0
+_upload_mod = _import_upload_file()
+upload_to_0x0 = _upload_mod.upload_to_0x0
 copy_to_clipboard = _upload_mod.copy_to_clipboard
-notify = _upload_mod.notify
+
+
+def notify(title, message):
+    subprocess.run(["notify-send", title, message])
 
 
 def get_dmenu_args():
@@ -92,7 +95,7 @@ def main():
         notify("Screenshot Saved", f"Saved to {filepath}\nPath copied to clipboard")
     elif action == opt_upload:
         notify("Uploading...", "Please wait...")
-        url = upload_file_to_0x0(filepath)
+        url = upload_to_0x0(filepath)
         if url:
             copy_to_clipboard(url)
             notify("Upload Successful", f"URL copied: {url}")
