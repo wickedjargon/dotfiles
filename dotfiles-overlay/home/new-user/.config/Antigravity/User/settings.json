@@ -6,5 +6,6 @@
     "window.restoreWindows": "none",
     "extensions.ignoreRecommendations": true,
     "terminal.integrated.sendKeybindingsToShell": true,
-    "terminal.integrated.allowChords": false
+    "terminal.integrated.allowChords": false,
+    "window.zoomLevel": 1
 }
