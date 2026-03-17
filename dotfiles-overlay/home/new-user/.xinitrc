@@ -1,5 +1,9 @@
 export PATH="$HOME/.local/bin:$PATH"
 
+# Session identity — needed for xdg-desktop-portal / Qt theme detection
+export XDG_CURRENT_DESKTOP=GNOME
+export XDG_SESSION_TYPE=x11
+
 # Start GNOME Keyring Daemon
 eval $(/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh)
 export SSH_AUTH_SOCK
