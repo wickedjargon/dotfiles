@@ -11,10 +11,17 @@
     (call-interactively 'find-file)))
 
 (defun fff-open-file-in-projects ()
-  "Prompt for a filename and open it in the /projects"
+  "Select a project from ~/d/projects/ and find-file within it."
   (interactive)
-  (let ((default-directory "~/d/projects/"))
-    (call-interactively 'find-file)))
+  (let* ((projects-dir (expand-file-name "~/d/projects/"))
+         (dirs (cl-remove-if-not
+                #'file-directory-p
+                (mapcar (lambda (d) (expand-file-name d projects-dir))
+                        (directory-files projects-dir nil "^[^.]"))))
+         (names (mapcar #'file-name-nondirectory dirs))
+         (selected (completing-read "Project: " names nil t))
+         (project-path (expand-file-name (concat selected "/") projects-dir)))
+    (dired project-path)))
 
 (defun fff-access-config-dir ()
   "Prompt for a filename and open it in the /projects"

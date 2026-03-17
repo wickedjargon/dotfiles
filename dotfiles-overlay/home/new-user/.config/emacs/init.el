@@ -351,6 +351,7 @@
   (setq dired-recursive-deletes 'always)
   (setq dired-dwim-target t)
   (setq dired-clean-confirm-killing-deleted-buffers nil)
+  (setq dired-free-space nil)
   :config
   (add-hook 'dired-mode-hook #'dired-hide-details-mode))
 
