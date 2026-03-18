@@ -124,12 +124,12 @@ THEMES = {
         # XOB
         "xob_fg": "#5294e2",
         "xob_bg": "#ffffff",
-        "xob_border": "#d0d5dd",
-        "xob_alt_fg": "#4280c4",
-        "xob_overflow_fg": "#F04A50",
-        "xob_overflow_border": "#F04A50",
-        "xob_altoverflow_fg": "#c33b42",
-        "xob_altoverflow_border": "#c33b42",
+        "xob_border": "#d0d0d0",
+        "xob_alt_fg": "#a6c4e8",
+        "xob_overflow_fg": "#e35b5b",
+        "xob_overflow_border": "#e35b5b",
+        "xob_altoverflow_fg": "#c64e4e",
+        "xob_altoverflow_border": "#c64e4e",
         # Dunst
         "dunst_bg": "#E8E8EE",
         "dunst_frame": "#CCCCCC",
