@@ -32,6 +32,7 @@ done
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias z='zathura'
+alias a="/usr/bin/distrobox-enter  -n archbox  --   /usr/bin/antigravity"
 alias em='emacs'
 alias emc='emacsclient -c -a ""'
 alias neofetch="fastfetch"
