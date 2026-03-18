@@ -8,13 +8,13 @@ CHOICE=$(printf '%s\n' "toggle" "light" "dark" | dmenu $DMENU_BASIC_ARGS -fn "$D
 
 # Execute theme command based on choice
 case "$CHOICE" in
-    toggle)
+    Toggle)
         theme --toggle
         ;;
-    light)
+    Light)
         theme --light
         ;;
-    dark)
+    Dark)
         theme --dark
         ;;
 esac
