@@ -123,8 +123,8 @@ THEMES = {
         "bspwm_presel_feedback": "#5294e2",
         # XOB
         "xob_fg": "#5294e2",
-        "xob_bg": "#F5F6F7",
-        "xob_border": "#cfd6e6",
+        "xob_bg": "#ffffff",
+        "xob_border": "#d0d5dd",
         "xob_alt_fg": "#4280c4",
         "xob_overflow_fg": "#F04A50",
         "xob_overflow_border": "#F04A50",
