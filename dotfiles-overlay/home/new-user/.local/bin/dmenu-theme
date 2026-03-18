@@ -4,7 +4,7 @@
 [ -f "$HOME/.config/dmenu/config" ] && . "$HOME/.config/dmenu/config"
 
 # Define options
-CHOICE=$(printf '%s\n' "toggle" "light" "dark" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -p "Theme:")
+CHOICE=$(printf '%s\n' "Toggle" "Light" "Dark" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -p "Theme:")
 
 # Execute theme command based on choice
 case "$CHOICE" in
