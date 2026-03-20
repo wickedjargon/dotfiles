@@ -33,6 +33,7 @@ qemu-desktop
 qemu-img
 rnote
 rsync
+scrcpy
 shellcheck
 sshpass
 steam

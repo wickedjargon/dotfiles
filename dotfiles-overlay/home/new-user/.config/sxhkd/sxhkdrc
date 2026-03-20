@@ -28,6 +28,10 @@ super + {j,k}
 super + shift + {j,k}
     bspc node -s {next,prev}.local.!hidden.window
 
+# Focus other monitor
+super + o
+    bspc monitor -f next
+
 # ========== LAYOUT MANAGEMENT ==========
 
 # Tiled mode
