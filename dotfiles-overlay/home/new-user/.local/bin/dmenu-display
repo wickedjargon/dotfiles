@@ -97,6 +97,9 @@ main() {
         *"Laptop Only"*)   apply_config laptop-only "$selected_external" ;;
         *)                exit 1 ;;
     esac
+
+    # Reposition xob on the internal display after layout change
+    xob-restart &
 }
 
 main

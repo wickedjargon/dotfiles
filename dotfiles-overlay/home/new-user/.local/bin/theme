@@ -527,15 +527,15 @@ def restart_services():
         )
     except FileNotFoundError:
         pass
-    # XOB - kill and restart via the named pipe
-    run_quiet(["killall", "xob"])
-    if os.path.exists("/tmp/xobpipe"):
+    # XOB - restart with correct multi-monitor positioning
+    try:
         subprocess.Popen(
-            "tail -f /tmp/xobpipe | xob",
-            shell=True,
+            ["xob-restart"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+    except FileNotFoundError:
+        pass
     print("  Services restarted (polybar, dunst, xob)")
 
 

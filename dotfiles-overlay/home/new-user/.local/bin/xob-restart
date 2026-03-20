@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# Restart xob positioned on the internal display.
+# Detects internal monitor geometry via xrandr and rewrites
+# the position/length in ~/.config/xob/styles.cfg with absolute
+# pixel offsets so the bar always appears on the laptop screen.
+
+PIPE="/tmp/xobpipe"
+STYLES="$HOME/.config/xob/styles.cfg"
+
+# Get internal display name (LVDS, eDP, etc.)
+get_internal() {
+    xrandr --query | grep -E "^(LVDS|eDP|eDP-?[0-9]*)-?[0-9]* connected" | cut -d' ' -f1 | head -n1
+}
+
+# Parse geometry for a given output: WIDTHxHEIGHT+X+Y
+get_geometry() {
+    xrandr --query | grep "^$1 " | grep -o '[0-9]\+x[0-9]\++[0-9]\++[0-9]\+' | head -n1
+}
+
+internal=$(get_internal)
+
+if [ -n "$internal" ]; then
+    geom=$(get_geometry "$internal")
+fi
+
+if [ -n "$geom" ]; then
+    width=$(echo "$geom" | cut -dx -f1)
+    rest=$(echo "$geom" | cut -dx -f2)
+    height=$(echo "$rest" | cut -d+ -f1)
+    off_x=$(echo "$rest" | cut -d+ -f2)
+    off_y=$(echo "$rest" | cut -d+ -f3)
+
+    # Bar length = 50% of internal display width
+    bar_len=$((width / 2))
+    # Center bar horizontally (x is left edge of bar)
+    bar_x=$((off_x + (width - bar_len) / 2))
+    # Place bar at 90% height (y is top edge of bar)
+    bar_y=$((off_y + height * 9 / 10))
+
+    # Rewrite position/length in styles.cfg (use absolute offsets)
+    if [ -f "$STYLES" ]; then
+        sed -i \
+            -e "s|x = {[^}]*}|x = {relative = 0; offset = $bar_x;}|" \
+            -e "s|y = {[^}]*}|y = {relative = 0; offset = $bar_y;}|" \
+            -e "s|length = {[^}]*}|length = {relative = 0; offset = $bar_len;}|" \
+            "$STYLES"
+    fi
+fi
+
+# Kill existing xob and relaunch
+killall xob 2>/dev/null
+if [ -p "$PIPE" ]; then
+    tail -f "$PIPE" | xob &
+fi
