@@ -1,0 +1,7 @@
+#!/bin/sh
+level=$(timeout 1 adb shell dumpsys battery 2>/dev/null | grep '^ *level:' | head -1 | tr -dc '0-9')
+if [ -n "$level" ]; then
+    echo "📱 ${level}%"
+else
+    echo ""
+fi
