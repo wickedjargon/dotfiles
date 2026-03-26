@@ -15,7 +15,7 @@ declare -A SYNC_DIRS=(
     ["$HOME/d/images"]="$PHONE_BASE/DCIM"
     ["$HOME/d/notes"]="$PHONE_BASE/Notes"
     ["$HOME/d/other"]="$PHONE_BASE/Other"
-    ["$HOME/d/screenshots"]="$PHONE_BASE/Pictures/Screenshots"
+    ["$HOME/d/images/screenshots"]="$PHONE_BASE/Pictures/Screenshots"
     ["$HOME/d/video"]="$PHONE_BASE/Movies"
 )
 
