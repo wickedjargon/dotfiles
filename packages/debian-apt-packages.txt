@@ -70,6 +70,7 @@ mpc                      # Command-line MPD client
 mpd                      # Music Player Daemon
 ffmpeg                   # Tools for recording, converting and streaming audio and video
 imagemagick              # Image manipulation suite
+farbfeld                 # Suckless image format utilities (required by sent)
 poppler-utils            # PDF utilities (pdftotext, pdfimages)
 sqlite3                  # SQLite database (used by org-roam)
 vis                      # Modal text editor combining vim and sam ideas
