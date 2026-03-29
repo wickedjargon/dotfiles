@@ -5,6 +5,7 @@ bc
 diffutils
 fastfetch
 git
+git-lfs
 github-cli
 glibc-locales
 go
