@@ -11,6 +11,7 @@ PHONE_PORT=8022
 PHONE_BASE="/data/data/com.termux/files/home/storage/shared"
 
 # Directories to sync: local_path -> phone_path
+# NOTE: images excludes screenshots/ to avoid overlap (synced separately)
 declare -A SYNC_DIRS=(
     ["$HOME/d/audio"]="$PHONE_BASE/Music"
     ["$HOME/d/images"]="$PHONE_BASE/DCIM"
@@ -18,6 +19,11 @@ declare -A SYNC_DIRS=(
     ["$HOME/d/other"]="$PHONE_BASE/Other"
     ["$HOME/d/images/screenshots"]="$PHONE_BASE/Pictures/Screenshots"
     ["$HOME/d/video"]="$PHONE_BASE/Movies"
+)
+
+# Exclude patterns per local dir (to prevent overlapping syncs)
+declare -A SYNC_EXCLUDES=(
+    ["$HOME/d/images"]="screenshots"
 )
 
 # ── Colors ──────────────────────────────────────────────────────────
@@ -43,6 +49,9 @@ ok()    { printf "${GREEN}✓${RESET} %s\n" "$*"; }
 warn()  { printf "${YELLOW}!${RESET} %s\n" "$*"; }
 die()   { printf "${RED}✗${RESET} %s\n" "$*" >&2; exit 1; }
 header(){ printf "\n${BOLD}%s${RESET}\n" "$*"; }
+
+# SSH helper — run a command on phone, return output
+phone_ssh() { ssh -p "$PHONE_PORT" "$PHONE_HOST" "$@"; }
 
 usage() {
     cat <<'EOF'
@@ -99,7 +108,7 @@ parse_args() {
                 ;;
             --nth)
                 [[ $# -lt 2 ]] && die "--nth requires a number"
-                [[ ! "$2" =~ ^[0-9]+$ ]] && die "--nth requires a number, got: $2"
+                [[ ! "$2" =~ ^[1-9][0-9]*$ ]] && die "--nth requires a positive number, got: $2"
                 NTH="$2"
                 shift
                 ;;
@@ -142,10 +151,20 @@ build_rsync_opts() {
 # ── Connection check ───────────────────────────────────────────────
 check_connection() {
     info "Checking connection to ${BOLD}$PHONE_HOST${RESET}..."
-    if ! ssh -o ConnectTimeout=10 -p "$PHONE_PORT" "$PHONE_HOST" "echo ok" &>/dev/null; then
+    if ! phone_ssh "echo ok" &>/dev/null; then
         die "Cannot reach $PHONE_HOST. Make sure Tailscale is active and sshd is running in Termux."
     fi
     ok "Phone is reachable"
+}
+
+# ── Build remote dirs string for SSH ───────────────────────────────
+# Returns a space-separated, single-quoted list of all remote sync dirs
+get_remote_dirs() {
+    local dirs=""
+    for local_dir in "${!SYNC_DIRS[@]}"; do
+        dirs+="'${SYNC_DIRS[$local_dir]}' "
+    done
+    echo "$dirs"
 }
 
 # ── Full sync ──────────────────────────────────────────────────────
@@ -159,18 +178,25 @@ do_full_sync() {
         header "PULLING: Phone → Laptop"
     fi
 
+    local local_dir remote_dir dir_name
     for local_dir in "${!SYNC_DIRS[@]}"; do
         remote_dir="${SYNC_DIRS[$local_dir]}"
         dir_name=$(basename "$local_dir")
 
+        # Build per-directory rsync opts (may include excludes)
+        local -a dir_opts=("${rsync_opts[@]}")
+        if [[ -n "${SYNC_EXCLUDES[$local_dir]:-}" ]]; then
+            dir_opts+=(--exclude "${SYNC_EXCLUDES[$local_dir]}")
+        fi
+
         printf "\n${DIM}─── %s ───${RESET}\n" "$dir_name"
 
         if [[ "$DIRECTION" == "push" ]]; then
-            ssh -p "$PHONE_PORT" "$PHONE_HOST" "mkdir -p '$remote_dir'" 2>/dev/null
-            rsync "${rsync_opts[@]}" "$local_dir/" "$PHONE_HOST:$remote_dir/"
+            phone_ssh "mkdir -p '$remote_dir'" 2>/dev/null
+            rsync "${dir_opts[@]}" -- "$local_dir/" "$PHONE_HOST:$remote_dir/"
         else
             mkdir -p "$local_dir"
-            rsync "${rsync_opts[@]}" "$PHONE_HOST:$remote_dir/" "$local_dir/"
+            rsync "${dir_opts[@]}" -- "$PHONE_HOST:$remote_dir/" "$local_dir/"
         fi
     done
 
@@ -189,28 +215,34 @@ do_file_sync() {
         header "PULLING files: Phone → Laptop"
     fi
 
+    local filename
     for filename in "${FILES[@]}"; do
         info "Searching for ${BOLD}$filename${RESET}..."
 
         local -a matches=()
+        local local_dir remote_dir
 
         if [[ "$DIRECTION" == "push" ]]; then
             # Search locally
+            local match
             for local_dir in "${!SYNC_DIRS[@]}"; do
                 while IFS= read -r -d '' match; do
                     matches+=("$local_dir|${SYNC_DIRS[$local_dir]}|$match")
                 done < <(find "$local_dir" -name "$filename" -type f -print0 2>/dev/null)
             done
         else
-            # Search on phone
+            # Search on phone — single SSH call across all remote dirs
+            local find_cmd=""
             for local_dir in "${!SYNC_DIRS[@]}"; do
                 remote_dir="${SYNC_DIRS[$local_dir]}"
-                while IFS= read -r match; do
-                    [[ -z "$match" ]] && continue
-                    matches+=("$local_dir|$remote_dir|$match")
-                done < <(ssh -p "$PHONE_PORT" "$PHONE_HOST" \
-                    "find '$remote_dir' -name '$filename' -type f 2>/dev/null" || true)
+                find_cmd+="find '$remote_dir' -name '$filename' -type f 2>/dev/null | sed 's|^|$local_dir|$remote_dir||'; "
             done
+
+            local line
+            while IFS='|' read -r local_dir remote_dir fpath; do
+                [[ -z "$fpath" ]] && continue
+                matches+=("$local_dir|$remote_dir|$fpath")
+            done < <(phone_ssh "$find_cmd" || true)
         fi
 
         if [[ ${#matches[@]} -eq 0 ]]; then
@@ -220,8 +252,9 @@ do_file_sync() {
 
         if [[ ${#matches[@]} -gt 1 ]]; then
             warn "Multiple matches for '$filename':"
+            local m fpath
             for m in "${matches[@]}"; do
-                IFS='|' read -r _ldir _rdir fpath <<< "$m"
+                IFS='|' read -r _ _ fpath <<< "$m"
                 printf "  ${DIM}%s${RESET}\n" "$fpath"
             done
             warn "Please use a more specific filename"
@@ -229,24 +262,19 @@ do_file_sync() {
         fi
 
         # Exactly one match
+        local found_path rel_path
         IFS='|' read -r local_dir remote_dir found_path <<< "${matches[0]}"
 
         if [[ "$DIRECTION" == "push" ]]; then
-            # found_path is the local absolute path
-            local rel_path="${found_path#"$local_dir/"}"
+            rel_path="${found_path#"$local_dir/"}"
             local remote_file="$remote_dir/$rel_path"
-            local remote_parent
-            remote_parent=$(dirname "$remote_file")
-            ssh -p "$PHONE_PORT" "$PHONE_HOST" "mkdir -p '$remote_parent'" 2>/dev/null
-            rsync "${rsync_opts[@]}" "$found_path" "$PHONE_HOST:$remote_file"
+            phone_ssh "mkdir -p '$(dirname "$remote_file")'" 2>/dev/null
+            rsync "${rsync_opts[@]}" -- "$found_path" "$PHONE_HOST:$remote_file"
         else
-            # found_path is the remote absolute path
-            local rel_path="${found_path#"$remote_dir/"}"
+            rel_path="${found_path#"$remote_dir/"}"
             local local_file="$local_dir/$rel_path"
-            local local_parent
-            local_parent=$(dirname "$local_file")
-            mkdir -p "$local_parent"
-            rsync "${rsync_opts[@]}" "$PHONE_HOST:$found_path" "$local_file"
+            mkdir -p "$(dirname "$local_file")"
+            rsync "${rsync_opts[@]}" -- "$PHONE_HOST:$found_path" "$local_file"
         fi
 
         ok "Synced: $filename"
@@ -277,29 +305,32 @@ do_latest_sync() {
 
     # Collect all files with timestamps
     local -a all_files=()
+    local ts fpath line local_dir remote_dir
 
     if [[ "$DIRECTION" == "push" ]]; then
         # Search locally
         for local_dir in "${!SYNC_DIRS[@]}"; do
             while IFS= read -r line; do
                 [[ -z "$line" ]] && continue
-                local ts="${line%% *}"
-                local fpath="${line#* }"
+                ts="${line%% *}"
+                fpath="${line#* }"
                 all_files+=("$ts|$local_dir|${SYNC_DIRS[$local_dir]}|$fpath")
             done < <(find "$local_dir" -type f -printf '%T@ %p\n' 2>/dev/null)
         done
     else
-        # Search on phone
+        # Search on phone — single SSH call across all remote dirs
+        local find_cmd=""
         for local_dir in "${!SYNC_DIRS[@]}"; do
             remote_dir="${SYNC_DIRS[$local_dir]}"
-            while IFS= read -r line; do
-                [[ -z "$line" ]] && continue
-                local ts="${line%% *}"
-                local fpath="${line#* }"
-                all_files+=("$ts|$local_dir|$remote_dir|$fpath")
-            done < <(ssh -p "$PHONE_PORT" "$PHONE_HOST" \
-                "find '$remote_dir' -type f -printf '%T@ %p\n' 2>/dev/null" || true)
+            find_cmd+="find '$remote_dir' -type f -printf '%T@ %p\n' 2>/dev/null | sed 's|^|$local_dir|$remote_dir||'; "
         done
+
+        while IFS='|' read -r local_dir remote_dir ts_and_path; do
+            [[ -z "$ts_and_path" ]] && continue
+            ts="${ts_and_path%% *}"
+            fpath="${ts_and_path#* }"
+            all_files+=("$ts|$local_dir|$remote_dir|$fpath")
+        done < <(phone_ssh "$find_cmd" || true)
     fi
 
     if [[ ${#all_files[@]} -eq 0 ]]; then
@@ -320,29 +351,25 @@ do_latest_sync() {
     fi
 
     # Sync each selected file
+    local entry basename_file rel_path
     for entry in "${sorted[@]}"; do
-        IFS='|' read -r _ts local_dir remote_dir found_path <<< "$entry"
-        local basename_file
+        IFS='|' read -r _ local_dir remote_dir found_path <<< "$entry"
         basename_file=$(basename "$found_path")
 
         if [[ "$DIRECTION" == "push" ]]; then
-            local rel_path="${found_path#"$local_dir/"}"
+            rel_path="${found_path#"$local_dir/"}"
             local remote_file="$remote_dir/$rel_path"
-            local remote_parent
-            remote_parent=$(dirname "$remote_file")
 
             info "Syncing ${BOLD}$basename_file${RESET} ${DIM}($rel_path)${RESET}"
-            ssh -p "$PHONE_PORT" "$PHONE_HOST" "mkdir -p '$remote_parent'" 2>/dev/null
-            rsync "${rsync_opts[@]}" "$found_path" "$PHONE_HOST:$remote_file"
+            phone_ssh "mkdir -p '$(dirname "$remote_file")'" 2>/dev/null
+            rsync "${rsync_opts[@]}" -- "$found_path" "$PHONE_HOST:$remote_file"
         else
-            local rel_path="${found_path#"$remote_dir/"}"
+            rel_path="${found_path#"$remote_dir/"}"
             local local_file="$local_dir/$rel_path"
-            local local_parent
-            local_parent=$(dirname "$local_file")
 
             info "Syncing ${BOLD}$basename_file${RESET} ${DIM}($rel_path)${RESET}"
-            mkdir -p "$local_parent"
-            rsync "${rsync_opts[@]}" "$PHONE_HOST:$found_path" "$local_file"
+            mkdir -p "$(dirname "$local_file")"
+            rsync "${rsync_opts[@]}" -- "$PHONE_HOST:$found_path" "$local_file"
         fi
 
         ok "Synced: $basename_file"
