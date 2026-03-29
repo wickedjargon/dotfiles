@@ -5,6 +5,7 @@
 
 set -euo pipefail
 
+# ── Config ──────────────────────────────────────────────────────────
 PHONE_HOST="pixel-8"  # Tailscale MagicDNS hostname
 PHONE_PORT=8022
 PHONE_BASE="/data/data/com.termux/files/home/storage/shared"
@@ -19,83 +20,358 @@ declare -A SYNC_DIRS=(
     ["$HOME/d/video"]="$PHONE_BASE/Movies"
 )
 
-RSYNC_OPTS=(
-    -avz
-    --progress
-    --delete
-    -e "ssh -p $PHONE_PORT"
-)
+# ── Colors ──────────────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+DIM='\033[2m'
+RESET='\033[0m'
+
+# ── Defaults ────────────────────────────────────────────────────────
+DIRECTION=""
+DRY_RUN=false
+NO_DELETE=false
+LATEST_COUNT=0
+NTH=0
+FILES=()
+
+# ── Helpers ─────────────────────────────────────────────────────────
+info()  { printf "${CYAN}▸${RESET} %s\n" "$*"; }
+ok()    { printf "${GREEN}✓${RESET} %s\n" "$*"; }
+warn()  { printf "${YELLOW}!${RESET} %s\n" "$*"; }
+die()   { printf "${RED}✗${RESET} %s\n" "$*" >&2; exit 1; }
+header(){ printf "\n${BOLD}%s${RESET}\n" "$*"; }
 
 usage() {
-    echo "Usage: sync-phone [push|pull|--push|--pull]"
-    echo ""
-    echo "  push, --push   Laptop → Phone (overwrite phone with laptop files)"
-    echo "  pull, --pull   Phone → Laptop (overwrite laptop with phone files)"
-    echo ""
-    echo "Synced directories:"
-    for local in "${!SYNC_DIRS[@]}"; do
-        echo "  $(basename "$local")  →  ${SYNC_DIRS[$local]}"
-    done
-    exit 1
+    cat <<'EOF'
+Usage: sync-phone <push|pull> [OPTIONS] [FILE...]
+
+Commands:
+  push              Laptop → Phone
+  pull              Phone → Laptop
+
+File selection (pick one):
+  FILE...           Sync files matching these filenames
+  --latest [N]      Sync the N most recent files (default: 1)
+  --nth N           Sync the Nth most recent file (1 = latest)
+
+Options:
+  --dry-run         Show what would be synced without transferring
+  --no-delete       Don't delete extraneous files at destination
+  -h, --help        Show this help
+
+Examples:
+  sync-phone push                   Push all directories
+  sync-phone pull                   Pull all directories
+  sync-phone push todo.md           Push file matching "todo.md"
+  sync-phone pull --latest          Pull the single latest file
+  sync-phone pull --latest 3        Pull the 3 most recent files
+  sync-phone pull --nth 2           Pull the 2nd most recent file
+  sync-phone push --dry-run         Preview a full push
+EOF
+    exit "${1:-1}"
 }
 
-check_connection() {
-    echo "Checking connection to $PHONE_HOST..."
-    if ! ssh -o ConnectTimeout=10 -p "$PHONE_PORT" "$PHONE_HOST" "echo ok" &>/dev/null; then
-        echo "ERROR: Cannot reach $PHONE_HOST."
-        echo "Make sure Tailscale is active on both devices and sshd is running in Termux."
-        exit 1
+# ── Argument parsing ────────────────────────────────────────────────
+parse_args() {
+    [[ $# -lt 1 ]] && usage
+
+    # First arg must be push/pull (or --help)
+    case "$1" in
+        push|--push)  DIRECTION="push" ;;
+        pull|--pull)  DIRECTION="pull" ;;
+        -h|--help)    usage 0 ;;
+        *)            die "Unknown command: $1 (expected push or pull)" ;;
+    esac
+    shift
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --latest)
+                if [[ $# -ge 2 && "$2" =~ ^[0-9]+$ ]]; then
+                    LATEST_COUNT="$2"
+                    shift
+                else
+                    LATEST_COUNT=1
+                fi
+                ;;
+            --nth)
+                [[ $# -lt 2 ]] && die "--nth requires a number"
+                [[ ! "$2" =~ ^[0-9]+$ ]] && die "--nth requires a number, got: $2"
+                NTH="$2"
+                shift
+                ;;
+            --dry-run)   DRY_RUN=true ;;
+            --no-delete) NO_DELETE=true ;;
+            -h|--help)   usage 0 ;;
+            -*)          die "Unknown option: $1" ;;
+            *)           FILES+=("$1") ;;
+        esac
+        shift
+    done
+
+    # Validation: --latest and --nth are mutually exclusive
+    if [[ $LATEST_COUNT -gt 0 && $NTH -gt 0 ]]; then
+        die "--latest and --nth cannot be used together"
     fi
-    echo "Phone is reachable."
-    echo ""
+
+    # Validation: file args and --latest/--nth are mutually exclusive
+    if [[ ${#FILES[@]} -gt 0 && ($LATEST_COUNT -gt 0 || $NTH -gt 0) ]]; then
+        die "Cannot combine filenames with --latest or --nth"
+    fi
 }
 
-do_push() {
-    echo "=== PUSHING: Laptop → Phone ==="
-    echo ""
-    for local in "${!SYNC_DIRS[@]}"; do
-        remote="${SYNC_DIRS[$local]}"
-        dir_name=$(basename "$local")
-        echo "--- $dir_name ---"
+# ── Build rsync options ────────────────────────────────────────────
+build_rsync_opts() {
+    local -n opts_ref=$1
+    local use_delete=${2:-true}
 
-        # Create remote dir if needed
-        ssh -p "$PHONE_PORT" "$PHONE_HOST" "mkdir -p '$remote'" 2>/dev/null
+    opts_ref=(-avz --progress -e "ssh -p $PHONE_PORT")
 
-        rsync "${RSYNC_OPTS[@]}" "$local/" "$PHONE_HOST:$remote/"
-        echo ""
+    if [[ "$use_delete" == "true" && "$NO_DELETE" == "false" ]]; then
+        opts_ref+=(--delete)
+    fi
+
+    if [[ "$DRY_RUN" == "true" ]]; then
+        opts_ref+=(--dry-run)
+    fi
+}
+
+# ── Connection check ───────────────────────────────────────────────
+check_connection() {
+    info "Checking connection to ${BOLD}$PHONE_HOST${RESET}..."
+    if ! ssh -o ConnectTimeout=10 -p "$PHONE_PORT" "$PHONE_HOST" "echo ok" &>/dev/null; then
+        die "Cannot reach $PHONE_HOST. Make sure Tailscale is active and sshd is running in Termux."
+    fi
+    ok "Phone is reachable"
+}
+
+# ── Full sync ──────────────────────────────────────────────────────
+do_full_sync() {
+    local -a rsync_opts
+    build_rsync_opts rsync_opts true
+
+    if [[ "$DIRECTION" == "push" ]]; then
+        header "PUSHING: Laptop → Phone"
+    else
+        header "PULLING: Phone → Laptop"
+    fi
+
+    for local_dir in "${!SYNC_DIRS[@]}"; do
+        remote_dir="${SYNC_DIRS[$local_dir]}"
+        dir_name=$(basename "$local_dir")
+
+        printf "\n${DIM}─── %s ───${RESET}\n" "$dir_name"
+
+        if [[ "$DIRECTION" == "push" ]]; then
+            ssh -p "$PHONE_PORT" "$PHONE_HOST" "mkdir -p '$remote_dir'" 2>/dev/null
+            rsync "${rsync_opts[@]}" "$local_dir/" "$PHONE_HOST:$remote_dir/"
+        else
+            mkdir -p "$local_dir"
+            rsync "${rsync_opts[@]}" "$PHONE_HOST:$remote_dir/" "$local_dir/"
+        fi
     done
-    echo "Push complete."
-}
 
-do_pull() {
-    echo "=== PULLING: Phone → Laptop ==="
     echo ""
-    for local in "${!SYNC_DIRS[@]}"; do
-        remote="${SYNC_DIRS[$local]}"
-        dir_name=$(basename "$local")
-        echo "--- $dir_name ---"
-
-        mkdir -p "$local"
-        rsync "${RSYNC_OPTS[@]}" "$PHONE_HOST:$remote/" "$local/"
-        echo ""
-    done
-    echo "Pull complete."
+    ok "${DIRECTION^} complete."
 }
 
-# --- Main ---
-[[ $# -lt 1 ]] && usage
+# ── Find files by name ─────────────────────────────────────────────
+do_file_sync() {
+    local -a rsync_opts
+    build_rsync_opts rsync_opts false  # no --delete for individual files
 
-# Tailscale must be running (VPN disables it)
-if ! tailscale status &>/dev/null; then
-    echo "ERROR: Tailscale is not running."
-    echo "Disconnect your VPN first (dmenu-vpn → Disconnect), then try again."
-    exit 1
-fi
+    if [[ "$DIRECTION" == "push" ]]; then
+        header "PUSHING files: Laptop → Phone"
+    else
+        header "PULLING files: Phone → Laptop"
+    fi
 
-check_connection
+    for filename in "${FILES[@]}"; do
+        info "Searching for ${BOLD}$filename${RESET}..."
 
-case "$1" in
-    push|--push) do_push ;;
-    pull|--pull) do_pull ;;
-    *)    usage ;;
-esac
+        local -a matches=()
+
+        if [[ "$DIRECTION" == "push" ]]; then
+            # Search locally
+            for local_dir in "${!SYNC_DIRS[@]}"; do
+                while IFS= read -r -d '' match; do
+                    matches+=("$local_dir|${SYNC_DIRS[$local_dir]}|$match")
+                done < <(find "$local_dir" -name "$filename" -type f -print0 2>/dev/null)
+            done
+        else
+            # Search on phone
+            for local_dir in "${!SYNC_DIRS[@]}"; do
+                remote_dir="${SYNC_DIRS[$local_dir]}"
+                while IFS= read -r match; do
+                    [[ -z "$match" ]] && continue
+                    matches+=("$local_dir|$remote_dir|$match")
+                done < <(ssh -p "$PHONE_PORT" "$PHONE_HOST" \
+                    "find '$remote_dir' -name '$filename' -type f 2>/dev/null" || true)
+            done
+        fi
+
+        if [[ ${#matches[@]} -eq 0 ]]; then
+            warn "No file matching '$filename' found"
+            continue
+        fi
+
+        if [[ ${#matches[@]} -gt 1 ]]; then
+            warn "Multiple matches for '$filename':"
+            for m in "${matches[@]}"; do
+                IFS='|' read -r _ldir _rdir fpath <<< "$m"
+                printf "  ${DIM}%s${RESET}\n" "$fpath"
+            done
+            warn "Please use a more specific filename"
+            continue
+        fi
+
+        # Exactly one match
+        IFS='|' read -r local_dir remote_dir found_path <<< "${matches[0]}"
+
+        if [[ "$DIRECTION" == "push" ]]; then
+            # found_path is the local absolute path
+            local rel_path="${found_path#"$local_dir/"}"
+            local remote_file="$remote_dir/$rel_path"
+            local remote_parent
+            remote_parent=$(dirname "$remote_file")
+            ssh -p "$PHONE_PORT" "$PHONE_HOST" "mkdir -p '$remote_parent'" 2>/dev/null
+            rsync "${rsync_opts[@]}" "$found_path" "$PHONE_HOST:$remote_file"
+        else
+            # found_path is the remote absolute path
+            local rel_path="${found_path#"$remote_dir/"}"
+            local local_file="$local_dir/$rel_path"
+            local local_parent
+            local_parent=$(dirname "$local_file")
+            mkdir -p "$local_parent"
+            rsync "${rsync_opts[@]}" "$PHONE_HOST:$found_path" "$local_file"
+        fi
+
+        ok "Synced: $filename"
+    done
+}
+
+# ── Find latest/nth files ──────────────────────────────────────────
+do_latest_sync() {
+    local count=$1
+    local pick_nth=$2  # 0 = use count, >0 = pick specific Nth
+
+    local -a rsync_opts
+    build_rsync_opts rsync_opts false  # no --delete for individual files
+
+    if [[ "$DIRECTION" == "push" ]]; then
+        header "PUSHING latest files: Laptop → Phone"
+    else
+        header "PULLING latest files: Phone → Laptop"
+    fi
+
+    # Determine how many to fetch from the sorted list
+    local fetch_count
+    if [[ $pick_nth -gt 0 ]]; then
+        fetch_count=$pick_nth
+    else
+        fetch_count=$count
+    fi
+
+    # Collect all files with timestamps
+    local -a all_files=()
+
+    if [[ "$DIRECTION" == "push" ]]; then
+        # Search locally
+        for local_dir in "${!SYNC_DIRS[@]}"; do
+            while IFS= read -r line; do
+                [[ -z "$line" ]] && continue
+                local ts="${line%% *}"
+                local fpath="${line#* }"
+                all_files+=("$ts|$local_dir|${SYNC_DIRS[$local_dir]}|$fpath")
+            done < <(find "$local_dir" -type f -printf '%T@ %p\n' 2>/dev/null)
+        done
+    else
+        # Search on phone
+        for local_dir in "${!SYNC_DIRS[@]}"; do
+            remote_dir="${SYNC_DIRS[$local_dir]}"
+            while IFS= read -r line; do
+                [[ -z "$line" ]] && continue
+                local ts="${line%% *}"
+                local fpath="${line#* }"
+                all_files+=("$ts|$local_dir|$remote_dir|$fpath")
+            done < <(ssh -p "$PHONE_PORT" "$PHONE_HOST" \
+                "find '$remote_dir' -type f -printf '%T@ %p\n' 2>/dev/null" || true)
+        done
+    fi
+
+    if [[ ${#all_files[@]} -eq 0 ]]; then
+        warn "No files found in sync directories"
+        return
+    fi
+
+    # Sort by timestamp (descending) and pick the top N
+    local -a sorted
+    mapfile -t sorted < <(printf '%s\n' "${all_files[@]}" | sort -t'|' -k1,1 -rn | head -n "$fetch_count")
+
+    # If --nth, take only the last entry (the Nth)
+    if [[ $pick_nth -gt 0 ]]; then
+        if [[ ${#sorted[@]} -lt $pick_nth ]]; then
+            die "Only ${#sorted[@]} files found, cannot get #${pick_nth}"
+        fi
+        sorted=("${sorted[$((pick_nth - 1))]}")
+    fi
+
+    # Sync each selected file
+    for entry in "${sorted[@]}"; do
+        IFS='|' read -r _ts local_dir remote_dir found_path <<< "$entry"
+        local basename_file
+        basename_file=$(basename "$found_path")
+
+        if [[ "$DIRECTION" == "push" ]]; then
+            local rel_path="${found_path#"$local_dir/"}"
+            local remote_file="$remote_dir/$rel_path"
+            local remote_parent
+            remote_parent=$(dirname "$remote_file")
+
+            info "Syncing ${BOLD}$basename_file${RESET} ${DIM}($rel_path)${RESET}"
+            ssh -p "$PHONE_PORT" "$PHONE_HOST" "mkdir -p '$remote_parent'" 2>/dev/null
+            rsync "${rsync_opts[@]}" "$found_path" "$PHONE_HOST:$remote_file"
+        else
+            local rel_path="${found_path#"$remote_dir/"}"
+            local local_file="$local_dir/$rel_path"
+            local local_parent
+            local_parent=$(dirname "$local_file")
+
+            info "Syncing ${BOLD}$basename_file${RESET} ${DIM}($rel_path)${RESET}"
+            mkdir -p "$local_parent"
+            rsync "${rsync_opts[@]}" "$PHONE_HOST:$found_path" "$local_file"
+        fi
+
+        ok "Synced: $basename_file"
+    done
+}
+
+# ── Preflight ───────────────────────────────────────────────────────
+preflight() {
+    # Tailscale must be running
+    if ! tailscale status &>/dev/null; then
+        die "Tailscale is not running. Disconnect your VPN first (dmenu-vpn → Disconnect), then try again."
+    fi
+    check_connection
+}
+
+# ── Main ────────────────────────────────────────────────────────────
+main() {
+    parse_args "$@"
+    preflight
+
+    if [[ ${#FILES[@]} -gt 0 ]]; then
+        do_file_sync
+    elif [[ $LATEST_COUNT -gt 0 ]]; then
+        do_latest_sync "$LATEST_COUNT" 0
+    elif [[ $NTH -gt 0 ]]; then
+        do_latest_sync 0 "$NTH"
+    else
+        do_full_sync
+    fi
+}
+
+main "$@"

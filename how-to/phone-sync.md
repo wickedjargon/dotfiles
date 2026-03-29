@@ -11,11 +11,22 @@ Both devices need:
 ## Quick Reference
 
 ```bash
-# Push laptop files to phone
-sync-phone push
+# Full sync
+sync-phone push                   # Push all dirs: Laptop → Phone
+sync-phone pull                   # Pull all dirs: Phone → Laptop
 
-# Pull phone files to laptop
-sync-phone pull
+# Single file
+sync-phone push todo.md           # Push a file by name
+sync-phone pull IMG_20260328.jpg  # Pull a file by name
+
+# Latest files
+sync-phone pull --latest          # Pull the single latest file
+sync-phone pull --latest 3        # Pull the 3 most recent files
+sync-phone pull --nth 2           # Pull the 2nd most recent file
+
+# Safety options
+sync-phone push --dry-run         # Preview without transferring
+sync-phone pull --no-delete       # Don't delete extraneous files
 ```
 
 ## Directory Mapping
@@ -33,14 +44,22 @@ sync-phone pull
 
 ### Wrote a note on laptop, need it on phone
 ```bash
-sync-phone push
+sync-phone push todo.md           # just that file
+sync-phone push                   # or push everything
 ```
 
 ### Took a photo on phone, need it on laptop
 ```bash
-sync-phone pull
+sync-phone pull --latest          # grab the latest photo
+sync-phone pull --latest 5        # grab the last 5 photos
+sync-phone pull                   # or pull everything
 ```
-Photos from the phone's camera (`/sdcard/DCIM`) sync directly into `~/d/images`.
+
+### Grab a specific older photo
+```bash
+sync-phone pull --nth 2           # 2nd most recent file
+sync-phone pull --nth 3           # 3rd most recent file
+```
 
 ### Two-way sync (e.g. edited notes on both devices)
 ```bash
@@ -49,10 +68,11 @@ sync-phone pull   # get phone changes first
 sync-phone push   # push merged result back
 ```
 
-> **⚠️ Warning:** `sync-phone` uses `--delete`, meaning the destination
+> **⚠️ Warning:** Full sync uses `--delete`, meaning the destination
 > mirrors the source exactly. If you `push`, files only on the phone
 > (in synced dirs) will be deleted. If you `pull`, files only on the
 > laptop will be deleted. Always pull before push for two-way sync.
+> Use `--no-delete` to prevent this behavior.
 
 ## Troubleshooting
 

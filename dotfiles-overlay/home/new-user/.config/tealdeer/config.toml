@@ -1,2 +1,5 @@
 [updates]
 auto_update = true
+
+[directories]
+custom_pages_dir = "/home/ff/.local/share/tldr/custom/pages"
