@@ -1,0 +1,26 @@
+# bash completion for psync
+_psync() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Complete --dir with the sync directory names
+    if [[ "$prev" == "--dir" ]]; then
+        COMPREPLY=( $(compgen -W "notes audio video images screenshots other" -- "$cur") )
+        return
+    fi
+
+    # First positional arg: push or pull
+    if [[ "$COMP_CWORD" -eq 1 ]]; then
+        COMPREPLY=( $(compgen -W "push pull" -- "$cur") )
+        return
+    fi
+
+    # Flags
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY=( $(compgen -W "--dir --latest --nth --dry-run --delete" -- "$cur") )
+        return
+    fi
+}
+complete -F _psync psync
