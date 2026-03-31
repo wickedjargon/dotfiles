@@ -19,7 +19,7 @@ _psync() {
 
     # Flags
     if [[ "$cur" == -* ]]; then
-        COMPREPLY=( $(compgen -W "--dir --latest --nth --dry-run --delete --quiet" -- "$cur") )
+        COMPREPLY=( $(compgen -W "--dir --latest --nth --dry-run --delete --update --quiet" -- "$cur") )
         return
     fi
 }

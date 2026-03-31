@@ -227,6 +227,16 @@ class TestArgParsing:
         with pytest.raises(SystemExit):
             parser.parse_args(["push", "--no-delete"])
 
+    def test_update_flag(self):
+        parser = self._build_parser()
+        args = parser.parse_args(["push", "--update"])
+        assert args.update is True
+
+    def test_no_update_by_default(self):
+        parser = self._build_parser()
+        args = parser.parse_args(["push"])
+        assert args.update is False
+
     @staticmethod
     def _build_parser():
         """Build the same parser as main() without running the full function."""
@@ -240,6 +250,7 @@ class TestArgParsing:
         parser.add_argument("--delete", action="store_true")
         parser.add_argument("--dir", nargs="+", metavar="NAME")
         parser.add_argument("--quiet", action="store_true")
+        parser.add_argument("--update", action="store_true")
         return parser
 
 

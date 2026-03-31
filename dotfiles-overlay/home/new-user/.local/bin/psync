@@ -795,6 +795,7 @@ examples:
   psync pull --nth 2           Pull the 2nd most recent file
   psync push --dry-run         Preview a full push
   psync push --delete          Delete phone files not on laptop
+  psync push --update          Skip files newer at destination
   psync push --quiet           Sync silently (errors still shown)
   psync status                 Show last sync times and reachability
   psync log                    Open the latest sync log""",
@@ -847,6 +848,12 @@ examples:
         action="store_true",
         help="suppress output except errors (log file still written)",
     )
+    parser.add_argument(
+        "--update",
+        action="store_true",
+        help="skip files that are newer on the destination "
+             "(always on for sync)",
+    )
 
     args = parser.parse_args()
 
@@ -883,6 +890,7 @@ examples:
 
     # Determine directions to run
     is_sync = args.command == "sync"
+    use_update = args.update or is_sync
     if is_sync:
         directions = ["push", "pull"]
     else:
@@ -895,16 +903,16 @@ examples:
     for direction in directions:
         if args.files:
             summary = do_file_sync(direction, args.files, args.dry_run,
-                                   args.delete, update=is_sync)
+                                   args.delete, update=use_update)
         elif args.latest is not None:
             summary = do_latest_sync(direction, args.latest, 0, args.dry_run,
-                                     args.delete, update=is_sync)
+                                     args.delete, update=use_update)
         elif args.nth > 0:
             summary = do_latest_sync(direction, 0, args.nth, args.dry_run,
-                                     args.delete, update=is_sync)
+                                     args.delete, update=use_update)
         else:
             summary = do_full_sync(direction, args.dry_run, args.delete,
-                                   update=is_sync)
+                                   update=use_update)
         summaries.append(f"{direction}: {summary}")
 
     # Show log location
