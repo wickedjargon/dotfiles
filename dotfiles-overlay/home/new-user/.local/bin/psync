@@ -330,10 +330,13 @@ def preflight():
 
 
 # ── Build rsync options ────────────────────────────────────────────
-def build_rsync_opts(use_delete=True, dry_run=False, delete_flag=False):
+def build_rsync_opts(use_delete=True, dry_run=False, delete_flag=False,
+                     update=False):
     """Build the rsync option list.
 
     Neither direction deletes by default. Use --delete to enable.
+    When update is True, --update is added so newer destination files
+    are not overwritten (used by the sync command).
     """
     opts = [
         "-avz", "--progress", "--stats",
@@ -347,11 +350,14 @@ def build_rsync_opts(use_delete=True, dry_run=False, delete_flag=False):
     if dry_run:
         opts.append("--dry-run")
 
+    if update:
+        opts.append("--update")
+
     return opts
 
 
 # ── Full sync ──────────────────────────────────────────────────────
-def do_full_sync(direction, dry_run, delete_flag):
+def do_full_sync(direction, dry_run, delete_flag, update=False):
     if direction == "push":
         header("PUSHING: Laptop → Phone")
     else:
@@ -364,7 +370,8 @@ def do_full_sync(direction, dry_run, delete_flag):
     for local_dir, remote_dir in SYNC_DIRS:
         dir_name = os.path.basename(local_dir)
         opts = build_rsync_opts(use_delete=True,
-                                dry_run=dry_run, delete_flag=delete_flag)
+                                dry_run=dry_run, delete_flag=delete_flag,
+                                update=update)
 
         # Add excludes for this directory
         for pattern in SYNC_EXCLUDES.get(local_dir, []):
@@ -417,9 +424,10 @@ def do_full_sync(direction, dry_run, delete_flag):
 
 
 # ── Find files by name ─────────────────────────────────────────────
-def do_file_sync(direction, files, dry_run, delete_flag):
+def do_file_sync(direction, files, dry_run, delete_flag, update=False):
     opts = build_rsync_opts(use_delete=False,
-                            dry_run=dry_run, delete_flag=delete_flag)
+                            dry_run=dry_run, delete_flag=delete_flag,
+                            update=update)
 
     if direction == "push":
         header("PUSHING files: Laptop → Phone")
@@ -516,10 +524,11 @@ def do_file_sync(direction, files, dry_run, delete_flag):
 
 
 # ── Find latest/nth files ──────────────────────────────────────────
-def do_latest_sync(direction, count, nth, dry_run, delete_flag):
+def do_latest_sync(direction, count, nth, dry_run, delete_flag, update=False):
     """Sync the N most recent files, or the Nth most recent file."""
     opts = build_rsync_opts(use_delete=False,
-                            dry_run=dry_run, delete_flag=delete_flag)
+                            dry_run=dry_run, delete_flag=delete_flag,
+                            update=update)
 
     if direction == "push":
         header("PUSHING latest files: Laptop → Phone")
@@ -873,7 +882,8 @@ examples:
     setup_log()
 
     # Determine directions to run
-    if args.command == "sync":
+    is_sync = args.command == "sync"
+    if is_sync:
         directions = ["push", "pull"]
     else:
         directions = [args.command]
@@ -885,15 +895,16 @@ examples:
     for direction in directions:
         if args.files:
             summary = do_file_sync(direction, args.files, args.dry_run,
-                                   args.delete)
+                                   args.delete, update=is_sync)
         elif args.latest is not None:
             summary = do_latest_sync(direction, args.latest, 0, args.dry_run,
-                                     args.delete)
+                                     args.delete, update=is_sync)
         elif args.nth > 0:
             summary = do_latest_sync(direction, 0, args.nth, args.dry_run,
-                                     args.delete)
+                                     args.delete, update=is_sync)
         else:
-            summary = do_full_sync(direction, args.dry_run, args.delete)
+            summary = do_full_sync(direction, args.dry_run, args.delete,
+                                   update=is_sync)
         summaries.append(f"{direction}: {summary}")
 
     # Show log location

@@ -131,6 +131,14 @@ class TestBuildRsyncOpts:
         opts = psync.build_rsync_opts(dry_run=False)
         assert "--dry-run" not in opts
 
+    def test_update_flag(self):
+        opts = psync.build_rsync_opts(update=True)
+        assert "--update" in opts
+
+    def test_no_update_by_default(self):
+        opts = psync.build_rsync_opts()
+        assert "--update" not in opts
+
 
 # ── Argument Parsing ─────────────────────────────────────────────────────────
 
@@ -1071,15 +1079,59 @@ class TestSyncCommand:
 
         original_do_full_sync = psync.do_full_sync
 
-        def tracking_sync(direction, dry_run, delete_flag):
+        def tracking_sync(direction, dry_run, delete_flag, update=False):
             directions_seen.append(direction)
             monkeypatch.setattr(psync, "run_rsync", lambda o, s, d: (0, ""))
             monkeypatch.setattr(psync, "phone_ssh",
                                 lambda *a: subprocess.CompletedProcess(a, 0))
-            return original_do_full_sync(direction, dry_run, delete_flag)
+            return original_do_full_sync(direction, dry_run, delete_flag,
+                                         update=update)
 
         # Simulate what main() does for "sync"
         for direction in ["push", "pull"]:
             tracking_sync(direction, dry_run=False, delete_flag=False)
 
         assert directions_seen == ["push", "pull"]
+
+    def test_sync_uses_update_flag(self, tmp_path, monkeypatch):
+        """The sync command should pass --update to rsync."""
+        local = tmp_path / "notes"
+        local.mkdir()
+        monkeypatch.setattr(psync, "SYNC_DIRS", [(str(local), "/remote")])
+        monkeypatch.setattr(psync, "SYNC_EXCLUDES", {})
+        monkeypatch.setattr(psync, "_quiet", False)
+
+        captured_opts = []
+
+        def mock_rsync(opts, src, dst):
+            captured_opts.append(list(opts))
+            return 0, ""
+
+        monkeypatch.setattr(psync, "run_rsync", mock_rsync)
+        monkeypatch.setattr(psync, "phone_ssh",
+                            lambda *a: subprocess.CompletedProcess(a, 0))
+
+        psync.do_full_sync("push", dry_run=False, delete_flag=False,
+                           update=True)
+        assert any("--update" in opts for opts in captured_opts)
+
+    def test_push_does_not_use_update(self, tmp_path, monkeypatch):
+        """Plain push should NOT use --update."""
+        local = tmp_path / "notes"
+        local.mkdir()
+        monkeypatch.setattr(psync, "SYNC_DIRS", [(str(local), "/remote")])
+        monkeypatch.setattr(psync, "SYNC_EXCLUDES", {})
+        monkeypatch.setattr(psync, "_quiet", False)
+
+        captured_opts = []
+
+        def mock_rsync(opts, src, dst):
+            captured_opts.append(list(opts))
+            return 0, ""
+
+        monkeypatch.setattr(psync, "run_rsync", mock_rsync)
+        monkeypatch.setattr(psync, "phone_ssh",
+                            lambda *a: subprocess.CompletedProcess(a, 0))
+
+        psync.do_full_sync("push", dry_run=False, delete_flag=False)
+        assert all("--update" not in opts for opts in captured_opts)
