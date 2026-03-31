@@ -5,6 +5,7 @@
 > Neither direction deletes by default — both are additive.
 > Dotfiles (.*) are globally excluded.
 > Logs: /tmp/psync/ (one per run, timestamped).
+> Config: ~/.config/psync.conf (optional).
 > ~/d/audio → /sdcard/Music
 > ~/d/images → /sdcard/DCIM
 > ~/d/notes → /sdcard/Notes
@@ -12,9 +13,9 @@
 > ~/d/images/screenshots → /sdcard/Pictures/Screenshots
 > ~/d/video → /sdcard/Movies
 
-- Full two-way sync (each device gets missing files from the other):
+- Full two-way sync (push then pull in one command):
 
-`psync push && psync pull`
+`psync sync`
 
 - Push all directories to phone:
 
@@ -24,9 +25,9 @@
 
 `psync pull`
 
-- Sync only a specific directory (e.g. notes, audio, video, images, screenshots, other):
+- Sync only specific directories (e.g. notes, audio, video, images, screenshots, other):
 
-`psync {{push|pull}} --dir {{notes}}`
+`psync {{push|pull}} --dir {{notes}} {{audio}}`
 
 - Push a specific file by name:
 
@@ -56,3 +57,14 @@
 
 `psync {{push|pull}} --delete`
 
+- Sync silently (errors still shown, log still written):
+
+`psync push --quiet`
+
+- Show last sync times and phone reachability:
+
+`psync status`
+
+- Open the latest sync log in a pager:
+
+`psync log`

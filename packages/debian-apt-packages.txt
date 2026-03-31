@@ -20,7 +20,6 @@ gir1.2-nm-1.0            # NetworkManager GObject introspection (for dmenu-netwo
 python3-googleapi        # Google API client library (for dmenu-google-calendar)
 python3-google-auth-oauthlib  # Google OAuth2 authentication (for dmenu-google-calendar)
 
-
 # Core System - Audio
 pipewire                 # The core PipeWire multimedia server
 pipewire-audio-client-libraries # Client libraries
@@ -98,7 +97,6 @@ qalculate-gtk            # Powerful calculator with GTK interface
 cheese                   # Webcam photo and video tool
 feh                      # Lightweight image viewer (for setting background)
 sxiv                     # Simple X Image Viewer
-qdirstat                 # Disk usage analyzer with GUI
 baobab                   # Disk usage analyzer with GUI
 pavucontrol              # PulseAudio Volume Control GUI
 alacritty                # GPU-accelerated terminal emulator

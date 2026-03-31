@@ -26,7 +26,8 @@ Both devices need:
 
 ```bash
 # ── Full two-way sync ──────────────────────────────────────────────
-psync push && psync pull        # Each device gets missing files
+psync sync                      # Push then pull in one command
+psync push && psync pull        # Same thing, manually
 
 # ── Full sync (one direction) ─────────────────────────────────────
 psync push                      # Push all dirs: Laptop → Phone
@@ -35,6 +36,10 @@ psync pull                      # Pull all dirs: Phone → Laptop
 # ── Single directory ──────────────────────────────────────────────
 psync pull --dir notes          # Pull only ~/d/notes ↔ /sdcard/Notes
 psync push --dir audio          # Push only ~/d/audio ↔ /sdcard/Music
+
+# ── Multiple directories ─────────────────────────────────────────
+psync push --dir notes audio    # Push notes and audio only
+psync pull --dir notes,audio    # Same (comma-separated also works)
 
 # ── Single file by name ──────────────────────────────────────────
 psync push todo.md              # Push a file by name (searched across all dirs)
@@ -51,24 +56,33 @@ psync push --dry-run            # Preview what would be pushed
 psync pull --dry-run            # Preview what would be pulled
 psync push --delete             # Delete phone files not on laptop
 psync pull --delete             # Delete local files not on phone
+
+# ── Info commands ─────────────────────────────────────────────────
+psync status                    # Show reachability and last sync times
+psync log                       # Open latest log in pager
+
+# ── Quiet mode ────────────────────────────────────────────────────
+psync push --quiet              # Sync silently (errors still shown)
+psync sync --quiet --dir notes  # Quiet two-way sync of notes only
 ```
 
 ## Flags
 
 | Flag              | Description                                                      |
 |-------------------|------------------------------------------------------------------|
-| `--dir NAME`      | Sync only the named directory (case-insensitive)                 |
+| `--dir NAME...`   | Sync only the named directories (supports multiple)              |
 | `--latest [N]`    | Sync the N most recent files (default: 1)                        |
 | `--nth N`         | Sync the Nth most recent file (1 = latest)                       |
-| `--dry-run`       | Show what would be transferred without actually syncing           |
-| `--delete`        | Delete destination files not present at source                    |
+| `--dry-run`       | Show what would be transferred without actually syncing          |
+| `--delete`        | Delete destination files not present at source                   |
+| `--quiet`         | Suppress output except errors (log file still written)           |
 
 ### Delete behavior
 
 **Neither direction deletes by default** — both push and pull are additive.
 This means a full two-way sync is simply:
 ```bash
-psync push && psync pull
+psync sync
 ```
 Each device gets the files it's missing. No files are removed.
 
@@ -90,6 +104,17 @@ Check the log file instead.
 
 Supports `xclip`, `xsel`, and `wl-copy`.
 
+## Desktop Notifications
+
+When running in a graphical environment, `psync` sends a desktop notification
+via `notify-send` on completion with a summary of what was transferred.
+
+## Transfer Summary
+
+After each sync, psync prints a summary line showing the number of files
+transferred and total size (e.g. `3 files transferred (1.2 MB)`).
+This is parsed from rsync's `--stats` output.
+
 ## Logging
 
 Each run creates a log file in `/tmp/psync/`:
@@ -101,6 +126,51 @@ Each run creates a log file in `/tmp/psync/`:
 - Contains the full rsync output for every directory/file synced
 - Skipped directories are noted
 - Log path is printed at the end of each run
+
+Use `psync log` to quickly open the latest log in your pager.
+
+## Status
+
+`psync status` shows:
+- Phone reachability (quick TCP check, no SSH required)
+- Last push timestamp (parsed from logs)
+- Last pull timestamp (parsed from logs)
+
+```
+✓ Phone: reachable (pixel-8:8022)
+  Last push: 2026-03-31 10:15:07 (26 min ago)
+  Last pull: 2026-03-31 09:42:33 (59 min ago)
+```
+
+## Configuration
+
+psync loads `~/.config/psync.conf` at startup if it exists. All values are
+optional — anything not specified uses the built-in defaults.
+
+```ini
+[connection]
+host = pixel-8
+port = 8022
+base_path = /data/data/com.termux/files/home/storage/shared
+
+[directories]
+# Override local or remote paths per directory.
+# Remote paths are relative to base_path unless they start with /.
+notes_local = ~/d/notes
+notes_remote = Notes
+```
+
+## Connection Handling
+
+- **Fast pre-check**: Uses a TCP socket connect (not SSH) for initial
+  reachability, saving ~1-2 seconds per invocation.
+- **Automatic retry**: If the initial connection fails, psync waits 2 seconds
+  and retries once before failing. This handles Tailscale tunnel warm-up.
+
+## Signal Handling
+
+Ctrl-C during a sync prints a clean "Sync interrupted" message and closes the
+log file properly. Exit code is 130 (standard for SIGINT).
 
 ## Common Workflows
 
@@ -133,6 +203,8 @@ psync push --dir screenshots
 
 ### Two-way sync (e.g. edited notes on both devices)
 ```bash
+psync sync --dir notes          # push then pull in one command
+# Or manually:
 psync pull --dir notes          # get phone changes first
 # resolve any conflicts manually
 psync push --dir notes          # push merged result back
