@@ -1,0 +1,506 @@
+#!/usr/bin/env python3
+"""
+psync — rsync ~/d/ dirs to/from phone over Tailscale
+
+Requires: rsync, ssh, tailscale
+Phone runs Termux with sshd on port 8022
+"""
+
+import argparse
+from datetime import datetime
+import os
+import shutil
+import subprocess
+import sys
+
+# ── Config ──────────────────────────────────────────────────────────
+PHONE_HOST = "pixel-8"  # Tailscale MagicDNS hostname
+PHONE_PORT = 8022
+PHONE_BASE = "/data/data/com.termux/files/home/storage/shared"
+LOG_DIR = "/tmp/psync"
+
+HOME = os.path.expanduser("~")
+
+# Directories to sync: (local_path, phone_path)
+# NOTE: images excludes screenshots/ to avoid overlap (synced separately)
+SYNC_DIRS = [
+    (f"{HOME}/d/audio", f"{PHONE_BASE}/Music"),
+    (f"{HOME}/d/images", f"{PHONE_BASE}/DCIM"),
+    (f"{HOME}/d/notes", f"{PHONE_BASE}/Notes"),
+    (f"{HOME}/d/other", f"{PHONE_BASE}/Other"),
+    (f"{HOME}/d/images/screenshots", f"{PHONE_BASE}/Pictures/Screenshots"),
+    (f"{HOME}/d/video", f"{PHONE_BASE}/Movies"),
+]
+
+# Exclude patterns per local dir (to prevent overlapping syncs)
+SYNC_EXCLUDES = {
+    f"{HOME}/d/images": ["screenshots"],
+}
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN = "\033[0;36m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
+
+# ── Logging ─────────────────────────────────────────────────────────
+_log_file = None
+_log_path = None
+
+
+def setup_log():
+    """Create log directory and open a timestamped log file."""
+    global _log_file, _log_path
+    os.makedirs(LOG_DIR, exist_ok=True)
+    stamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    _log_path = os.path.join(LOG_DIR, f"{stamp}.log")
+    _log_file = open(_log_path, "w")
+    _log_file.write(f"psync run: {datetime.now().isoformat()}\n")
+    _log_file.write(f"args: {' '.join(sys.argv[1:])}\n\n")
+
+
+def log_write(msg):
+    """Write a line to the log file."""
+    if _log_file:
+        _log_file.write(msg + "\n")
+        _log_file.flush()
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):
+    print(f"{CYAN}▸{RESET} {msg}")
+
+
+def ok(msg):
+    print(f"{GREEN}✓{RESET} {msg}")
+
+
+def warn(msg):
+    print(f"{YELLOW}!{RESET} {msg}")
+
+
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def header(msg):
+    print(f"\n{BOLD}{msg}{RESET}")
+
+
+def copy_to_clipboard(text):
+    """Copy text to clipboard if in a graphical environment."""
+    if not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+        return False
+    for cmd in ["xclip", "xsel", "wl-copy"]:
+        if shutil.which(cmd):
+            try:
+                if cmd == "xclip":
+                    args = [cmd, "-selection", "clipboard"]
+                elif cmd == "xsel":
+                    args = [cmd, "--clipboard", "--input"]
+                else:
+                    args = [cmd]
+                subprocess.run(args, input=text, text=True,
+                               capture_output=True, timeout=2)
+                return True
+            except (subprocess.TimeoutExpired, OSError):
+                continue
+    return False
+
+
+def phone_ssh(*cmd):
+    """Run a command on the phone via SSH. Returns CompletedProcess."""
+    return subprocess.run(
+        ["ssh", "-p", str(PHONE_PORT), PHONE_HOST, *cmd],
+        capture_output=True,
+        text=True,
+    )
+
+
+def run_rsync(opts, src, dst):
+    """Run rsync with the given options, printing output live and logging."""
+    cmd = ["rsync"] + opts + ["--", src, dst]
+    log_write(f"$ {' '.join(cmd)}")
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    for line in proc.stdout:
+        decoded = line.decode(errors="replace")
+        sys.stdout.write(decoded)
+        sys.stdout.flush()
+        if _log_file:
+            _log_file.write(decoded)
+            _log_file.flush()
+    proc.wait()
+    return proc.returncode
+
+
+# ── Connection check ───────────────────────────────────────────────
+def check_connection():
+    info(f"Checking connection to {BOLD}{PHONE_HOST}{RESET}...")
+    result = phone_ssh("echo", "ok")
+    if result.returncode != 0:
+        die(
+            f"Cannot reach {PHONE_HOST}. Make sure Tailscale is active "
+            "and sshd is running in Termux."
+        )
+    ok("Phone is reachable")
+
+
+def preflight():
+    """Ensure Tailscale is running and phone is reachable."""
+    try:
+        result = subprocess.run(
+            ["tailscale", "status"], capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            die(
+                "Tailscale is not running. Disconnect your VPN first "
+                "(dmenu-vpn → Disconnect), then try again."
+            )
+    except FileNotFoundError:
+        die("tailscale not found in PATH")
+    check_connection()
+
+
+# ── Build rsync options ────────────────────────────────────────────
+def build_rsync_opts(direction, use_delete=True, dry_run=False, delete_flag=False):
+    """Build the rsync option list.
+
+    Neither direction deletes by default. Use --delete to enable.
+    """
+    opts = ["-avz", "--progress", "--exclude", ".*", "-e", f"ssh -p {PHONE_PORT}"]
+
+    if use_delete and delete_flag:
+        opts.append("--delete")
+
+    if dry_run:
+        opts.append("--dry-run")
+
+    return opts
+
+
+# ── Full sync ──────────────────────────────────────────────────────
+def do_full_sync(direction, dry_run, delete_flag):
+    if direction == "push":
+        header("PUSHING: Laptop → Phone")
+    else:
+        header("PULLING: Phone → Laptop")
+
+    for local_dir, remote_dir in SYNC_DIRS:
+        dir_name = os.path.basename(local_dir)
+        opts = build_rsync_opts(direction, use_delete=True,
+                                dry_run=dry_run, delete_flag=delete_flag)
+
+        # Add excludes for this directory
+        for pattern in SYNC_EXCLUDES.get(local_dir, []):
+            opts.extend(["--exclude", pattern])
+
+        print(f"\n{DIM}─── {dir_name} ───{RESET}")
+        log_write(f"\n─── {dir_name} ───")
+
+        if direction == "push":
+            if not os.path.isdir(local_dir):
+                warn(f"Local directory {local_dir} does not exist, skipping")
+                log_write(f"SKIP: {local_dir} does not exist")
+                continue
+            phone_ssh("mkdir", "-p", remote_dir)
+            run_rsync(opts, f"{local_dir}/", f"{PHONE_HOST}:{remote_dir}/")
+        else:
+            # Check if remote directory exists before pulling
+            check = phone_ssh("test", "-d", remote_dir)
+            if check.returncode != 0:
+                warn(f"Remote directory {remote_dir} does not exist, skipping")
+                log_write(f"SKIP: {remote_dir} does not exist")
+                continue
+            os.makedirs(local_dir, exist_ok=True)
+            run_rsync(opts, f"{PHONE_HOST}:{remote_dir}/", f"{local_dir}/")
+
+    print()
+    ok(f"{direction.capitalize()} complete.")
+
+
+# ── Find files by name ─────────────────────────────────────────────
+def do_file_sync(direction, files, dry_run, delete_flag):
+    opts = build_rsync_opts(direction, use_delete=False,
+                            dry_run=dry_run, delete_flag=delete_flag)
+
+    if direction == "push":
+        header("PUSHING files: Laptop → Phone")
+    else:
+        header("PULLING files: Phone → Laptop")
+
+    for filename in files:
+        info(f"Searching for {BOLD}{filename}{RESET}...")
+
+        matches = []
+
+        if direction == "push":
+            # Search locally
+            for local_dir, remote_dir in SYNC_DIRS:
+                for root, _dirs, fnames in os.walk(local_dir):
+                    for fn in fnames:
+                        if fn == filename:
+                            matches.append((local_dir, remote_dir,
+                                            os.path.join(root, fn)))
+        else:
+            # Search on phone — single SSH call across all remote dirs
+            find_parts = []
+            for local_dir, remote_dir in SYNC_DIRS:
+                find_parts.append(
+                    f"find '{remote_dir}' -name '{filename}' -type f 2>/dev/null "
+                    f"| while read -r f; do printf '%s\\t%s\\t%s\\n' "
+                    f"'{local_dir}' '{remote_dir}' \"$f\"; done"
+                )
+            find_cmd = "; ".join(find_parts)
+            result = phone_ssh(find_cmd)
+            for line in result.stdout.strip().splitlines():
+                if not line:
+                    continue
+                parts = line.split("\t", 2)
+                if len(parts) == 3:
+                    matches.append(tuple(parts))
+
+        if not matches:
+            warn(f"No file matching '{filename}' found")
+            continue
+
+        if len(matches) > 1:
+            warn(f"Multiple matches for '{filename}':")
+            for _, _, fpath in matches:
+                print(f"  {DIM}{fpath}{RESET}")
+            warn("Please use a more specific filename")
+            continue
+
+        # Exactly one match
+        local_dir, remote_dir, found_path = matches[0]
+
+        if direction == "push":
+            rel_path = os.path.relpath(found_path, local_dir)
+            remote_file = f"{remote_dir}/{rel_path}"
+            phone_ssh("mkdir", "-p", os.path.dirname(remote_file))
+            run_rsync(opts, found_path, f"{PHONE_HOST}:{remote_file}")
+        else:
+            rel_path = found_path.removeprefix(f"{remote_dir}/")
+            local_file = os.path.join(local_dir, rel_path)
+            os.makedirs(os.path.dirname(local_file), exist_ok=True)
+            run_rsync(opts, f"{PHONE_HOST}:{found_path}", local_file)
+
+        ok(f"Synced: {filename}")
+        if direction == "pull":
+            print(f"  {DIM}{local_file}{RESET}")
+            log_write(f"SYNCED: {local_file}")
+            if copy_to_clipboard(local_file):
+                ok("Path copied to clipboard")
+
+
+# ── Find latest/nth files ──────────────────────────────────────────
+def do_latest_sync(direction, count, nth, dry_run, delete_flag):
+    """Sync the N most recent files, or the Nth most recent file."""
+    opts = build_rsync_opts(direction, use_delete=False,
+                            dry_run=dry_run, delete_flag=delete_flag)
+
+    if direction == "push":
+        header("PUSHING latest files: Laptop → Phone")
+    else:
+        header("PULLING latest files: Phone → Laptop")
+
+    # How many to fetch from sorted list
+    fetch_count = nth if nth > 0 else count
+
+    # Collect all files with timestamps: (timestamp, local_dir, remote_dir, path)
+    all_files = []
+
+    if direction == "push":
+        for local_dir, remote_dir in SYNC_DIRS:
+            for root, _dirs, fnames in os.walk(local_dir):
+                for fn in fnames:
+                    fpath = os.path.join(root, fn)
+                    try:
+                        ts = os.path.getmtime(fpath)
+                    except OSError:
+                        continue
+                    all_files.append((ts, local_dir, remote_dir, fpath))
+    else:
+        # Search on phone — single SSH call
+        find_parts = []
+        for local_dir, remote_dir in SYNC_DIRS:
+            find_parts.append(
+                f"find '{remote_dir}' -type f -printf '%T@ %p\\n' 2>/dev/null "
+                f"| while read -r line; do printf '%s\\t%s\\t%s\\n' "
+                f"'{local_dir}' '{remote_dir}' \"$line\"; done"
+            )
+        find_cmd = "; ".join(find_parts)
+        result = phone_ssh(find_cmd)
+        for line in result.stdout.strip().splitlines():
+            if not line:
+                continue
+            parts = line.split("\t", 2)
+            if len(parts) != 3:
+                continue
+            local_dir, remote_dir, ts_and_path = parts
+            space_idx = ts_and_path.find(" ")
+            if space_idx == -1:
+                continue
+            try:
+                ts = float(ts_and_path[:space_idx])
+            except ValueError:
+                continue
+            fpath = ts_and_path[space_idx + 1:]
+            all_files.append((ts, local_dir, remote_dir, fpath))
+
+    if not all_files:
+        warn("No files found in sync directories")
+        return
+
+    # Sort by timestamp descending, pick top N
+    all_files.sort(key=lambda x: x[0], reverse=True)
+    top = all_files[:fetch_count]
+
+    # If --nth, take only the last entry (the Nth)
+    if nth > 0:
+        if len(top) < nth:
+            die(f"Only {len(all_files)} files found, cannot get #{nth}")
+        top = [top[nth - 1]]
+
+    # Sync each selected file
+    for _ts, local_dir, remote_dir, found_path in top:
+        basename = os.path.basename(found_path)
+
+        if direction == "push":
+            rel_path = os.path.relpath(found_path, local_dir)
+            remote_file = f"{remote_dir}/{rel_path}"
+            info(f"Syncing {BOLD}{basename}{RESET} {DIM}({rel_path}){RESET}")
+            phone_ssh("mkdir", "-p", os.path.dirname(remote_file))
+            run_rsync(opts, found_path, f"{PHONE_HOST}:{remote_file}")
+        else:
+            rel_path = found_path.removeprefix(f"{remote_dir}/")
+            local_file = os.path.join(local_dir, rel_path)
+            info(f"Syncing {BOLD}{basename}{RESET} {DIM}({rel_path}){RESET}")
+            os.makedirs(os.path.dirname(local_file), exist_ok=True)
+            run_rsync(opts, f"{PHONE_HOST}:{found_path}", local_file)
+
+        ok(f"Synced: {basename}")
+        if direction == "pull":
+            print(f"  {DIM}{local_file}{RESET}")
+            log_write(f"SYNCED: {local_file}")
+            # Only copy to clipboard when pulling exactly 1 file
+            if len(top) == 1 and copy_to_clipboard(local_file):
+                ok("Path copied to clipboard")
+
+
+# ── Main ────────────────────────────────────────────────────────────
+def main():
+    parser = argparse.ArgumentParser(
+        description="Sync ~/d/ directories to/from phone over Tailscale.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""\
+examples:
+  psync push                   Push all directories
+  psync pull                   Pull all directories
+  psync push && psync pull  Full two-way sync
+  psync pull --dir notes       Pull only the notes directory
+  psync push todo.md           Push file matching "todo.md"
+  psync pull --latest          Pull the single latest file
+  psync pull --latest 3        Pull the 3 most recent files
+  psync pull --nth 2           Pull the 2nd most recent file
+  psync push --dry-run         Preview a full push
+  psync push --delete          Delete phone files not on laptop""",
+    )
+
+    parser.add_argument(
+        "direction",
+        choices=["push", "pull"],
+        help="push (Laptop → Phone) or pull (Phone → Laptop)",
+    )
+    parser.add_argument(
+        "files",
+        nargs="*",
+        help="specific filenames to sync",
+    )
+    parser.add_argument(
+        "--latest",
+        nargs="?",
+        const=1,
+        type=int,
+        metavar="N",
+        help="sync the N most recent files (default: 1)",
+    )
+    parser.add_argument(
+        "--nth",
+        type=int,
+        default=0,
+        metavar="N",
+        help="sync the Nth most recent file (1 = latest)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="show what would be synced without transferring",
+    )
+    parser.add_argument(
+        "--delete",
+        action="store_true",
+        help="delete extraneous files at destination (neither direction deletes by default)",
+    )
+    parser.add_argument(
+        "--dir",
+        metavar="NAME",
+        help="sync only the named directory (e.g. notes, audio, video)",
+    )
+
+    args = parser.parse_args()
+
+    # Validation
+    if args.latest is not None and args.nth > 0:
+        die("--latest and --nth cannot be used together")
+
+    if args.files and (args.latest is not None or args.nth > 0):
+        die("Cannot combine filenames with --latest or --nth")
+
+    if args.nth < 0:
+        die("--nth requires a positive number")
+
+    # Filter SYNC_DIRS if --dir is given
+    if args.dir:
+        filtered = [
+            (l, r) for l, r in SYNC_DIRS
+            if os.path.basename(l).lower() == args.dir.lower()
+        ]
+        if not filtered:
+            valid = ", ".join(sorted(set(os.path.basename(l) for l, _ in SYNC_DIRS)))
+            die(f"Unknown directory '{args.dir}'. Valid names: {valid}")
+        # Temporarily replace SYNC_DIRS for this run
+        SYNC_DIRS[:] = filtered
+
+    # Preflight
+    preflight()
+
+    # Setup logging
+    setup_log()
+    log_write(f"direction: {args.direction}")
+
+    # Dispatch
+    if args.files:
+        do_file_sync(args.direction, args.files, args.dry_run,
+                      args.delete)
+    elif args.latest is not None:
+        do_latest_sync(args.direction, args.latest, 0, args.dry_run,
+                        args.delete)
+    elif args.nth > 0:
+        do_latest_sync(args.direction, 0, args.nth, args.dry_run,
+                        args.delete)
+    else:
+        do_full_sync(args.direction, args.dry_run, args.delete)
+
+    # Show log location
+    if _log_path:
+        print(f"{DIM}Log: {_log_path}{RESET}")
+        _log_file.close()
+
+
+if __name__ == "__main__":
+    main()
