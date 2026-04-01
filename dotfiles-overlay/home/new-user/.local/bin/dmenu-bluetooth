@@ -2,7 +2,7 @@
 . ~/.config/dmenu/config
 
 case "$(printf "Connect Nothing\nDisconnect Nothing\nReconnect Nothing\nProfile Nothing Hands Free Unit\nProfile Nothing A2DP Sink\nConnect Musicozy\nDisconnect Musicozy\nConnect Miniroll\nDisconnect Miniroll" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -l 10 -p 'Bluetooth:')" in
-    'Connect Nothing') bluetooth-connect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" || bluetooth-connect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" ;;
+    'Connect Nothing') bluetooth-connect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" ;;
     'Disconnect Nothing') bluetooth-disconnect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)" ;;
     'Reconnect Nothing') bluetooth-nothing-reconnect ;;
     'Profile Nothing Hands Free Unit') bluetooth-set-profile "3C:B0:ED:A7:6A:88" handsfree_head_unit ;;
