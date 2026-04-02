@@ -1,0 +1,25 @@
+# bash completion for google-calendar
+_google_calendar() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # First positional arg: subcommand
+    if [[ "$COMP_CWORD" -eq 1 ]]; then
+        COMPREPLY=( $(compgen -W "add list show edit delete" -- "$cur") )
+        return
+    fi
+
+    # Flags per subcommand
+    local cmd="${COMP_WORDS[1]}"
+    if [[ "$cur" == -* ]]; then
+        case "$cmd" in
+            add)  COMPREPLY=( $(compgen -W "--json" -- "$cur") ) ;;
+            list) COMPREPLY=( $(compgen -W "--days" -- "$cur") ) ;;
+        esac
+        return
+    fi
+}
+
+complete -F _google_calendar google-calendar

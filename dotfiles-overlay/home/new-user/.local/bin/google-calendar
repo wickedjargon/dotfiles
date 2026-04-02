@@ -1,0 +1,395 @@
+#!/usr/bin/env python3
+"""google-calendar — Manage Google Calendar events from the command line.
+
+Uses Google Calendar's quickAdd() for natural language event creation
+(e.g. "Dentist next Tuesday at 10am for 1 hour").
+
+SETUP
+-----
+1. Go to https://console.cloud.google.com/
+2. Create a project (or use an existing one).
+3. Enable the "Google Calendar API".
+4. Go to Credentials → Create Credentials → OAuth client ID → Desktop app.
+5. Download the JSON and save it as:
+       ~/.config/google-calendar/credentials.json
+6. Make this script executable:
+       chmod +x ~/.local/bin/google-calendar
+7. On first run, a browser window will open for OAuth consent.
+   After granting access, a token is cached at:
+       ~/.config/google-calendar/token.json
+
+DEBIAN 13 DEPENDENCIES
+----------------------
+    sudo apt install python3-googleapi python3-google-auth-oauthlib
+"""
+
+import datetime
+import sys
+from pathlib import Path
+
+CONFIG_DIR = Path.home() / ".config" / "google-calendar"
+CREDENTIALS_FILE = CONFIG_DIR / "credentials.json"
+TOKEN_FILE = CONFIG_DIR / "token.json"
+SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
+
+
+# ---------------------------------------------------------------------------
+# Auth
+# ---------------------------------------------------------------------------
+
+def get_service():
+    """Authenticate and return a Google Calendar API service object."""
+    try:
+        from google.oauth2.credentials import Credentials
+        from google.auth.transport.requests import Request
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        from googleapiclient.discovery import build
+    except ImportError:
+        print(
+            "Error: missing dependencies. Install with:\n"
+            "  sudo apt install python3-googleapi python3-google-auth-oauthlib",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    creds = None
+
+    if TOKEN_FILE.exists():
+        creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
+
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+    elif not creds or not creds.valid:
+        if not CREDENTIALS_FILE.exists():
+            print(
+                f"Error: credentials.json not found at {CREDENTIALS_FILE}\n"
+                "See 'google-calendar --help' for setup instructions.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        flow = InstalledAppFlow.from_client_secrets_file(
+            str(CREDENTIALS_FILE), SCOPES
+        )
+        creds = flow.run_local_server(port=0)
+
+    # Cache the token for next time
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    with open(TOKEN_FILE, "w") as f:
+        f.write(creds.to_json())
+
+    return build("calendar", "v3", credentials=creds)
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def short_id(event_id):
+    """Return the last 8 characters of an event ID for display."""
+    return event_id[-8:] if event_id else "--------"
+
+
+def find_event_by_short_id(service, sid):
+    """Find an event whose ID ends with the given short ID.
+
+    Searches the next 365 days of events to find a match.
+    Returns the event dict or exits with an error.
+    """
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    time_max = (
+        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)
+    ).isoformat()
+
+    page_token = None
+    while True:
+        result = service.events().list(
+            calendarId="primary",
+            timeMin=now,
+            timeMax=time_max,
+            maxResults=250,
+            singleEvents=True,
+            orderBy="startTime",
+            pageToken=page_token,
+        ).execute()
+
+        for event in result.get("items", []):
+            if event["id"].endswith(sid):
+                return event
+
+        page_token = result.get("nextPageToken")
+        if not page_token:
+            break
+
+    print(f"Error: no event found matching ID '...{sid}'", file=sys.stderr)
+    sys.exit(1)
+
+
+def format_event_time(event):
+    """Extract a human-readable time range from an event."""
+    start = event.get("start", {})
+    end = event.get("end", {})
+
+    start_str = start.get("dateTime", start.get("date", ""))
+    end_str = end.get("dateTime", end.get("date", ""))
+
+    if "T" in start_str:
+        # dateTime format — parse and display nicely
+        try:
+            st = datetime.datetime.fromisoformat(start_str)
+            start_fmt = st.strftime("%-I:%M %p  %a %b %-d")
+        except ValueError:
+            start_fmt = start_str
+    else:
+        # All-day event
+        start_fmt = start_str + "  (all day)"
+
+    if "T" in end_str:
+        try:
+            et = datetime.datetime.fromisoformat(end_str)
+            end_fmt = et.strftime("%-I:%M %p")
+        except ValueError:
+            end_fmt = end_str
+    else:
+        end_fmt = ""
+
+    if end_fmt:
+        return f"{start_fmt} → {end_fmt}"
+    return start_fmt
+
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+
+def cmd_add(service, args):
+    """Create an event using Google's quickAdd natural language parsing."""
+    json_output = False
+    filtered_args = []
+    for a in args:
+        if a == "--json":
+            json_output = True
+        else:
+            filtered_args.append(a)
+
+    text = " ".join(filtered_args)
+    if not text:
+        print("Error: provide event text, e.g.: google-calendar add \"Dentist Tuesday 10am\"",
+              file=sys.stderr)
+        sys.exit(1)
+
+    event = service.events().quickAdd(calendarId="primary", text=text).execute()
+
+    if json_output:
+        import json
+        print(json.dumps(event))
+        return
+
+    summary = event.get("summary", text)
+    when = format_event_time(event)
+    eid = short_id(event.get("id", ""))
+
+    print(f"✓ Event created: {summary}")
+    print(f"  When: {when}")
+    print(f"  ID:   {eid}")
+
+
+def cmd_list(service, args):
+    """List upcoming events. Default: today. Use --days N for a range."""
+    days = 0  # 0 means rest of today
+    i = 0
+    while i < len(args):
+        if args[i] == "--days" and i + 1 < len(args):
+            try:
+                days = int(args[i + 1])
+            except ValueError:
+                print(f"Error: invalid number '{args[i + 1]}'", file=sys.stderr)
+                sys.exit(1)
+            i += 2
+        else:
+            print(f"Error: unknown argument '{args[i]}'", file=sys.stderr)
+            sys.exit(1)
+
+    now = datetime.datetime.now().astimezone()
+
+    if days > 0:
+        # Start of tomorrow through N days
+        time_min = now.isoformat()
+        end_date = now + datetime.timedelta(days=days)
+        time_max = end_date.replace(
+            hour=23, minute=59, second=59
+        ).isoformat()
+        header = f"Events in the next {days} day{'s' if days != 1 else ''}:"
+    else:
+        # Rest of today
+        time_min = now.isoformat()
+        time_max = now.replace(
+            hour=23, minute=59, second=59
+        ).isoformat()
+        header = f"Events today ({now.strftime('%a %b %-d')}):"
+
+    result = service.events().list(
+        calendarId="primary",
+        timeMin=time_min,
+        timeMax=time_max,
+        maxResults=50,
+        singleEvents=True,
+        orderBy="startTime",
+    ).execute()
+
+    events = result.get("items", [])
+
+    if not events:
+        print("No upcoming events.")
+        return
+
+    print(header)
+    print(f"{'ID':<10} {'Time':<28} {'Summary'}")
+    print("─" * 64)
+
+    for event in events:
+        eid = short_id(event.get("id", ""))
+        when = format_event_time(event)
+        summary = event.get("summary", "(no title)")
+        print(f"{eid:<10} {when:<28} {summary}")
+
+
+def cmd_show(service, args):
+    """Show full details of an event by short ID."""
+    if not args:
+        print("Error: provide an event ID, e.g.: google-calendar show abc12345",
+              file=sys.stderr)
+        sys.exit(1)
+
+    sid = args[0]
+    event = find_event_by_short_id(service, sid)
+
+    print(f"Summary:     {event.get('summary', '(no title)')}")
+    print(f"When:        {format_event_time(event)}")
+
+    location = event.get("location")
+    if location:
+        print(f"Location:    {location}")
+
+    description = event.get("description")
+    if description:
+        print(f"Description: {description}")
+
+    link = event.get("htmlLink")
+    if link:
+        print(f"Link:        {link}")
+
+    print(f"ID:          {short_id(event['id'])} (full: {event['id']})")
+
+    status = event.get("status", "confirmed")
+    print(f"Status:      {status}")
+
+
+def cmd_edit(service, args):
+    """Edit an event: delete the old one and quickAdd the new text."""
+    if len(args) < 2:
+        print(
+            'Error: provide ID and new text, e.g.: google-calendar edit abc12345 "New event text"',
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    sid = args[0]
+    new_text = " ".join(args[1:])
+
+    old_event = find_event_by_short_id(service, sid)
+    old_summary = old_event.get("summary", "(no title)")
+
+    # Delete old event
+    service.events().delete(calendarId="primary", eventId=old_event["id"]).execute()
+
+    # Create new event via quickAdd
+    new_event = service.events().quickAdd(calendarId="primary", text=new_text).execute()
+
+    new_summary = new_event.get("summary", new_text)
+    when = format_event_time(new_event)
+    eid = short_id(new_event.get("id", ""))
+
+    print(f"✓ Event updated: \"{old_summary}\" → \"{new_summary}\"")
+    print(f"  When: {when}")
+    print(f"  ID:   {eid} (new)")
+
+
+def cmd_delete(service, args):
+    """Delete an event by short ID."""
+    if not args:
+        print("Error: provide an event ID, e.g.: google-calendar delete abc12345",
+              file=sys.stderr)
+        sys.exit(1)
+
+    sid = args[0]
+    event = find_event_by_short_id(service, sid)
+    summary = event.get("summary", "(no title)")
+
+    service.events().delete(calendarId="primary", eventId=event["id"]).execute()
+    print(f"✓ Deleted: {summary} ({short_id(event['id'])})")
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+COMMANDS = {
+    "add": cmd_add,
+    "list": cmd_list,
+    "show": cmd_show,
+    "edit": cmd_edit,
+    "delete": cmd_delete,
+}
+
+HELP_TEXT = """\
+usage: google-calendar <command> [args...]
+
+Manage Google Calendar events from the command line.
+
+commands:
+  add [--json] TEXT            create event via natural language
+  list [--days N]             list events (default: today)
+  show ID                     show full event details
+  edit ID TEXT                replace event with new text
+  delete ID                   delete an event
+
+examples:
+  google-calendar add "Dentist next Tuesday at 10am"
+  google-calendar add "Lunch with Bob Friday noon for 1 hour"
+  google-calendar add "Team standup 2pm to 3pm every weekday"
+  google-calendar list
+  google-calendar list --days 7
+  google-calendar show abc12345
+  google-calendar edit abc12345 "Dentist Wednesday at 11am"
+  google-calendar delete abc12345
+
+config: ~/.config/google-calendar/
+  credentials.json    OAuth client ID (from Google Cloud Console)
+  token.json          cached auth token (auto-generated)
+
+setup:
+  1. Enable Google Calendar API at console.cloud.google.com
+  2. Create OAuth Desktop credentials
+  3. Save credentials.json to ~/.config/google-calendar/
+  4. Run any command — browser opens for first-time auth"""
+
+
+def main():
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
+        print(HELP_TEXT)
+        sys.exit(0 if len(sys.argv) >= 2 else 1)
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    if command not in COMMANDS:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'google-calendar --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    service = get_service()
+    COMMANDS[command](service, args)
+
+
+if __name__ == "__main__":
+    main()
