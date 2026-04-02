@@ -1,0 +1,382 @@
+#!/usr/bin/env python3
+"""displays - Manage external displays from the command line."""
+
+import os
+import re
+import subprocess
+import sys
+
+# If running inside a distrobox container, re-exec on the host
+if os.path.exists("/run/.containerenv"):
+    from shutil import which
+    if which("distrobox-host-exec"):
+        os.execvp("distrobox-host-exec", ["distrobox-host-exec"] + sys.argv)
+
+
+# ---------------------------------------------------------------------------
+# xrandr parsing
+# ---------------------------------------------------------------------------
+
+def xrandr_query():
+    """Run xrandr --query and return the raw output."""
+    result = subprocess.run(
+        ["xrandr", "--query"], capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print(f"Error: xrandr failed: {result.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
+    return result.stdout
+
+
+def parse_outputs(raw):
+    """Parse xrandr output into a list of display dicts.
+
+    Each dict has keys:
+      name:       output name (e.g. 'eDP-1', 'HDMI-2')
+      connected:  bool
+      active:     bool  (has a mode/resolution set)
+      resolution: str or None (e.g. '1920x1080')
+      primary:    bool
+    """
+    outputs = []
+    for line in raw.splitlines():
+        m = re.match(
+            r'^(\S+)\s+(connected|disconnected)\s*(primary)?\s*'
+            r'(?:(\d+x\d+)\+\d+\+\d+)?\s*',
+            line,
+        )
+        if m:
+            outputs.append({
+                'name': m.group(1),
+                'connected': m.group(2) == 'connected',
+                'active': m.group(4) is not None,
+                'resolution': m.group(4),
+                'primary': m.group(3) == 'primary',
+            })
+    return outputs
+
+
+def get_internal(outputs):
+    """Return the internal display output (eDP or LVDS)."""
+    for o in outputs:
+        if re.match(r'^(eDP|LVDS)', o['name']) and o['connected']:
+            return o
+    return None
+
+
+def get_externals(outputs):
+    """Return connected external display outputs."""
+    internal = get_internal(outputs)
+    internal_name = internal['name'] if internal else None
+    return [o for o in outputs if o['connected'] and o['name'] != internal_name]
+
+
+def resolve_external(outputs, name=None):
+    """Resolve which external output to act on.
+
+    If name is given, validate it exists and is connected.
+    If omitted, auto-select if exactly one external is connected.
+    """
+    externals = get_externals(outputs)
+
+    if name:
+        # Find by exact name (case-insensitive)
+        for o in outputs:
+            if o['name'].lower() == name.lower() and o['connected']:
+                return o
+        print(f"Error: '{name}' is not connected.", file=sys.stderr)
+        connected = ', '.join(o['name'] for o in externals) or 'none'
+        print(f"Connected externals: {connected}", file=sys.stderr)
+        sys.exit(1)
+
+    if not externals:
+        print("No external displays connected.", file=sys.stderr)
+        sys.exit(1)
+
+    if len(externals) == 1:
+        return externals[0]
+
+    # Multiple externals — ask user to specify
+    print("Multiple external displays connected:", file=sys.stderr)
+    for o in externals:
+        res = o['resolution'] or 'off'
+        print(f"  {o['name']}  ({res})", file=sys.stderr)
+    print("\nSpecify one, e.g.: displays mirror HDMI-2", file=sys.stderr)
+    sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# Post-apply hooks
+# ---------------------------------------------------------------------------
+
+def post_apply():
+    """Run hooks after changing display layout."""
+    # Restart polybar so it repositions to the correct monitor
+    from shutil import which
+    if which("launch-polybar"):
+        subprocess.Popen(
+            ["launch-polybar"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    if which("xob-restart"):
+        subprocess.Popen(
+            ["xob-restart"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+
+
+def notify(summary, body=""):
+    """Send a desktop notification."""
+    cmd = [
+        "notify-send",
+        "-h", "string:x-canonical-private-synchronous:display",
+        summary,
+    ]
+    if body:
+        cmd.append(body)
+    subprocess.run(cmd, capture_output=True)
+
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+
+def cmd_status(outputs):
+    """Show current display status."""
+    internal = get_internal(outputs)
+    externals = get_externals(outputs)
+
+    if internal:
+        res = internal['resolution'] or 'off'
+        state = 'active' if internal['active'] else 'off'
+        print(f"Internal:  {internal['name']}    {res}  ({state})")
+    else:
+        print("Internal:  (not detected)")
+
+    if not externals:
+        print("External:  (none connected)")
+    else:
+        for o in externals:
+            res = o['resolution'] or 'off'
+            state = 'active' if o['active'] else 'connected, off'
+            print(f"External:  {o['name']}   {res}  ({state})")
+
+
+def cmd_list(outputs):
+    """List all outputs (connected and disconnected)."""
+    internal = get_internal(outputs)
+    internal_name = internal['name'] if internal else None
+
+    for o in outputs:
+        status = 'connected' if o['connected'] else 'disconnected'
+        res = o['resolution'] or ''
+        tag = ' (internal)' if o['name'] == internal_name else ''
+        cols = f"{o['name']:<12} {status:<14} {res:<12}{tag}"
+        print(cols)
+
+
+def cmd_mirror(outputs, args):
+    """Mirror the internal display to an external output."""
+    internal = get_internal(outputs)
+    if not internal:
+        print("Error: no internal display detected.", file=sys.stderr)
+        sys.exit(1)
+
+    ext = resolve_external(outputs, args[0] if args else None)
+
+    subprocess.run([
+        "xrandr",
+        "--output", internal['name'], "--auto",
+        "--output", ext['name'], "--auto", "--same-as", internal['name'],
+    ], check=True)
+
+    print(f"✓ Mirroring {internal['name']} → {ext['name']}")
+    notify("Display", f"Mirroring to {ext['name']}")
+    post_apply()
+
+
+def cmd_extend(outputs, args):
+    """Extend the desktop to an external output.
+
+    Default: right. Use --left, --above, --below to override.
+    """
+    internal = get_internal(outputs)
+    if not internal:
+        print("Error: no internal display detected.", file=sys.stderr)
+        sys.exit(1)
+
+    # Parse direction flag
+    direction = "right"
+    direction_flag = "--right-of"
+    remaining = []
+    for a in args:
+        if a == "--left":
+            direction = "left"
+            direction_flag = "--left-of"
+        elif a == "--above":
+            direction = "above"
+            direction_flag = "--above"
+        elif a == "--below":
+            direction = "below"
+            direction_flag = "--below"
+        else:
+            remaining.append(a)
+
+    ext = resolve_external(outputs, remaining[0] if remaining else None)
+
+    subprocess.run([
+        "xrandr",
+        "--output", internal['name'], "--auto",
+        "--output", ext['name'], "--auto", direction_flag, internal['name'],
+    ], check=True)
+
+    print(f"✓ Extended {ext['name']} to the {direction} of {internal['name']}")
+    notify("Display", f"Extended to {ext['name']} ({direction})")
+    post_apply()
+
+
+def cmd_only(outputs, args):
+    """Use only the specified display, turn off all others.
+
+    With no args, uses the internal display (same as 'reset').
+    With an output name, uses only that display.
+    """
+    if not args:
+        # No argument — use internal only
+        cmd_reset(outputs)
+        return
+
+    target_name = args[0]
+
+    # Find the target
+    target = None
+    for o in outputs:
+        if o['name'].lower() == target_name.lower() and o['connected']:
+            target = o
+            break
+
+    if not target:
+        print(f"Error: '{target_name}' is not connected.", file=sys.stderr)
+        sys.exit(1)
+
+    # Turn off everything except the target
+    xrandr_cmd = ["xrandr", "--output", target['name'], "--auto"]
+    for o in outputs:
+        if o['connected'] and o['name'] != target['name']:
+            xrandr_cmd.extend(["--output", o['name'], "--off"])
+
+    subprocess.run(xrandr_cmd, check=True)
+
+    print(f"✓ Using {target['name']} only")
+    notify("Display", f"Using {target['name']} only")
+    post_apply()
+
+
+def cmd_off(outputs, args):
+    """Turn off a specific display output."""
+    if not args:
+        print("Error: specify which output to turn off.", file=sys.stderr)
+        print("Usage: display off HDMI-2", file=sys.stderr)
+        sys.exit(1)
+
+    ext = resolve_external(outputs, args[0])
+
+    subprocess.run([
+        "xrandr", "--output", ext['name'], "--off",
+    ], check=True)
+
+    print(f"✓ Turned off {ext['name']}")
+    notify("Display", f"{ext['name']} off")
+    post_apply()
+
+
+def cmd_reset(outputs):
+    """Turn off all external displays and re-enable internal."""
+    internal = get_internal(outputs)
+    if not internal:
+        print("Error: no internal display detected.", file=sys.stderr)
+        sys.exit(1)
+
+    externals = get_externals(outputs)
+
+    xrandr_cmd = ["xrandr", "--output", internal['name'], "--auto"]
+    for ext in externals:
+        xrandr_cmd.extend(["--output", ext['name'], "--off"])
+
+    subprocess.run(xrandr_cmd, check=True)
+
+    turned_off = ', '.join(e['name'] for e in externals) if externals else 'none'
+    print(f"✓ Using {internal['name']} only ({turned_off} off)")
+    notify("Display", f"Using {internal['name']} only")
+    post_apply()
+
+
+# ---------------------------------------------------------------------------
+# Help + Main
+# ---------------------------------------------------------------------------
+
+HELP_TEXT = """\
+usage: displays [command] [options]
+
+Manage external displays from the command line.
+
+commands:
+  (none)                        show current display status
+  mirror [OUTPUT]               mirror internal display to external
+  extend [OUTPUT]               extend desktop to the right (default)
+  extend --left [OUTPUT]        extend to the left
+  extend --above [OUTPUT]       extend above
+  extend --below [OUTPUT]       extend below
+  only [OUTPUT]                 use only the specified display
+  off OUTPUT                    turn off a specific output
+  reset                         laptop-only, turn off all externals
+  list                          list all outputs (including disconnected)
+
+If OUTPUT is omitted and exactly one external display is connected,
+it is selected automatically.
+
+examples:
+  displays                       show what's connected and active
+  displays mirror                mirror to the only external display
+  displays mirror HDMI-2         mirror to HDMI-2 specifically
+  displays extend                extend right (auto-detect external)
+  displays extend --left HDMI-2  extend HDMI-2 to the left
+  displays only HDMI-2           use only HDMI-2, turn off laptop
+  displays only                  use only the laptop display
+  displays off HDMI-2            turn off HDMI-2
+  displays reset                 turn off all externals, laptop only
+  displays list                  show all outputs"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ('-h', '--help'):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    raw = xrandr_query()
+    outputs = parse_outputs(raw)
+
+    if len(sys.argv) < 2:
+        cmd_status(outputs)
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        'mirror': lambda: cmd_mirror(outputs, args),
+        'extend': lambda: cmd_extend(outputs, args),
+        'only': lambda: cmd_only(outputs, args),
+        'off': lambda: cmd_off(outputs, args),
+        'reset': lambda: cmd_reset(outputs),
+        'list': lambda: cmd_list(outputs),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'displays --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == '__main__':
+    main()

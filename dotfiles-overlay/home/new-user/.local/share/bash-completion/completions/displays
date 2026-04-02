@@ -1,0 +1,39 @@
+# bash completion for displays(1)
+
+_displays() {
+    local cur prev commands
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    commands="mirror extend only off reset list"
+
+    # Complete subcommands at position 1
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "$commands --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+
+    # Commands that accept an output name
+    case "$cmd" in
+        mirror|only|off)
+            # Suggest connected output names from xrandr
+            local outputs
+            outputs=$(xrandr --query 2>/dev/null | grep ' connected' | cut -d' ' -f1)
+            COMPREPLY=( $(compgen -W "$outputs" -- "$cur") )
+            ;;
+        extend)
+            # Suggest direction flags and output names
+            if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $(compgen -W "--left --above --below" -- "$cur") )
+            else
+                local outputs
+                outputs=$(xrandr --query 2>/dev/null | grep ' connected' | cut -d' ' -f1)
+                COMPREPLY=( $(compgen -W "$outputs --left --above --below" -- "$cur") )
+            fi
+            ;;
+    esac
+}
+
+complete -F _displays displays
