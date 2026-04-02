@@ -1,4 +1,4 @@
-# Phone Sync (Laptop ↔ Pixel 8)
+# psync (Laptop ↔ Pixel 8)
 
 Sync files between laptop and phone over any network using `psync` — an rsync wrapper over Tailscale.
 
@@ -56,6 +56,7 @@ psync push --dry-run            # Preview what would be pushed
 psync pull --dry-run            # Preview what would be pulled
 psync push --delete             # Delete phone files not on laptop
 psync pull --delete             # Delete local files not on phone
+psync push --update             # Skip destination files that are newer
 
 # ── Info commands ─────────────────────────────────────────────────
 psync status                    # Show reachability and last sync times
@@ -76,6 +77,7 @@ psync sync --quiet --dir notes  # Quiet two-way sync of notes only
 | `--dry-run`       | Show what would be transferred without actually syncing          |
 | `--delete`        | Delete destination files not present at source                   |
 | `--quiet`         | Suppress output except errors (log file still written)           |
+| `--update`        | Skip files that are newer on the destination side                |
 
 ### Delete behavior
 
@@ -264,6 +266,11 @@ passwd                # set SSH password
 sshd                  # start SSH server
 sv-enable sshd        # auto-start on Termux launch (after restart)
 ```
+
+### Android Settings (Crucial for Reliability)
+To prevent Android from killing the SSH server when the screen is off or in the background, you **must** configure the following on your phone:
+1. **Battery Optimization**: Go to Android Settings → Apps → Termux → Battery and set it to **Unrestricted**.
+2. **Wake Lock**: Pull down your Android notification shade, expand the Termux notification, and tap **Acquire wakelock** (or run `termux-wake-lock` in the terminal).
 
 ### SSH Key Auth (from laptop)
 ```bash
