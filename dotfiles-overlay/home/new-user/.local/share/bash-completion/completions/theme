@@ -1,0 +1,10 @@
+# bash completion for theme
+_theme() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    COMPREPLY=( $(compgen -W "--dark --light --toggle --no-restart --help" -- "$cur") )
+}
+
+complete -F _theme theme
