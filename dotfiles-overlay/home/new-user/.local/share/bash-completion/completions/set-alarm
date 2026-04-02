@@ -1,0 +1,26 @@
+# bash completion for set-alarm
+_set_alarm() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # After 'cancel', complete with active alarm IDs
+    if [[ "$prev" == "cancel" ]]; then
+        local alarm_dir="$HOME/.local/share/set-alarm"
+        if [[ -d "$alarm_dir" ]]; then
+            local ids
+            ids=$(ls "$alarm_dir"/*.json 2>/dev/null | xargs -I{} basename {} .json)
+            COMPREPLY=( $(compgen -W "$ids" -- "$cur") )
+        fi
+        return
+    fi
+
+    # First positional arg: subcommand
+    if [[ "$COMP_CWORD" -eq 1 ]]; then
+        COMPREPLY=( $(compgen -W "list cancel cal" -- "$cur") )
+        return
+    fi
+}
+
+complete -F _set_alarm set-alarm

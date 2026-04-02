@@ -1,0 +1,433 @@
+#!/usr/bin/env python3
+"""set-alarm - Set alarms from the command line using systemd timers."""
+
+import datetime
+import json
+import os
+import random
+import re
+import string
+import subprocess
+import sys
+
+ALARM_DIR = os.path.expanduser("~/.local/share/set-alarm")
+ALARM_SOUND = "/usr/share/sounds/freedesktop/stereo/suspend-error.oga"
+UNIT_PREFIX = "set-alarm-"
+
+
+def ensure_alarm_dir():
+    os.makedirs(ALARM_DIR, exist_ok=True)
+
+
+def generate_id():
+    """Generate a short unique alarm ID."""
+    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+
+
+def parse_time_str(s):
+    """Parse a time string like '2pm', '2:30pm', '14:00'.
+
+    Returns a datetime.time or None.
+    """
+    s = s.strip().lower()
+
+    # 12-hour: 2pm, 2:30pm, 2:30 pm, 12am
+    m = re.match(r'^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$', s)
+    if m:
+        hour = int(m.group(1))
+        minute = int(m.group(2) or 0)
+        ampm = m.group(3)
+        if hour < 1 or hour > 12 or minute > 59:
+            return None
+        if ampm == 'pm' and hour != 12:
+            hour += 12
+        elif ampm == 'am' and hour == 12:
+            hour = 0
+        return datetime.time(hour, minute)
+
+    # 24-hour: 14:00, 9:30
+    m = re.match(r'^(\d{1,2}):(\d{2})$', s)
+    if m:
+        hour = int(m.group(1))
+        minute = int(m.group(2))
+        if hour > 23 or minute > 59:
+            return None
+        return datetime.time(hour, minute)
+
+    return None
+
+
+def parse_time(args):
+    """Parse time arguments into a datetime object.
+
+    Supports:
+      2pm, 2:30pm, 14:00        time only (smart day selection)
+      tomorrow 9am              explicit tomorrow
+      2025-04-02 2pm            specific date + time
+      30min, 1hr, +1h30m         relative offset (+ optional)
+    """
+    now = datetime.datetime.now()
+    time_str = ' '.join(args).strip()
+
+    if not time_str:
+        return None
+
+    # --- Relative time: +1h, 1hr, 30min, 1h30m, 1hr30min, etc. ---
+    # Optional '+' prefix, accepts h/hr/hour/hours and m/min/mins/minutes
+    rel_match = re.match(
+        r'^\+?(?:(\d+)(?:h|hr|hours?))?(?:(\d+)(?:m|min|mins|minutes?))?$',
+        time_str, re.IGNORECASE,
+    )
+    if rel_match and (rel_match.group(1) or rel_match.group(2)):
+        hours = int(rel_match.group(1) or 0)
+        minutes = int(rel_match.group(2) or 0)
+        return now + datetime.timedelta(hours=hours, minutes=minutes)
+
+    # --- Extract optional date prefix ---
+    date_part = None
+    time_part = time_str
+
+    if time_str.lower().startswith("tomorrow"):
+        rest = time_str[8:].strip()
+        if not rest:
+            return None
+        date_part = (now + datetime.timedelta(days=1)).date()
+        time_part = rest
+    else:
+        # ISO date prefix: YYYY-MM-DD
+        date_match = re.match(r'^(\d{4}-\d{2}-\d{2})\s+(.+)$', time_str)
+        if date_match:
+            try:
+                date_part = datetime.date.fromisoformat(date_match.group(1))
+            except ValueError:
+                print(f"Error: invalid date '{date_match.group(1)}'", file=sys.stderr)
+                sys.exit(1)
+            time_part = date_match.group(2).strip()
+
+    # --- Parse the time component ---
+    parsed_time = parse_time_str(time_part)
+    if parsed_time is None:
+        print(f"Error: cannot parse time '{time_part}'", file=sys.stderr)
+        print("Examples: 2pm, 2:30pm, 14:00, +30m, +1h30m, tomorrow 9am", file=sys.stderr)
+        sys.exit(1)
+
+    if date_part:
+        return datetime.datetime.combine(date_part, parsed_time)
+
+    # Smart day: if time already passed today, schedule for tomorrow
+    target = datetime.datetime.combine(now.date(), parsed_time)
+    if target <= now:
+        target += datetime.timedelta(days=1)
+    return target
+
+
+def format_eta(delta):
+    """Format a timedelta as a human-readable ETA string."""
+    total_seconds = int(delta.total_seconds())
+    if total_seconds < 60:
+        return "<1m"
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes = remainder // 60
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0:
+        parts.append(f"{minutes}m")
+    return ' '.join(parts)
+
+
+def set_alarm(target_dt, label=None):
+    """Schedule an alarm at the given datetime."""
+    ensure_alarm_dir()
+    alarm_id = generate_id()
+
+    # Capture environment needed for notification delivery
+    env_vars = {}
+    for var in ['DISPLAY', 'XAUTHORITY', 'DBUS_SESSION_BUS_ADDRESS', 'XDG_RUNTIME_DIR']:
+        if var in os.environ:
+            env_vars[var] = os.environ[var]
+
+    # Save alarm metadata
+    alarm_data = {
+        'id': alarm_id,
+        'time': target_dt.isoformat(),
+        'label': label or '',
+        'created': datetime.datetime.now().isoformat(),
+        'env': env_vars,
+    }
+
+    alarm_file = os.path.join(ALARM_DIR, f"{alarm_id}.json")
+    with open(alarm_file, 'w') as f:
+        json.dump(alarm_data, f, indent=2)
+
+    # Build systemd-run command
+    unit_name = f"{UNIT_PREFIX}{alarm_id}"
+    calendar_spec = target_dt.strftime("%Y-%m-%d %H:%M:%S")
+    script_path = os.path.realpath(sys.argv[0])
+
+    cmd = [
+        "systemd-run", "--user",
+        "--on-calendar", calendar_spec,
+        "--unit", unit_name,
+        "--description", f"Alarm: {label or target_dt.strftime('%H:%M')}",
+    ]
+
+    # Pass display/session environment so notify-send works when fired
+    for k, v in env_vars.items():
+        cmd.extend(["-E", f"{k}={v}"])
+
+    cmd.extend([script_path, "--fire", alarm_id])
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"Error scheduling alarm: {result.stderr.strip()}", file=sys.stderr)
+        os.remove(alarm_file)
+        sys.exit(1)
+
+    # Print confirmation
+    eta = format_eta(target_dt - datetime.datetime.now())
+    time_str = target_dt.strftime("%-I:%M %p")
+    date_str = target_dt.strftime("%a %b %-d")
+    label_str = f' "{label}"' if label else ''
+
+    print(f"⏰ Alarm{label_str} set for {time_str} {date_str} (in {eta})")
+    print(f"   ID: {alarm_id}")
+
+
+def fire_alarm(alarm_id):
+    """Fire an alarm — called internally by the systemd timer."""
+    alarm_file = os.path.join(ALARM_DIR, f"{alarm_id}.json")
+
+    label = ""
+    if os.path.exists(alarm_file):
+        with open(alarm_file) as f:
+            data = json.load(f)
+        label = data.get('label', '')
+
+    title = "⏰ Alarm"
+    body = label if label else datetime.datetime.now().strftime("%-I:%M %p")
+
+    subprocess.run([
+        "notify-send", "-u", "critical",
+        "-h", "string:x-canonical-private-synchronous:set-alarm",
+        title, body,
+    ])
+
+    if os.path.exists(ALARM_SOUND):
+        subprocess.run(["paplay", ALARM_SOUND])
+
+    # Clean up metadata file (alarm has fired)
+    if os.path.exists(alarm_file):
+        os.remove(alarm_file)
+
+
+def cal_event(text):
+    """Create a Google Calendar event and set a local alarm at the same time.
+
+    Uses google-calendar's quickAdd (Google NLP) to parse natural language,
+    then extracts the resolved datetime to set a systemd alarm.
+    """
+    if not text:
+        print("Error: provide event text, e.g.: set-alarm cal \"Dentist Tuesday 10am\"",
+              file=sys.stderr)
+        sys.exit(1)
+
+    # Call google-calendar add --json to create event and get parsed time
+    result = subprocess.run(
+        ["google-calendar", "add", "--json", text],
+        capture_output=True, text=True,
+    )
+
+    if result.returncode != 0:
+        print(f"Error creating calendar event: {result.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        event = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        print("Error: could not parse google-calendar output", file=sys.stderr)
+        sys.exit(1)
+
+    # Extract the resolved start time
+    start = event.get("start", {})
+    start_str = start.get("dateTime", start.get("date", ""))
+
+    if not start_str:
+        print("Error: calendar event has no start time", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        target_dt = datetime.datetime.fromisoformat(start_str)
+        # Strip timezone info for local comparison (systemd uses local time)
+        if target_dt.tzinfo is not None:
+            target_dt = target_dt.replace(tzinfo=None)
+    except ValueError:
+        print(f"Error: could not parse start time '{start_str}'", file=sys.stderr)
+        sys.exit(1)
+
+    now = datetime.datetime.now()
+    if target_dt <= now:
+        print(f"Warning: event time {target_dt.strftime('%-I:%M %p')} is in the past, "
+              f"skipping local alarm.", file=sys.stderr)
+        # Still show the calendar event was created
+        summary = event.get("summary", text)
+        print(f"📅 Calendar event created: {summary}")
+        return
+
+    # Set the local alarm using the resolved datetime
+    summary = event.get("summary", text)
+    set_alarm(target_dt, label=summary)
+
+    # Print the calendar confirmation too
+    eid = event.get("id", "")[-8:] or "--------"
+    print(f"📅 Calendar event also created (ID: {eid})")
+
+
+def list_alarms():
+    """List all active alarms."""
+    ensure_alarm_dir()
+    alarms = []
+
+    for fname in sorted(os.listdir(ALARM_DIR)):
+        if not fname.endswith('.json'):
+            continue
+        filepath = os.path.join(ALARM_DIR, fname)
+        try:
+            with open(filepath) as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            continue
+
+        alarm_id = data.get('id', fname.replace('.json', ''))
+
+        # Verify the systemd timer is still active
+        unit_name = f"{UNIT_PREFIX}{alarm_id}.timer"
+        result = subprocess.run(
+            ["systemctl", "--user", "is-active", unit_name],
+            capture_output=True, text=True,
+        )
+        status = result.stdout.strip()
+
+        if status not in ("active", "waiting"):
+            # Timer is gone — clean up stale metadata
+            os.remove(filepath)
+            continue
+
+        alarms.append(data)
+
+    if not alarms:
+        print("No active alarms.")
+        return
+
+    now = datetime.datetime.now()
+    print(f"{'ID':<8} {'Time':<22} {'ETA':<10} {'Label'}")
+    print("─" * 56)
+    for a in sorted(alarms, key=lambda x: x['time']):
+        target = datetime.datetime.fromisoformat(a['time'])
+        delta = target - now
+
+        eta = format_eta(delta) if delta.total_seconds() > 0 else "past"
+        time_str = target.strftime("%-I:%M %p  %a %b %-d")
+        print(f"{a['id']:<8} {time_str:<22} {eta:<10} {a.get('label', '')}")
+
+
+def cancel_alarm(alarm_id):
+    """Cancel an alarm by ID."""
+    alarm_file = os.path.join(ALARM_DIR, f"{alarm_id}.json")
+    unit_name = f"{UNIT_PREFIX}{alarm_id}"
+
+    # Stop the systemd timer
+    subprocess.run(
+        ["systemctl", "--user", "stop", f"{unit_name}.timer"],
+        capture_output=True,
+    )
+    subprocess.run(
+        ["systemctl", "--user", "stop", f"{unit_name}.service"],
+        capture_output=True,
+    )
+
+    if os.path.exists(alarm_file):
+        # Read label for the confirmation message
+        try:
+            with open(alarm_file) as f:
+                data = json.load(f)
+            label = data.get('label', '')
+        except (json.JSONDecodeError, IOError):
+            label = ''
+        os.remove(alarm_file)
+        label_str = f' "{label}"' if label else ''
+        print(f"Alarm {alarm_id}{label_str} canceled.")
+    else:
+        print(f"Alarm '{alarm_id}' not found.", file=sys.stderr)
+        sys.exit(1)
+
+
+def main():
+    # Handle the hidden --fire flag before argparse (it's an internal interface
+    # used by the systemd timer, so we don't want it polluting help output).
+    if len(sys.argv) >= 3 and sys.argv[1] == '--fire':
+        fire_alarm(sys.argv[2])
+        return
+
+    # Subcommand dispatch: list, cancel
+    if len(sys.argv) >= 2 and sys.argv[1] == 'list':
+        list_alarms()
+        return
+
+    if len(sys.argv) >= 3 and sys.argv[1] == 'cancel':
+        cancel_alarm(sys.argv[2])
+        return
+
+    if len(sys.argv) >= 3 and sys.argv[1] == 'cal':
+        cal_event(' '.join(sys.argv[2:]))
+        return
+
+    if len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help'):
+        print("""usage: set-alarm TIME [LABEL]
+       set-alarm cal TEXT
+       set-alarm list
+       set-alarm cancel ID
+
+Set alarms from the command line (backed by systemd timers).
+
+commands:
+  cal TEXT                          create alarm + Google Calendar event
+  list                              list active alarms
+  cancel ID                         cancel an alarm by ID
+
+examples:
+  set-alarm 2pm                     alarm at 2 PM (today or tomorrow)
+  set-alarm 2:30pm "Take medicine"  alarm with a label
+  set-alarm 14:00                   24-hour format
+  set-alarm tomorrow 9am            explicitly tomorrow
+  set-alarm 2025-04-02 2pm          specific date
+  set-alarm 30min                   30 minutes from now
+  set-alarm 1hr30min "Meeting"      relative with label
+  set-alarm +1h30m "Meeting"        same (terse form)
+  set-alarm cal "Dentist next Tuesday at 10am"
+  set-alarm cal "Lunch Friday noon for 1 hour\"""")
+        sys.exit(0 if '--help' in sys.argv or '-h' in sys.argv else 1)
+
+    # Default action: set an alarm
+    # Separate time args from an optional trailing label.
+    # Heuristic: if the last arg doesn't look like a time token, it's a label.
+    time_args = list(sys.argv[1:])
+    label = None
+
+    if len(time_args) >= 2:
+        last = time_args[-1]
+        if not re.match(r'^(\d|am|pm|tomorrow|\+)', last, re.IGNORECASE):
+            label = last
+            time_args = time_args[:-1]
+
+    target = parse_time(time_args)
+
+    if target is None or target <= datetime.datetime.now():
+        print("Error: alarm time is in the past or invalid.", file=sys.stderr)
+        sys.exit(1)
+
+    set_alarm(target, label)
+
+
+if __name__ == '__main__':
+    main()
