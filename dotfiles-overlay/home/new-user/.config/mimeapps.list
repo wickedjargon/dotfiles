@@ -1,5 +1,8 @@
 [Default Applications]
 text/plain=emacs-client.desktop
+text/css=emacs-client.desktop
+text/x-dsrc=emacs-client.desktop
+text/x-python=emacs-client.desktop
 text/x-log=emacs-client.desktop
 text/x-makefile=emacs-client.desktop
 application/x-shellscript=emacs-client.desktop
@@ -8,7 +11,7 @@ text/x-c++src=emacs-client.desktop
 text/x-chdr=emacs-client.desktop
 text/x-csrc=emacs-client.desktop
 text/x-java=emacs-client.desktop
-text/x-moc=emacs-client.desktop
+text/x-moc=emacscathy newman-client.desktop
 text/x-pascal=emacs-client.desktop
 text/x-tcl=emacs-client.desktop
 text/x-tex=emacs-client.desktop

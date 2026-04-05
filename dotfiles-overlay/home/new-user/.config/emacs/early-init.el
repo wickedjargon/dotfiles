@@ -21,21 +21,34 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
-(let* ((theme-mode (if (string-match-p "light" (or (ignore-errors (with-temp-buffer (insert-file-contents "~/.config/theme-mode") (buffer-string))) "dark"))
-                       'light 'dark))
-       (bg-color (if (eq theme-mode 'light) "#ffffff" "#000000"))
-       (fg-color (if (eq theme-mode 'light) "#000000" "#ffffff")))
-  (setq default-frame-alist
-        (append
-         `((background-color . ,bg-color)
-           (foreground-color . ,fg-color)
-           (background-mode . ,theme-mode))
-         default-frame-alist)))
+(defun fff-update-default-frame-colors ()
+  "Read ~/.config/theme-mode and update `default-frame-alist' colors.
+Call this at startup and whenever the theme-mode file changes so that
+new emacsclient frames are born with the correct background color
+\(no white flash when in dark mode, no black flash when in light mode)."
+  (let* ((theme-mode (if (string-match-p
+                          "light"
+                          (or (ignore-errors
+                                (with-temp-buffer
+                                  (insert-file-contents "~/.config/theme-mode")
+                                  (buffer-string)))
+                              "dark"))
+                         'light 'dark))
+         (bg-color (if (eq theme-mode 'light) "#ffffff" "#000000"))
+         (fg-color (if (eq theme-mode 'light) "#000000" "#ffffff")))
+    ;; Remove any existing color/mode entries so we don't accumulate stale ones
+    (setq default-frame-alist
+          (cl-remove-if (lambda (pair)
+                          (memq (car pair)
+                                '(background-color foreground-color background-mode)))
+                        default-frame-alist))
+    (setq default-frame-alist
+          (append
+           `((background-color . ,bg-color)
+             (foreground-color . ,fg-color)
+             (background-mode . ,theme-mode))
+           default-frame-alist))))
 
-(defun fff-reapply-theme-to-new-frame (frame)
-  "Reapply the current theme to FRAME so it overrides default-frame-alist colors."
-  (with-selected-frame frame
-    (when-let ((theme (car custom-enabled-themes)))
-      (enable-theme theme))))
-
-(add-hook 'after-make-frame-functions #'fff-reapply-theme-to-new-frame)
+;; Set the initial frame colors before any frame is created
+(fff-update-default-frame-colors)
+,

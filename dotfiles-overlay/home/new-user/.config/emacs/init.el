@@ -511,6 +511,9 @@ TTY frames (standalone non-daemon only) get tty-dark."
        '(change attribute-change)
        (lambda (_event)
          (let ((sys-theme (fff--read-sys-theme)))
+           ;; Update default-frame-alist so new emacsclient frames
+           ;; are born with the correct bg color (no flash)
+           (fff-update-default-frame-colors)
            (if (eq sys-theme 'light)
                (progn (disable-theme 'ef-tritanopia-dark)
                       (load-theme 'ef-tritanopia-light t))
