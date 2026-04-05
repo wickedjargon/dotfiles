@@ -1,3 +1,4 @@
 https://github.com/cdown/clipmenu.git
 https://github.com/wickedjargon/sent.git
 https://github.com/florentc/xob.git
+https://github.com/wickedjargon/xmouseless.git
