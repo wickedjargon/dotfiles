@@ -144,6 +144,10 @@ super + s
 F12
     instant-screenshot
 
+# Xmouseless
+super + x
+    xmouseless
+
 # ========== VOLUME CONTROLS ==========
 
 # Volume up (snap to nearest 5%)
