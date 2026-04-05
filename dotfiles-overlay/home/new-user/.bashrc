@@ -16,6 +16,7 @@ paths=(
   "/usr/sbin"
   "/sbin"
   "$HOME/.local/bin"
+  "$HOME/.local/scripts"
   "$HOME/.cargo/bin"
   "$ANDROID_HOME/tools/bin"
   "$ANDROID_HOME/platform-tools"
