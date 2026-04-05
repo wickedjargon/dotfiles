@@ -38,10 +38,10 @@ new emacsclient frames are born with the correct background color
          (fg-color (if (eq theme-mode 'light) "#000000" "#ffffff")))
     ;; Remove any existing color/mode entries so we don't accumulate stale ones
     (setq default-frame-alist
-          (cl-remove-if (lambda (pair)
-                          (memq (car pair)
-                                '(background-color foreground-color background-mode)))
-                        default-frame-alist))
+          (seq-remove (lambda (pair)
+                        (memq (car pair)
+                              '(background-color foreground-color background-mode)))
+                      default-frame-alist))
     (setq default-frame-alist
           (append
            `((background-color . ,bg-color)

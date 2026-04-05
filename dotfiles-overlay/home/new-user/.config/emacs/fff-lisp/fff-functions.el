@@ -11,16 +11,32 @@
     (call-interactively 'find-file)))
 
 (defun fff-open-file-in-projects ()
-  "Select a project from ~/d/projects/ and find-file within it."
+  "Select a project from ~/d/projects/ and find-file within it.
+The projects directory itself is always the first candidate."
   (interactive)
   (let* ((projects-dir (expand-file-name "~/d/projects/"))
+         (parent-name (file-name-nondirectory (directory-file-name projects-dir)))
          (dirs (cl-remove-if-not
                 #'file-directory-p
                 (mapcar (lambda (d) (expand-file-name d projects-dir))
                         (directory-files projects-dir nil "^[^.]"))))
-         (names (mapcar #'file-name-nondirectory dirs))
-         (selected (completing-read "Project: " names nil t))
-         (project-path (expand-file-name (concat selected "/") projects-dir)))
+         (sub-names (mapcar #'file-name-nondirectory dirs))
+         (all-names (cons parent-name sub-names))
+         (table (lambda (string pred action)
+                  (if (eq action 'metadata)
+                      `(metadata (display-sort-function
+                                  . ,(lambda (candidates)
+                                       (let ((rest (delete parent-name
+                                                           (copy-sequence candidates))))
+                                         (cons parent-name
+                                               (if (fboundp 'prescient-sort)
+                                                   (prescient-sort rest)
+                                                 rest))))))
+                    (complete-with-action action all-names string pred))))
+         (selected (completing-read "Project: " table nil t))
+         (project-path (if (string= selected parent-name)
+                           projects-dir
+                         (expand-file-name (concat selected "/") projects-dir))))
     (dired project-path)))
 
 (defun fff-access-config-dir ()
