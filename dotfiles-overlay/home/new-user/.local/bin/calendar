@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""set-alarm - Set alarms from the command line using systemd timers."""
+"""calendar - Set alarms from the command line using systemd timers."""
 
 import datetime
 import json
@@ -10,9 +10,9 @@ import string
 import subprocess
 import sys
 
-ALARM_DIR = os.path.expanduser("~/.local/share/set-alarm")
+ALARM_DIR = os.path.expanduser("~/.local/share/calendar")
 ALARM_SOUND = "/usr/share/sounds/freedesktop/stereo/suspend-error.oga"
-UNIT_PREFIX = "set-alarm-"
+UNIT_PREFIX = "calendar-"
 
 
 def ensure_alarm_dir():
@@ -209,7 +209,7 @@ def fire_alarm(alarm_id):
 
     subprocess.run([
         "notify-send", "-u", "critical",
-        "-h", "string:x-canonical-private-synchronous:set-alarm",
+        "-h", "string:x-canonical-private-synchronous:calendar",
         title, body,
     ])
 
@@ -221,25 +221,31 @@ def fire_alarm(alarm_id):
         os.remove(alarm_file)
 
 
-def cal_event(text):
-    """Create a Google Calendar event and set a local alarm at the same time.
+def _google_event(text, reminder=False):
+    """Create a Google Calendar event/reminder and set a local alarm.
 
     Uses google-calendar's quickAdd (Google NLP) to parse natural language,
     then extracts the resolved datetime to set a systemd alarm.
+
+    If reminder=True, the event is patched to zero-duration with a popup
+    notification (like a Pixel reminder, not a 1-hour event block).
     """
+    kind = "reminder" if reminder else "event"
     if not text:
-        print("Error: provide event text, e.g.: set-alarm cal \"Dentist Tuesday 10am\"",
-              file=sys.stderr)
+        print(f"Error: provide {kind} text, e.g.: calendar {'rem' if reminder else 'cal'} "
+              f'"Dentist Tuesday 10am"', file=sys.stderr)
         sys.exit(1)
 
-    # Call google-calendar add --json to create event and get parsed time
-    result = subprocess.run(
-        ["google-calendar", "add", "--json", text],
-        capture_output=True, text=True,
-    )
+    # Call google-calendar add --json [--reminder] to create event
+    cmd = ["google-calendar", "add", "--json"]
+    if reminder:
+        cmd.append("--reminder")
+    cmd.append(text)
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
 
     if result.returncode != 0:
-        print(f"Error creating calendar event: {result.stderr.strip()}", file=sys.stderr)
+        print(f"Error creating calendar {kind}: {result.stderr.strip()}", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -253,7 +259,7 @@ def cal_event(text):
     start_str = start.get("dateTime", start.get("date", ""))
 
     if not start_str:
-        print("Error: calendar event has no start time", file=sys.stderr)
+        print(f"Error: calendar {kind} has no start time", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -267,11 +273,10 @@ def cal_event(text):
 
     now = datetime.datetime.now()
     if target_dt <= now:
-        print(f"Warning: event time {target_dt.strftime('%-I:%M %p')} is in the past, "
+        print(f"Warning: {kind} time {target_dt.strftime('%-I:%M %p')} is in the past, "
               f"skipping local alarm.", file=sys.stderr)
-        # Still show the calendar event was created
         summary = event.get("summary", text)
-        print(f"📅 Calendar event created: {summary}")
+        print(f"📅 Calendar {kind} created: {summary}")
         return
 
     # Set the local alarm using the resolved datetime
@@ -280,7 +285,18 @@ def cal_event(text):
 
     # Print the calendar confirmation too
     eid = event.get("id", "")[-8:] or "--------"
-    print(f"📅 Calendar event also created (ID: {eid})")
+    icon = "🔔" if reminder else "📅"
+    print(f"{icon} Calendar {kind} also created (ID: {eid})")
+
+
+def cal_event(text):
+    """Create a Google Calendar event + local alarm."""
+    _google_event(text, reminder=False)
+
+
+def rem_event(text):
+    """Create a zero-duration Google Calendar reminder + local alarm."""
+    _google_event(text, reminder=True)
 
 
 def list_alarms():
@@ -374,7 +390,7 @@ def main():
         list_alarms()
         return
 
-    if len(sys.argv) >= 3 and sys.argv[1] == 'cancel':
+    if len(sys.argv) >= 3 and sys.argv[1] == 'del':
         cancel_alarm(sys.argv[2])
         return
 
@@ -382,30 +398,37 @@ def main():
         cal_event(' '.join(sys.argv[2:]))
         return
 
+    if len(sys.argv) >= 3 and sys.argv[1] == 'rem':
+        rem_event(' '.join(sys.argv[2:]))
+        return
+
     if len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help'):
-        print("""usage: set-alarm TIME [LABEL]
-       set-alarm cal TEXT
-       set-alarm list
-       set-alarm cancel ID
+        print("""usage: calendar TIME [LABEL]
+       calendar cal TEXT
+       calendar rem TEXT
+       calendar list
+       calendar del ID
 
 Set alarms from the command line (backed by systemd timers).
 
 commands:
-  cal TEXT                          create alarm + Google Calendar event
+  cal TEXT                          create alarm + Google Calendar event (1hr block)
+  rem TEXT                          create alarm + calendar reminder (no time block)
   list                              list active alarms
-  cancel ID                         cancel an alarm by ID
+  del ID                            cancel an alarm by ID
 
 examples:
-  set-alarm 2pm                     alarm at 2 PM (today or tomorrow)
-  set-alarm 2:30pm "Take medicine"  alarm with a label
-  set-alarm 14:00                   24-hour format
-  set-alarm tomorrow 9am            explicitly tomorrow
-  set-alarm 2025-04-02 2pm          specific date
-  set-alarm 30min                   30 minutes from now
-  set-alarm 1hr30min "Meeting"      relative with label
-  set-alarm +1h30m "Meeting"        same (terse form)
-  set-alarm cal "Dentist next Tuesday at 10am"
-  set-alarm cal "Lunch Friday noon for 1 hour\"""")
+  calendar 2pm                     alarm at 2 PM (today or tomorrow)
+  calendar 2:30pm "Take medicine"  alarm with a label
+  calendar 14:00                   24-hour format
+  calendar tomorrow 9am            explicitly tomorrow
+  calendar 2025-04-02 2pm          specific date
+  calendar 30min                   30 minutes from now
+  calendar 1hr30min "Meeting"      relative with label
+  calendar +1h30m "Meeting"        same (terse form)
+  calendar cal "Dentist next Tuesday at 10am"
+  calendar rem "get laundry 9:55am today"
+  calendar cal "Lunch Friday noon for 1 hour\"""")
         sys.exit(0 if '--help' in sys.argv or '-h' in sys.argv else 1)
 
     # Default action: set an alarm

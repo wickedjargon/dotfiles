@@ -1,13 +1,13 @@
-# bash completion for set-alarm
-_set_alarm() {
+# bash completion for calendar
+_calendar() {
     local cur prev
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    # After 'cancel', complete with active alarm IDs
-    if [[ "$prev" == "cancel" ]]; then
-        local alarm_dir="$HOME/.local/share/set-alarm"
+    # After 'del', complete with active alarm IDs
+    if [[ "$prev" == "del" ]]; then
+        local alarm_dir="$HOME/.local/share/calendar"
         if [[ -d "$alarm_dir" ]]; then
             local ids
             ids=$(ls "$alarm_dir"/*.json 2>/dev/null | xargs -I{} basename {} .json)
@@ -18,9 +18,9 @@ _set_alarm() {
 
     # First positional arg: subcommand
     if [[ "$COMP_CWORD" -eq 1 ]]; then
-        COMPREPLY=( $(compgen -W "list cancel cal" -- "$cur") )
+        COMPREPLY=( $(compgen -W "list del cal rem" -- "$cur") )
         return
     fi
 }
 
-complete -F _set_alarm set-alarm
+complete -F _calendar calendar

@@ -61,7 +61,7 @@ if [ "${1:-0}" = "0" ]; then
 	pgrep -x sxhkd > /dev/null || SXHKD_SHELL=/bin/bash sxhkd &
 
 	# Launch Polybar (single launch point — the ONLY place polybar starts on login)
-	~/.local/bin/launch-polybar &
+	launch-polybar &
 fi
 
 # set Qalculate-gtk to float

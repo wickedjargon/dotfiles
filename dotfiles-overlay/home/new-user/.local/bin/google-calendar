@@ -164,10 +164,13 @@ def format_event_time(event):
 def cmd_add(service, args):
     """Create an event using Google's quickAdd natural language parsing."""
     json_output = False
+    reminder_mode = False
     filtered_args = []
     for a in args:
         if a == "--json":
             json_output = True
+        elif a == "--reminder":
+            reminder_mode = True
         else:
             filtered_args.append(a)
 
@@ -179,6 +182,23 @@ def cmd_add(service, args):
 
     event = service.events().quickAdd(calendarId="primary", text=text).execute()
 
+    # --reminder: patch to zero-duration + popup notification
+    if reminder_mode and event.get("id"):
+        start = event.get("start", {})
+        patch_body = {
+            "end": dict(start),  # end = start → zero-duration
+            "transparency": "transparent",  # don't block appointment slots
+            "reminders": {
+                "useDefault": False,
+                "overrides": [{"method": "popup", "minutes": 0}],
+            },
+        }
+        event = service.events().patch(
+            calendarId="primary",
+            eventId=event["id"],
+            body=patch_body,
+        ).execute()
+
     if json_output:
         import json
         print(json.dumps(event))
@@ -188,7 +208,8 @@ def cmd_add(service, args):
     when = format_event_time(event)
     eid = short_id(event.get("id", ""))
 
-    print(f"✓ Event created: {summary}")
+    kind = "Reminder" if reminder_mode else "Event"
+    print(f"✓ {kind} created: {summary}")
     print(f"  When: {when}")
     print(f"  ID:   {eid}")
 

@@ -1,4 +1,4 @@
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.local/scripts:$PATH"
 
 # Session identity — needed for xdg-desktop-portal / Qt theme detection
 export XDG_CURRENT_DESKTOP=GNOME
