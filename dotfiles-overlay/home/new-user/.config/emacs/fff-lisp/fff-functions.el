@@ -26,12 +26,16 @@ The projects directory itself (\".\") is always the first candidate."
                   (if (eq action 'metadata)
                       `(metadata (display-sort-function
                                   . ,(lambda (candidates)
-                                       (let ((rest (delete parent-name
-                                                           (copy-sequence candidates))))
-                                         (cons parent-name
-                                               (if (fboundp 'prescient-sort)
-                                                   (prescient-sort rest)
-                                                 rest))))))
+                                       (if (member parent-name candidates)
+                                           (let ((rest (delete parent-name
+                                                               (copy-sequence candidates))))
+                                             (cons parent-name
+                                                   (if (fboundp 'prescient-sort)
+                                                       (prescient-sort rest)
+                                                     rest)))
+                                         (if (fboundp 'prescient-sort)
+                                             (prescient-sort candidates)
+                                           candidates)))))
                     (complete-with-action action all-names string pred))))
          (selected (completing-read "Project: " table nil t))
          (project-path (if (string= selected parent-name)
