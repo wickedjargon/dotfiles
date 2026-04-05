@@ -51,4 +51,3 @@ new emacsclient frames are born with the correct background color
 
 ;; Set the initial frame colors before any frame is created
 (fff-update-default-frame-colors)
-,
