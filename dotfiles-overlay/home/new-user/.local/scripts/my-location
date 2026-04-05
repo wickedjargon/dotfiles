@@ -15,8 +15,3 @@ org=$(echo "$data" | grep -oP '"org": *"\K[^"]+')
 echo "IP:       $ip"
 echo "Location: $city, $region, $country"
 echo "ISP:      $org"
-
-# If notify-send is available, also show a desktop notification
-if command -v notify-send &>/dev/null; then
-    notify-send "My Location" "$city, $region, $country\n$ip ($org)"
-fi

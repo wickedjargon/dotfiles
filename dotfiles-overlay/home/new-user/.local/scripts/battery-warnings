@@ -5,7 +5,7 @@ import subprocess
 import select
 import shutil
 
-"""Battery monitor script converted to Python."""
+"""Battery monitor script"""
 
 BATTERY_PATH = "/sys/class/power_supply/BAT0"
 SOUND_FILE = "/usr/share/sounds/freedesktop/stereo/suspend-error.oga"
