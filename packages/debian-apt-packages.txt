@@ -12,7 +12,6 @@ fwupd                    # Firmware update daemon (BIOS, Thunderbolt, EC)
 network-manager          # Network connection manager
 openssh-server           # SSH server for remote access
 bluez                    # Bluetooth tools and daemons
-syncthing                # Open Source Continuous File Synchronization
 wireguard                # Fast, modern, secure VPN tunnel
 openresolv               # Used by wg-quick for DNS management
 firmware-mediatek         # MediaTek firmware (AWUS036ACM / MT7612U WiFi adapter)
