@@ -267,11 +267,6 @@ sshd                  # start SSH server
 sv-enable sshd        # auto-start on Termux launch (after restart)
 ```
 
-### Android Settings (Crucial for Reliability)
-To prevent Android from killing the SSH server when the screen is off or in the background, you **must** configure the following on your phone:
-1. **Battery Optimization**: Go to Android Settings → Apps → Termux → Battery and set it to **Unrestricted**.
-2. **Wake Lock**: Pull down your Android notification shade, expand the Termux notification, and tap **Acquire wakelock** (or run `termux-wake-lock` in the terminal).
-
 ### SSH Key Auth (from laptop)
 ```bash
 ssh-copy-id -p 8022 pixel-8
