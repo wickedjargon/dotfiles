@@ -12,10 +12,10 @@
 
 (defun fff-open-file-in-projects ()
   "Select a project from ~/d/projects/ and find-file within it.
-The projects directory itself is always the first candidate."
+The projects directory itself (\".\") is always the first candidate."
   (interactive)
   (let* ((projects-dir (expand-file-name "~/d/projects/"))
-         (parent-name (file-name-nondirectory (directory-file-name projects-dir)))
+         (parent-name ".")
          (dirs (cl-remove-if-not
                 #'file-directory-p
                 (mapcar (lambda (d) (expand-file-name d projects-dir))
