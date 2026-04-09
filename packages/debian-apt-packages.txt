@@ -15,7 +15,6 @@ bluez                    # Bluetooth tools and daemons
 wireguard                # Fast, modern, secure VPN tunnel
 openresolv               # Used by wg-quick for DNS management
 firmware-mediatek         # MediaTek firmware (AWUS036ACM / MT7612U WiFi adapter)
-gir1.2-nm-1.0            # NetworkManager GObject introspection (for dmenu-network-manager)
 python3-googleapi        # Google API client library (for google-calendar)
 python3-google-auth-oauthlib  # Google OAuth2 authentication (for google-calendar)
 

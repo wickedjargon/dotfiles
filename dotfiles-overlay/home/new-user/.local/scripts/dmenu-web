@@ -1,7 +1,12 @@
 #!/bin/sh
 . ~/.config/dmenu/config
 
-# web-related scripts and packages go here
+search() {
+    query=$(printf '' | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p "Search $1: ")
+    [ -z "$query" ] && return
+    encoded=$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote_plus(sys.argv[1]))' "$query")
+    eval "$2"
+}
 
 case "$(printf "Firefox\nFirefox Private\nGoogle Chrome\nTor Browser\nBookmarks\nUpload Selection\nGmail\nWhatsApp\nTelegram\nYouTube\nGoogle Calendar\nSearch Google\nSearch Yandex\nSearch Wiby\nSearch Wikipedia\nSearch YouTube\nSearch Yeetube\nYouTube to MPV" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Web:')" in
     'Firefox') firefox --new-window ;;
@@ -15,12 +20,12 @@ case "$(printf "Firefox\nFirefox Private\nGoogle Chrome\nTor Browser\nBookmarks\
     'Telegram') firefox --new-window "https://web.telegram.org/" ;;
     'YouTube') firefox --new-window "https://www.youtube.com/" ;;
     'Google Calendar') firefox --new-window "https://calendar.google.com/" ;;
-    'Search Google') dmenu-search-google ;;
-    'Search Yandex') dmenu-search-yandex ;;
-    'Search Wiby') dmenu-search-wiby ;;
-    'Search Wikipedia') dmenu-search-wikipedia ;;
-    'Search YouTube') dmenu-search-youtube ;;
-    'Search Yeetube') dmenu-search-yeetube ;;
+    'Search Google') search "Google" 'firefox --new-window "https://www.google.com/search?q=${encoded}"' ;;
+    'Search Yandex') search "Yandex" 'firefox --new-window "https://yandex.com/search/?text=${encoded}"' ;;
+    'Search Wiby') search "Wiby" 'firefox --new-window "http://wiby.me/?q=${encoded}"' ;;
+    'Search Wikipedia') search "Wikipedia" 'firefox --new-window "https://en.wikipedia.org/wiki/Special:Search?search=${encoded}"' ;;
+    'Search YouTube') search "YouTube" 'firefox --new-window "https://www.youtube.com/results?search_query=${encoded}"' ;;
+    'Search Yeetube') search "Yeetube" 'emacsclient -c -a "" --eval "(yeetube-search \"${query}\")"' ;;
     'YouTube to MPV') browser-to-mpv ;;
     *) exit 1 ;;
 esac

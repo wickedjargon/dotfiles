@@ -1,7 +1,9 @@
 #!/bin/sh
 . ~/.config/dmenu/config
 
-case "$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\nReload Desktop\nClean Local Bin\nDeploy Dotfiles\nScreenshot\nBrightness\nTheme\nBattery Time Left\nStorage Free" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'System:')" in
+choice="$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\nReload Desktop\nClean Local Bin\nDeploy Dotfiles\nScreenshot\nBrightness\nNight\nDay\nTheme Toggle\nTheme Dark\nTheme Light\nBattery Time Left\nStorage Free" | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'System:')"
+
+case "$choice" in
     'Lock') slock ;;
     'Kill X') pkill X ;;
     'Reboot') systemctl reboot -i ;;
@@ -13,8 +15,15 @@ case "$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\n
     'Clean Local Bin') clean-local-bin ;;
     'Deploy Dotfiles') deploy-dotfiles ;;
     'Screenshot') dmenu-screenshot ;;
-    'Brightness') dmenu-brightness ;;
-    'Theme') dmenu-theme ;;
+    'Brightness')
+        level="$(seq 5 5 100 | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" -i -p 'Brightness:')"
+        [ -n "$level" ] && brightnessctl set "${level}%"
+        ;;
+    'Night') night ;;
+    'Day') day ;;
+    'Theme Toggle') theme --toggle ;;
+    'Theme Dark') theme --dark ;;
+    'Theme Light') theme --light ;;
     'Battery Time Left') notify-send "Battery Time Left" "$(battery-time)" ;;
     'Storage Free') storage-notify ;;
     *) exit 1 ;;
