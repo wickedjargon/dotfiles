@@ -7,7 +7,7 @@
 
 `{{h}} | {{j}} | {{k}} | {{l}}`
 
-- Click the left mouse button:
+- Click the left mouse button (Enter also exits):
 
 `{{Space}} | {{Enter}} | {{Left Arrow}}`
 
@@ -24,10 +24,6 @@
 `{{a}} | {{s}} | {{d}} | {{f}}`
 
 - Scroll vertically (Down / Up):
-
-`{{n}}` / `{{p}}`
-
-- Fast vertical scrolling (Down / Up):
 
 `{{=}}` / `{{-}}`
 
