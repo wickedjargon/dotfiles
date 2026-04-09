@@ -1,7 +1,7 @@
 #!/bin/sh
 # rofi-system — System actions with Alt+c to copy command.
 
-selection=$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\nReload Desktop\nClean Local Bin\nDeploy Dotfiles\nScreenshot\nBrightness\nNight\nDay\nTheme Toggle\nTheme Dark\nTheme Light\nBattery Time Left\nStorage Free" | rofi -dmenu -i -p "System:" -kb-custom-1 "Alt+c")
+selection=$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\nReload Desktop\nClean Local Bin\nDeploy Dotfiles\nScreenshot\nBrightness\nNight\nDay\nTheme Toggle\nTheme Dark\nTheme Light\nBattery Time Left\nStorage Free" | rofi -dmenu -i -p "System" -kb-custom-1 "Alt+c")
 exit_code=$?
 
 [ $exit_code -eq 1 ] && exit 0
@@ -20,7 +20,7 @@ case "$selection" in
     'Deploy Dotfiles') cmd='deploy-dotfiles' ;;
     'Screenshot') cmd='dmenu-screenshot' ;;
     'Brightness')
-        level=$(seq 5 5 100 | rofi -dmenu -i -p "Brightness:")
+        level=$(seq 5 5 100 | rofi -dmenu -i -p "Brightness")
         [ -z "$level" ] && exit 0
         cmd="brightnessctl set ${level}%"
         ;;

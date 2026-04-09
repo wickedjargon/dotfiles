@@ -62,7 +62,7 @@ PROJECTS_DIR = (Path.home() / "d" / "projects").resolve()
 MUSIC_DIR = (Path.home() / "d" / "audio").resolve()
 
 
-def rofi_select(options, prompt="Browse:"):
+def rofi_select(options, prompt="Browse"):
     """Present options in rofi and return (exit_code, selected_text).
 
     Exit codes:
@@ -277,7 +277,7 @@ def open_project(path):
     """Prompt to open project in emacsclient or antigravity"""
     options = ["emacsclient", "antigravity"]
 
-    exit_code, choice = rofi_select(options, prompt="Open project with:")
+    exit_code, choice = rofi_select(options, prompt="Open project with")
     if exit_code != 0 or not choice:
         return
 
@@ -337,7 +337,7 @@ def main():
         max_len = 40
         if len(dir_name) > max_len:
             dir_name = dir_name[:max_len] + "..."
-        prompt = f"{dir_name}:"
+        prompt = f"{dir_name}"
 
         exit_code, selection = rofi_select(options, prompt=prompt)
 

@@ -2,13 +2,13 @@
 # rofi-web — Web launchers and search with Alt+c to copy command.
 
 search() {
-    query=$(printf '' | rofi -dmenu -i -p "Search $1:")
+    query=$(printf '' | rofi -dmenu -i -p "Search $1")
     [ -z "$query" ] && return
     encoded=$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote_plus(sys.argv[1]))' "$query")
     eval "$2"
 }
 
-selection=$(printf "Firefox\nFirefox Private\nGoogle Chrome\nTor Browser\nBookmarks\nUpload Selection\nGmail\nWhatsApp\nTelegram\nYouTube\nGoogle Calendar\nSearch Google\nSearch Yandex\nSearch Wiby\nSearch Wikipedia\nSearch YouTube\nSearch Yeetube\nYouTube to MPV" | rofi -dmenu -i -p "Web:" -kb-custom-1 "Alt+c")
+selection=$(printf "Firefox\nFirefox Private\nGoogle Chrome\nTor Browser\nBookmarks\nUpload Selection\nGmail\nWhatsApp\nTelegram\nYouTube\nGoogle Calendar\nSearch Google\nSearch Yandex\nSearch Wiby\nSearch Wikipedia\nSearch YouTube\nSearch Yeetube\nYouTube to MPV" | rofi -dmenu -i -p "Web" -kb-custom-1 "Alt+c")
 exit_code=$?
 
 [ $exit_code -eq 1 ] && exit 0

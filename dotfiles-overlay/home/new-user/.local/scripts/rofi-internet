@@ -9,7 +9,7 @@ delete_wifi_connection() {
         return
     fi
 
-    selected=$(printf "%s" "$connections" | rofi -dmenu -i -p "Delete Connection:")
+    selected=$(printf "%s" "$connections" | rofi -dmenu -i -p "Delete Connection")
     [ -z "$selected" ] && return
 
     confirm=$(printf "No\nYes" | rofi -dmenu -i -p "Delete '$selected'?")
@@ -23,7 +23,7 @@ delete_wifi_connection() {
     fi
 }
 
-selection=$(printf "Connect to WiFi Network\nRescan WiFi Networks\nShow Current WiFi Network\nDisconnect from WiFi Network\nDelete WiFi Connection\nShow Password of WiFi Connection\nVPN\nMAC Address" | rofi -dmenu -i -p "Internet:" -kb-custom-1 "Alt+c")
+selection=$(printf "Connect to WiFi Network\nRescan WiFi Networks\nShow Current WiFi Network\nDisconnect from WiFi Network\nDelete WiFi Connection\nShow Password of WiFi Connection\nVPN\nMAC Address" | rofi -dmenu -i -p "Internet" -kb-custom-1 "Alt+c")
 exit_code=$?
 
 [ $exit_code -eq 1 ] && exit 0
