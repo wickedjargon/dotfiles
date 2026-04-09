@@ -1,0 +1,23 @@
+#!/bin/bash
+# Script to restart the ThinkPad TrackPoint kernel module.
+# Run this from within your distrobox container, or directly on the host.
+
+echo "🔄 Soft-restarting the TrackPoint driver (psmouse)..."
+
+# Use distrobox-host-exec if inside a container, otherwise run directly
+if command -v distrobox-host-exec &> /dev/null; then
+    PREFIX="distrobox-host-exec "
+else
+    PREFIX=""
+fi
+
+# We use sudo directly here. It will safely prompt you for your password in the terminal.
+${PREFIX}sudo modprobe -r psmouse
+if [ $? -eq 0 ]; then
+    sleep 1
+    ${PREFIX}sudo modprobe psmouse
+    echo "✅ TrackPoint driver restarted successfully!"
+else
+    echo "❌ Failed to remove the psmouse module. Make sure you enter your host sudo password correctly."
+    exit 1
+fi
