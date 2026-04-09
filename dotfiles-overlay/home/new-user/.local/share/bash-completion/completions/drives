@@ -1,0 +1,35 @@
+# bash completion for drives
+_drives() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Complete subcommands at position 1
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "mount unmount eject open list help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+
+    # Commands that accept a device name
+    # Note: RM is placed before MOUNTPOINT so columns don't shift
+    # when mountpoint is empty (lsblk collapses empty fields)
+    case "$cmd" in
+        mount)
+            # Suggest unmounted removable partitions (no mountpoint = 3 fields)
+            local devs
+            devs=$(lsblk -lnpo NAME,TYPE,RM,MOUNTPOINT 2>/dev/null | awk '$2=="part" && $3=="1" && NF==3 {print $1}' | xargs -I{} basename {})
+            COMPREPLY=( $(compgen -W "$devs" -- "$cur") )
+            ;;
+        unmount|eject|open)
+            # Suggest mounted removable partitions (has mountpoint = 4+ fields)
+            local devs
+            devs=$(lsblk -lnpo NAME,TYPE,RM,MOUNTPOINT 2>/dev/null | awk '$2=="part" && $3=="1" && NF>=4 {print $1}' | xargs -I{} basename {})
+            COMPREPLY=( $(compgen -W "$devs" -- "$cur") )
+            ;;
+    esac
+}
+
+complete -F _drives drives

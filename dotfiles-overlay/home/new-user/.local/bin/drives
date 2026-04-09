@@ -1,0 +1,377 @@
+#!/usr/bin/env python3
+"""drives — manage external USB drives from the command line.
+
+Requires: udisks2 (udisksctl), lsblk
+"""
+
+import json
+import os
+import subprocess
+import sys
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN = "\033[0;36m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):
+    print(f"{CYAN}▸{RESET} {msg}")
+
+
+def ok(msg):
+    print(f"{GREEN}✓{RESET} {msg}")
+
+
+def warn(msg):
+    print(f"{YELLOW}!{RESET} {msg}")
+
+
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+# ── lsblk parsing ──────────────────────────────────────────────────
+def get_block_devices():
+    """Get block device info from lsblk as a list of dicts."""
+    result = subprocess.run(
+        ["lsblk", "-J", "-o",
+         "NAME,TYPE,MOUNTPOINT,SIZE,LABEL,RM,FSTYPE,HOTPLUG,TRAN,MODEL"],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        die(f"lsblk failed: {result.stderr.strip()}")
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        die("Failed to parse lsblk output")
+    return data.get("blockdevices", [])
+
+
+def get_external_partitions():
+    """Return a list of external/removable partitions.
+
+    Each entry is a dict with keys:
+      name, size, label, fstype, mountpoint, mounted
+    """
+    partitions = []
+    for dev in get_block_devices():
+        # Check if the device is removable or USB-connected
+        removable = dev.get("rm") in (True, "1", 1)
+        transport = (dev.get("tran") or "").lower()
+        is_usb = transport == "usb"
+
+        if not (removable or is_usb):
+            continue
+
+        # Collect partitions (children), or the device itself if no children
+        children = dev.get("children", [])
+        if not children:
+            # Whole-disk without partitions (some thumb drives)
+            if dev.get("type") in ("disk", "part") and dev.get("fstype"):
+                children = [dev]
+
+        for child in children:
+            if child.get("type") not in ("part", "disk"):
+                continue
+            mountpoint = child.get("mountpoint") or child.get("mountpoints", [None])[0] if isinstance(child.get("mountpoints"), list) else child.get("mountpoint")
+            partitions.append({
+                "name": f"/dev/{child['name']}" if not child["name"].startswith("/") else child["name"],
+                "size": child.get("size", "?"),
+                "label": child.get("label") or "",
+                "fstype": child.get("fstype") or "",
+                "mountpoint": mountpoint,
+                "mounted": bool(mountpoint),
+                "model": dev.get("model") or "",
+            })
+    return partitions
+
+
+def resolve_device(partitions, name=None, want_mounted=None):
+    """Resolve which partition to act on.
+
+    If name is given, find it in the list.
+    If omitted, auto-select if exactly one candidate matches want_mounted.
+    want_mounted: True = only mounted, False = only unmounted, None = any.
+    """
+    if want_mounted is not None:
+        candidates = [p for p in partitions if p["mounted"] == want_mounted]
+    else:
+        candidates = partitions
+
+    if name:
+        # Normalize: accept "sdb1", "/dev/sdb1", or a label
+        for p in candidates:
+            dev_basename = os.path.basename(p["name"])
+            if name in (p["name"], dev_basename, p["label"]):
+                return p
+        # Not found
+        print(f"Error: '{name}' not found among external drives.", file=sys.stderr)
+        if candidates:
+            print("Available:", file=sys.stderr)
+            for p in candidates:
+                _print_drive_line(p, indent="  ")
+        sys.exit(1)
+
+    if not candidates:
+        state = {True: "mounted", False: "unmounted"}.get(want_mounted, "")
+        if state:
+            die(f"No {state} external drives found")
+        else:
+            die("No external drives found")
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    # Multiple candidates — ask user to specify
+    state = {True: "mounted", False: "unmounted"}.get(want_mounted, "external")
+    print(f"Multiple {state} drives found:", file=sys.stderr)
+    for p in candidates:
+        _print_drive_line(p, indent="  ")
+    print(f"\nSpecify one, e.g.: drives mount {os.path.basename(candidates[0]['name'])}", file=sys.stderr)
+    sys.exit(1)
+
+
+def _format_drive_label(p):
+    """Format a human-readable label for a partition."""
+    parts = [os.path.basename(p["name"])]
+    if p["label"]:
+        parts.append(f'"{p["label"]}"')
+    parts.append(p["size"])
+    if p["fstype"]:
+        parts.append(p["fstype"])
+    return "  ".join(parts)
+
+
+def _print_drive_line(p, indent=""):
+    """Print a single drive line with status indicator."""
+    label = _format_drive_label(p)
+    if p["mounted"]:
+        print(f"{indent}{GREEN}●{RESET} {label}  {DIM}→ {p['mountpoint']}{RESET}")
+    else:
+        print(f"{indent}{DIM}○{RESET} {label}  {DIM}(unmounted){RESET}")
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status(partitions):
+    """Show status of all external drives."""
+    if not partitions:
+        print("No external drives detected.")
+        return
+
+    mounted = [p for p in partitions if p["mounted"]]
+    unmounted = [p for p in partitions if not p["mounted"]]
+
+    if mounted:
+        print(f"{BOLD}Mounted{RESET}")
+        for p in mounted:
+            _print_drive_line(p, indent="  ")
+
+    if unmounted:
+        if mounted:
+            print()
+        print(f"{BOLD}Unmounted{RESET}")
+        for p in unmounted:
+            _print_drive_line(p, indent="  ")
+
+
+def cmd_list(partitions):
+    """List external drives."""
+    if not partitions:
+        print("No external drives detected.")
+        return
+
+    for p in partitions:
+        name = os.path.basename(p["name"])
+        label = p["label"] or ""
+        size = p["size"]
+        fstype = p["fstype"] or ""
+        mount = p["mountpoint"] or "(unmounted)"
+        print(f"{name:<10} {size:<8} {fstype:<6} {label:<16} {mount}")
+
+
+def cmd_mount(partitions, args):
+    """Mount an external drive."""
+    device_name = args[0] if args else None
+    p = resolve_device(partitions, device_name, want_mounted=False)
+
+    info(f"Mounting {BOLD}{os.path.basename(p['name'])}{RESET}...")
+    result = subprocess.run(
+        ["udisksctl", "mount", "-b", p["name"]],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        die(f"Failed to mount {p['name']}: {result.stderr.strip()}")
+
+    # Parse mount point from udisksctl output
+    # e.g. "Mounted /dev/sdb1 at /run/media/user/LABEL."
+    output = result.stdout.strip()
+    mountpoint = ""
+    if " at " in output:
+        mountpoint = output.split(" at ", 1)[1].rstrip(".")
+
+    label = _format_drive_label(p)
+    if mountpoint:
+        ok(f"Mounted {label}  {DIM}→ {mountpoint}{RESET}")
+    else:
+        ok(f"Mounted {label}")
+
+
+def cmd_unmount(partitions, args):
+    """Unmount an external drive."""
+    device_name = args[0] if args else None
+    p = resolve_device(partitions, device_name, want_mounted=True)
+
+    info(f"Unmounting {BOLD}{os.path.basename(p['name'])}{RESET}...")
+    result = subprocess.run(
+        ["udisksctl", "unmount", "-b", p["name"]],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        die(f"Failed to unmount {p['name']}: {result.stderr.strip()}")
+
+    label = _format_drive_label(p)
+    ok(f"Unmounted {label}")
+
+
+def cmd_eject(partitions, args):
+    """Unmount and power off an external drive for safe removal."""
+    device_name = args[0] if args else None
+    p = resolve_device(partitions, device_name, want_mounted=None)
+
+    # Unmount first if mounted
+    if p["mounted"]:
+        info(f"Unmounting {BOLD}{os.path.basename(p['name'])}{RESET}...")
+        result = subprocess.run(
+            ["udisksctl", "unmount", "-b", p["name"]],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            die(f"Failed to unmount {p['name']}: {result.stderr.strip()}")
+
+    # Get the parent disk device for power-off (e.g. /dev/sdb from /dev/sdb1)
+    dev_basename = os.path.basename(p["name"])
+    # Strip trailing partition number to get the disk
+    import re
+    disk_match = re.match(r"^(sd[a-z]+|nvme\d+n\d+)", dev_basename)
+    if disk_match:
+        disk_device = f"/dev/{disk_match.group(1)}"
+    else:
+        disk_device = p["name"]
+
+    info(f"Powering off {BOLD}{os.path.basename(disk_device)}{RESET}...")
+    result = subprocess.run(
+        ["udisksctl", "power-off", "-b", disk_device],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        die(f"Failed to power off {disk_device}: {result.stderr.strip()}")
+
+    label = _format_drive_label(p)
+    ok(f"Ejected {label} — safe to remove")
+
+
+def cmd_open(partitions, args):
+    """Open a mounted drive in the file manager or terminal."""
+    device_name = args[0] if args else None
+    p = resolve_device(partitions, device_name, want_mounted=True)
+
+    mountpoint = p["mountpoint"]
+    if not mountpoint:
+        die(f"{p['name']} is not mounted")
+
+    from shutil import which
+
+    if which("xdg-open"):
+        info(f"Opening {BOLD}{mountpoint}{RESET}...")
+        subprocess.Popen(
+            ["xdg-open", mountpoint],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    elif os.environ.get("TERMINAL") and which(os.environ["TERMINAL"]):
+        terminal = os.environ["TERMINAL"]
+        shell = os.environ.get("SHELL", "/bin/sh")
+        info(f"Opening {BOLD}{mountpoint}{RESET} in {terminal}...")
+        subprocess.Popen(
+            [terminal, "-e", shell, "-c", f"cd '{mountpoint}' && exec {shell}"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    else:
+        ok(mountpoint)
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: drives [command] [device]
+
+Manage external USB drives from the command line.
+
+commands:
+  (none)                        show status of all external drives
+  mount [DEVICE]                mount a drive
+  unmount [DEVICE]              unmount a drive
+  eject [DEVICE]                unmount + power off for safe removal
+  open [DEVICE]                 open mounted drive in file manager
+  list                          list external drives (verbose)
+
+DEVICE can be a device name (sdb1), full path (/dev/sdb1), or a
+filesystem label. If omitted and exactly one candidate exists, it
+is selected automatically.
+
+examples:
+  drives                        show what's plugged in
+  drives mount                  mount the only unmounted drive
+  drives mount sdb1             mount /dev/sdb1 specifically
+  drives unmount                unmount the only mounted drive
+  drives eject                  safely eject for removal
+  drives open                   open in file manager
+  drives list                   show external drives in detail"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    # Check for udisksctl
+    from shutil import which
+    if not which("udisksctl"):
+        die("udisks2 not installed (need udisksctl)")
+
+    if len(sys.argv) < 2:
+        partitions = get_external_partitions()
+        cmd_status(partitions)
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    partitions = get_external_partitions()
+
+    if command == "list":
+        cmd_list(partitions)
+        return
+
+    commands = {
+        "mount": lambda: cmd_mount(partitions, args),
+        "unmount": lambda: cmd_unmount(partitions, args),
+        "eject": lambda: cmd_eject(partitions, args),
+        "open": lambda: cmd_open(partitions, args),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'drives --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()
