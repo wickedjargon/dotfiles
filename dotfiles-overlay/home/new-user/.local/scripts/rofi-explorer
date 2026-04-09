@@ -1,0 +1,383 @@
+#!/usr/bin/env python3
+"""
+rofi-explorer
+
+Rofi-based file navigator with basic file associations.
+- Starts at ~/d by default or a provided path argument.
+- Shows directories and files (including hidden).
+- ".." navigates to the parent directory.
+- Directories open within rofi; files open with associated apps.
+- Alt+c copies the full path of the selected item to clipboard.
+"""
+
+import argparse
+import os
+import shlex
+import subprocess
+from pathlib import Path
+
+TEXT_EXTENSIONS = {
+    ".txt",
+    ".md",
+    ".org",
+    ".py",
+    ".sh",
+    ".c",
+    ".h",
+    ".rs",
+    ".go",
+    ".js",
+    ".ts",
+    ".el",
+    ".lisp",
+    ".scm",
+    ".clj",
+    ".lua",
+    ".rb",
+    ".html",
+    ".css",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".toml",
+    ".ini",
+    ".conf",
+    ".cfg",
+    ".csv",
+    ".xml",
+    ".tex",
+    ".rst",
+    ".log",
+}
+
+DOCUMENT_EXTENSIONS = {".pdf", ".epub", ".djvu", ".mobi", ".cbz"}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"}
+VIDEO_EXTENSIONS = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv", ".wmv"}
+AUDIO_EXTENSIONS = {".mp3", ".flac", ".ogg", ".wav", ".m4a"}
+PLAYLIST_EXTENSIONS = {".m3u"}
+VM_EXTENSIONS = {".qcow2"}
+
+BOOKMARKS_FILE = (Path.home() / "d" / "notes" / "bm.md").resolve()
+PROJECTS_DIR = (Path.home() / "d" / "projects").resolve()
+MUSIC_DIR = (Path.home() / "d" / "audio").resolve()
+
+
+def rofi_select(options, prompt="Browse:"):
+    """Present options in rofi and return (exit_code, selected_text).
+
+    Exit codes:
+        0  — Enter (accept selection)
+        1  — Escape (cancel)
+        10 — Alt+c (copy path)
+    """
+    rofi_input = "\n".join(options)
+
+    cmd = [
+        "rofi",
+        "-dmenu",
+        "-i",
+        "-p",
+        prompt,
+        "-kb-custom-1",
+        "Alt+c",
+    ]
+
+    result = subprocess.run(cmd, input=rofi_input, capture_output=True, text=True)
+    selected = result.stdout.strip()
+    return result.returncode, selected if selected else None
+
+
+def list_directory(current_path):
+    options = [".."]
+    entries = []
+
+    try:
+        with os.scandir(current_path) as it:
+            for entry in it:
+                display_name = entry.name
+                if entry.is_dir(follow_symlinks=True):
+                    display_name = f"{display_name}/"
+                entries.append((display_name, entry.path))
+    except OSError:
+        pass
+
+    entries.sort(key=lambda x: (not x[0].endswith("/"), x[0].lower()))
+    options.extend([display for display, _ in entries])
+    mapping = {display: Path(path) for display, path in entries}
+
+    return options, mapping
+
+
+def to_rel_path(path):
+    """Convert path to be relative to MUSIC_DIR if it's inside it."""
+    try:
+        return path.resolve().relative_to(MUSIC_DIR)
+    except (ValueError, OSError):
+        return path
+
+
+def run_mpc(args):
+    """Run mpc command and notify on error."""
+    try:
+        result = subprocess.run(["mpc"] + args, capture_output=True, text=True)
+        if result.returncode != 0:
+            error_msg = result.stderr.strip() or "Unknown error"
+            subprocess.run(
+                [
+                    "notify-send",
+                    "MPD Error",
+                    f"Command: mpc {' '.join(args)}\n{error_msg}",
+                ]
+            )
+            return False
+        return True
+    except FileNotFoundError:
+        subprocess.run(["notify-send", "Error", "mpc not found"])
+        return False
+
+
+def open_file(path, run_executables=False):
+    resolved = path.resolve()
+    if resolved == BOOKMARKS_FILE:
+        subprocess.Popen(["dmenu-bookmarks"])
+        return
+
+    if run_executables and path.is_file() and os.access(path, os.X_OK):
+        subprocess.Popen([str(path)], cwd=str(path.parent))
+        return
+
+    ext = path.suffix.lower()
+    if ext in TEXT_EXTENSIONS:
+        subprocess.Popen(["emacsclient", "-c", "-a", "", str(path)])
+    elif ext in DOCUMENT_EXTENSIONS:
+        subprocess.Popen(["zathura", str(path)])
+    elif ext in IMAGE_EXTENSIONS:
+        subprocess.Popen(["sxiv", str(path)])
+    elif ext in PLAYLIST_EXTENSIONS:
+        if "video" in path.name.lower():
+            quoted_path = shlex.quote(str(path))
+            cmd = f"mpv {quoted_path} || notify-send 'MPV Error' 'Failed to play {path.name}'"
+            subprocess.Popen(cmd, shell=True)
+        else:
+            run_mpc(["clear"])
+            rel_playlist = to_rel_path(path)
+            if run_mpc(["load", str(rel_playlist)]):
+                run_mpc(["play"])
+
+    elif ext in AUDIO_EXTENSIONS:
+        files_in_current = []
+        try:
+            for item in path.parent.iterdir():
+                if item.suffix.lower() in AUDIO_EXTENSIONS:
+                    files_in_current.append(item)
+        except OSError:
+            pass
+
+        files_in_current.sort(key=lambda x: x.name.lower())
+        run_mpc(["clear"])
+
+        target_pos = 1
+        found = False
+
+        for i, sibling in enumerate(files_in_current, 1):
+            rel_sib = to_rel_path(sibling)
+            subprocess.run(["mpc", "add", str(rel_sib)], capture_output=True)
+            if sibling.name == path.name:
+                target_pos = i
+                found = True
+
+        if found:
+            run_mpc(["play", str(target_pos)])
+        else:
+            run_mpc(["add", str(to_rel_path(path))])
+            run_mpc(["play"])
+
+    elif ext in VIDEO_EXTENSIONS:
+        subprocess.Popen(["mpv", str(path)])
+    elif ext in VM_EXTENSIONS:
+        parts = path.stem.rsplit(".", 2)
+        arch = parts[1] if len(parts) >= 3 else "x86_64"
+        ram = parts[2].replace("GB", "G") if len(parts) >= 3 else "1G"
+        cmd = [
+            f"qemu-system-{arch}",
+            "-m",
+            ram,
+        ]
+        if arch == "x86_64":
+            cmd.extend(
+                [
+                    "-drive",
+                    f"file={path},format=qcow2",
+                    "-enable-kvm",
+                    "-net",
+                    "user,hostfwd=tcp::2222-:22",
+                    "-net",
+                    "nic",
+                    "-device",
+                    "intel-hda",
+                    "-device",
+                    "hda-output",
+                    "-display",
+                    "gtk,zoom-to-fit=on",
+                ]
+            )
+        elif arch == "aarch64":
+            cmd.extend(
+                [
+                    "-machine",
+                    "virt",
+                    "-cpu",
+                    "cortex-a57",
+                    "-drive",
+                    f"file={path},format=qcow2,if=virtio",
+                    "-net",
+                    "user,hostfwd=tcp::2223-:22",
+                    "-net",
+                    "nic,model=virtio",
+                    "-display",
+                    "gtk,zoom-to-fit=on",
+                    "-bios",
+                    "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd",
+                    "-device",
+                    "virtio-gpu-pci",
+                    "-device",
+                    "qemu-xhci",
+                    "-device",
+                    "usb-kbd",
+                    "-device",
+                    "usb-mouse",
+                ]
+            )
+        subprocess.Popen(cmd)
+    else:
+        subprocess.Popen(["xdg-open", str(path)])
+
+
+def copy_to_clipboard(text):
+    """Copy text to clipboard via xclip and notify."""
+    try:
+        p = subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE)
+        p.communicate(input=text.encode("utf-8"))
+        subprocess.run(["notify-send", "Copied Path", text])
+    except FileNotFoundError:
+        subprocess.run(["notify-send", "Error", "xclip not installed"])
+
+
+def is_project_dir(path):
+    """Check if path is a direct subdirectory of ~/d/projects"""
+    try:
+        path_resolved = path.resolve()
+        parent = path_resolved.parent.resolve()
+        return parent == PROJECTS_DIR
+    except (ValueError, OSError):
+        return False
+
+
+def open_project(path):
+    """Prompt to open project in emacsclient or antigravity"""
+    options = ["emacsclient", "antigravity"]
+
+    exit_code, choice = rofi_select(options, prompt="Open project with:")
+    if exit_code != 0 or not choice:
+        return
+
+    if choice == "emacsclient":
+        subprocess.Popen(["emacsclient", "-c", str(path)])
+    elif choice == "antigravity":
+        subprocess.Popen(["antigravity", str(path)])
+
+
+def normalize_path(raw_path):
+    expanded = os.path.expandvars(os.path.expanduser(raw_path))
+    return Path(expanded)
+
+
+def resolve_selection(selection, mapping, current_path):
+    """Resolve a selection string to a full Path.
+
+    Returns the resolved Path, or None if unresolvable.
+    """
+    if selection == "..":
+        return current_path.parent
+
+    target = mapping.get(selection)
+    if target:
+        return target
+
+    manual_path = normalize_path(selection)
+    if manual_path.exists():
+        return manual_path
+
+    return None
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Rofi-based file navigator")
+    parser.add_argument("start_path", nargs="?", default=None)
+    parser.add_argument(
+        "--run-executables",
+        action="store_true",
+        help="Run executable files when selected",
+    )
+    args = parser.parse_args()
+
+    start_path = Path.home() / "d"
+    if args.start_path:
+        start_path = normalize_path(args.start_path)
+
+    if not start_path.exists():
+        subprocess.run(["notify-send", "Error", f"Path not found: {start_path}"])
+        return
+
+    current_path = start_path
+
+    while True:
+        options, mapping = list_directory(current_path)
+        dir_name = current_path.name or str(current_path)
+        max_len = 40
+        if len(dir_name) > max_len:
+            dir_name = dir_name[:max_len] + "..."
+        prompt = f"{dir_name}:"
+
+        exit_code, selection = rofi_select(options, prompt=prompt)
+
+        if exit_code == 1 or not selection:
+            # Cancelled
+            return
+
+        if exit_code == 10:
+            # Alt+c: copy full path
+            target = resolve_selection(selection, mapping, current_path)
+            if target:
+                copy_to_clipboard(str(target.resolve()))
+            return
+
+        # Exit code 0: Enter pressed
+        if selection == "..":
+            current_path = current_path.parent
+            continue
+
+        target = mapping.get(selection)
+        if not target:
+            manual_path = normalize_path(selection)
+            if manual_path.is_dir():
+                current_path = manual_path
+                continue
+            if manual_path.exists():
+                open_file(manual_path, run_executables=args.run_executables)
+            return
+
+        if selection.endswith("/") and target.is_dir():
+            # Check if it's a project directory
+            if is_project_dir(target):
+                open_project(target)
+                return
+            current_path = target
+            continue
+
+        open_file(target, run_executables=args.run_executables)
+        return
+
+
+if __name__ == "__main__":
+    main()

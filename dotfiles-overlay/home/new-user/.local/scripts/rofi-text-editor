@@ -1,0 +1,23 @@
+#!/bin/sh
+# rofi-text-editor — Pick a text editor with Alt+c to copy command.
+
+selection=$(printf "Emacs Client\nAntigravity\nEmacs GUI\nStart Emacs Server" | rofi -dmenu -i -p "Text Editor:" -kb-custom-1 "Alt+c")
+exit_code=$?
+
+[ $exit_code -eq 1 ] && exit 0
+[ -z "$selection" ] && exit 0
+
+case "$selection" in
+    'Emacs Client') cmd="emacsclient -c -a ''" ;;
+    'Antigravity') cmd="antigravity" ;;
+    'Emacs GUI') cmd="emacs" ;;
+    'Start Emacs Server') cmd="emacs --daemon" ;;
+    *) exit 1 ;;
+esac
+
+if [ $exit_code -eq 10 ]; then
+    printf '%s' "$cmd" | xclip -selection clipboard
+    notify-send "Copied Command" "$cmd"
+else
+    eval "$cmd"
+fi

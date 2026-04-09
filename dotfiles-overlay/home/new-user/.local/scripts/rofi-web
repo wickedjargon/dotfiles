@@ -1,0 +1,92 @@
+#!/bin/sh
+# rofi-web — Web launchers and search with Alt+c to copy command.
+
+search() {
+    query=$(printf '' | rofi -dmenu -i -p "Search $1:")
+    [ -z "$query" ] && return
+    encoded=$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote_plus(sys.argv[1]))' "$query")
+    eval "$2"
+}
+
+selection=$(printf "Firefox\nFirefox Private\nGoogle Chrome\nTor Browser\nBookmarks\nUpload Selection\nGmail\nWhatsApp\nTelegram\nYouTube\nGoogle Calendar\nSearch Google\nSearch Yandex\nSearch Wiby\nSearch Wikipedia\nSearch YouTube\nSearch Yeetube\nYouTube to MPV" | rofi -dmenu -i -p "Web:" -kb-custom-1 "Alt+c")
+exit_code=$?
+
+[ $exit_code -eq 1 ] && exit 0
+[ -z "$selection" ] && exit 0
+
+case "$selection" in
+    'Firefox') cmd='firefox --new-window' ;;
+    'Firefox Private') cmd='firefox --private-window' ;;
+    'Google Chrome') cmd='/usr/bin/distrobox-enter -n archbox -- /usr/bin/google-chrome-stable' ;;
+    'Tor Browser') cmd='tor-browser' ;;
+    'Bookmarks') cmd='dmenu-bookmarks' ;;
+    'Upload Selection') cmd='upload-selection' ;;
+    'Gmail') cmd='firefox --new-window "https://mail.google.com/"' ;;
+    'WhatsApp') cmd='firefox --new-window "https://web.whatsapp.com/"' ;;
+    'Telegram') cmd='firefox --new-window "https://web.telegram.org/"' ;;
+    'YouTube') cmd='firefox --new-window "https://www.youtube.com/"' ;;
+    'Google Calendar') cmd='firefox --new-window "https://calendar.google.com/"' ;;
+    'Search Google')
+        if [ $exit_code -eq 10 ]; then
+            printf '%s' 'firefox --new-window "https://www.google.com/search?q=QUERY"' | xclip -selection clipboard
+            notify-send "Copied Command" 'Search Google URL template'
+            exit 0
+        fi
+        search "Google" 'firefox --new-window "https://www.google.com/search?q=${encoded}"'
+        exit 0
+        ;;
+    'Search Yandex')
+        if [ $exit_code -eq 10 ]; then
+            printf '%s' 'firefox --new-window "https://yandex.com/search/?text=QUERY"' | xclip -selection clipboard
+            notify-send "Copied Command" 'Search Yandex URL template'
+            exit 0
+        fi
+        search "Yandex" 'firefox --new-window "https://yandex.com/search/?text=${encoded}"'
+        exit 0
+        ;;
+    'Search Wiby')
+        if [ $exit_code -eq 10 ]; then
+            printf '%s' 'firefox --new-window "http://wiby.me/?q=QUERY"' | xclip -selection clipboard
+            notify-send "Copied Command" 'Search Wiby URL template'
+            exit 0
+        fi
+        search "Wiby" 'firefox --new-window "http://wiby.me/?q=${encoded}"'
+        exit 0
+        ;;
+    'Search Wikipedia')
+        if [ $exit_code -eq 10 ]; then
+            printf '%s' 'firefox --new-window "https://en.wikipedia.org/wiki/Special:Search?search=QUERY"' | xclip -selection clipboard
+            notify-send "Copied Command" 'Search Wikipedia URL template'
+            exit 0
+        fi
+        search "Wikipedia" 'firefox --new-window "https://en.wikipedia.org/wiki/Special:Search?search=${encoded}"'
+        exit 0
+        ;;
+    'Search YouTube')
+        if [ $exit_code -eq 10 ]; then
+            printf '%s' 'firefox --new-window "https://www.youtube.com/results?search_query=QUERY"' | xclip -selection clipboard
+            notify-send "Copied Command" 'Search YouTube URL template'
+            exit 0
+        fi
+        search "YouTube" 'firefox --new-window "https://www.youtube.com/results?search_query=${encoded}"'
+        exit 0
+        ;;
+    'Search Yeetube')
+        if [ $exit_code -eq 10 ]; then
+            printf '%s' 'emacsclient -c -a "" --eval "(yeetube-search \"QUERY\")"' | xclip -selection clipboard
+            notify-send "Copied Command" 'Search Yeetube command template'
+            exit 0
+        fi
+        search "Yeetube" 'emacsclient -c -a "" --eval "(yeetube-search \"${query}\")"'
+        exit 0
+        ;;
+    'YouTube to MPV') cmd='browser-to-mpv' ;;
+    *) exit 1 ;;
+esac
+
+if [ $exit_code -eq 10 ]; then
+    printf '%s' "$cmd" | xclip -selection clipboard
+    notify-send "Copied Command" "$cmd"
+else
+    eval "$cmd"
+fi

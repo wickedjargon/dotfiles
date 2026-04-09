@@ -24,6 +24,7 @@ mpd & # Music Player Daemon
 dunst & # notificatoins
 lxpolkit & # authentication agent
 battery-warnings & # low battery warning
+export CM_LAUNCHER=rofi  # Use rofi for clipmenu
 clipmenud &  # Start clipmenu daemon
 unclutter -idle 1 &  # makes cursor disappear
 

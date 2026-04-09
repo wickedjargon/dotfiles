@@ -1,0 +1,42 @@
+#!/bin/sh
+# rofi-system — System actions with Alt+c to copy command.
+
+selection=$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\nReload Desktop\nClean Local Bin\nDeploy Dotfiles\nScreenshot\nBrightness\nNight\nDay\nTheme Toggle\nTheme Dark\nTheme Light\nBattery Time Left\nStorage Free" | rofi -dmenu -i -p "System:" -kb-custom-1 "Alt+c")
+exit_code=$?
+
+[ $exit_code -eq 1 ] && exit 0
+[ -z "$selection" ] && exit 0
+
+case "$selection" in
+    'Lock') cmd='slock' ;;
+    'Kill X') cmd='pkill X' ;;
+    'Reboot') cmd='systemctl reboot -i' ;;
+    'Poweroff') cmd='systemctl poweroff -i' ;;
+    'Hibernate') cmd='slock & sleep 0.2 && systemctl hibernate' ;;
+    'Display Off') cmd='xset dpms force off' ;;
+    'Logout') cmd='sys-logout' ;;
+    'Reload Desktop') cmd='reload-desktop' ;;
+    'Clean Local Bin') cmd='clean-local-bin' ;;
+    'Deploy Dotfiles') cmd='deploy-dotfiles' ;;
+    'Screenshot') cmd='dmenu-screenshot' ;;
+    'Brightness')
+        level=$(seq 5 5 100 | rofi -dmenu -i -p "Brightness:")
+        [ -z "$level" ] && exit 0
+        cmd="brightnessctl set ${level}%"
+        ;;
+    'Night') cmd='night' ;;
+    'Day') cmd='day' ;;
+    'Theme Toggle') cmd='theme --toggle' ;;
+    'Theme Dark') cmd='theme --dark' ;;
+    'Theme Light') cmd='theme --light' ;;
+    'Battery Time Left') cmd='notify-send "Battery Time Left" "$(battery-time)"' ;;
+    'Storage Free') cmd='storage-notify' ;;
+    *) exit 1 ;;
+esac
+
+if [ $exit_code -eq 10 ]; then
+    printf '%s' "$cmd" | xclip -selection clipboard
+    notify-send "Copied Command" "$cmd"
+else
+    eval "$cmd"
+fi

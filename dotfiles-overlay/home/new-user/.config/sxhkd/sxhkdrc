@@ -92,9 +92,9 @@ super + l
 super + Return
     alacritty
 
-# dmenu
+# Run launcher
 super + d
-    dmenu-run
+    rofi-run
 
 # App finder
 super + space
@@ -102,15 +102,15 @@ super + space
 
 # Text editor menu
 super + m
-    dmenu-text-editor
+    rofi-text-editor
 
 # Web menu
 super + w
-    dmenu-web
+    rofi-web
 
-# Commands menu
+# Bluetooth menu
 super + b
-    dmenu-bluetooth
+    rofi-bluetooth
 
 # Show keybindings
 super + slash
@@ -118,27 +118,27 @@ super + slash
 
 # System menu
 super + BackSpace
-    dmenu-system
+    rofi-system
 
 # Clipmenu
 super + c
-    clipmenu
+    CM_LAUNCHER=rofi clipmenu
 
 # Internet menu
 super + i
-    dmenu-internet
+    rofi-internet
 
 # File explorer
 super + e
-    dmenu-explorer
+    rofi-explorer
 
 # Audio explorer
 super + comma
-    dmenu-explorer ~/d/audio/; mpd-notification
+    rofi-explorer ~/d/audio/; mpd-notification
 
 # Scripts menu
 super + s
-    dmenu-explorer "~/.local/bin/" --run-executables
+    rofi-explorer "~/.local/bin/" --run-executables
 
 # Instant fullscreen screenshot
 F12
