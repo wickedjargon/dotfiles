@@ -1,0 +1,553 @@
+#!/usr/bin/env python3
+"""wifi — manage WiFi connections from the command line.
+
+Requires: NetworkManager (nmcli)
+"""
+
+import getpass
+import os
+import re
+import subprocess
+import sys
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN = "\033[0;36m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):
+    print(f"{CYAN}▸{RESET} {msg}")
+
+
+def ok(msg):
+    print(f"{GREEN}✓{RESET} {msg}")
+
+
+def warn(msg):
+    print(f"{YELLOW}!{RESET} {msg}")
+
+
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def nmcli(*args, check=False):
+    """Run an nmcli command and return the CompletedProcess."""
+    result = subprocess.run(
+        ["nmcli"] + list(args),
+        capture_output=True, text=True,
+    )
+    if check and result.returncode != 0:
+        die(f"nmcli failed: {result.stderr.strip()}")
+    return result
+
+
+def signal_bars(strength):
+    """Convert signal percentage (0-100) to a bar display."""
+    if strength >= 80:
+        return "▂▄▆█"
+    elif strength >= 60:
+        return "▂▄▆ "
+    elif strength >= 40:
+        return "▂▄  "
+    elif strength >= 20:
+        return "▂   "
+    else:
+        return "    "
+
+
+def signal_color(strength):
+    """Return color code for signal strength."""
+    if strength >= 60:
+        return GREEN
+    elif strength >= 40:
+        return YELLOW
+    else:
+        return RED
+
+
+# ── nmcli Parsing ──────────────────────────────────────────────────
+def get_active_connection():
+    """Get the active WiFi connection info.
+
+    Returns a dict with keys:
+      ssid, device, signal, speed, ip, security
+    or None if not connected.
+    """
+    result = nmcli("-t", "-f", "NAME,TYPE,DEVICE", "connection", "show", "--active")
+    if result.returncode != 0:
+        return None
+
+    wifi_device = None
+    wifi_name = None
+    for line in result.stdout.strip().splitlines():
+        parts = line.split(":")
+        if len(parts) >= 3:
+            name, conn_type, device = parts[0], parts[1], parts[2]
+            if "802-11-wireless" in conn_type or device.startswith("wl"):
+                wifi_name = name
+                wifi_device = device
+                break
+
+    if not wifi_name:
+        return None
+
+    # Get detailed info from the device
+    info_dict = {"ssid": wifi_name, "device": wifi_device}
+
+    # Get signal and speed from iw/nmcli device
+    dev_result = nmcli("-t", "-f", "GENERAL.CONNECTION,WIRED-PROPERTIES",
+                       "device", "show", wifi_device)
+
+    # Get SSID and signal from wifi list for current AP
+    wifi_result = nmcli("-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY,FREQ,RATE",
+                        "device", "wifi", "list")
+    if wifi_result.returncode == 0:
+        for line in wifi_result.stdout.strip().splitlines():
+            if line.startswith("*:"):
+                parts = line.split(":")
+                if len(parts) >= 6:
+                    info_dict["ssid"] = parts[1].replace(r"\:", ":")
+                    info_dict["signal"] = int(parts[2]) if parts[2].isdigit() else 0
+                    info_dict["security"] = parts[3]
+                    info_dict["rate"] = parts[5]
+                break
+
+    # Get IP address
+    ip_result = nmcli("-t", "-f", "IP4.ADDRESS", "device", "show", wifi_device)
+    if ip_result.returncode == 0:
+        for line in ip_result.stdout.strip().splitlines():
+            if line.startswith("IP4.ADDRESS"):
+                ip_val = line.split(":", 1)[1].strip()
+                info_dict["ip"] = ip_val
+                break
+
+    return info_dict
+
+
+def get_wifi_device():
+    """Find the WiFi device name (e.g. wlan0, wlp3s0)."""
+    result = nmcli("-t", "-f", "DEVICE,TYPE", "device")
+    if result.returncode != 0:
+        return None
+    for line in result.stdout.strip().splitlines():
+        parts = line.split(":")
+        if len(parts) >= 2 and parts[1] == "wifi":
+            return parts[0]
+    return None
+
+
+def is_wifi_enabled():
+    """Check if WiFi radio is enabled."""
+    result = nmcli("radio", "wifi")
+    if result.returncode != 0:
+        return False
+    return "enabled" in result.stdout.strip().lower()
+
+
+def get_available_networks():
+    """Get list of available WiFi networks.
+
+    Returns a list of dicts with keys:
+      ssid, signal, security, in_use, rate
+    Deduplicated by SSID (keeping strongest signal).
+    """
+    result = nmcli("-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY,RATE",
+                   "device", "wifi", "list")
+    if result.returncode != 0:
+        return []
+
+    seen = {}
+    for line in result.stdout.strip().splitlines():
+        # Handle escaped colons in SSID
+        parts = line.split(":")
+        if len(parts) < 5:
+            continue
+
+        in_use = parts[0].strip() == "*"
+        ssid = parts[1].replace(r"\:", ":").replace(r"\\", "\\")
+        sig = int(parts[2]) if parts[2].isdigit() else 0
+        security = parts[3]
+        rate = parts[4] if len(parts) > 4 else ""
+
+        if not ssid:
+            continue
+
+        if ssid not in seen or sig > seen[ssid]["signal"]:
+            seen[ssid] = {
+                "ssid": ssid,
+                "signal": sig,
+                "security": security,
+                "in_use": in_use,
+                "rate": rate,
+            }
+
+    return sorted(seen.values(), key=lambda n: n["signal"], reverse=True)
+
+
+def get_saved_connections():
+    """Get list of saved WiFi connection profiles.
+
+    Returns a list of dicts with keys: name, uuid
+    """
+    result = nmcli("-t", "-f", "NAME,UUID,TYPE", "connection", "show")
+    if result.returncode != 0:
+        return []
+
+    connections = []
+    for line in result.stdout.strip().splitlines():
+        parts = line.split(":")
+        if len(parts) >= 3 and "802-11-wireless" in parts[2]:
+            connections.append({
+                "name": parts[0],
+                "uuid": parts[1],
+            })
+    return connections
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Show current WiFi connection status."""
+    if not is_wifi_enabled():
+        print(f"{RED}●{RESET} WiFi is {BOLD}disabled{RESET}")
+        return
+
+    conn = get_active_connection()
+    if not conn:
+        print(f"{DIM}○{RESET} WiFi is {BOLD}on{RESET} but not connected")
+        return
+
+    ssid = conn.get("ssid", "?")
+    sig = conn.get("signal", 0)
+    bars = signal_bars(sig)
+    color = signal_color(sig)
+    security = conn.get("security", "")
+    ip_addr = conn.get("ip", "")
+    rate = conn.get("rate", "")
+    device = conn.get("device", "")
+
+    print(f"{GREEN}●{RESET} Connected to {BOLD}{ssid}{RESET}")
+    print(f"  Signal     {color}{bars}{RESET}  {sig}%")
+    if security:
+        print(f"  Security   {security}")
+    if rate:
+        print(f"  Speed      {rate}")
+    if ip_addr:
+        print(f"  IP         {ip_addr}")
+    if device:
+        print(f"  Device     {DIM}{device}{RESET}")
+
+
+def cmd_list():
+    """List available WiFi networks."""
+    if not is_wifi_enabled():
+        die("WiFi is disabled. Run 'wifi toggle' to enable.")
+
+    networks = get_available_networks()
+    if not networks:
+        print("No WiFi networks found. Try 'wifi rescan' first.")
+        return
+
+    # Calculate column widths
+    max_ssid = max(len(n["ssid"]) for n in networks)
+    ssid_width = max(max_ssid, 4) + 2
+
+    for net in networks:
+        ssid = net["ssid"]
+        sig = net["signal"]
+        bars = signal_bars(sig)
+        color = signal_color(sig)
+        security = net["security"] or "Open"
+        in_use = f"{GREEN}*{RESET} " if net["in_use"] else "  "
+
+        sig_str = f"{sig}%".rjust(4)
+        print(f"{in_use}{ssid:<{ssid_width}} {color}{bars}{RESET} {sig_str}   {DIM}{security}{RESET}")
+
+
+def cmd_connect(args):
+    """Connect to a WiFi network."""
+    if not is_wifi_enabled():
+        die("WiFi is disabled. Run 'wifi toggle' to enable.")
+
+    ssid = args[0] if args else None
+
+    if not ssid:
+        # No SSID given — show available networks and ask
+        networks = get_available_networks()
+        if not networks:
+            die("No WiFi networks found. Try 'wifi rescan' first.")
+
+        # Filter out the currently connected network
+        conn = get_active_connection()
+        current = conn["ssid"] if conn else None
+        candidates = [n for n in networks if n["ssid"] != current]
+
+        if not candidates:
+            die("Already connected to the only available network")
+
+        print(f"{BOLD}Available networks:{RESET}")
+        for i, net in enumerate(candidates[:15], 1):
+            sig = net["signal"]
+            color = signal_color(sig)
+            bars = signal_bars(sig)
+            security = net["security"] or "Open"
+            print(f"  {i:2d}. {net['ssid']:<30} {color}{bars}{RESET} {sig}%  {DIM}{security}{RESET}")
+
+        try:
+            choice = input(f"\n{CYAN}▸{RESET} Enter number or SSID: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            sys.exit(0)
+
+        if not choice:
+            sys.exit(0)
+
+        # Try as number first
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(candidates):
+                ssid = candidates[idx]["ssid"]
+            else:
+                die(f"Invalid selection: {choice}")
+        except ValueError:
+            ssid = choice
+
+    # Check if we have a saved connection
+    saved = get_saved_connections()
+    saved_names = [c["name"] for c in saved]
+
+    if ssid in saved_names:
+        info(f"Connecting to {BOLD}{ssid}{RESET} (saved)...")
+        result = nmcli("connection", "up", ssid)
+        if result.returncode == 0:
+            ok(f"Connected to {ssid}")
+        else:
+            warn("Saved connection failed, trying with password...")
+            _connect_with_password(ssid)
+    else:
+        # Check if the network is visible
+        networks = get_available_networks()
+        net = next((n for n in networks if n["ssid"] == ssid), None)
+
+        if net and (net["security"] == "" or net["security"] == "--"):
+            # Open network
+            info(f"Connecting to {BOLD}{ssid}{RESET} (open)...")
+            result = nmcli("device", "wifi", "connect", ssid)
+            if result.returncode == 0:
+                ok(f"Connected to {ssid}")
+            else:
+                die(f"Failed to connect: {result.stderr.strip()}")
+        else:
+            _connect_with_password(ssid)
+
+
+def _connect_with_password(ssid):
+    """Prompt for a password and connect."""
+    try:
+        password = getpass.getpass(f"{CYAN}▸{RESET} Password for {BOLD}{ssid}{RESET}: ")
+    except (EOFError, KeyboardInterrupt):
+        print()
+        sys.exit(0)
+
+    if not password:
+        die("No password entered")
+
+    info(f"Connecting to {BOLD}{ssid}{RESET}...")
+    result = subprocess.run(
+        ["nmcli", "device", "wifi", "connect", ssid, "password", password],
+        capture_output=True, text=True,
+    )
+    if result.returncode == 0:
+        ok(f"Connected to {ssid}")
+    else:
+        die(f"Failed to connect: {result.stderr.strip()}")
+
+
+def cmd_disconnect():
+    """Disconnect from the current WiFi network."""
+    conn = get_active_connection()
+    if not conn:
+        warn("Not connected to any WiFi network")
+        return
+
+    ssid = conn["ssid"]
+    info(f"Disconnecting from {BOLD}{ssid}{RESET}...")
+    result = nmcli("connection", "down", ssid)
+    if result.returncode == 0:
+        ok(f"Disconnected from {ssid}")
+    else:
+        die(f"Failed to disconnect: {result.stderr.strip()}")
+
+
+def cmd_saved():
+    """List saved WiFi connection profiles."""
+    connections = get_saved_connections()
+    if not connections:
+        print("No saved WiFi connections.")
+        return
+
+    conn = get_active_connection()
+    current = conn["ssid"] if conn else None
+
+    print(f"{BOLD}Saved connections{RESET}")
+    for c in connections:
+        if c["name"] == current:
+            print(f"  {GREEN}●{RESET} {c['name']}  {DIM}(active){RESET}")
+        else:
+            print(f"  {DIM}○{RESET} {c['name']}")
+
+
+def cmd_forget(args):
+    """Delete a saved WiFi connection profile."""
+    if not args:
+        die("Specify which connection to forget.\nUsage: wifi forget <SSID>")
+
+    ssid = " ".join(args)
+
+    # Verify it exists
+    saved = get_saved_connections()
+    if not any(c["name"] == ssid for c in saved):
+        die(f"No saved connection named '{ssid}'")
+
+    info(f"Forgetting {BOLD}{ssid}{RESET}...")
+    result = nmcli("connection", "delete", ssid)
+    if result.returncode == 0:
+        ok(f"Forgot {ssid}")
+    else:
+        die(f"Failed to forget: {result.stderr.strip()}")
+
+
+def cmd_password(args):
+    """Show the password of the current or specified WiFi network."""
+    ssid = " ".join(args) if args else None
+
+    if not ssid:
+        # Use current connection
+        conn = get_active_connection()
+        if not conn:
+            die("Not connected. Specify an SSID: wifi password <SSID>")
+        ssid = conn["ssid"]
+
+    # Get password from saved connection
+    result = nmcli("-s", "-t", "-f", "802-11-wireless-security.psk",
+                   "connection", "show", ssid)
+    if result.returncode != 0:
+        die(f"No saved connection for '{ssid}'")
+
+    password = None
+    for line in result.stdout.strip().splitlines():
+        if line.startswith("802-11-wireless-security.psk:"):
+            password = line.split(":", 1)[1].strip()
+            break
+
+    if password:
+        print(f"{BOLD}{ssid}{RESET}: {password}")
+    else:
+        warn(f"No password stored for '{ssid}' (may be an open network)")
+
+
+def cmd_rescan():
+    """Trigger a WiFi rescan."""
+    if not is_wifi_enabled():
+        die("WiFi is disabled. Run 'wifi toggle' to enable.")
+
+    info("Rescanning...")
+    result = nmcli("device", "wifi", "rescan")
+    if result.returncode == 0:
+        ok("Rescan complete")
+        # Show current list
+        cmd_list()
+    else:
+        # Rescan may "fail" if done too recently — that's fine
+        warn("Rescan requested (may take a moment)")
+
+
+def cmd_toggle():
+    """Toggle WiFi radio on/off."""
+    if is_wifi_enabled():
+        info("Turning WiFi off...")
+        nmcli("radio", "wifi", "off")
+        ok("WiFi disabled")
+    else:
+        info("Turning WiFi on...")
+        nmcli("radio", "wifi", "on")
+        ok("WiFi enabled")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: wifi [command] [options]
+
+Manage WiFi connections from the command line.
+
+commands:
+  (none)                        show current connection status
+  list                          list available networks
+  connect [SSID]                connect to a network
+  disconnect                    disconnect from current network
+  saved                         list saved connection profiles
+  forget SSID                   delete a saved connection
+  password [SSID]               show password of a connection
+  rescan                        rescan for available networks
+  toggle                        toggle wifi radio on/off
+
+If SSID is omitted for 'connect', an interactive picker is shown.
+If SSID is omitted for 'password', the current network is used.
+
+examples:
+  wifi                          show what you're connected to
+  wifi list                     see available networks
+  wifi connect                  pick a network interactively
+  wifi connect "My Network"     connect to a specific SSID
+  wifi disconnect               disconnect from current network
+  wifi saved                    list known networks
+  wifi forget "Old Network"     remove a saved connection
+  wifi password                 show current network's password
+  wifi toggle                   turn wifi on/off"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    # Check for nmcli
+    from shutil import which
+    if not which("nmcli"):
+        die("NetworkManager not installed (need nmcli)")
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "list": lambda: cmd_list(),
+        "connect": lambda: cmd_connect(args),
+        "disconnect": lambda: cmd_disconnect(),
+        "saved": lambda: cmd_saved(),
+        "forget": lambda: cmd_forget(args),
+        "password": lambda: cmd_password(args),
+        "rescan": lambda: cmd_rescan(),
+        "toggle": lambda: cmd_toggle(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'wifi --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

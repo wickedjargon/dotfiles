@@ -1,0 +1,740 @@
+#!/usr/bin/env python3
+"""bt — manage Bluetooth devices from the command line.
+
+Requires: bluez (bluetoothctl), pipewire/pulseaudio (pactl)
+"""
+
+import os
+import re
+import subprocess
+import sys
+import time
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN = "\033[0;36m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):
+    print(f"{CYAN}▸{RESET} {msg}")
+
+
+def ok(msg):
+    print(f"{GREEN}✓{RESET} {msg}")
+
+
+def warn(msg):
+    print(f"{YELLOW}!{RESET} {msg}")
+
+
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=5):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+def bluetoothctl(*args, timeout=5):
+    """Run a bluetoothctl command."""
+    return run(["bluetoothctl"] + list(args), timeout=timeout)
+
+
+def refresh_polybar():
+    """Trigger Polybar updates for bluetooth modules."""
+    modules = ["headphones", "miniroll", "musicozy"]
+    for module in modules:
+        run(["polybar-msg", "action", module, "hook", "0"])
+
+
+# ── bluetoothctl Parsing ───────────────────────────────────────────
+def get_devices():
+    """Get all paired/known devices.
+
+    Returns a list of dicts with keys:
+      mac, name, connected, paired, trusted, icon, battery
+    """
+    result = bluetoothctl("devices")
+    if result.returncode != 0:
+        return []
+
+    devices = []
+    for line in result.stdout.strip().splitlines():
+        m = re.match(r"Device\s+([0-9A-F:]{17})\s+(.+)", line)
+        if not m:
+            continue
+
+        mac = m.group(1)
+        name = m.group(2)
+        device_info = _get_device_info(mac)
+        device_info["mac"] = mac
+        device_info["name"] = name
+        devices.append(device_info)
+
+    return devices
+
+
+def _get_device_info(mac):
+    """Get detailed info for a single device from bluetoothctl info."""
+    result = bluetoothctl("info", mac)
+    info_dict = {
+        "connected": False,
+        "paired": False,
+        "trusted": False,
+        "icon": "",
+        "battery": None,
+    }
+
+    if result.returncode != 0:
+        return info_dict
+
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if line.startswith("Connected:"):
+            info_dict["connected"] = "yes" in line.lower()
+        elif line.startswith("Paired:"):
+            info_dict["paired"] = "yes" in line.lower()
+        elif line.startswith("Trusted:"):
+            info_dict["trusted"] = "yes" in line.lower()
+        elif line.startswith("Icon:"):
+            info_dict["icon"] = line.split(":", 1)[1].strip()
+        elif "Battery Percentage" in line:
+            m = re.search(r"\((\d+)\)", line)
+            if m:
+                info_dict["battery"] = int(m.group(1))
+
+    return info_dict
+
+
+def get_connected_devices():
+    """Return only connected devices."""
+    return [d for d in get_devices() if d["connected"]]
+
+
+def is_bluetooth_powered():
+    """Check if the bluetooth controller is powered on."""
+    result = bluetoothctl("show")
+    if result.returncode != 0:
+        return False
+    for line in result.stdout.splitlines():
+        if "Powered:" in line:
+            return "yes" in line.lower()
+    return False
+
+
+def resolve_device(devices, name=None, want_connected=None):
+    """Resolve which device to act on.
+
+    If name is given, match it against MAC or device name.
+    If omitted, auto-select if exactly one candidate exists.
+    """
+    if want_connected is not None:
+        candidates = [d for d in devices if d["connected"] == want_connected]
+    else:
+        candidates = devices
+
+    if name:
+        name_lower = name.lower()
+        for d in candidates:
+            if name_lower in (d["mac"].lower(), d["name"].lower()):
+                return d
+        # Try partial match
+        matches = [d for d in candidates
+                   if name_lower in d["name"].lower()
+                   or name_lower in d["mac"].lower()]
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            print("Multiple matches:", file=sys.stderr)
+            for d in matches:
+                _print_device_line(d, indent="  ")
+            print(f"\nBe more specific, e.g.: bt connect \"{matches[0]['name']}\"",
+                  file=sys.stderr)
+            sys.exit(1)
+        # Not found
+        print(f"Error: '{name}' not found among devices.", file=sys.stderr)
+        if candidates:
+            print("Available:", file=sys.stderr)
+            for d in candidates:
+                _print_device_line(d, indent="  ")
+        sys.exit(1)
+
+    if not candidates:
+        state = {True: "connected", False: "disconnected"}.get(want_connected, "")
+        if state:
+            die(f"No {state} devices found")
+        else:
+            die("No paired devices found")
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    # Multiple candidates — ask user to specify
+    state = {True: "connected", False: "paired"}.get(want_connected, "paired")
+    print(f"Multiple {state} devices:", file=sys.stderr)
+    for d in candidates:
+        _print_device_line(d, indent="  ")
+    print(f"\nSpecify one, e.g.: bt connect \"{candidates[0]['name']}\"",
+          file=sys.stderr)
+    sys.exit(1)
+
+
+def _device_icon(device):
+    """Get a display icon for a device type."""
+    icon = device.get("icon", "")
+    if "audio-headset" in icon or "audio-headphones" in icon:
+        return "🎧"
+    elif "audio" in icon:
+        return "🔊"
+    elif "input-keyboard" in icon:
+        return "⌨ "
+    elif "input-mouse" in icon or "input-tablet" in icon:
+        return "🖱 "
+    elif "phone" in icon:
+        return "📱"
+    else:
+        return "  "
+
+
+def _print_device_line(device, indent=""):
+    """Print a single device line with status."""
+    icon = _device_icon(device)
+    name = device["name"]
+    mac = device["mac"]
+    battery_str = ""
+    if device.get("battery") is not None:
+        battery_str = f"  {device['battery']}%"
+
+    if device["connected"]:
+        print(f"{indent}{GREEN}●{RESET} {icon} {name}{battery_str}  {DIM}{mac}{RESET}")
+    else:
+        print(f"{indent}{DIM}○{RESET} {icon} {name}  {DIM}{mac}{RESET}")
+
+
+# ── Audio Sink Helpers ─────────────────────────────────────────────
+def _find_audio_sink(mac, max_attempts=6, interval=0.5):
+    """Poll for PulseAudio/PipeWire sink to appear."""
+    sink_part = mac.replace(":", "_")
+    for attempt in range(max_attempts):
+        result = run(["pactl", "list", "short", "sinks"])
+        if result.returncode == 0:
+            for line in result.stdout.splitlines():
+                if sink_part in line:
+                    parts = line.split()
+                    if len(parts) >= 2:
+                        return parts[1]
+        if attempt < max_attempts - 1:
+            time.sleep(interval)
+    return None
+
+
+def _set_default_sink(sink_name):
+    """Set the default audio sink and move existing streams."""
+    result = run(["pactl", "set-default-sink", sink_name])
+    if result.returncode != 0:
+        return False
+    # Move existing streams
+    stream_result = run(["pactl", "list", "short", "sink-inputs"])
+    if stream_result.returncode == 0:
+        for line in stream_result.stdout.splitlines():
+            if line.strip():
+                stream_id = line.split()[0]
+                run(["pactl", "move-sink-input", stream_id, sink_name])
+    return True
+
+
+def _wait_sink_gone(mac, max_attempts=20, interval=0.5):
+    """Wait for audio sink to disappear."""
+    sink_part = mac.replace(":", "_")
+    for attempt in range(max_attempts):
+        result = run(["pactl", "list", "short", "sinks"])
+        if result.returncode == 0 and sink_part not in result.stdout:
+            return True
+        if attempt < max_attempts - 1:
+            time.sleep(interval)
+    return False
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status(devices):
+    """Show status of all paired Bluetooth devices."""
+    if not is_bluetooth_powered():
+        print(f"{RED}●{RESET} Bluetooth is {BOLD}off{RESET}")
+        return
+
+    if not devices:
+        print(f"{GREEN}●{RESET} Bluetooth is {BOLD}on{RESET}")
+        print(f"  {DIM}No paired devices{RESET}")
+        return
+
+    connected = [d for d in devices if d["connected"]]
+    disconnected = [d for d in devices if not d["connected"]]
+
+    print(f"{GREEN}●{RESET} Bluetooth is {BOLD}on{RESET}")
+
+    if connected:
+        print(f"\n{BOLD}Connected{RESET}")
+        for d in connected:
+            _print_device_line(d, indent="  ")
+
+    if disconnected:
+        if connected:
+            print()
+        print(f"{BOLD}Paired{RESET}")
+        for d in disconnected:
+            _print_device_line(d, indent="  ")
+
+
+def cmd_list(devices):
+    """List paired devices."""
+    if not devices:
+        print("No paired devices.")
+        return
+
+    for d in devices:
+        name = d["name"]
+        mac = d["mac"]
+        state = "connected" if d["connected"] else "paired"
+        battery = f"  {d['battery']}%" if d.get("battery") is not None else ""
+        icon_type = d.get("icon", "")
+        print(f"{mac}  {name:<30} {state:<12} {icon_type:<20}{battery}")
+
+
+def cmd_connect(devices, args):
+    """Connect to a paired Bluetooth device."""
+    if not is_bluetooth_powered():
+        die("Bluetooth is off. Run 'bt toggle' to enable.")
+
+    device_name = " ".join(args) if args else None
+    device = resolve_device(devices, device_name, want_connected=False)
+
+    mac = device["mac"]
+    name = device["name"]
+    icon = device.get("icon", "")
+    is_audio = "audio" in icon
+
+    info(f"Connecting to {BOLD}{name}{RESET}...")
+
+    # Trust + connect
+    bluetoothctl("trust", mac)
+    bluetoothctl("connect", mac, timeout=10)
+
+    # Verify connection
+    for attempt in range(6):
+        device_info = _get_device_info(mac)
+        if device_info["connected"]:
+            break
+        time.sleep(0.5)
+    else:
+        die(f"Failed to connect to {name}")
+
+    # Audio devices: set up sink
+    if is_audio:
+        sink = _find_audio_sink(mac)
+        if sink:
+            _set_default_sink(sink)
+            ok(f"Connected to {name} (audio routed)")
+        else:
+            ok(f"Connected to {name}")
+            warn("Audio sink not found — audio may not route automatically")
+    else:
+        ok(f"Connected to {name}")
+
+    refresh_polybar()
+
+
+def cmd_disconnect(devices, args):
+    """Disconnect a Bluetooth device."""
+    device_name = " ".join(args) if args else None
+    device = resolve_device(devices, device_name, want_connected=True)
+
+    mac = device["mac"]
+    name = device["name"]
+    icon = device.get("icon", "")
+    is_audio = "audio" in icon
+
+    info(f"Disconnecting {BOLD}{name}{RESET}...")
+
+    bluetoothctl("disconnect", mac)
+
+    # Verify disconnection
+    for attempt in range(10):
+        device_info = _get_device_info(mac)
+        if not device_info["connected"]:
+            break
+        time.sleep(0.2)
+    else:
+        warn("Timeout waiting for disconnection")
+
+    # Wait for audio cleanup
+    if is_audio:
+        _wait_sink_gone(mac)
+
+    ok(f"Disconnected {name}")
+    refresh_polybar()
+
+
+def cmd_reconnect(devices, args):
+    """Disconnect then reconnect a device (useful for audio glitches)."""
+    device_name = " ".join(args) if args else None
+    device = resolve_device(devices, device_name, want_connected=True)
+
+    mac = device["mac"]
+    name = device["name"]
+
+    info(f"Reconnecting {BOLD}{name}{RESET}...")
+
+    # Disconnect
+    bluetoothctl("disconnect", mac)
+    for attempt in range(10):
+        device_info = _get_device_info(mac)
+        if not device_info["connected"]:
+            break
+        time.sleep(0.2)
+
+    _wait_sink_gone(mac)
+    time.sleep(1)
+
+    # Reconnect
+    bluetoothctl("trust", mac)
+    bluetoothctl("connect", mac, timeout=10)
+
+    for attempt in range(6):
+        device_info = _get_device_info(mac)
+        if device_info["connected"]:
+            break
+        time.sleep(0.5)
+    else:
+        die(f"Failed to reconnect to {name}")
+
+    icon = device.get("icon", "")
+    if "audio" in icon:
+        sink = _find_audio_sink(mac)
+        if sink:
+            _set_default_sink(sink)
+
+    ok(f"Reconnected to {name}")
+    refresh_polybar()
+
+
+def _get_card_profiles(mac):
+    """Get available profiles for a bluetooth card from pactl.
+
+    Returns a list of (profile_name, description) tuples.
+    """
+    card = f"bluez_card.{mac.replace(':', '_')}"
+    result = run(["pactl", "list", "cards"])
+    if result.returncode != 0:
+        return []
+
+    profiles = []
+    in_card = False
+    in_profiles = False
+    for line in result.stdout.splitlines():
+        if f"Name: {card}" in line:
+            in_card = True
+            continue
+        if in_card and line.strip().startswith("Profiles:"):
+            in_profiles = True
+            continue
+        if in_card and in_profiles:
+            # Profiles section ends at next non-indented section
+            if line.strip() and not line.startswith("\t\t"):
+                break
+            m = re.match(r"\t\t(\S+): (.+?)\(", line)
+            if m:
+                profiles.append((m.group(1), m.group(2).strip()))
+
+    return profiles
+
+
+def cmd_profiles(devices, args):
+    """List available audio profiles for a connected device."""
+    device_name = " ".join(args) if args else None
+    device = resolve_device(devices, device_name, want_connected=True)
+
+    mac = device["mac"]
+    name = device["name"]
+    profiles = _get_card_profiles(mac)
+
+    if not profiles:
+        warn(f"No profiles found for {name}")
+        return
+
+    # Get active profile
+    card = f"bluez_card.{mac.replace(':', '_')}"
+    active = ""
+    result = run(["pactl", "list", "cards"])
+    if result.returncode == 0:
+        in_card = False
+        for line in result.stdout.splitlines():
+            if f"Name: {card}" in line:
+                in_card = True
+            elif in_card and "Active Profile:" in line:
+                active = line.split(":", 1)[1].strip()
+                break
+
+    print(f"{BOLD}{name}{RESET} profiles:")
+    for pname, desc in profiles:
+        if pname == active:
+            print(f"  {GREEN}●{RESET} {pname}  {DIM}{desc}{RESET}")
+        else:
+            print(f"  {DIM}○{RESET} {pname}  {DIM}{desc}{RESET}")
+
+
+def cmd_profile(devices, args):
+    """Set audio profile for a device."""
+    if len(args) < 1:
+        die("Specify a profile.\nUsage: bt profile <PROFILE> [DEVICE]\n"
+            "Run 'bt profiles' to see available profiles.")
+
+    profile = args[0]
+    device_name = " ".join(args[1:]) if len(args) > 1 else None
+    device = resolve_device(devices, device_name, want_connected=True)
+
+    mac = device["mac"]
+    name = device["name"]
+    card = f"bluez_card.{mac.replace(':', '_')}"
+
+    info(f"Setting {BOLD}{name}{RESET} to profile {BOLD}{profile}{RESET}...")
+    result = run(["pactl", "set-card-profile", card, profile])
+    if result.returncode == 0:
+        ok(f"Profile set to {profile}")
+    else:
+        # Show available profiles on failure
+        profiles = _get_card_profiles(mac)
+        if profiles:
+            print(f"\nAvailable profiles for {name}:", file=sys.stderr)
+            for pname, desc in profiles:
+                print(f"  {pname}  {DIM}{desc}{RESET}", file=sys.stderr)
+        die(f"Failed to set profile '{profile}'")
+
+
+def cmd_battery(devices, args):
+    """Show battery level for connected devices."""
+    device_name = " ".join(args) if args else None
+
+    if device_name:
+        device = resolve_device(devices, device_name)
+        targets = [device]
+    else:
+        targets = [d for d in devices if d["connected"]]
+        if not targets:
+            warn("No connected devices")
+            return
+
+    for d in targets:
+        name = d["name"]
+        battery = d.get("battery")
+        icon = _device_icon(d)
+        if battery is not None:
+            if battery > 60:
+                color = GREEN
+            elif battery > 20:
+                color = YELLOW
+            else:
+                color = RED
+            print(f"  {icon} {name}  {color}{battery}%{RESET}")
+        else:
+            print(f"  {icon} {name}  {DIM}(no battery info){RESET}")
+
+
+def cmd_toggle():
+    """Toggle Bluetooth power on/off."""
+    if is_bluetooth_powered():
+        info("Turning Bluetooth off...")
+        bluetoothctl("power", "off")
+        ok("Bluetooth disabled")
+    else:
+        info("Turning Bluetooth on...")
+        bluetoothctl("power", "on")
+        ok("Bluetooth enabled")
+
+
+def cmd_scan():
+    """Scan for nearby discoverable devices."""
+    if not is_bluetooth_powered():
+        die("Bluetooth is off. Run 'bt toggle' to enable.")
+
+    info("Scanning for 5 seconds...")
+
+    # Start scan
+    proc = subprocess.Popen(
+        ["bluetoothctl", "--timeout", "5", "scan", "on"],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+    )
+    proc.wait()
+
+    # Now list all devices (including newly discovered)
+    result = bluetoothctl("devices")
+    if result.returncode != 0:
+        die("Failed to list devices")
+
+    discovered = []
+    for line in result.stdout.strip().splitlines():
+        m = re.match(r"Device\s+([0-9A-F:]{17})\s+(.+)", line)
+        if m:
+            discovered.append({"mac": m.group(1), "name": m.group(2)})
+
+    if not discovered:
+        print("No devices found.")
+        return
+
+    print(f"\n{BOLD}Discovered devices{RESET}")
+    paired = get_devices()
+    paired_macs = {d["mac"] for d in paired}
+
+    for d in discovered:
+        tag = f"  {GREEN}(paired){RESET}" if d["mac"] in paired_macs else ""
+        print(f"  {d['mac']}  {d['name']}{tag}")
+
+
+def cmd_pair(devices, args):
+    """Pair with a device by MAC address."""
+    if not args:
+        die("Specify a MAC address.\nUsage: bt pair XX:XX:XX:XX:XX:XX")
+
+    mac = args[0].upper()
+    if not re.match(r"^[0-9A-F]{2}(:[0-9A-F]{2}){5}$", mac):
+        die(f"Invalid MAC address: {mac}")
+
+    info(f"Pairing with {BOLD}{mac}{RESET}...")
+    bluetoothctl("pair", mac, timeout=15)
+    bluetoothctl("trust", mac)
+
+    device_info = _get_device_info(mac)
+    if device_info["paired"]:
+        # Get the name
+        result = bluetoothctl("info", mac)
+        name = mac
+        m = re.search(r"Name:\s+(.+)", result.stdout)
+        if m:
+            name = m.group(1)
+        ok(f"Paired with {name}")
+    else:
+        die(f"Failed to pair with {mac}")
+
+
+def cmd_remove(devices, args):
+    """Remove (unpair) a paired device."""
+    device_name = " ".join(args) if args else None
+    if not device_name:
+        die("Specify which device to remove.\nUsage: bt remove <DEVICE>")
+
+    device = resolve_device(devices, device_name)
+    mac = device["mac"]
+    name = device["name"]
+
+    info(f"Removing {BOLD}{name}{RESET}...")
+    result = bluetoothctl("remove", mac)
+    if result.returncode == 0:
+        ok(f"Removed {name}")
+    else:
+        die(f"Failed to remove: {result.stderr.strip()}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: bt [command] [device]
+
+Manage Bluetooth devices from the command line.
+
+commands:
+  (none)                        show status of all paired devices
+  connect [DEVICE]              connect to a paired device
+  disconnect [DEVICE]           disconnect a device
+  reconnect [DEVICE]            disconnect + reconnect (fixes audio glitches)
+  profile PROFILE [DEVICE]      set audio profile
+  profiles [DEVICE]             list available audio profiles
+  battery [DEVICE]              show battery level
+  toggle                        toggle bluetooth power on/off
+  scan                          scan for nearby discoverable devices
+  pair MAC                      pair with a new device by MAC address
+  remove DEVICE                 unpair a device
+  list                          list paired devices (verbose)
+
+DEVICE can be a name or MAC address. Partial name matching is
+supported. If omitted and exactly one candidate exists, it is
+selected automatically.
+
+examples:
+  bt                            show what's connected
+  bt connect                    connect the only paired device
+  bt connect Nothing            connect the Nothing headphones
+  bt disconnect                 disconnect the only connected device
+  bt reconnect Nothing          fix a glitchy connection
+  bt profiles                   see available profiles
+  bt profile a2dp-sink          switch to high-quality audio
+  bt profile headset-head-unit  switch to mic+audio mode
+  bt battery                    show battery for all connected
+  bt scan                       find new devices nearby
+  bt pair 3C:B0:ED:A7:6A:88     pair with a device
+  bt remove Miniroll            unpair a device"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    # Check for bluetoothctl
+    from shutil import which
+    if not which("bluetoothctl"):
+        die("bluez not installed (need bluetoothctl)")
+
+    if len(sys.argv) < 2:
+        devices = get_devices()
+        cmd_status(devices)
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    # Commands that don't need the device list
+    if command == "toggle":
+        cmd_toggle()
+        return
+
+    if command == "scan":
+        cmd_scan()
+        return
+
+    devices = get_devices()
+
+    commands = {
+        "connect": lambda: cmd_connect(devices, args),
+        "disconnect": lambda: cmd_disconnect(devices, args),
+        "reconnect": lambda: cmd_reconnect(devices, args),
+        "profile": lambda: cmd_profile(devices, args),
+        "profiles": lambda: cmd_profiles(devices, args),
+        "battery": lambda: cmd_battery(devices, args),
+        "pair": lambda: cmd_pair(devices, args),
+        "remove": lambda: cmd_remove(devices, args),
+        "list": lambda: cmd_list(devices),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'bt --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

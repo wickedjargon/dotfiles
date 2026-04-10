@@ -1,0 +1,32 @@
+# bash completion for wifi
+_wifi() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Complete subcommands at position 1
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "list connect disconnect saved forget password rescan toggle help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+
+    case "$cmd" in
+        connect)
+            # Suggest available SSIDs
+            local ssids
+            ssids=$(nmcli -t -f SSID device wifi list 2>/dev/null | grep -v '^$' | sort -u)
+            COMPREPLY=( $(compgen -W "$ssids" -- "$cur") )
+            ;;
+        forget|password)
+            # Suggest saved WiFi connection names
+            local saved
+            saved=$(nmcli -t -f NAME,TYPE connection show 2>/dev/null | grep ':802-11-wireless$' | cut -d: -f1)
+            COMPREPLY=( $(compgen -W "$saved" -- "$cur") )
+            ;;
+    esac
+}
+
+complete -F _wifi wifi

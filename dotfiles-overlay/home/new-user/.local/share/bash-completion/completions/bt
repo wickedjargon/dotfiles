@@ -1,0 +1,52 @@
+# bash completion for bt
+_bt() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Complete subcommands at position 1
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "connect disconnect reconnect profile profiles battery toggle scan pair remove list help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+
+    case "$cmd" in
+        connect)
+            # Suggest paired but disconnected device names
+            local devs
+            devs=$(bluetoothctl devices 2>/dev/null | sed 's/^Device [0-9A-F:]* //')
+            COMPREPLY=( $(compgen -W "$devs" -- "$cur") )
+            ;;
+        disconnect|reconnect|battery)
+            # Suggest connected device names
+            local devs
+            devs=$(bluetoothctl devices Connected 2>/dev/null | sed 's/^Device [0-9A-F:]* //')
+            COMPREPLY=( $(compgen -W "$devs" -- "$cur") )
+            ;;
+        remove)
+            # Suggest all paired device names
+            local devs
+            devs=$(bluetoothctl devices 2>/dev/null | sed 's/^Device [0-9A-F:]* //')
+            COMPREPLY=( $(compgen -W "$devs" -- "$cur") )
+            ;;
+        profile)
+            # At position 2 (the profile), suggest profiles from pactl
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                local profiles
+                profiles=$(pactl list cards 2>/dev/null | grep -A1 '^\s*Profiles:' | sed -n 's/^\t\t\(\S\+\):.*/\1/p' 2>/dev/null | grep -v '^off$')
+                [ -z "$profiles" ] && profiles="a2dp-sink headset-head-unit"
+                COMPREPLY=( $(compgen -W "$profiles" -- "$cur") )
+            else
+                # At position 3+, suggest connected devices
+                local devs
+                devs=$(bluetoothctl devices Connected 2>/dev/null | sed 's/^Device [0-9A-F:]* //')
+                COMPREPLY=( $(compgen -W "$devs" -- "$cur") )
+            fi
+            ;;
+    esac
+}
+
+complete -F _bt bt
