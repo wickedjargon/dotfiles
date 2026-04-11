@@ -1,3 +1,0 @@
-#!/bin/sh
-. ~/.config/dmenu/config
-dmenu_path | dmenu $DMENU_BASIC_ARGS -fn "$DMENU_FONT" "$@" | /bin/sh &

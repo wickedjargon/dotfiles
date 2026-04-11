@@ -1,0 +1,405 @@
+#!/usr/bin/env python3
+"""upload — upload files or text to the internet.
+
+Default backend: u.fftp.io (private), fallback: 0x0.st (public)
+
+Backends: 0x0.st (public, anonymous), u.fftp.io (private, API key)
+"""
+
+import argparse
+import os
+import subprocess
+import sys
+import tempfile
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN = "\033[0;36m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
+
+# ── Config ──────────────────────────────────────────────────────────
+U_UPLOAD_URL = "https://u.fftp.io/upload"
+API_KEY_FILE = os.path.expanduser("~/.config/u/api_key")
+
+# Pyongyang, North Korea
+PYONGYANG_LAT = (39, 1, 27.48)
+PYONGYANG_LON = (125, 45, 12.6)
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):
+    print(f"{CYAN}▸{RESET} {msg}")
+
+
+def ok(msg):
+    print(f"{GREEN}✓{RESET} {msg}")
+
+
+def warn(msg):
+    print(f"{YELLOW}!{RESET} {msg}")
+
+
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def notify(title, message):
+    try:
+        subprocess.run(["notify-send", title, message],
+                       capture_output=True, timeout=5)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+
+def copy_to_clipboard(text):
+    try:
+        subprocess.run(["xclip", "-selection", "clipboard"],
+                       input=text, text=True, timeout=5)
+        return True
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+def get_selection():
+    """Get the primary X selection (highlighted text)."""
+    try:
+        result = subprocess.run(
+            ["xclip", "-o", "-selection", "primary"],
+            capture_output=True, text=True, timeout=2,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout
+        return None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+def read_api_key():
+    try:
+        with open(API_KEY_FILE) as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return None
+
+
+# ── EXIF ────────────────────────────────────────────────────────────
+def _deg_to_rational(deg, minutes, seconds):
+    return (
+        (int(deg), 1),
+        (int(minutes), 1),
+        (int(seconds * 100), 100),
+    )
+
+
+def strip_exif_and_troll(filepath):
+    """Strip EXIF and inject Pyongyang GPS. Returns path to modified temp file."""
+    ext = os.path.splitext(filepath)[1].lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".tiff", ".webp"):
+        return filepath
+
+    try:
+        import piexif
+        from PIL import Image
+
+        img = Image.open(filepath)
+        gps_ifd = {
+            piexif.GPSIFD.GPSLatitudeRef: b"N",
+            piexif.GPSIFD.GPSLatitude: _deg_to_rational(*PYONGYANG_LAT),
+            piexif.GPSIFD.GPSLongitudeRef: b"E",
+            piexif.GPSIFD.GPSLongitude: _deg_to_rational(*PYONGYANG_LON),
+        }
+        exif_bytes = piexif.dump({"GPS": gps_ifd})
+        tmp = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+        img.save(tmp.name, exif=exif_bytes)
+        return tmp.name
+    except ImportError:
+        return filepath
+    except Exception:
+        return filepath
+
+
+# ── Backends ────────────────────────────────────────────────────────
+def upload_file_to_0x0(filepath):
+    """Upload a file to 0x0.st. Returns URL or None."""
+    try:
+        result = subprocess.run(
+            [
+                "curl", "-fsS",
+                "--connect-timeout", "5",
+                "--max-time", "30",
+                "-F", f"file=@{filepath}",
+                "https://0x0.st",
+            ],
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0:
+            url = result.stdout.strip()
+            if url.startswith(("http://0x0.st/", "https://0x0.st/")):
+                return url
+        return None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+def upload_file_to_u(filepath, preserve_filename=False):
+    """Upload a file to u.fftp.io. Returns URL or None."""
+    api_key = read_api_key()
+    if not api_key:
+        return None
+    cmd = [
+        "curl", "-fsS",
+        "--connect-timeout", "5",
+        "--max-time", "60",
+        "-H", f"Authorization: Bearer {api_key}",
+        "-F", f"file=@{filepath}",
+    ]
+    if preserve_filename:
+        cmd += ["-F", "preserve_filename=true"]
+    cmd.append(U_UPLOAD_URL)
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+        return None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+def upload_text_to_0x0(content):
+    """Upload text content to 0x0.st via stdin. Returns URL or None."""
+    try:
+        result = subprocess.run(
+            [
+                "curl", "-fsS",
+                "--connect-timeout", "5",
+                "--max-time", "30",
+                "-F", "file=@-",
+                "https://0x0.st",
+            ],
+            input=content,
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0:
+            url = result.stdout.strip()
+            if url.startswith(("http://0x0.st/", "https://0x0.st/")):
+                return url
+        return None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+def upload_text_to_u(content):
+    """Upload text content to u.fftp.io via stdin. Returns URL or None."""
+    api_key = read_api_key()
+    if not api_key:
+        return None
+    try:
+        result = subprocess.run(
+            [
+                "curl", "-fsS",
+                "--connect-timeout", "5",
+                "--max-time", "30",
+                "-H", f"Authorization: Bearer {api_key}",
+                "-F", "file=@-;filename=paste.txt",
+                U_UPLOAD_URL,
+            ],
+            input=content,
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+        return None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_file(args):
+    """Upload a file."""
+    parser = argparse.ArgumentParser(prog="upload file", add_help=False)
+    parser.add_argument("file", help="File to upload")
+    parser.add_argument("--backend", choices=["0x0", "u"],
+                        help="Force a specific backend")
+    parser.add_argument("--preserve-filename", action="store_true",
+                        help="Keep the original filename (u.fftp.io only)")
+    parser.add_argument("--keep-exif", action="store_true",
+                        help="Skip EXIF stripping and GPS injection")
+    opts = parser.parse_args(args)
+
+    if not os.path.isfile(opts.file):
+        die(f"File not found: {opts.file}")
+
+    basename = os.path.basename(opts.file)
+    info(f"Uploading {BOLD}{basename}{RESET}...")
+
+    # Forced backend
+    if opts.backend == "0x0":
+        url = upload_file_to_0x0(opts.file)
+        if url:
+            copy_to_clipboard(url)
+            ok(f"{url}")
+        else:
+            die("Upload to 0x0.st failed")
+        return
+
+    if opts.backend == "u":
+        upload_path = opts.file
+        tmp_path = None
+        if not opts.keep_exif:
+            processed = strip_exif_and_troll(opts.file)
+            if processed != opts.file:
+                upload_path = processed
+                tmp_path = processed
+        url = upload_file_to_u(upload_path,
+                               preserve_filename=opts.preserve_filename)
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        if url:
+            copy_to_clipboard(url)
+            ok(f"{url}")
+        else:
+            die("Upload to u.fftp.io failed")
+        return
+
+    # Default: u.fftp.io → 0x0.st fallback
+    upload_path = opts.file
+    tmp_path = None
+    if not opts.keep_exif:
+        processed = strip_exif_and_troll(opts.file)
+        if processed != opts.file:
+            upload_path = processed
+            tmp_path = processed
+
+    url = upload_file_to_u(upload_path,
+                           preserve_filename=opts.preserve_filename)
+    if tmp_path and os.path.exists(tmp_path):
+        os.unlink(tmp_path)
+
+    if url:
+        copy_to_clipboard(url)
+        ok(f"{url}")
+        return
+
+    warn("u.fftp.io failed, falling back to 0x0.st...")
+
+    url = upload_file_to_0x0(opts.file)
+    if url:
+        copy_to_clipboard(url)
+        ok(f"{url}")
+    else:
+        die("Both u.fftp.io and 0x0.st failed")
+
+
+def cmd_selection(args):
+    """Upload the primary X selection."""
+    parser = argparse.ArgumentParser(prog="upload selection", add_help=False)
+    parser.add_argument("--backend", choices=["0x0", "u"],
+                        help="Force a specific backend")
+    opts = parser.parse_args(args)
+
+    content = get_selection()
+    if not content:
+        notify("Upload Failed", "No text selected")
+        die("No text selected")
+
+    # Forced backend
+    if opts.backend == "0x0":
+        notify("Uploading...", "Uploading selection to 0x0.st")
+        url = upload_text_to_0x0(content)
+        if url:
+            copy_to_clipboard(url)
+            ok(f"{url}")
+            notify("Upload Successful", f"URL copied: {url}")
+        else:
+            notify("Upload Failed", "Could not upload to 0x0.st")
+            die("Upload to 0x0.st failed")
+        return
+
+    if opts.backend == "u":
+        notify("Uploading...", "Uploading selection to u.fftp.io")
+        url = upload_text_to_u(content)
+        if url:
+            copy_to_clipboard(url)
+            ok(f"{url}")
+            notify("Upload Successful", f"URL copied: {url}")
+        else:
+            notify("Upload Failed", "Could not upload to u.fftp.io")
+            die("Upload to u.fftp.io failed")
+        return
+
+    # Default: u.fftp.io → 0x0.st fallback
+    notify("Uploading...", "Uploading selection to u.fftp.io")
+    url = upload_text_to_u(content)
+    if url:
+        copy_to_clipboard(url)
+        ok(f"{url}")
+        notify("Upload Successful", f"URL copied: {url}")
+        return
+
+    notify("u.fftp.io failed", "Falling back to 0x0.st...")
+    warn("u.fftp.io failed, falling back to 0x0.st...")
+
+    url = upload_text_to_0x0(content)
+    if url:
+        copy_to_clipboard(url)
+        ok(f"{url}")
+        notify("Upload Successful", f"URL copied (via 0x0.st): {url}")
+    else:
+        notify("Upload Failed", "Both u.fftp.io and 0x0.st failed")
+        die("Both u.fftp.io and 0x0.st failed")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: upload <command> [options]
+
+Upload files or text to the internet.
+
+commands:
+  file <PATH>                   upload a file (u.fftp.io → 0x0.st fallback)
+  selection                     upload X selection (u.fftp.io → 0x0.st fallback)
+
+options:
+  --backend 0x0|u               force a specific backend (skip fallback)
+  --preserve-filename           keep original filename (u.fftp.io only)
+  --keep-exif                   skip EXIF stripping (u.fftp.io only)
+
+examples:
+  upload file screenshot.png                upload a file
+  upload file photo.jpg --backend u         upload directly to u.fftp.io
+  upload file doc.pdf --backend 0x0         upload directly to 0x0.st
+  upload selection                          upload highlighted text
+  upload selection --backend u              upload selection to u.fftp.io
+  upload file img.jpg --keep-exif           preserve EXIF metadata
+  upload file report.pdf --preserve-filename  keep filename on server"""
+
+
+def main():
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "file": lambda: cmd_file(args),
+        "selection": lambda: cmd_selection(args),
+    }
+
+    if command not in commands:
+        print(f"{RED}✗{RESET} Unknown command '{command}'", file=sys.stderr)
+        print("Run 'upload --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

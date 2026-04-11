@@ -1,0 +1,35 @@
+# bash completion for upload
+_upload() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Complete subcommands at position 1
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "file selection help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+
+    # Complete --backend values
+    if [ "$prev" = "--backend" ]; then
+        COMPREPLY=( $(compgen -W "0x0 u" -- "$cur") )
+        return
+    fi
+
+    case "$cmd" in
+        file)
+            # Complete flags and filenames
+            COMPREPLY=( $(compgen -W "--backend --preserve-filename --keep-exif" -- "$cur") )
+            # Also offer file completion
+            COMPREPLY+=( $(compgen -f -- "$cur") )
+            ;;
+        selection)
+            COMPREPLY=( $(compgen -W "--backend" -- "$cur") )
+            ;;
+    esac
+}
+
+complete -o default -F _upload upload

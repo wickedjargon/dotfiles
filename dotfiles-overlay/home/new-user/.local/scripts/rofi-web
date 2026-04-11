@@ -20,7 +20,7 @@ case "$selection" in
     'Google Chrome') cmd='/usr/bin/distrobox-enter -n archbox -- /usr/bin/google-chrome-stable' ;;
     'Tor Browser') cmd='tor-browser' ;;
     'Bookmarks') cmd='dmenu-bookmarks' ;;
-    'Upload Selection') cmd='upload-selection' ;;
+    'Upload Selection') cmd='upload selection' ;;
     'Gmail') cmd='firefox --new-window "https://mail.google.com/"' ;;
     'WhatsApp') cmd='firefox --new-window "https://web.whatsapp.com/"' ;;
     'Telegram') cmd='firefox --new-window "https://web.telegram.org/"' ;;
