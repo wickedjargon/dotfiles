@@ -18,7 +18,7 @@ case "$selection" in
     'Reload Desktop') cmd='reload-desktop' ;;
     'Clean Local Bin') cmd='clean-local-bin' ;;
     'Deploy Dotfiles') cmd='deploy-dotfiles' ;;
-    'Screenshot') cmd='dmenu-screenshot' ;;
+    'Screenshot') cmd='rofi-screenshot' ;;
     'Brightness')
         level=$(seq 5 5 100 | rofi -dmenu -i -p "Brightness")
         [ -z "$level" ] && exit 0

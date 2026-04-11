@@ -1,0 +1,47 @@
+#!/bin/sh
+# rofi-screenshot — Take screenshots with Alt+c to copy command.
+
+# 1. Choose screenshot type
+type=$(printf "Full Screenshot\nRegion Screenshot" | rofi -dmenu -i -p "Screenshot" -kb-custom-1 "Alt+c")
+type_exit=$?
+
+[ $type_exit -eq 1 ] && exit 0
+[ -z "$type" ] && exit 0
+
+# Build the maim command
+filename="/tmp/screenshot-$(date +%Y%m%d-%H%M%S).png"
+case "$type" in
+    'Full Screenshot')  maim_cmd="maim $filename" ;;
+    'Region Screenshot') maim_cmd="maim -s $filename" ;;
+    *) exit 1 ;;
+esac
+
+# Alt+c: copy the command instead of running it
+if [ $type_exit -eq 10 ]; then
+    printf '%s' "$maim_cmd" | xclip -selection clipboard
+    notify-send "Copied Command" "$maim_cmd"
+    exit 0
+fi
+
+# Take the screenshot
+eval "$maim_cmd" || exit 1
+[ ! -f "$filename" ] && exit 1
+
+# 2. Choose action
+action=$(printf "Save (Copy Path)\nUpload (Copy URL)" | rofi -dmenu -i -p "Action")
+action_exit=$?
+
+[ $action_exit -eq 1 ] && exit 0
+[ -z "$action" ] && exit 0
+
+case "$action" in
+    'Save (Copy Path)')
+        printf '%s' "$filename" | xclip -selection clipboard
+        notify-send "Screenshot Saved" "Path copied: $filename"
+        ;;
+    'Upload (Copy URL)')
+        notify-send "Uploading..." "$filename"
+        upload file "$filename"
+        ;;
+    *) exit 1 ;;
+esac
