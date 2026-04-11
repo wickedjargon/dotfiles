@@ -336,15 +336,18 @@ def list_alarms():
         return
 
     now = datetime.datetime.now()
-    print(f"{'ID':<8} {'Time':<22} {'ETA':<10} {'Label'}")
+    print(f"{'ID':<9}{'Time':<23}{'ETA':<11}Label")
     print("─" * 56)
     for a in sorted(alarms, key=lambda x: x['time']):
         target = datetime.datetime.fromisoformat(a['time'])
         delta = target - now
 
         eta = format_eta(delta) if delta.total_seconds() > 0 else "past"
-        time_str = target.strftime("%-I:%M %p  %a %b %-d")
-        print(f"{a['id']:<8} {time_str:<22} {eta:<10} {a.get('label', '')}")
+        hm = target.strftime("%-I:%M")
+        ampm = target.strftime("%p").upper()
+        date_str = target.strftime("%a %b %-d")
+        time_str = f"{hm:>5} {ampm}  {date_str}"
+        print(f"{a['id']:<9}{time_str:<23}{eta:<11}{a.get('label', '')}")
 
 
 def cancel_alarm(alarm_id):
