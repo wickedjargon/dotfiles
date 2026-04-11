@@ -5,7 +5,7 @@ import unittest
 script_path = os.path.abspath(
     os.path.join(
         os.path.dirname(__file__),
-        "../dotfiles-overlay/home/new-user/.local/bin/create-qemu-vm",
+        "../dotfiles-overlay/home/new-user/.local/scripts/create-qemu-vm",
     )
 )
 

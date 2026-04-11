@@ -406,17 +406,17 @@ class TestXob:
     def test_switch_to_light(self, fake_home):
         theme_mod.switch_xob(theme_mod.THEMES["light"])
         content = (fake_home / ".config" / "xob" / "styles.cfg").read_text()
-        assert '"#5294e2"' in content  # xob_fg light (Arc blue)
-        assert '"#ffffff"' in content  # xob_bg light
+        assert '"#3584e4"' in content  # xob_fg light (Arc blue)
+        assert '"#e0e0e1"' in content  # xob_bg light
         assert '"#d0d0d0"' in content  # xob_border light
 
     def test_switch_to_dark(self, fake_home):
         theme_mod.switch_xob(theme_mod.THEMES["light"])
         theme_mod.switch_xob(theme_mod.THEMES["dark"])
         content = (fake_home / ".config" / "xob" / "styles.cfg").read_text()
-        assert '"#ffffff"' in content
-        assert '"#000000"' in content
-        assert '"#222222"' in content
+        assert '"#5294e2"' in content
+        assert '"#383C4A"' in content
+        assert '"#2b2e39"' in content
 
     def test_missing_config(self, fake_home):
         os.remove(str(fake_home / ".config" / "xob" / "styles.cfg"))

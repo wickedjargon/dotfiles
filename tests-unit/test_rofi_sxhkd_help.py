@@ -7,7 +7,7 @@ import unittest
 SCRIPT_PATH = os.path.abspath(
     os.path.join(
         os.path.dirname(__file__),
-        "../dotfiles-overlay/home/new-user/.local/bin/rofi-sxhkd-help",
+        "../dotfiles-overlay/home/new-user/.local/scripts/rofi-sxhkd-help",
     )
 )
 
