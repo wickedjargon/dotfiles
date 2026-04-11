@@ -10,6 +10,15 @@ import re
 import subprocess
 import sys
 
+
+def nmcli_split_line(line):
+    """Split an nmcli -t output line respecting \\: escapes.
+
+    nmcli -t uses ':' as delimiter but escapes literal colons in
+    values as '\\:'. A naive split(':') breaks SSIDs like 'My:Network'.
+    """
+    return re.split(r'(?<!\\):', line)
+
 # ── Colors ──────────────────────────────────────────────────────────
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
@@ -88,9 +97,10 @@ def get_active_connection():
     wifi_device = None
     wifi_name = None
     for line in result.stdout.strip().splitlines():
-        parts = line.split(":")
+        parts = nmcli_split_line(line)
         if len(parts) >= 3:
-            name, conn_type, device = parts[0], parts[1], parts[2]
+            name = parts[0].replace(r"\:", ":")
+            conn_type, device = parts[1], parts[2]
             if "802-11-wireless" in conn_type or device.startswith("wl"):
                 wifi_name = name
                 wifi_device = device
@@ -102,17 +112,13 @@ def get_active_connection():
     # Get detailed info from the device
     info_dict = {"ssid": wifi_name, "device": wifi_device}
 
-    # Get signal and speed from iw/nmcli device
-    dev_result = nmcli("-t", "-f", "GENERAL.CONNECTION,WIRED-PROPERTIES",
-                       "device", "show", wifi_device)
-
     # Get SSID and signal from wifi list for current AP
     wifi_result = nmcli("-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY,FREQ,RATE",
                         "device", "wifi", "list")
     if wifi_result.returncode == 0:
         for line in wifi_result.stdout.strip().splitlines():
-            if line.startswith("*:"):
-                parts = line.split(":")
+            parts = nmcli_split_line(line)
+            if parts and parts[0].strip() == "*":
                 if len(parts) >= 6:
                     info_dict["ssid"] = parts[1].replace(r"\:", ":")
                     info_dict["signal"] = int(parts[2]) if parts[2].isdigit() else 0
@@ -167,7 +173,7 @@ def get_available_networks():
     seen = {}
     for line in result.stdout.strip().splitlines():
         # Handle escaped colons in SSID
-        parts = line.split(":")
+        parts = nmcli_split_line(line)
         if len(parts) < 5:
             continue
 

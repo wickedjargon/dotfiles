@@ -6,6 +6,7 @@ Requires: udisks2 (udisksctl), lsblk
 
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -80,7 +81,11 @@ def get_external_partitions():
         for child in children:
             if child.get("type") not in ("part", "disk"):
                 continue
-            mountpoint = child.get("mountpoint") or child.get("mountpoints", [None])[0] if isinstance(child.get("mountpoints"), list) else child.get("mountpoint")
+            mps = child.get("mountpoints")
+            if isinstance(mps, list) and mps:
+                mountpoint = mps[0]
+            else:
+                mountpoint = child.get("mountpoint")
             partitions.append({
                 "name": f"/dev/{child['name']}" if not child["name"].startswith("/") else child["name"],
                 "size": child.get("size", "?"),
@@ -258,7 +263,6 @@ def cmd_eject(partitions, args):
     # Get the parent disk device for power-off (e.g. /dev/sdb from /dev/sdb1)
     dev_basename = os.path.basename(p["name"])
     # Strip trailing partition number to get the disk
-    import re
     disk_match = re.match(r"^(sd[a-z]+|nvme\d+n\d+)", dev_basename)
     if disk_match:
         disk_device = f"/dev/{disk_match.group(1)}"

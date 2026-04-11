@@ -347,7 +347,7 @@ examples:
 
 
 def main():
-    if len(sys.argv) >= 2 and sys.argv[1] in ('-h', '--help'):
+    if len(sys.argv) >= 2 and sys.argv[1] in ('-h', '--help', 'help'):
         print(HELP_TEXT)
         sys.exit(0)
 

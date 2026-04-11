@@ -40,6 +40,7 @@ alias neofetch="fastfetch"
 
 # bind ctrl+l to cls (using macro to force full prompt redraw)
 bind '"\C-l": " \C-a\C-kcls\n\C-y"'
+HISTIGNORE="cls"
 
 # add color and newline before prompt
 PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '

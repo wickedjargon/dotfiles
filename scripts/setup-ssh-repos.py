@@ -199,7 +199,6 @@ def main():
     repos_failed = 0
 
     # Wickedjargon repos to look for
-    # Wickedjargon repos to look for
     repo_names = ['.emacs.d']
 
     # Search locations
