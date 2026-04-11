@@ -81,9 +81,9 @@ def install_yay() -> bool:
 
     print("\nBootstrapping yay from source...")
     with tempfile.TemporaryDirectory(prefix="yay-build-") as tmpdir:
+        yay_dir = os.path.join(tmpdir, "yay")
         clone_result = subprocess.run(
-            ["git", "clone", YAY_GIT_URL, tmpdir],
-            cwd=tmpdir,
+            ["git", "clone", YAY_GIT_URL, yay_dir],
         )
         if clone_result.returncode != 0:
             print("ERROR: Failed to clone yay repository.")
@@ -91,7 +91,7 @@ def install_yay() -> bool:
 
         build_result = subprocess.run(
             ["makepkg", "-si", "--noconfirm"],
-            cwd=tmpdir,
+            cwd=yay_dir,
         )
         if build_result.returncode != 0:
             print("ERROR: Failed to build/install yay.")
