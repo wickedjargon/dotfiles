@@ -6,10 +6,10 @@ import os
 import subprocess
 
 import pytest
-from helpers import get_script_path, import_script
+from helpers import get_bin_path, import_script
 
 # Import the theme script as a module
-theme_mod = import_script(get_script_path("theme"))
+theme_mod = import_script(get_bin_path("theme"))
 
 
 @pytest.fixture

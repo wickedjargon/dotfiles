@@ -5,9 +5,9 @@ import signal
 import subprocess
 
 import pytest
-from helpers import get_script_path, import_script
+from helpers import get_bin_path, import_script
 
-psync = import_script(get_script_path("psync"))
+psync = import_script(get_bin_path("psync"))
 
 
 # ── Config Tests ─────────────────────────────────────────────────────────────

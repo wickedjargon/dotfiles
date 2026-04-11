@@ -13,7 +13,7 @@ def import_script(path):
     loader.exec_module(module)
     return module
 
-SCRIPT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../.local/bin/bspwm-deck'))
+SCRIPT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../dotfiles-overlay/home/new-user/.local/scripts/bspwm-deck'))
 
 class TestBspwmDeck(unittest.TestCase):
     @classmethod

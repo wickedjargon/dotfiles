@@ -15,7 +15,7 @@ def import_script(path):
     return module
 
 # Paths to scripts
-BIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../.local/bin'))
+BIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../dotfiles-overlay/home/new-user/.local/scripts'))
 BT_CONNECT_PATH = os.path.join(BIN_DIR, 'bluetooth-connect')
 BT_DISCONNECT_PATH = os.path.join(BIN_DIR, 'bluetooth-disconnect')
 

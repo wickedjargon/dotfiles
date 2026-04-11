@@ -14,8 +14,8 @@ def import_script(path):
     loader.exec_module(module)
     return module
 
-ARROW_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../.local/bin/bspwm-smart-arrow'))
-CANCEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../.local/bin/bspwm-smart-cancel'))
+ARROW_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../dotfiles-overlay/home/new-user/.local/scripts/bspwm-smart-arrow'))
+CANCEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../dotfiles-overlay/home/new-user/.local/scripts/bspwm-smart-cancel'))
 
 class TestBspwmScripts(unittest.TestCase):
     @classmethod

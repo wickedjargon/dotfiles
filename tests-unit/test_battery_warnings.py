@@ -12,7 +12,7 @@ def import_script(path):
     loader.exec_module(module)
     return module
 
-SCRIPT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../.local/bin/battery-warnings'))
+SCRIPT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../dotfiles-overlay/home/new-user/.local/scripts/battery-warnings'))
 
 class TestBatteryMonitor(unittest.TestCase):
     @classmethod

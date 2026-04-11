@@ -32,10 +32,32 @@ def import_script(path):
 
 
 def get_script_path(script_name):
-    """Get the absolute path to a script in dotfiles-overlay/home/new-user/.local/bin.
+    """Get the absolute path to a script in dotfiles-overlay/home/new-user/.local/scripts.
 
     Args:
         script_name: Name of the script (e.g., 'battery-warnings')
+
+    Returns:
+        Absolute path to the script
+    """
+    tests_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(
+        tests_dir,
+        "..",
+        "dotfiles-overlay",
+        "home",
+        "new-user",
+        ".local",
+        "scripts",
+        script_name,
+    )
+
+
+def get_bin_path(script_name):
+    """Get the absolute path to a script in dotfiles-overlay/home/new-user/.local/bin.
+
+    Args:
+        script_name: Name of the script (e.g., 'theme')
 
     Returns:
         Absolute path to the script

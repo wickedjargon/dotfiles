@@ -5,9 +5,9 @@ from unittest.mock import patch, MagicMock
 import os
 import subprocess
 
-from helpers import import_script, get_script_path
+from helpers import import_script, get_bin_path
 
-SCRIPT_PATH = get_script_path('upload')
+SCRIPT_PATH = get_bin_path('upload')
 
 
 class TestUpload(unittest.TestCase):
