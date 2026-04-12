@@ -124,10 +124,6 @@ super + BackSpace
 super + c
     CM_LAUNCHER=rofi clipmenu
 
-# Internet menu
-super + i
-    rofi-internet
-
 # File explorer
 super + e
     rofi-explorer
@@ -140,7 +136,7 @@ super + comma
 super + s
     rofi-explorer "~/.local/bin/" --run-executables
 
-# Instant fullscreen screenshot
+# Instant fullscreen screenshotv
 F12
     instant-screenshot
 
