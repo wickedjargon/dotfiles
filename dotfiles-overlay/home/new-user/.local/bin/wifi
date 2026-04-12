@@ -4,7 +4,6 @@
 Requires: NetworkManager (nmcli)
 """
 
-import getpass
 import os
 import re
 import subprocess
@@ -357,7 +356,7 @@ def cmd_connect(args):
 def _connect_with_password(ssid):
     """Prompt for a password and connect."""
     try:
-        password = getpass.getpass(f"{CYAN}▸{RESET} Password for {BOLD}{ssid}{RESET}: ")
+        password = input(f"{CYAN}▸{RESET} Password for {BOLD}{ssid}{RESET}: ")
     except (EOFError, KeyboardInterrupt):
         print()
         sys.exit(0)
