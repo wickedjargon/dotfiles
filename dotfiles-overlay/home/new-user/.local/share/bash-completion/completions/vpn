@@ -1,0 +1,38 @@
+# bash completion for vpn
+_vpn() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "connect disconnect location list refresh help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        connect|location)
+            # Suggest cached country/city codes
+            if [ -f "$HOME/.cache/mullvad-relays.json" ]; then
+                local locations
+                locations=$(python3 -c "
+import json, sys
+try:
+    data = json.load(open('$HOME/.cache/mullvad-relays.json'))
+    seen = set()
+    for r in data:
+        for key in ('country_code', 'city_code', 'country_name'):
+            v = r.get(key, '')
+            if v and v.lower() not in seen:
+                seen.add(v.lower())
+                print(v)
+except: pass
+" 2>/dev/null)
+                COMPREPLY=( $(compgen -W "$locations" -- "$cur") )
+            fi
+            ;;
+    esac
+}
+
+complete -F _vpn vpn

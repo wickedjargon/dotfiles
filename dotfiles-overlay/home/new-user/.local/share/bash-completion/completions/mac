@@ -1,0 +1,32 @@
+# bash completion for mac
+_mac() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "show random set reset list help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        show|random|reset)
+            # Suggest network interfaces
+            local ifaces
+            ifaces=$(ip -o link show 2>/dev/null | awk -F'[: ]+' '{print $2}' | grep -v '^lo$')
+            COMPREPLY=( $(compgen -W "$ifaces" -- "$cur") )
+            ;;
+        set)
+            if [ "$COMP_CWORD" -eq 3 ]; then
+                # After MAC address, suggest interfaces
+                local ifaces
+                ifaces=$(ip -o link show 2>/dev/null | awk -F'[: ]+' '{print $2}' | grep -v '^lo$')
+                COMPREPLY=( $(compgen -W "$ifaces" -- "$cur") )
+            fi
+            ;;
+    esac
+}
+
+complete -F _mac mac

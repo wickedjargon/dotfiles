@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+"""mac — view and spoof MAC addresses from the command line.
+
+Requires: iproute2 (ip), macchanger (optional, for vendor spoofing)
+"""
+
+import os
+import random
+import re
+import subprocess
+import sys
+
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=10):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+# ── Interface Discovery ───────────────────────────────────────────
+def _get_interfaces():
+    """Get network interfaces with their MAC addresses.
+
+    Returns a list of dicts with keys:
+      name, mac, state, type
+    """
+    result = run(["ip", "-o", "link", "show"])
+    if result.returncode != 0:
+        return []
+
+    interfaces = []
+    for line in result.stdout.strip().splitlines():
+        # Format: NUM: NAME: <FLAGS> mtu ... link/TYPE MAC ...
+        match = re.match(
+            r'\d+:\s+(\S+?)(?:@\S+)?:\s+<([^>]*)>.*link/(\S+)\s+([0-9a-f:]+)',
+            line, re.IGNORECASE,
+        )
+        if not match:
+            continue
+
+        name = match.group(1)
+        flags = match.group(2)
+        link_type = match.group(3)
+        mac = match.group(4)
+
+        # Skip loopback
+        if name == "lo" or link_type == "loopback":
+            continue
+
+        state = "UP" if "UP" in flags.split(",") else "DOWN"
+
+        # Infer friendly type from interface name
+        if name.startswith(("wl", "wlan")):
+            friendly_type = "wifi"
+        elif name.startswith(("en", "eth")):
+            friendly_type = "ethernet"
+        else:
+            friendly_type = link_type
+
+        interfaces.append({
+            "name": name,
+            "mac": mac,
+            "state": state,
+            "type": friendly_type,
+        })
+
+    return interfaces
+
+
+def _get_permanent_mac(iface):
+    """Try to get the permanent (hardware) MAC address."""
+    result = run(["ethtool", "-P", iface])
+    if result.returncode == 0:
+        match = re.search(r'([0-9a-f:]{17})', result.stdout, re.IGNORECASE)
+        if match:
+            perm = match.group(1)
+            # Some drivers return all zeros or ff:ff:ff... for no permanent MAC
+            if perm not in ("00:00:00:00:00:00", "ff:ff:ff:ff:ff:ff"):
+                return perm
+    return None
+
+
+def _resolve_interface(name=None):
+    """Resolve an interface by name, or auto-select the WiFi interface."""
+    interfaces = _get_interfaces()
+    if not interfaces:
+        die("No network interfaces found")
+
+    if name:
+        for iface in interfaces:
+            if iface["name"] == name:
+                return iface
+        die(f"Interface '{name}' not found")
+
+    # Auto-select: prefer wireless interfaces
+    wireless = [i for i in interfaces if i["name"].startswith(("wl", "wlan"))]
+    if len(wireless) == 1:
+        return wireless[0]
+
+    if len(wireless) > 1:
+        print("Multiple wireless interfaces found:", file=sys.stderr)
+        for i in wireless:
+            print(f"  ○ {i['name']}  {DIM}{i['mac']}{RESET}", file=sys.stderr)
+        print(f"\nSpecify one, e.g.: mac show {wireless[0]['name']}",
+              file=sys.stderr)
+        sys.exit(1)
+
+    # No wireless — use first non-loopback
+    if len(interfaces) == 1:
+        return interfaces[0]
+
+    print("Multiple interfaces found:", file=sys.stderr)
+    for i in interfaces:
+        print(f"  ○ {i['name']}  {DIM}{i['mac']}{RESET}", file=sys.stderr)
+    print(f"\nSpecify one, e.g.: mac show {interfaces[0]['name']}",
+          file=sys.stderr)
+    sys.exit(1)
+
+
+# ── MAC Generation ─────────────────────────────────────────────────
+def _random_mac():
+    """Generate a random locally-administered unicast MAC address."""
+    # First byte: set bit 1 (locally administered), clear bit 0 (unicast)
+    first = random.randint(0, 255)
+    first = (first | 0x02) & 0xFE
+    octets = [first] + [random.randint(0, 255) for _ in range(5)]
+    return ":".join(f"{b:02x}" for b in octets)
+
+
+def _validate_mac(mac):
+    """Validate a MAC address string."""
+    pattern = re.compile(r'^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$')
+    return bool(pattern.match(mac))
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Show MAC addresses for all interfaces."""
+    interfaces = _get_interfaces()
+    if not interfaces:
+        die("No network interfaces found")
+
+    for iface in interfaces:
+        state_color = GREEN if iface["state"] == "UP" else DIM
+        dot = f"{GREEN}●{RESET}" if iface["state"] == "UP" else f"{DIM}○{RESET}"
+
+        print(f"{dot} {BOLD}{iface['name']}{RESET}  {DIM}({iface['type']}){RESET}")
+        print(f"  MAC      {iface['mac']}")
+
+        perm = _get_permanent_mac(iface["name"])
+        if perm and perm.lower() != iface["mac"].lower():
+            print(f"  Original {DIM}{perm}{RESET}  {YELLOW}(spoofed){RESET}")
+        elif perm:
+            print(f"  Original {DIM}{perm}{RESET}")
+
+        print(f"  State    {state_color}{iface['state']}{RESET}")
+        print()
+
+
+def cmd_show(args):
+    """Show MAC address for a specific interface."""
+    name = args[0] if args else None
+    iface = _resolve_interface(name)
+
+    print(iface["mac"])
+
+
+def cmd_random(args):
+    """Set a random MAC address on an interface."""
+    name = args[0] if args else None
+    iface = _resolve_interface(name)
+
+    new_mac = _random_mac()
+    _set_mac(iface["name"], new_mac)
+
+
+def cmd_set(args):
+    """Set a specific MAC address on an interface."""
+    if not args:
+        die("Usage: mac set <MAC> [interface]")
+
+    mac = args[0]
+    if not _validate_mac(mac):
+        die(f"Invalid MAC address: {mac}")
+
+    name = args[1] if len(args) > 1 else None
+    iface = _resolve_interface(name)
+
+    _set_mac(iface["name"], mac)
+
+
+def cmd_reset(args):
+    """Reset interface to its permanent/hardware MAC address."""
+    name = args[0] if args else None
+    iface = _resolve_interface(name)
+
+    perm = _get_permanent_mac(iface["name"])
+    if not perm:
+        die(f"Cannot determine permanent MAC for {iface['name']}")
+
+    if perm.lower() == iface["mac"].lower():
+        warn(f"{iface['name']} is already using its permanent MAC")
+        return
+
+    _set_mac(iface["name"], perm, label="permanent")
+
+
+def _set_mac(iface_name, new_mac, label=""):
+    """Bring interface down, change MAC, bring back up."""
+    label_str = f" ({label})" if label else ""
+
+    info(f"Setting MAC on {BOLD}{iface_name}{RESET} → "
+         f"{BOLD}{new_mac}{RESET}{label_str}")
+
+    # Bring down
+    result = run(["sudo", "-n", "ip", "link", "set", iface_name, "down"])
+    if result.returncode != 0:
+        # Try with password prompt
+        result = run(["sudo", "ip", "link", "set", iface_name, "down"])
+        if result.returncode != 0:
+            die(f"Failed to bring down {iface_name}: {result.stderr.strip()}")
+
+    # Set MAC
+    result = run(["sudo", "-n", "ip", "link", "set", iface_name,
+                   "address", new_mac])
+    if result.returncode != 0:
+        result = run(["sudo", "ip", "link", "set", iface_name,
+                       "address", new_mac])
+        if result.returncode != 0:
+            # Try to bring interface back up before dying
+            run(["sudo", "ip", "link", "set", iface_name, "up"])
+            die(f"Failed to set MAC: {result.stderr.strip()}")
+
+    # Bring up
+    result = run(["sudo", "-n", "ip", "link", "set", iface_name, "up"])
+    if result.returncode != 0:
+        result = run(["sudo", "ip", "link", "set", iface_name, "up"])
+        if result.returncode != 0:
+            warn(f"MAC changed but failed to bring {iface_name} back up")
+            return
+
+    ok(f"{iface_name} → {new_mac}")
+
+
+def cmd_list():
+    """List all interfaces and their MACs (machine-parseable)."""
+    interfaces = _get_interfaces()
+    for iface in interfaces:
+        perm = _get_permanent_mac(iface["name"]) or ""
+        spoofed = "spoofed" if perm and perm.lower() != iface["mac"].lower() else ""
+        print(f"{iface['name']}\t{iface['mac']}\t{perm}\t{iface['state']}\t{spoofed}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: mac [command] [options]
+
+View and spoof MAC addresses.
+
+commands:
+  (none)                        show all interfaces and MACs
+  show [IFACE]                  print MAC of an interface
+  random [IFACE]                set a random MAC address
+  set <MAC> [IFACE]             set a specific MAC address
+  reset [IFACE]                 restore permanent/hardware MAC
+  list                          machine-parseable interface list
+
+IFACE defaults to the wireless interface if only one exists.
+Changing MAC requires sudo.
+
+examples:
+  mac                           show all MACs
+  mac show                      print wifi MAC address
+  mac show eth0                 print MAC of eth0
+  mac random                    randomize wifi MAC
+  mac random wlan0              randomize wlan0 MAC
+  mac set aa:bb:cc:dd:ee:ff     set specific MAC on wifi
+  mac reset                     restore original wifi MAC"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    # Check for ip command
+    from shutil import which
+    if not which("ip"):
+        die("iproute2 not installed (need 'ip' command)")
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "show":   lambda: cmd_show(args),
+        "random": lambda: cmd_random(args),
+        "set":    lambda: cmd_set(args),
+        "reset":  lambda: cmd_reset(args),
+        "list":   lambda: cmd_list(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'mac --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

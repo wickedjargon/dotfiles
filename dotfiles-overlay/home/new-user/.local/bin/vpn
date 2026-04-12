@@ -1,0 +1,490 @@
+#!/usr/bin/env python3
+"""vpn — manage Mullvad WireGuard VPN from the command line.
+
+Requires: wireguard-tools (wg-quick, wg), curl
+"""
+
+import json
+import os
+import subprocess
+import sys
+import urllib.request
+
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=15):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+# ── Configuration ──────────────────────────────────────────────────
+IDENTITY_FILE = os.path.expanduser("~/.config/mullvad/identity.conf")
+NEXT_CONF = os.path.expanduser("~/.config/mullvad/mullvad-next.conf")
+WG_CONF = "/etc/wireguard/mullvad.conf"
+INTERFACE = "mullvad"
+RELAY_URL = "https://api.mullvad.net/www/relays/wireguard/"
+RELAY_CACHE = os.path.expanduser("~/.cache/mullvad-relays.json")
+
+
+def _read_identity():
+    """Read PrivateKey and Address from the identity file."""
+    if not os.path.isfile(IDENTITY_FILE):
+        die(f"Identity file not found: {IDENTITY_FILE}\n"
+            f"  See: how-to/mullvad-vpn.md")
+
+    private_key = None
+    address = None
+
+    with open(IDENTITY_FILE) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("#") or not line:
+                continue
+            if line.startswith("PrivateKey"):
+                private_key = line.split("=", 1)[1].strip()
+            elif line.startswith("Address"):
+                address = line.split("=", 1)[1].strip()
+
+    if not private_key or not address:
+        die(f"Missing PrivateKey or Address in {IDENTITY_FILE}")
+
+    return private_key, address
+
+
+# ── Relay Fetching ─────────────────────────────────────────────────
+def _fetch_relays():
+    """Fetch Mullvad WireGuard relays from API (cached)."""
+    # Use cache if less than 1 day old
+    if os.path.isfile(RELAY_CACHE):
+        import time
+        age = time.time() - os.path.getmtime(RELAY_CACHE)
+        if age < 86400:
+            try:
+                with open(RELAY_CACHE) as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError):
+                pass
+
+    info("Fetching relay list...")
+    try:
+        req = urllib.request.Request(RELAY_URL)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode())
+    except Exception as e:
+        # Fall back to cache if available
+        if os.path.isfile(RELAY_CACHE):
+            warn(f"API unavailable, using cached relays")
+            with open(RELAY_CACHE) as f:
+                return json.load(f)
+        die(f"Failed to fetch relays: {e}")
+
+    # Cache the result
+    os.makedirs(os.path.dirname(RELAY_CACHE), exist_ok=True)
+    with open(RELAY_CACHE, "w") as f:
+        json.dump(data, f)
+
+    return data
+
+
+def _parse_relays(data):
+    """Parse relay JSON into a structured list.
+
+    Returns list of dicts with keys:
+      hostname, country_name, country_code, city_name, city_code,
+      ipv4_addr_in, public_key, active
+    """
+    relays = []
+    for relay in data:
+        relays.append({
+            "hostname": relay.get("hostname", ""),
+            "country_name": relay.get("country_name", ""),
+            "country_code": relay.get("country_code", ""),
+            "city_name": relay.get("city_name", ""),
+            "city_code": relay.get("city_code", ""),
+            "ipv4_addr_in": relay.get("ipv4_addr_in", ""),
+            "public_key": relay.get("public_key", ""),
+            "active": relay.get("active", False),
+        })
+    return [r for r in relays if r["active"] and r["ipv4_addr_in"]]
+
+
+def _generate_config(relay, private_key, address):
+    """Generate a WireGuard configuration for a specific relay."""
+    return f"""\
+[Interface]
+PrivateKey = {private_key}
+Address = {address}
+DNS = 10.64.0.1
+
+[Peer]
+PublicKey = {relay['public_key']}
+AllowedIPs = 0.0.0.0/0,::0/0
+Endpoint = {relay['ipv4_addr_in']}:51820
+"""
+
+
+# ── Status Parsing ─────────────────────────────────────────────────
+def _is_connected():
+    """Check if the VPN interface is active."""
+    result = run(["sudo", "-n", "wg", "show", INTERFACE])
+    return result.returncode == 0 and result.stdout.strip() != ""
+
+
+def _get_current_endpoint():
+    """Get the current VPN endpoint address."""
+    result = run(["sudo", "-n", "wg", "show", INTERFACE, "endpoints"])
+    if result.returncode != 0:
+        return None
+    # Format: <peer_key>\t<endpoint>
+    for line in result.stdout.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 2:
+            return parts[1].split(":")[0]  # IP without port
+    return None
+
+
+def _find_relay_by_ip(relays, ip):
+    """Find a relay matching the given IP."""
+    for r in relays:
+        if r["ipv4_addr_in"] == ip:
+            return r
+    return None
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Show current VPN connection status."""
+    if not _is_connected():
+        print(f"{DIM}○{RESET} VPN is {BOLD}disconnected{RESET}")
+        return
+
+    print(f"{GREEN}●{RESET} VPN is {BOLD}connected{RESET}")
+
+    endpoint = _get_current_endpoint()
+    if endpoint:
+        print(f"  Endpoint   {endpoint}")
+
+        # Try to identify which relay
+        try:
+            data = _fetch_relays()
+            relays = _parse_relays(data)
+            relay = _find_relay_by_ip(relays, endpoint)
+            if relay:
+                print(f"  Server     {relay['hostname']}")
+                print(f"  Location   {relay['city_name']}, {relay['country_name']}")
+        except Exception:
+            pass
+
+    # Show transfer stats
+    result = run(["sudo", "-n", "wg", "show", INTERFACE, "transfer"])
+    if result.returncode == 0 and result.stdout.strip():
+        for line in result.stdout.strip().splitlines():
+            parts = line.split("\t")
+            if len(parts) >= 3:
+                rx = _human_bytes(int(parts[1]))
+                tx = _human_bytes(int(parts[2]))
+                print(f"  Transfer   {DIM}↓{RESET} {rx}  {DIM}↑{RESET} {tx}")
+
+    # Show handshake time
+    result = run(["sudo", "-n", "wg", "show", INTERFACE, "latest-handshakes"])
+    if result.returncode == 0 and result.stdout.strip():
+        import time
+        for line in result.stdout.strip().splitlines():
+            parts = line.split("\t")
+            if len(parts) >= 2 and parts[1].isdigit():
+                ts = int(parts[1])
+                if ts > 0:
+                    ago = int(time.time() - ts)
+                    if ago < 60:
+                        hs = f"{ago}s ago"
+                    elif ago < 3600:
+                        hs = f"{ago // 60}m ago"
+                    else:
+                        hs = f"{ago // 3600}h ago"
+                    print(f"  Handshake  {DIM}{hs}{RESET}")
+
+
+def _human_bytes(n):
+    """Convert bytes to human-readable string."""
+    for unit in ("B", "KiB", "MiB", "GiB"):
+        if n < 1024:
+            return f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TiB"
+
+
+def cmd_connect(args):
+    """Connect to VPN, optionally specifying a location."""
+    if _is_connected():
+        warn("VPN is already connected")
+        print(f"  {DIM}Use 'vpn disconnect' first, or 'vpn location' to change.{RESET}")
+        return
+
+    private_key, address = _read_identity()
+    data = _fetch_relays()
+    relays = _parse_relays(data)
+
+    if not relays:
+        die("No active relays found")
+
+    if args:
+        # Match by country, city, or hostname
+        query = " ".join(args).lower()
+        relay = _pick_relay(relays, query)
+    else:
+        # Pick a random relay (or use last location)
+        import random
+        relay = random.choice(relays)
+
+    _do_connect(relay, private_key, address)
+
+
+def cmd_disconnect():
+    """Disconnect from VPN."""
+    if not _is_connected():
+        warn("VPN is not connected")
+        return
+
+    info("Disconnecting...")
+    result = run(["sudo", "-n", "wg-quick", "down", INTERFACE])
+    if result.returncode == 0:
+        ok("Disconnected")
+    else:
+        die(f"Failed to disconnect: {result.stderr.strip()}")
+
+
+def cmd_location(args):
+    """Change VPN location (disconnect + reconnect)."""
+    private_key, address = _read_identity()
+    data = _fetch_relays()
+    relays = _parse_relays(data)
+
+    if not relays:
+        die("No active relays found")
+
+    if not args:
+        # Show available countries
+        _show_locations(relays)
+        return
+
+    query = " ".join(args).lower()
+    relay = _pick_relay(relays, query)
+
+    # Disconnect first if connected
+    if _is_connected():
+        info("Disconnecting current VPN...")
+        run(["sudo", "-n", "wg-quick", "down", INTERFACE])
+
+    _do_connect(relay, private_key, address)
+
+
+def _show_locations(relays):
+    """Show available locations grouped by country."""
+    # Group by country
+    countries = {}
+    for r in relays:
+        cc = r["country_code"]
+        if cc not in countries:
+            countries[cc] = {
+                "name": r["country_name"],
+                "cities": {},
+            }
+        city = r["city_code"]
+        if city not in countries[cc]["cities"]:
+            countries[cc]["cities"][city] = {
+                "name": r["city_name"],
+                "count": 0,
+            }
+        countries[cc]["cities"][city]["count"] += 1
+
+    print(f"{BOLD}Available locations{RESET}\n")
+    for cc in sorted(countries, key=lambda c: countries[c]["name"]):
+        country = countries[cc]
+        cities = country["cities"]
+        city_list = ", ".join(
+            f"{c['name']} {DIM}({c['count']}){RESET}"
+            for c in sorted(cities.values(), key=lambda x: x["name"])
+        )
+        print(f"  {BOLD}{country['name']}{RESET}  {DIM}[{cc}]{RESET}")
+        print(f"    {city_list}")
+        print()
+
+    print(f"{DIM}Usage: vpn location <country|city|hostname>{RESET}")
+
+
+def _pick_relay(relays, query):
+    """Find a relay matching the query string.
+
+    Matches against country name, country code, city name,
+    city code, or hostname. If multiple match, picks random.
+    """
+    matches = []
+    for r in relays:
+        searchable = [
+            r["country_name"].lower(),
+            r["country_code"].lower(),
+            r["city_name"].lower(),
+            r["city_code"].lower(),
+            r["hostname"].lower(),
+        ]
+        if any(query in s for s in searchable):
+            matches.append(r)
+
+    if not matches:
+        die(f"No relays matching '{query}'")
+
+    # If exact hostname match, use that
+    exact = [r for r in matches if r["hostname"].lower() == query]
+    if exact:
+        return exact[0]
+
+    # Otherwise pick random from matches
+    import random
+    return random.choice(matches)
+
+
+def _do_connect(relay, private_key, address):
+    """Generate config and connect to a relay."""
+    config = _generate_config(relay, private_key, address)
+
+    # Write temp config
+    with open(NEXT_CONF, "w") as f:
+        f.write(config)
+    os.chmod(NEXT_CONF, 0o600)
+
+    # Copy to /etc/wireguard (requires sudo)
+    info(f"Connecting to {BOLD}{relay['hostname']}{RESET} "
+         f"({relay['city_name']}, {relay['country_name']})...")
+
+    result = run(["sudo", "-n", "cp", NEXT_CONF, WG_CONF])
+    if result.returncode != 0:
+        die(f"Failed to install config (need sudoers): {result.stderr.strip()}")
+
+    result = run(["sudo", "-n", "wg-quick", "up", INTERFACE])
+    if result.returncode == 0:
+        ok(f"Connected to {relay['hostname']} "
+           f"({relay['city_name']}, {relay['country_name']})")
+    else:
+        die(f"Failed to connect: {result.stderr.strip()}")
+
+
+def cmd_list():
+    """List available relays."""
+    data = _fetch_relays()
+    relays = _parse_relays(data)
+
+    if not relays:
+        print("No active relays found.")
+        return
+
+    # Group by country → city
+    max_host = max(len(r["hostname"]) for r in relays)
+
+    current_ip = _get_current_endpoint() if _is_connected() else None
+
+    for r in sorted(relays, key=lambda x: (x["country_name"], x["city_name"], x["hostname"])):
+        active = "* " if r["ipv4_addr_in"] == current_ip else "  "
+        color = GREEN if r["ipv4_addr_in"] == current_ip else ""
+        reset = RESET if color else ""
+        print(f"{active}{color}{r['hostname']:<{max_host}}{reset}  "
+              f"{r['city_name']:<20}  {DIM}{r['country_name']}{RESET}")
+
+
+def cmd_refresh():
+    """Force refresh the relay cache."""
+    if os.path.isfile(RELAY_CACHE):
+        os.remove(RELAY_CACHE)
+    data = _fetch_relays()
+    relays = _parse_relays(data)
+    ok(f"Refreshed — {len(relays)} active relays")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: vpn [command] [options]
+
+Manage Mullvad WireGuard VPN connections.
+
+commands:
+  (none)                        show connection status
+  connect [LOCATION]            connect (random relay or by location)
+  disconnect                    disconnect from VPN
+  location [QUERY]              show/change VPN location
+  list                          list all available relays
+  refresh                       force refresh relay cache
+
+LOCATION can be a country name/code, city name/code, or hostname.
+If multiple relays match, one is chosen randomly.
+
+examples:
+  vpn                           show connection status
+  vpn connect                   connect to a random relay
+  vpn connect sweden            connect to a relay in Sweden
+  vpn connect se-got            connect to Gothenburg
+  vpn disconnect                disconnect from VPN
+  vpn location                  list available locations
+  vpn location germany          switch to a German relay
+  vpn list                      show all relays
+  vpn refresh                   update relay cache"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    # Check for wg-quick
+    from shutil import which
+    if not which("wg-quick"):
+        die("wireguard-tools not installed (need wg-quick)")
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "connect":    lambda: cmd_connect(args),
+        "disconnect": lambda: cmd_disconnect(),
+        "location":   lambda: cmd_location(args),
+        "list":       lambda: cmd_list(),
+        "refresh":    lambda: cmd_refresh(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'vpn --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

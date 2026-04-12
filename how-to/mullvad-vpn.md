@@ -1,8 +1,8 @@
-# How to Set Up Mullvad VPN (dmenu-vpn)
+# How to Set Up Mullvad VPN (vpn)
 
-The `dmenu-vpn` script manages WireGuard connections to Mullvad servers and allows you to change locations dynamically. Because it uses WireGuard directly instead of the Mullvad app, there is a specific setup process required on a fresh install.
+The `vpn` script manages WireGuard connections to Mullvad servers and allows you to change locations dynamically. Because it uses WireGuard directly instead of the Mullvad app, there is a specific setup process required on a fresh install.
 
-When you first deploy your dotfiles, `dmenu-vpn` will fail until these steps are completed.
+When you first deploy your dotfiles, `vpn` will fail until these steps are completed.
 
 ## 1. Generate WireGuard Configuration
 
@@ -15,7 +15,7 @@ First, you need a valid WireGuard private key and an assigned internal IP addres
 
 ## 2. Set Up the Identity File
 
-`dmenu-vpn` needs to know your PrivateKey and your assigned Address. It reads these from a local identity file.
+`vpn` needs to know your PrivateKey and your assigned Address. It reads these from a local identity file.
 
 1. Open the `.conf` file you downloaded in a text editor.
 2. Create the identity file at `~/.config/mullvad/identity.conf`:
@@ -30,12 +30,12 @@ Address = <Copy Address from downloaded config>
 
 ## 3. Configure Sudoers Permissions
 
-`dmenu-vpn` requires passwordless `sudo` access to perform three specific actions:
+`vpn` requires passwordless `sudo` access to perform three specific actions:
 1. Bring the WireGuard interface up (`wg-quick up`)
 2. Bring the WireGuard interface down (`wg-quick down`)
 3. Copy the dynamically generated configuration file into `/etc/wireguard/` (`cp`)
 
-Because `dmenu` runs without a terminal, it cannot prompt you for a password.
+Because the script may be invoked from contexts without a terminal, passwordless sudo is required.
 
 ### Applying the Sudoers Rules
 
@@ -59,9 +59,8 @@ distrobox-host-exec sudo chmod 0440 /etc/sudoers.d/mullvad-vpn
 
 Once the identity file is created and the sudoers permissions are applied, the setup is complete.
 
-1. Trigger your `dmenu-vpn` keyboard shortcut.
-2. Select **Change Location**.
-3. Choose a country and city.
-4. The script will automatically generate the corresponding WireGuard configuration, place it in `/etc/wireguard/mullvad.conf`, and connect.
+1. Run `vpn connect` to connect to a random relay.
+2. Or run `vpn location` to see available locations, then `vpn location sweden` to connect to Sweden.
+3. The script will automatically generate the corresponding WireGuard configuration, place it in `/etc/wireguard/mullvad.conf`, and connect.
 
 You can verify your connection and location by running `my-location` in the terminal.

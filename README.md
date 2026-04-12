@@ -106,6 +106,6 @@ adb push /tmp/private-key.asc /sdcard/Download/private-key.asc
 
 ### 6. Mullvad VPN Setup
 
-To configure the `dmenu-vpn` tool to manage your Mullvad WireGuard connections, including the required `sudoers` setup, follow the guide here:
+To configure the `vpn` tool to manage your Mullvad WireGuard connections, including the required `sudoers` setup, follow the guide here:
 
 [How to Set Up Mullvad VPN](how-to/mullvad-vpn.md)
