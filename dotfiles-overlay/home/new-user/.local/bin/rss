@@ -1,0 +1,886 @@
+#!/usr/bin/env python3
+"""rss — read and manage RSS/Atom feeds from the terminal.
+
+No external dependencies — uses only Python stdlib.
+"""
+
+import hashlib
+import html
+import json
+import os
+import re
+import sys
+import shutil
+import textwrap
+import time
+import urllib.error
+import urllib.request
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+# ── Config ──────────────────────────────────────────────────────────
+DATA_DIR   = os.path.expanduser("~/.local/share/rss")
+FEEDS_FILE = os.path.join(DATA_DIR, "feeds.opml")
+CACHE_DIR  = os.path.join(DATA_DIR, "cache")
+READ_FILE  = os.path.join(DATA_DIR, "read.json")
+
+USER_AGENT = "rss/1.0 (pass-inspired feed reader)"
+FETCH_TIMEOUT = 15
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def ensure_dirs():
+    os.makedirs(CACHE_DIR, exist_ok=True)
+
+
+def feed_hash(url):
+    return hashlib.sha256(url.encode()).hexdigest()[:12]
+
+
+def time_ago(dt):
+    """Human-readable relative time from a datetime."""
+    if dt is None:
+        return ""
+    now = datetime.now(timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    delta = now - dt
+    seconds = int(delta.total_seconds())
+    if seconds < 0:
+        return "just now"
+    if seconds < 60:
+        return "just now"
+    if seconds < 3600:
+        m = seconds // 60
+        return f"{m}m ago"
+    if seconds < 86400:
+        h = seconds // 3600
+        return f"{h}h ago"
+    d = seconds // 86400
+    if d == 1:
+        return "1d ago"
+    if d < 30:
+        return f"{d}d ago"
+    if d < 365:
+        mo = d // 30
+        return f"{mo}mo ago"
+    y = d // 365
+    return f"{y}y ago"
+
+
+# ── HTML → plain text ──────────────────────────────────────────────
+def html_to_text(raw):
+    """Strip HTML tags and decode entities into readable plain text."""
+    if not raw:
+        return ""
+    # Remove script/style blocks
+    text = re.sub(r'<(script|style)[^>]*>.*?</\1>', '', raw,
+                  flags=re.DOTALL | re.IGNORECASE)
+    # Convert <br>, <p>, <div>, <li> to newlines
+    text = re.sub(r'<br\s*/?>', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'</(p|div|li|tr|h[1-6])>', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'<(p|div|li|tr|h[1-6])[^>]*>', '\n', text, flags=re.IGNORECASE)
+    # Convert links to text [label](url)
+    text = re.sub(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+                  r'\2 (\1)', text, flags=re.DOTALL | re.IGNORECASE)
+    # Strip remaining tags
+    text = re.sub(r'<[^>]+>', '', text)
+    # Decode entities
+    text = html.unescape(text)
+    # Collapse whitespace on each line, preserve newlines
+    lines = text.split('\n')
+    lines = [' '.join(line.split()) for line in lines]
+    # Collapse multiple blank lines
+    result = []
+    prev_blank = False
+    for line in lines:
+        if not line:
+            if not prev_blank:
+                result.append('')
+            prev_blank = True
+        else:
+            result.append(line)
+            prev_blank = False
+    return '\n'.join(result).strip()
+
+
+# ── OPML management ────────────────────────────────────────────────
+def load_feeds():
+    """Load feeds from OPML. Returns list of dicts with 'name', 'url'."""
+    if not os.path.exists(FEEDS_FILE):
+        return []
+    try:
+        tree = ET.parse(FEEDS_FILE)
+        root = tree.getroot()
+        feeds = []
+        for outline in root.iter("outline"):
+            url = outline.get("xmlUrl")
+            if url:
+                name = outline.get("text") or outline.get("title") or url
+                feeds.append({"name": name, "url": url})
+        return feeds
+    except ET.ParseError:
+        warn("Corrupt feeds.opml — starting fresh")
+        return []
+
+
+def save_feeds(feeds):
+    """Save feeds list to OPML."""
+    ensure_dirs()
+    root = ET.Element("opml", version="2.0")
+    head = ET.SubElement(root, "head")
+    title = ET.SubElement(head, "title")
+    title.text = "RSS Subscriptions"
+    body = ET.SubElement(root, "body")
+    for f in sorted(feeds, key=lambda x: x["name"].lower()):
+        ET.SubElement(body, "outline",
+                      type="rss",
+                      text=f["name"],
+                      title=f["name"],
+                      xmlUrl=f["url"])
+    tree = ET.ElementTree(root)
+    ET.indent(tree, space="  ")
+    tree.write(FEEDS_FILE, encoding="unicode", xml_declaration=True)
+
+
+def find_feed(feeds, name):
+    """Find a feed by name (case-insensitive partial match)."""
+    name_lower = name.lower()
+    # Exact match first
+    for f in feeds:
+        if f["name"].lower() == name_lower:
+            return f
+    # Prefix match
+    matches = [f for f in feeds if f["name"].lower().startswith(name_lower)]
+    if len(matches) == 1:
+        return matches[0]
+    # Substring match
+    matches = [f for f in feeds if name_lower in f["name"].lower()]
+    if len(matches) == 1:
+        return matches[0]
+    return None
+
+
+# ── Read tracking ──────────────────────────────────────────────────
+def load_read():
+    if not os.path.exists(READ_FILE):
+        return set()
+    try:
+        with open(READ_FILE) as f:
+            return set(json.load(f))
+    except (json.JSONDecodeError, TypeError):
+        return set()
+
+
+def save_read(read_set):
+    ensure_dirs()
+    with open(READ_FILE, "w") as f:
+        json.dump(list(read_set), f)
+
+
+def entry_id(entry):
+    """Get a unique ID for an entry."""
+    return entry.get("id") or entry.get("link") or entry.get("title", "")
+
+
+# ── Feed fetching & parsing ────────────────────────────────────────
+def fetch_url(url):
+    """Fetch a URL and return the response body as string."""
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as resp:
+            data = resp.read()
+            # Try to detect encoding
+            charset = resp.headers.get_content_charset() or "utf-8"
+            return data.decode(charset, errors="replace")
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"HTTP {e.code}: {e.reason}")
+    except urllib.error.URLError as e:
+        raise RuntimeError(str(e.reason))
+    except Exception as e:
+        raise RuntimeError(str(e))
+
+
+def parse_date(date_str):
+    """Parse various date formats from feeds."""
+    if not date_str:
+        return None
+    # RFC 2822 (RSS)
+    try:
+        return parsedate_to_datetime(date_str)
+    except (ValueError, TypeError):
+        pass
+    # ISO 8601 / Atom
+    # Strip trailing Z and replace with +00:00
+    cleaned = date_str.strip()
+    cleaned = re.sub(r'Z$', '+00:00', cleaned)
+    try:
+        return datetime.fromisoformat(cleaned)
+    except (ValueError, TypeError):
+        pass
+    return None
+
+
+def _find(parent, *paths, ns=None):
+    """Find the first matching element across multiple XPath expressions."""
+    for path in paths:
+        el = parent.find(path, ns) if ns else parent.find(path)
+        if el is not None:
+            return el
+    return None
+
+
+def parse_feed(xml_text):
+    """Parse RSS or Atom XML. Returns (title, [entries])."""
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as e:
+        raise RuntimeError(f"XML parse error: {e}")
+
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    entries = []
+
+    # Atom feed
+    if root.tag == "{http://www.w3.org/2005/Atom}feed" or root.tag == "feed":
+        title_el = _find(root, "atom:title", "title", ns=ns)
+        feed_title = title_el.text if title_el is not None else "Untitled"
+
+        for entry in root.findall("atom:entry", ns) + root.findall("entry"):
+            e_title_el = _find(entry, "atom:title", "title", ns=ns)
+            e_title = e_title_el.text if e_title_el is not None else "Untitled"
+
+            # Link — prefer rel=alternate
+            link_el = entry.find("atom:link[@rel='alternate']", ns)
+            if link_el is None:
+                link_el = _find(entry, "atom:link", "link", ns=ns)
+            link = link_el.get("href", "") if link_el is not None else ""
+
+            # ID
+            id_el = _find(entry, "atom:id", "id", ns=ns)
+            eid = id_el.text if id_el is not None else link
+
+            # Date
+            date_el = _find(entry, "atom:updated", "atom:published",
+                            "updated", "published", ns=ns)
+            date_str = date_el.text if date_el is not None else None
+
+            # Content
+            content_el = _find(entry, "atom:content", "atom:summary",
+                               "content", "summary", ns=ns)
+            content = content_el.text if content_el is not None else ""
+
+            entries.append({
+                "id": eid or link or e_title,
+                "title": e_title,
+                "link": link,
+                "date": date_str,
+                "content": content or "",
+            })
+        return feed_title, entries
+
+    # RSS 2.0
+    channel = root.find("channel")
+    if channel is None:
+        raise RuntimeError("Unrecognized feed format")
+
+    title_el = channel.find("title")
+    feed_title = title_el.text if title_el is not None else "Untitled"
+
+    for item in channel.findall("item"):
+        i_title_el = item.find("title")
+        i_title = i_title_el.text if i_title_el is not None else "Untitled"
+
+        link_el = item.find("link")
+        link = link_el.text if link_el is not None else ""
+
+        guid_el = item.find("guid")
+        guid = guid_el.text if guid_el is not None else link
+
+        date_el = _find(item, "pubDate", "dc:date")
+        date_str = date_el.text if date_el is not None else None
+
+        # Content: prefer content:encoded, fall back to description
+        content_el = _find(item,
+                           "{http://purl.org/rss/1.0/modules/content/}encoded",
+                           "description")
+        content = content_el.text if content_el is not None else ""
+
+        entries.append({
+            "id": guid or link or i_title,
+            "title": i_title,
+            "link": link.strip() if link else "",
+            "date": date_str,
+            "content": content or "",
+        })
+
+    return feed_title, entries
+
+
+def fetch_and_cache(feed):
+    """Fetch a feed and cache its entries. Returns (title, entries) or raises."""
+    xml_text = fetch_url(feed["url"])
+    title, entries = parse_feed(xml_text)
+
+    # Sort by date (newest first)
+    def sort_key(e):
+        dt = parse_date(e.get("date"))
+        if dt is None:
+            return datetime.min.replace(tzinfo=timezone.utc)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+
+    entries.sort(key=sort_key, reverse=True)
+
+    # Cache
+    ensure_dirs()
+    cache_path = os.path.join(CACHE_DIR, f"{feed_hash(feed['url'])}.json")
+    with open(cache_path, "w") as f:
+        json.dump({"title": title, "entries": entries}, f, indent=2)
+
+    return title, entries
+
+
+def load_cached(feed):
+    """Load cached entries for a feed. Returns (title, entries) or (None, [])."""
+    cache_path = os.path.join(CACHE_DIR, f"{feed_hash(feed['url'])}.json")
+    if not os.path.exists(cache_path):
+        return None, []
+    try:
+        with open(cache_path) as f:
+            data = json.load(f)
+        return data.get("title", feed["name"]), data.get("entries", [])
+    except (json.JSONDecodeError, TypeError):
+        return None, []
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Bare command — show all feeds with unread counts."""
+    feeds = load_feeds()
+    if not feeds:
+        print(f"{DIM}No feeds.{RESET} Add one with: rss add <url>")
+        return
+
+    read_set = load_read()
+    rows = []
+    for f in feeds:
+        _, entries = load_cached(f)
+        total = len(entries)
+        unread = sum(1 for e in entries if entry_id(e) not in read_set)
+        rows.append((f["name"], total, unread))
+
+    # Find column width
+    max_name = max(len(r[0]) for r in rows) if rows else 0
+
+    for name, total, unread in rows:
+        if unread > 0:
+            dot = f"{GREEN}●{RESET}"
+            count = f"{BOLD}{unread}{RESET} unread"
+        else:
+            dot = f"{DIM}○{RESET}"
+            count = f"{DIM}0 unread{RESET}"
+        print(f"  {dot} {name:<{max_name}}  {count}")
+
+
+def resolve_youtube_url(url):
+    """If url is a YouTube channel page, resolve it to the RSS feed URL."""
+    import re as _re
+    yt_patterns = [
+        r'(?:https?://)?(?:www\.)?youtube\.com/channel/([a-zA-Z0-9_-]+)',
+        r'(?:https?://)?(?:www\.)?youtube\.com/(?:@|c/|user/)([a-zA-Z0-9_.-]+)',
+    ]
+    # Direct channel ID
+    m = _re.match(yt_patterns[0], url)
+    if m:
+        channel_id = m.group(1)
+        return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+
+    # @handle, /c/name, /user/name — need to fetch page to get channel ID
+    m = _re.match(yt_patterns[1], url)
+    if m:
+        info(f"Resolving YouTube channel...")
+        try:
+            page = fetch_url(url)
+        except RuntimeError as e:
+            die(f"Failed to fetch YouTube page: {e}")
+        # Extract channel ID from meta tag or page source
+        cid_match = _re.search(
+            r'(?:channel_id=|"channelId":"| \
+<link[^>]+rel="canonical"[^>]+href="https://www\.youtube\.com/channel/)([a-zA-Z0-9_-]{20,})',
+            page)
+        if cid_match:
+            channel_id = cid_match.group(1)
+            return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+        die("Could not resolve YouTube channel ID from page")
+
+    return None
+
+
+def cmd_add(args):
+    """Subscribe to a feed."""
+    if not args:
+        die("Usage: rss add <url> [name]")
+
+    url = args[0]
+    custom_name = " ".join(args[1:]) if len(args) > 1 else None
+
+    # Resolve YouTube channel URLs to RSS feed URLs
+    yt_feed = resolve_youtube_url(url)
+    if yt_feed:
+        ok(f"Resolved YouTube → {yt_feed}")
+        url = yt_feed
+
+    feeds = load_feeds()
+
+    # Check for duplicate
+    for f in feeds:
+        if f["url"] == url:
+            die(f"Already subscribed to {f['name']} ({url})")
+
+    info("Fetching feed metadata...")
+    try:
+        xml_text = fetch_url(url)
+        title, entries = parse_feed(xml_text)
+    except RuntimeError as e:
+        die(f"Failed to fetch feed: {e}")
+
+    name = custom_name or title or url
+    feed = {"name": name, "url": url}
+    feeds.append(feed)
+    save_feeds(feeds)
+
+    # Cache the fetched entries
+    ensure_dirs()
+    cache_path = os.path.join(CACHE_DIR, f"{feed_hash(url)}.json")
+    with open(cache_path, "w") as f_out:
+        json.dump({"title": name, "entries": entries}, f_out, indent=2)
+
+    ok(f'Added "{name}" ({url}) — {len(entries)} entries')
+
+
+def cmd_del(args):
+    """Unsubscribe from a feed."""
+    if not args:
+        die("Usage: rss del <name>")
+
+    name = " ".join(args)
+    feeds = load_feeds()
+
+    match = find_feed(feeds, name)
+    if not match:
+        # Check for multiple partial matches
+        name_lower = name.lower()
+        matches = [f for f in feeds if name_lower in f["name"].lower()]
+        if len(matches) > 1:
+            print("Multiple feeds match:")
+            for f in matches:
+                print(f"  ○ {f['name']}")
+            print(f"\nSpecify one, e.g.: rss del \"{matches[0]['name']}\"")
+            return
+        die(f"No feed matching \"{name}\"")
+
+    feeds = [f for f in feeds if f["url"] != match["url"]]
+    save_feeds(feeds)
+
+    # Remove cache
+    cache_path = os.path.join(CACHE_DIR, f"{feed_hash(match['url'])}.json")
+    if os.path.exists(cache_path):
+        os.unlink(cache_path)
+
+    ok(f'Removed "{match["name"]}"')
+
+
+def cmd_fetch(args):
+    """Fetch/refresh feeds."""
+    feeds = load_feeds()
+    if not feeds:
+        die("No feeds. Add one with: rss add <url>")
+
+    # Fetch specific feed or all
+    if args:
+        name = " ".join(args)
+        match = find_feed(feeds, name)
+        if not match:
+            die(f"No feed matching \"{name}\"")
+        targets = [match]
+    else:
+        targets = feeds
+
+    ok_count = 0
+    fail_count = 0
+    for f in targets:
+        try:
+            info(f"Fetching {BOLD}{f['name']}{RESET}...")
+            title, entries = fetch_and_cache(f)
+
+            # Update feed title if it changed
+            if title and title != f["name"]:
+                for orig in feeds:
+                    if orig["url"] == f["url"]:
+                        orig["name"] = title
+                save_feeds(feeds)
+
+            ok(f"{f['name']} — {len(entries)} entries")
+            ok_count += 1
+        except RuntimeError as e:
+            warn(f"{f['name']}: {e}")
+            fail_count += 1
+
+    if len(targets) > 1:
+        summary = f"Fetched {ok_count} feed{'s' if ok_count != 1 else ''}"
+        if fail_count:
+            summary += f", {fail_count} failed"
+        print(f"\n{summary}")
+
+
+def cmd_read(args):
+    """Read entries — interactive entry browser."""
+    feeds = load_feeds()
+    if not feeds:
+        die("No feeds. Add one with: rss add <url>")
+
+    read_set = load_read()
+
+    # Determine which feed to read
+    if args:
+        name = " ".join(args)
+        match = find_feed(feeds, name)
+        if not match:
+            die(f"No feed matching \"{name}\"")
+        target = match
+    else:
+        # Auto-select: find feeds with unread items
+        unread_feeds = []
+        for f in feeds:
+            _, entries = load_cached(f)
+            unread = [e for e in entries if entry_id(e) not in read_set]
+            if unread:
+                unread_feeds.append((f, unread))
+
+        if not unread_feeds:
+            print(f"{DIM}No unread entries.{RESET}")
+            return
+
+        if len(unread_feeds) == 1:
+            target = unread_feeds[0][0]
+            info(f'Only "{BOLD}{target["name"]}{RESET}" has unread items')
+        else:
+            print("Feeds with unread items:")
+            max_name = max(len(f["name"]) for f, _ in unread_feeds)
+            for f, unread in unread_feeds:
+                print(f"  {GREEN}●{RESET} {f['name']:<{max_name}}"
+                      f"  {BOLD}{len(unread)}{RESET} unread")
+            print(f"\nSpecify one, e.g.: rss read \"{unread_feeds[0][0]['name']}\"")
+            return
+
+    _, entries = load_cached(target)
+    if not entries:
+        warn(f'No cached entries for "{target["name"]}". Run: rss fetch')
+        return
+
+    # Show unread first, then all
+    unread = [e for e in entries if entry_id(e) not in read_set]
+    if not unread:
+        print(f"{DIM}No unread entries in \"{target['name']}\".{RESET}")
+        show = entries[:20]  # Show recent entries anyway
+        if not show:
+            return
+        print(f"Showing {len(show)} most recent:")
+    else:
+        show = unread
+
+    # Display entry list
+    print(f"\n  {BOLD}{target['name']}{RESET}"
+          f"  {DIM}({len(unread)} unread of {len(entries)}){RESET}\n")
+
+    max_idx = len(str(len(show)))
+    for i, e in enumerate(show, 1):
+        dt = parse_date(e.get("date"))
+        ago = time_ago(dt)
+        title = e.get("title", "Untitled")
+        # Truncate long titles
+        term_width = shutil.get_terminal_size(fallback=(80, 24)).columns
+        max_title = term_width - max_idx - len(ago) - 8
+        if len(title) > max_title > 0:
+            title = title[:max_title - 1] + "…"
+        ago_str = f"  {DIM}{ago}{RESET}" if ago else ""
+        print(f"  {DIM}{i:>{max_idx}}{RESET}  {title}{ago_str}")
+
+    # Interactive selection
+    print(f"\n{DIM}Enter number to read (q to quit):{RESET} ", end="", flush=True)
+    try:
+        choice = input().strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return
+
+    if choice.lower() in ("q", "quit", ""):
+        return
+
+    try:
+        idx = int(choice) - 1
+        if idx < 0 or idx >= len(show):
+            die(f"Invalid selection: {choice}")
+    except ValueError:
+        die(f"Invalid selection: {choice}")
+
+    selected = show[idx]
+
+    # Mark as read
+    read_set.add(entry_id(selected))
+    save_read(read_set)
+
+    # Display the entry
+    title = selected.get("title", "Untitled")
+    link = selected.get("link", "")
+    dt = parse_date(selected.get("date"))
+    ago = time_ago(dt)
+    content = html_to_text(selected.get("content", ""))
+
+    sep = "─" * min(70, shutil.get_terminal_size(fallback=(80, 24)).columns - 2)
+    print(f"\n{BOLD}── {title} {RESET}")
+    meta_parts = [target["name"]]
+    if ago:
+        meta_parts.append(ago)
+    if link:
+        meta_parts.append(link)
+    print(f"{DIM}{' · '.join(meta_parts)}{RESET}")
+    print(sep)
+
+    if content:
+        # Word-wrap to terminal width
+        width = min(76, shutil.get_terminal_size(fallback=(80, 24)).columns - 4)
+        for paragraph in content.split('\n'):
+            if paragraph.strip():
+                wrapped = textwrap.fill(paragraph, width=width)
+                print(f"  {wrapped}")
+            else:
+                print()
+    else:
+        print(f"  {DIM}(No content in feed — open in browser){RESET}")
+
+    print(sep)
+
+    if link:
+        is_yt = bool(re.match(
+            r'https?://(?:www\.|m\.)?(?:youtube\.com|youtu\.be)/', link))
+        mpv_hint = "[m]pv" if is_yt else "[m]pv audio  [M]pv video"
+        print(f"\n{DIM}[o]pen in browser  {mpv_hint}  [q]uit{RESET} ",
+              end="", flush=True)
+        try:
+            action = input().strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return
+        if action == "o":
+            browser = os.environ.get("BROWSER", "xdg-open")
+            try:
+                import subprocess
+                subprocess.Popen([browser, link],
+                                 stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
+                ok(f"Opened in {browser}")
+            except FileNotFoundError:
+                warn(f"Could not open browser: {browser}")
+                print(f"  {link}")
+        elif action in ("m", "M"):
+            import subprocess
+            # YouTube links get video by default; others need uppercase M
+            use_video = is_yt or action == "M"
+            cmd = ["mpv"]
+            if not use_video:
+                cmd.append("--no-video")
+            cmd.append(link)
+            info(f"Opening in mpv{'' if use_video else ' (audio)'}...")
+            try:
+                subprocess.Popen(cmd,
+                                 stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
+                ok("Launched mpv")
+            except FileNotFoundError:
+                die("mpv not found — install it with your package manager")
+
+
+def cmd_list():
+    """Machine-parseable list of feeds."""
+    feeds = load_feeds()
+    for f in feeds:
+        print(f"{f['name']}\t{f['url']}")
+
+
+def cmd_export():
+    """Print feeds.opml to stdout."""
+    if not os.path.exists(FEEDS_FILE):
+        die("No feeds.opml found")
+    with open(FEEDS_FILE) as f:
+        print(f.read(), end="")
+
+
+def cmd_import(args):
+    """Import feeds from an OPML file."""
+    if not args:
+        die("Usage: rss import <file.opml>")
+
+    filepath = args[0]
+    if not os.path.isfile(filepath):
+        die(f"File not found: {filepath}")
+
+    try:
+        tree = ET.parse(filepath)
+        root = tree.getroot()
+    except ET.ParseError as e:
+        die(f"Invalid OPML: {e}")
+
+    existing = load_feeds()
+    existing_urls = {f["url"] for f in existing}
+
+    added = 0
+    skipped = 0
+    for outline in root.iter("outline"):
+        url = outline.get("xmlUrl")
+        if not url:
+            continue
+        if url in existing_urls:
+            skipped += 1
+            continue
+        name = outline.get("text") or outline.get("title") or url
+        existing.append({"name": name, "url": url})
+        existing_urls.add(url)
+        added += 1
+
+    save_feeds(existing)
+
+    ok(f"Imported {added} feed{'s' if added != 1 else ''}")
+    if skipped:
+        info(f"Skipped {skipped} duplicate{'s' if skipped != 1 else ''}")
+
+
+def cmd_catchup(args):
+    """Mark all entries as read for a feed (or all feeds)."""
+    feeds = load_feeds()
+    if not feeds:
+        die("No feeds. Add one with: rss add <url>")
+
+    read_set = load_read()
+
+    if args:
+        name = " ".join(args)
+        match = find_feed(feeds, name)
+        if not match:
+            die(f"No feed matching \"{name}\"")
+        targets = [match]
+    else:
+        targets = feeds
+
+    marked = 0
+    for f in targets:
+        _, entries = load_cached(f)
+        # Skip the most recent entry (entries are sorted newest-first)
+        for e in entries[1:]:
+            eid = entry_id(e)
+            if eid not in read_set:
+                read_set.add(eid)
+                marked += 1
+
+    save_read(read_set)
+
+    names = targets[0]["name"] if len(targets) == 1 else f"{len(targets)} feeds"
+    ok(f"Marked {marked} entr{'y' if marked == 1 else 'ies'} as read in {names}")
+
+
+def cmd_reset():
+    """Delete read.json — mark everything as unread."""
+    if os.path.exists(READ_FILE):
+        os.unlink(READ_FILE)
+        ok("Reset read state — all entries are unread")
+    else:
+        info("Already clean — no read state to reset")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: rss [command] [options]
+
+Read and manage RSS/Atom feeds from the terminal.
+
+commands:
+  (none)                        show feeds with unread counts
+  add <url> [name]              subscribe to a feed
+  del <name>                    unsubscribe from a feed
+  fetch [name]                  refresh all feeds (or one)
+  read [name]                   browse and read entries
+  catchup [name]                mark all entries as read
+  reset                         mark everything as unread
+  list                          machine-parseable feed list
+  export                        print feeds.opml to stdout
+  import <file>                 import feeds from OPML file
+
+examples:
+  rss                           show all feeds with unread counts
+  rss add https://jvns.ca/atom.xml
+  rss add https://example.com/rss "My Blog"
+  rss fetch                     refresh all feeds
+  rss fetch "Julia Evans"       refresh one feed
+  rss read                      read unread entries
+  rss read "Hacker News"        read entries from a specific feed
+  rss del "Old Blog"            unsubscribe
+  rss catchup                   mark all feeds as read
+  rss catchup fireship          mark one feed as read
+  rss reset                     mark everything as unread
+  rss export > backup.opml      export subscriptions
+  rss import feeds.opml         import subscriptions"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "add":    lambda: cmd_add(args),
+        "del":    lambda: cmd_del(args),
+        "fetch":  lambda: cmd_fetch(args),
+        "read":   lambda: cmd_read(args),
+        "catchup": lambda: cmd_catchup(args),
+        "reset":  lambda: cmd_reset(),
+        "list":   lambda: cmd_list(),
+        "export": lambda: cmd_export(),
+        "import": lambda: cmd_import(args),
+    }
+
+    if command not in commands:
+        print(f"{RED}✗{RESET} Unknown command '{command}'", file=sys.stderr)
+        print("Run 'rss --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

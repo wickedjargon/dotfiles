@@ -33,3 +33,14 @@ user_pref("browser.newtabpage.activity-stream.feeds.section.topstories", false);
 user_pref("browser.newtabpage.activity-stream.feeds.discoverystreamfeed", false);
 user_pref("browser.newtabpage.activity-stream.feeds.system.topstories", false);
 user_pref("browser.newtabpage.activity-stream.section.highlights.includePocket", false);
+
+
+// --- 3. OPEN LINKS IN NEW WINDOWS (NOT TABS) ---
+// 1 = current tab, 2 = new window, 3 = new tab (default)
+user_pref("browser.link.open_newwindow", 2);
+
+// 0 = apply to all links, 1 = no override, 2 = apply unless size specified
+user_pref("browser.link.open_newwindow.restriction", 0);
+
+// Same behavior for links opened from external applications
+user_pref("browser.link.open_newwindow.override.external", 2);

@@ -1,0 +1,45 @@
+# bash completion for rss
+_rss() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Complete subcommands at position 1
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "add del fetch read catchup reset list export import help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+
+    # Dynamic feed name completion from feeds.opml
+    _rss_feed_names() {
+        local opml="$HOME/.local/share/rss/feeds.opml"
+        if [ -f "$opml" ]; then
+            grep -oP 'text="\K[^"]+' "$opml" 2>/dev/null
+        fi
+    }
+
+    case "$cmd" in
+        del|read|fetch|catchup)
+            # Complete with feed names (escaped for special characters)
+            COMPREPLY=()
+            while IFS= read -r name; do
+                [ -z "$name" ] && continue
+                if [[ "${name,,}" == "${cur,,}"* ]]; then
+                    COMPREPLY+=( "$(printf '%q' "$name")" )
+                fi
+            done < <(_rss_feed_names)
+            ;;
+        add)
+            # No special completion for URLs
+            ;;
+        import)
+            # File completion for OPML files
+            COMPREPLY=( $(compgen -f -- "$cur") )
+            ;;
+    esac
+}
+
+complete -o default -F _rss rss

@@ -9,6 +9,7 @@ Here are my dotfiles intended for use on a Debian-based system. Feel free to use
 | `deploy.py` | CLI entry point — deploys dotfiles and installs packages |
 | `deploy_lib.py` | Business logic library used by `deploy.py` |
 | `dotfiles-overlay/` | Filesystem mirror copied to matching system paths |
+| `dotfiles-overlay/…/.local/bin/` | `pass`-inspired CLI utilities — see [CLI_DESIGN.md](CLI_DESIGN.md) |
 | `dotfiles-patches/` | Patches applied to system files post-deploy |
 | `firefox/` | Firefox extensions and `user.js` config |
 | `packages/` | Package lists |

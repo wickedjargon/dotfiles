@@ -1,7 +1,7 @@
 # exports
 export EDITOR="vis"
 export SUDO_EDITOR="vis"
-export BROWSER="firefox"
+export BROWSER="firefox --new-window"
 
 # qt theme
 export QT_QPA_PLATFORMTHEME=qt5ct
