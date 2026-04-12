@@ -1,0 +1,34 @@
+# bash completion for svc
+_svc() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Complete subcommands at position 1
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "status start stop restart enable disable logs follow failed reset timers cat edit list help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+
+    # Dynamic service name completion
+    _svc_user_units() {
+        systemctl --user list-unit-files --type=service --no-pager --no-legend 2>/dev/null \
+            | awk '{print $1}' | sed 's/\.service$//'
+    }
+
+    case "$cmd" in
+        status|start|stop|restart|enable|disable|logs|follow|reset|cat|edit)
+            # Complete with user service names
+            COMPREPLY=( $(compgen -W "$(_svc_user_units)" -- "$cur") )
+            ;;
+        failed|timers|list)
+            # Complete with --system flag
+            COMPREPLY=( $(compgen -W "--system" -- "$cur") )
+            ;;
+    esac
+}
+
+complete -o default -F _svc svc

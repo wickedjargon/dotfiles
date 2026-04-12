@@ -1,0 +1,646 @@
+#!/usr/bin/env python3
+"""svc — manage systemd services from the command line.
+
+Requires: systemd (systemctl, journalctl)
+"""
+
+import subprocess
+import sys
+
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=10):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+def systemctl(*args, user=True, timeout=10):
+    """Run a systemctl command."""
+    cmd = ["systemctl"]
+    if user:
+        cmd.append("--user")
+    cmd.extend(args)
+    return run(cmd, timeout=timeout)
+
+
+# ── systemd Parsing ────────────────────────────────────────────────
+def get_services(user=True):
+    """Get all services with their status.
+
+    Returns a list of dicts with keys:
+      unit, load, active, sub, description
+    """
+    result = systemctl("list-units", "--type=service", "--all",
+                       "--no-pager", "--no-legend", user=user)
+    if result.returncode != 0:
+        return []
+
+    services = []
+    for line in result.stdout.strip().splitlines():
+        # Strip the bullet character systemd sometimes prepends
+        stripped = line.lstrip().lstrip("●").strip()
+        if not stripped:
+            continue
+        parts = stripped.split(None, 4)
+        if len(parts) < 4:
+            continue
+        services.append({
+            "unit": parts[0],
+            "load": parts[1],
+            "active": parts[2],
+            "sub": parts[3],
+            "description": parts[4] if len(parts) > 4 else "",
+        })
+    return services
+
+
+def get_timers(user=True):
+    """Get all timers with their status.
+
+    Returns a list of dicts with keys:
+      unit, active, sub, next, left
+    """
+    result = systemctl("list-timers", "--all",
+                       "--no-pager", "--no-legend", user=user)
+    if result.returncode != 0:
+        return []
+
+    timers = []
+    for line in result.stdout.strip().splitlines():
+        # Format: NEXT  LEFT  LAST  PASSED  UNIT  ACTIVATES
+        parts = line.split()
+        if not parts:
+            continue
+        # Find the .timer unit in the line
+        timer_unit = None
+        for p in parts:
+            if p.endswith(".timer"):
+                timer_unit = p
+                break
+        if not timer_unit:
+            continue
+
+        # Get timer status
+        info_result = systemctl("is-active", timer_unit, user=user)
+        active = info_result.stdout.strip()
+
+        timers.append({
+            "unit": timer_unit,
+            "active": active,
+            "raw": line.strip(),
+        })
+    return timers
+
+
+def get_unit_status(unit, user=True):
+    """Get the active state of a unit."""
+    result = systemctl("is-active", unit, user=user)
+    return result.stdout.strip()
+
+
+def get_unit_enabled(unit, user=True):
+    """Get the enabled state of a unit."""
+    result = systemctl("is-enabled", unit, user=user)
+    return result.stdout.strip()
+
+
+def resolve_unit(name, user=True):
+    """Resolve a unit name, appending .service if needed.
+
+    Returns (unit_name, user_flag) or dies if not found.
+    Tries user scope first, falls back to system.
+    """
+    candidates = []
+
+    # Normalize: append .service if no suffix
+    if "." not in name:
+        name_with_suffix = name + ".service"
+    else:
+        name_with_suffix = name
+
+    # Try user scope
+    if user:
+        result = systemctl("cat", name_with_suffix, user=True)
+        if result.returncode == 0:
+            candidates.append((name_with_suffix, True))
+
+    # Try system scope
+    result = systemctl("cat", name_with_suffix, user=False)
+    if result.returncode == 0:
+        candidates.append((name_with_suffix, False))
+
+    if not candidates:
+        # Try partial match on services
+        services = get_services(user=True) + get_services(user=False)
+        name_lower = name.lower()
+        matches = []
+        for s in services:
+            unit = s["unit"]
+            bare = unit.rsplit(".", 1)[0] if "." in unit else unit
+            if name_lower in bare.lower():
+                is_user = s in get_services(user=True)
+                matches.append((unit, is_user))
+
+        # Deduplicate
+        seen = set()
+        unique = []
+        for u, flag in matches:
+            if u not in seen:
+                seen.add(u)
+                unique.append((u, flag))
+
+        if len(unique) == 1:
+            return unique[0]
+        if len(unique) > 1:
+            print("Multiple services match:", file=sys.stderr)
+            for u, flag in unique:
+                scope = "user" if flag else "system"
+                print(f"  ○ {u}  {DIM}({scope}){RESET}", file=sys.stderr)
+            print(f"\nSpecify one, e.g.: svc status {unique[0][0]}",
+                  file=sys.stderr)
+            sys.exit(1)
+
+        die(f"No service matching \"{name}\"")
+
+    # Prefer user scope if found in both
+    return candidates[0]
+
+
+def _scope_label(user):
+    """Return a display label for the scope."""
+    return "user" if user else "system"
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status(args):
+    """Show status of a specific service, or overview of all."""
+    if args:
+        name = " ".join(args)
+        unit, user = resolve_unit(name)
+        scope = _scope_label(user)
+
+        # Get full status output
+        result = systemctl("status", unit, "--no-pager", user=user)
+        active = get_unit_status(unit, user=user)
+        enabled = get_unit_enabled(unit, user=user)
+
+        # Header
+        if active == "active":
+            dot = f"{GREEN}●{RESET}"
+        elif active == "failed":
+            dot = f"{RED}●{RESET}"
+        else:
+            dot = f"{DIM}○{RESET}"
+
+        bare = unit.rsplit(".", 1)[0] if "." in unit else unit
+        print(f"{dot} {BOLD}{bare}{RESET}  {DIM}({scope}){RESET}")
+        print(f"  Active   {active}")
+        print(f"  Enabled  {enabled}")
+
+        # Show last few log lines
+        log_result = run(["journalctl",
+                          "--user" if user else "--system",
+                          "-u", unit, "-n", "5", "--no-pager",
+                          "-o", "short-iso"])
+        if log_result.returncode == 0 and log_result.stdout.strip():
+            print(f"\n  {DIM}Recent logs:{RESET}")
+            for line in log_result.stdout.strip().splitlines():
+                print(f"  {DIM}{line}{RESET}")
+        return
+
+    # No args: show overview of all user services
+    _show_overview(user=True)
+
+
+def _show_overview(user=True):
+    """Show an overview of all services."""
+    services = get_services(user=user)
+    if not services:
+        scope = _scope_label(user)
+        print(f"{DIM}No {scope} services found.{RESET}")
+        return
+
+    # Group by state
+    active = [s for s in services if s["active"] == "active"]
+    failed = [s for s in services if s["active"] == "failed"]
+    inactive = [s for s in services if s["active"] == "inactive"]
+
+    scope = _scope_label(user)
+
+    if failed:
+        print(f"\n{RED}{BOLD}Failed{RESET}  {DIM}({len(failed)}){RESET}")
+        for s in sorted(failed, key=lambda x: x["unit"]):
+            bare = s["unit"].rsplit(".", 1)[0]
+            print(f"  {RED}●{RESET} {bare}  {DIM}{s['description']}{RESET}")
+
+    if active:
+        print(f"\n{GREEN}{BOLD}Active{RESET}  {DIM}({len(active)}){RESET}")
+        max_name = max(len(s["unit"].rsplit(".", 1)[0]) for s in active)
+        for s in sorted(active, key=lambda x: x["unit"]):
+            bare = s["unit"].rsplit(".", 1)[0]
+            sub = s["sub"]
+            print(f"  {GREEN}●{RESET} {bare:<{max_name}}  {DIM}{sub:<10}{RESET}"
+                  f"  {DIM}{s['description']}{RESET}")
+
+    if inactive:
+        print(f"\n{DIM}Inactive  ({len(inactive)}){RESET}")
+        for s in sorted(inactive, key=lambda x: x["unit"]):
+            bare = s["unit"].rsplit(".", 1)[0]
+            print(f"  {DIM}○ {bare}  {s['description']}{RESET}")
+
+    print(f"\n{DIM}{scope} scope — "
+          f"{len(active)} active, {len(failed)} failed, "
+          f"{len(inactive)} inactive{RESET}")
+
+
+def cmd_start(args):
+    """Start a service."""
+    if not args:
+        die("Usage: svc start <service>")
+
+    name = " ".join(args)
+    unit, user = resolve_unit(name)
+    scope = _scope_label(user)
+
+    current = get_unit_status(unit, user=user)
+    if current == "active":
+        warn(f"{unit} is already running")
+        return
+
+    bare = unit.rsplit(".", 1)[0]
+    info(f"Starting {BOLD}{bare}{RESET} ({scope})...")
+    result = systemctl("start", unit, user=user)
+    if result.returncode == 0:
+        ok(f"Started {bare}")
+    else:
+        die(f"Failed to start: {result.stderr.strip()}")
+
+
+def cmd_stop(args):
+    """Stop a service."""
+    if not args:
+        die("Usage: svc stop <service>")
+
+    name = " ".join(args)
+    unit, user = resolve_unit(name)
+    scope = _scope_label(user)
+
+    current = get_unit_status(unit, user=user)
+    if current != "active":
+        warn(f"{unit} is not running")
+        return
+
+    bare = unit.rsplit(".", 1)[0]
+    info(f"Stopping {BOLD}{bare}{RESET} ({scope})...")
+    result = systemctl("stop", unit, user=user)
+    if result.returncode == 0:
+        ok(f"Stopped {bare}")
+    else:
+        die(f"Failed to stop: {result.stderr.strip()}")
+
+
+def cmd_restart(args):
+    """Restart a service."""
+    if not args:
+        die("Usage: svc restart <service>")
+
+    name = " ".join(args)
+    unit, user = resolve_unit(name)
+    scope = _scope_label(user)
+
+    bare = unit.rsplit(".", 1)[0]
+    info(f"Restarting {BOLD}{bare}{RESET} ({scope})...")
+    result = systemctl("restart", unit, user=user)
+    if result.returncode == 0:
+        ok(f"Restarted {bare}")
+    else:
+        die(f"Failed to restart: {result.stderr.strip()}")
+
+
+def cmd_enable(args):
+    """Enable a service to start on boot."""
+    if not args:
+        die("Usage: svc enable <service>")
+
+    name = " ".join(args)
+    unit, user = resolve_unit(name)
+    scope = _scope_label(user)
+
+    bare = unit.rsplit(".", 1)[0]
+    info(f"Enabling {BOLD}{bare}{RESET} ({scope})...")
+    result = systemctl("enable", unit, user=user)
+    if result.returncode == 0:
+        ok(f"Enabled {bare}")
+    else:
+        die(f"Failed to enable: {result.stderr.strip()}")
+
+
+def cmd_disable(args):
+    """Disable a service from starting on boot."""
+    if not args:
+        die("Usage: svc disable <service>")
+
+    name = " ".join(args)
+    unit, user = resolve_unit(name)
+    scope = _scope_label(user)
+
+    bare = unit.rsplit(".", 1)[0]
+    info(f"Disabling {BOLD}{bare}{RESET} ({scope})...")
+    result = systemctl("disable", unit, user=user)
+    if result.returncode == 0:
+        ok(f"Disabled {bare}")
+    else:
+        die(f"Failed to disable: {result.stderr.strip()}")
+
+
+def cmd_logs(args):
+    """Show logs for a service."""
+    if not args:
+        die("Usage: svc logs <service> [lines]")
+
+    # Check if last arg is a number (line count)
+    lines = "20"
+    name_parts = list(args)
+    if len(name_parts) > 1 and name_parts[-1].isdigit():
+        lines = name_parts.pop()
+
+    name = " ".join(name_parts)
+    unit, user = resolve_unit(name)
+
+    cmd = ["journalctl",
+           "--user" if user else "--system",
+           "-u", unit,
+           "-n", lines,
+           "--no-pager",
+           "-o", "short-iso"]
+
+    result = run(cmd, timeout=10)
+    if result.returncode != 0:
+        die(f"Failed to get logs: {result.stderr.strip()}")
+
+    bare = unit.rsplit(".", 1)[0]
+    scope = _scope_label(user)
+    print(f"{BOLD}{bare}{RESET}  {DIM}({scope}, last {lines} lines){RESET}\n")
+    if result.stdout.strip():
+        print(result.stdout.strip())
+    else:
+        print(f"{DIM}No logs found.{RESET}")
+
+
+def cmd_follow(args):
+    """Follow logs for a service in real time."""
+    if not args:
+        die("Usage: svc follow <service>")
+
+    name = " ".join(args)
+    unit, user = resolve_unit(name)
+
+    bare = unit.rsplit(".", 1)[0]
+    scope = _scope_label(user)
+    info(f"Following {BOLD}{bare}{RESET} ({scope})... {DIM}(Ctrl+C to stop){RESET}")
+
+    cmd = ["journalctl",
+           "--user" if user else "--system",
+           "-u", unit,
+           "-f",
+           "--no-pager",
+           "-o", "short-iso"]
+
+    try:
+        subprocess.run(cmd)
+    except KeyboardInterrupt:
+        print()
+
+
+def cmd_failed(args):
+    """Show failed services."""
+    user = True
+    if args and args[0] == "--system":
+        user = False
+
+    result = systemctl("list-units", "--type=service", "--state=failed",
+                       "--no-pager", "--no-legend", user=user)
+    scope = _scope_label(user)
+
+    if result.returncode != 0 or not result.stdout.strip():
+        ok(f"No failed {scope} services")
+        return
+
+    print(f"{RED}{BOLD}Failed {scope} services{RESET}\n")
+    for line in result.stdout.strip().splitlines():
+        stripped = line.lstrip().lstrip("●").strip()
+        if not stripped:
+            continue
+        parts = stripped.split(None, 4)
+        if len(parts) < 4:
+            continue
+        unit = parts[0]
+        bare = unit.rsplit(".", 1)[0] if "." in unit else unit
+        desc = parts[4] if len(parts) > 4 else ""
+        print(f"  {RED}●{RESET} {bare}  {DIM}{desc}{RESET}")
+
+    print(f"\n{DIM}Reset with: svc reset <service>{RESET}")
+
+
+def cmd_reset(args):
+    """Reset a failed service."""
+    if not args:
+        die("Usage: svc reset <service>")
+
+    name = " ".join(args)
+    unit, user = resolve_unit(name)
+    scope = _scope_label(user)
+
+    bare = unit.rsplit(".", 1)[0]
+    info(f"Resetting {BOLD}{bare}{RESET} ({scope})...")
+    result = systemctl("reset-failed", unit, user=user)
+    if result.returncode == 0:
+        ok(f"Reset {bare}")
+    else:
+        die(f"Failed to reset: {result.stderr.strip()}")
+
+
+def cmd_list(args):
+    """Machine-parseable list of services."""
+    user = True
+    if args and args[0] == "--system":
+        user = False
+
+    services = get_services(user=user)
+    for s in sorted(services, key=lambda x: x["unit"]):
+        print(f"{s['unit']}\t{s['active']}\t{s['sub']}\t{s['description']}")
+
+
+def cmd_timers(args):
+    """Show active timers."""
+    user = True
+    if args and args[0] == "--system":
+        user = False
+
+    result = systemctl("list-timers", "--all",
+                       "--no-pager", user=user)
+    scope = _scope_label(user)
+
+    if result.returncode != 0 or not result.stdout.strip():
+        print(f"{DIM}No {scope} timers.{RESET}")
+        return
+
+    print(f"{BOLD}{scope.title()} timers{RESET}\n")
+    print(result.stdout.strip())
+
+
+def cmd_cat(args):
+    """Show the unit file for a service."""
+    if not args:
+        die("Usage: svc cat <service>")
+
+    name = " ".join(args)
+    unit, user = resolve_unit(name)
+
+    result = systemctl("cat", unit, user=user)
+    if result.returncode == 0:
+        print(result.stdout.strip())
+    else:
+        die(f"Failed to read unit file: {result.stderr.strip()}")
+
+
+def cmd_edit(args):
+    """Edit the unit file for a service (opens in $EDITOR)."""
+    if not args:
+        die("Usage: svc edit <service>")
+
+    name = " ".join(args)
+    unit, user = resolve_unit(name)
+    scope = _scope_label(user)
+
+    bare = unit.rsplit(".", 1)[0]
+    info(f"Editing {BOLD}{bare}{RESET} ({scope})...")
+
+    cmd = ["systemctl"]
+    if user:
+        cmd.append("--user")
+    cmd.extend(["edit", "--full", unit])
+
+    try:
+        subprocess.run(cmd)
+    except KeyboardInterrupt:
+        pass
+
+    info("Reloading daemon...")
+    systemctl("daemon-reload", user=user)
+    ok("Done")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: svc [command] [service]
+
+Manage systemd services from the command line.
+Defaults to user scope; system units are auto-detected as fallback.
+
+commands:
+  (none)                        show overview of user services
+  status <service>              show detailed status + recent logs
+  start <service>               start a service
+  stop <service>                stop a service
+  restart <service>             restart a service
+  enable <service>              enable a service (start on boot)
+  disable <service>             disable a service
+  logs <service> [N]            show last N log lines (default 20)
+  follow <service>              follow logs in real time
+  failed [--system]             show failed services
+  reset <service>               reset a failed service
+  timers [--system]             show active timers
+  cat <service>                 print the unit file
+  edit <service>                edit the unit file in $EDITOR
+  list [--system]               machine-parseable service list
+
+SERVICE can be a name or partial match. The .service suffix is
+optional. User scope is tried first, system scope as fallback.
+
+examples:
+  svc                           overview of user services
+  svc status pipewire           detailed status of pipewire
+  svc start syncthing           start syncthing
+  svc stop syncthing            stop syncthing
+  svc restart pipewire          restart pipewire
+  svc enable syncthing          enable syncthing on login
+  svc logs pipewire             show last 20 log lines
+  svc logs pipewire 50          show last 50 log lines
+  svc follow pipewire           tail logs in real time
+  svc failed                    show failed user services
+  svc failed --system           show failed system services
+  svc reset myservice           reset a failed service
+  svc timers                    show user timers
+  svc cat pipewire              print pipewire's unit file"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    # Check for systemctl
+    from shutil import which
+    if not which("systemctl"):
+        die("systemd not found (need systemctl)")
+
+    if len(sys.argv) < 2:
+        cmd_status([])
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "status":  lambda: cmd_status(args),
+        "start":   lambda: cmd_start(args),
+        "stop":    lambda: cmd_stop(args),
+        "restart": lambda: cmd_restart(args),
+        "enable":  lambda: cmd_enable(args),
+        "disable": lambda: cmd_disable(args),
+        "logs":    lambda: cmd_logs(args),
+        "follow":  lambda: cmd_follow(args),
+        "failed":  lambda: cmd_failed(args),
+        "reset":   lambda: cmd_reset(args),
+        "timers":  lambda: cmd_timers(args),
+        "cat":     lambda: cmd_cat(args),
+        "edit":    lambda: cmd_edit(args),
+        "list":    lambda: cmd_list(args),
+    }
+
+    if command not in commands:
+        print(f"{RED}✗{RESET} Unknown command '{command}'", file=sys.stderr)
+        print("Run 'svc --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

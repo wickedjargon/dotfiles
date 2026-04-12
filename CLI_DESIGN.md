@@ -56,7 +56,7 @@ complete -F _name name
 
 ## Pass-Inspired Scripts
 
-The following scripts follow the `pass` design philosophy: **`drives`**, **`wifi`**, **`bt`**, **`displays`**, **`psync`**, **`upload`**, **`calendar`**, **`rss`**.
+The following scripts follow the `pass` design philosophy: **`drives`**, **`wifi`**, **`bt`**, **`displays`**, **`psync`**, **`upload`**, **`calendar`**, **`rss`**, **`svc`**.
 
 ### Core Principles (from `pass`)
 
@@ -220,5 +220,6 @@ They still require tldr pages and bash completions.
 | `upload`     | ✓             | curl               | ✓    | ✓          |
 | `calendar`   | ✓             | at, aplay          | ✓    | ✓          |
 | `rss`        | ✓             | (stdlib only)      | ✓    | ✓          |
+| `svc`        | ✓             | systemctl          | ✓    | ✓          |
 | `theme`      | ✗             | various            | ✓    | ✓          |
 | `shorten-url`| ✗             | curl               | ✗    | ✗          |
