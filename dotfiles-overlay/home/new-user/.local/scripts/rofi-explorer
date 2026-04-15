@@ -139,7 +139,7 @@ def run_mpc(args):
 def open_file(path, run_executables=False):
     resolved = path.resolve()
     if resolved == BOOKMARKS_FILE:
-        subprocess.Popen(["dmenu-bookmarks"])
+        subprocess.Popen(["rofi-bookmarks"])
         return
 
     if run_executables and path.is_file() and os.access(path, os.X_OK):
