@@ -15,18 +15,28 @@ _wifi() {
 
     case "$cmd" in
         connect)
-            # Suggest available SSIDs
-            local ssids
-            ssids=$(nmcli -t -f SSID device wifi list 2>/dev/null | grep -v '^$' | sort -u)
-            COMPREPLY=( $(compgen -W "$ssids" -- "$cur") )
+            # Suggest available SSIDs (handles spaces and special chars)
+            local -a ssid_list
+            mapfile -t ssid_list < <(nmcli -t -f SSID device wifi list 2>/dev/null | grep -v '^$' | sort -u)
+            _wifi_complete_names "${ssid_list[@]}"
             ;;
         forget|password)
-            # Suggest saved WiFi connection names
-            local saved
-            saved=$(nmcli -t -f NAME,TYPE connection show 2>/dev/null | grep ':802-11-wireless$' | cut -d: -f1)
-            COMPREPLY=( $(compgen -W "$saved" -- "$cur") )
+            # Suggest saved WiFi connection names (handles spaces and special chars)
+            local -a saved_list
+            mapfile -t saved_list < <(nmcli -t -f NAME,TYPE connection show 2>/dev/null | grep ':802-11-wireless$' | cut -d: -f1)
+            _wifi_complete_names "${saved_list[@]}"
             ;;
     esac
+}
+
+# Helper: populate COMPREPLY with properly escaped names.
+# Uses compgen which natively respects bash's quoting context:
+#   unquoted: wifi connect Hungry\ Guys
+#   quoted:   wifi connect "Hungry Guys"
+_wifi_complete_names() {
+    local IFS=$'\n'
+    COMPREPLY=( $(compgen -W "$*" -- "$cur") )
+    compopt -o filenames 2>/dev/null
 }
 
 complete -F _wifi wifi
