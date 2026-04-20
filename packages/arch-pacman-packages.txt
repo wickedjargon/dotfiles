@@ -2,6 +2,7 @@ base
 base-devel
 bash-completion
 bc
+clang
 diffutils
 fastfetch
 git
