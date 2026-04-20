@@ -197,8 +197,13 @@ def main():
         idx = int(stdout.strip())
         selected_cmd = cmds[idx]
         
-        # Execute the command
-        subprocess.Popen(selected_cmd, shell=True)
+        # Copy command to clipboard
+        p = subprocess.Popen(
+            ["xclip", "-selection", "clipboard"],
+            stdin=subprocess.PIPE,
+        )
+        p.communicate(input=selected_cmd.encode("utf-8"))
+        subprocess.run(["notify-send", "Copied Command", selected_cmd])
 
 if __name__ == "__main__":
     main()

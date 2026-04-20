@@ -134,7 +134,7 @@ super + comma
 
 # Scripts menu
 super + s
-    rofi-explorer "~/.local/bin/" --run-executables
+    rofi-explorer "~/.local/bin/" --copy-name
 
 # Instant fullscreen screenshotv
 F12

@@ -319,6 +319,11 @@ def main():
         action="store_true",
         help="Run executable files when selected",
     )
+    parser.add_argument(
+        "--copy-name",
+        action="store_true",
+        help="Copy basename of selected file to clipboard",
+    )
     args = parser.parse_args()
 
     start_path = Path.home() / "d"
@@ -374,6 +379,10 @@ def main():
                 return
             current_path = target
             continue
+
+        if args.copy_name:
+            copy_to_clipboard(target.name)
+            return
 
         open_file(target, run_executables=args.run_executables)
         return
