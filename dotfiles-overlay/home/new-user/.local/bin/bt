@@ -84,6 +84,13 @@ def get_devices():
         device_info = _get_device_info(mac)
         device_info["mac"] = mac
         device_info["name"] = name
+
+        # Add profile for connected audio devices
+        if device_info["connected"] and "audio" in device_info.get("icon", ""):
+            device_info["profile"] = _profile_label(_get_active_profile(mac))
+        else:
+            device_info["profile"] = ""
+
         devices.append(device_info)
 
     return devices
@@ -219,9 +226,12 @@ def _print_device_line(device, indent=""):
     battery_str = ""
     if device.get("battery") is not None:
         battery_str = f"  {device['battery']}%"
+    profile_str = ""
+    if device.get("profile"):
+        profile_str = f"  {CYAN}{device['profile']}{RESET}"
 
     if device["connected"]:
-        print(f"{indent}{GREEN}●{RESET} {icon} {name}{battery_str}  {DIM}{mac}{RESET}")
+        print(f"{indent}{GREEN}●{RESET} {icon} {name}{battery_str}{profile_str}  {DIM}{mac}{RESET}")
     else:
         print(f"{indent}{DIM}○{RESET} {icon} {name}  {DIM}{mac}{RESET}")
 
@@ -461,6 +471,36 @@ def _get_card_profiles(mac):
                 profiles.append((m.group(1), m.group(2).strip()))
 
     return profiles
+
+
+def _get_active_profile(mac):
+    """Get the active audio profile name for a bluetooth card."""
+    card = f"bluez_card.{mac.replace(':', '_')}"
+    result = run(["pactl", "list", "cards"])
+    if result.returncode != 0:
+        return None
+
+    in_card = False
+    for line in result.stdout.splitlines():
+        if f"Name: {card}" in line:
+            in_card = True
+        elif in_card and "Active Profile:" in line:
+            return line.split(":", 1)[1].strip()
+    return None
+
+
+def _profile_label(profile_name):
+    """Map a pactl profile name to a short display label."""
+    if not profile_name:
+        return ""
+    p = profile_name.lower()
+    if "a2dp" in p:
+        return "A2DP"
+    elif "headset" in p or "hfp" in p or "hsp" in p:
+        return "HFP"
+    elif "off" in p:
+        return "off"
+    return profile_name
 
 
 def cmd_profiles(devices, args):
