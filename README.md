@@ -45,14 +45,6 @@ fwupdmgr get-updates
 fwupdmgr update
 ```
 
-Reboot computer to apply firmware updates.
-
-Verify the Thunderbolt NVM version is ≥ 20.0 (critical for T480s to prevent USB-C port failure):
-
-```bash
-cat /sys/bus/thunderbolt/devices/*/nvm_version
-```
-
 ### 2. Bluetooth Setup
 
 Pair and trust your Bluetooth devices via `bluetoothctl`:
