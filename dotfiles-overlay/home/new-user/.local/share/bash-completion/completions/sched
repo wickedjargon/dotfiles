@@ -1,5 +1,5 @@
-# bash completion for calendar
-_calendar() {
+# bash completion for sched
+_sched() {
     local cur prev
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -7,7 +7,7 @@ _calendar() {
 
     # After 'del', complete with active alarm IDs
     if [[ "$prev" == "del" ]]; then
-        local alarm_dir="$HOME/.local/share/calendar"
+        local alarm_dir="$HOME/.local/share/sched"
         if [[ -d "$alarm_dir" ]]; then
             local ids
             ids=$(ls "$alarm_dir"/*.json 2>/dev/null | xargs -I{} basename {} .json)
@@ -23,4 +23,4 @@ _calendar() {
     fi
 }
 
-complete -F _calendar calendar
+complete -F _sched sched

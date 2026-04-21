@@ -1,4 +1,4 @@
-"""Tests for the calendar alarm CLI."""
+"""Tests for the sched alarm CLI."""
 
 import datetime
 import json
@@ -9,7 +9,7 @@ import pytest
 
 from helpers import get_bin_path, import_script
 
-cal_mod = import_script(get_bin_path("calendar"))
+cal_mod = import_script(get_bin_path("sched"))
 
 
 # ── parse_time_str ──────────────────────────────────────────────────

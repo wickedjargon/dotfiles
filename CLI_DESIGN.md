@@ -56,7 +56,7 @@ complete -F _name name
 
 ## Pass-Inspired Scripts
 
-The following scripts follow the `pass` design philosophy: **`drives`**, **`wifi`**, **`bt`**, **`displays`**, **`psync`**, **`upload`**, **`calendar`**, **`rss`**, **`svc`**, **`vpn`**, **`mac`**.
+The following scripts follow the `pass` design philosophy: **`drives`**, **`wifi`**, **`bt`**, **`displays`**, **`psync`**, **`upload`**, **`sched`**, **`rss`**, **`svc`**, **`vpn`**, **`mac`**.
 
 ### Core Principles (from `pass`)
 
@@ -218,7 +218,7 @@ They still require tldr pages and bash completions.
 | `displays`   | ✓             | xrandr/wlr-randr   | ✓    | ✓          |
 | `psync`      | ✓             | rsync, tailscale   | ✓    | ✓          |
 | `upload`     | ✓             | curl               | ✓    | ✓          |
-| `calendar`   | ✓             | at, aplay          | ✓    | ✓          |
+| `sched`      | ✓             | at, aplay          | ✓    | ✓          |
 | `rss`        | ✓             | (stdlib only)      | ✓    | ✓          |
 | `svc`        | ✓             | systemctl          | ✓    | ✓          |
 | `vpn`        | ✓             | wg-quick, curl     | ✓    | ✓          |
