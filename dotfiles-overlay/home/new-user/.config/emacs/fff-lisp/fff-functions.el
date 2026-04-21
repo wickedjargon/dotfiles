@@ -61,7 +61,7 @@ The projects directory itself (\".\") is always the first candidate."
   "Prompt for a filename and open it in the snippets directory."
   (interactive)
   (let ((default-directory "~/"))
-    (call-interactively 'find-file)))
+    (call-einteractively 'find-file)))
 
 (defun fff-access-config ()
   (interactive)
@@ -1729,3 +1729,10 @@ TIME-STRING should be in the format \"hh:mm am/pm\"."
       (if (> seconds-until-target 0)
           (tmr (number-to-string (/ seconds-until-target 60)))
         (error "The specified time is invalid")))))
+
+(defun fff-project-find-file ()
+  "Call `project-find-file' if in a project, otherwise display a message."
+  (interactive)
+  (if (project-current)
+      (call-interactively #'project-find-file)
+    (message "Not in a project")))

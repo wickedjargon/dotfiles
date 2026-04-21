@@ -569,7 +569,7 @@ TTY frames (standalone non-daemon only) get tty-dark."
 
   ;; project
   (evil-leader/set-key "p p" 'project-find-file)
-  (evil-leader/set-key "c p" 'project-find-file)
+  (evil-leader/set-key "c p" 'fff-project-find-file)
 
   ;; eval
   (evil-leader/set-key "e e" 'eval-last-sexp)
