@@ -1,0 +1,6 @@
+{
+  "theme": "auto",
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  }
+}
