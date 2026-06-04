@@ -30,6 +30,10 @@
 ;; - smartparens
 ;; - evil-snipe
 
+;; TODO: make `space c p' behave more like vscode.
+;; only display file names (without path) or
+;; display filenames first with path less prominent in grey next to it.
+
 ;;; Initialization
 
 ;; Load straight.el (installed by scripts/emacs-sync-packages.sh)
@@ -1308,7 +1312,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
 (use-package erc :ensure nil :defer t
   :custom
   (erc-join-buffer 'window)
-  (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK"))
+  (erc-hide-list '("JOIN" "PART" "QUIT" "MODE" "NICK" "TOPIC" "AWAY" "INVITE" "KICK" "324" "329"))
   (doom-modeline-irc nil)
   (erc-nick "wickedjargon")
   (erc-autojoin-channels-alist
@@ -1320,6 +1324,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
       "#python"
       "#javascript"
       "#rust"
+      "#zig"
       "#c"
       "#haskell"
       "#linux"
