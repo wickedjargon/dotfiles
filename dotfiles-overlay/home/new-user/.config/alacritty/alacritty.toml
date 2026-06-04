@@ -54,4 +54,7 @@ bindings = [
   { key = "Equals", mods = "Alt", action = "IncreaseFontSize" },
   { key = "Minus",  mods = "Alt", action = "DecreaseFontSize" },
   { key = "Key0",   mods = "Alt", action = "ResetFontSize" },
+
+  # Shift+Return sends ESC CR
+  { key = "Return", mods = "Shift", chars = "\u001B\r" },
 ]
