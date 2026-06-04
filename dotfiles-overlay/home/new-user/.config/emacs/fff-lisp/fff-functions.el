@@ -61,7 +61,7 @@ The projects directory itself (\".\") is always the first candidate."
   "Prompt for a filename and open it in the snippets directory."
   (interactive)
   (let ((default-directory "~/"))
-    (call-einteractively 'find-file)))
+    (call-interactively 'find-file)))
 
 (defun fff-access-config ()
   (interactive)
