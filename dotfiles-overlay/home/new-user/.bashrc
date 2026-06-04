@@ -20,6 +20,7 @@ paths=(
   "$HOME/.cargo/bin"
   "$ANDROID_HOME/tools/bin"
   "$ANDROID_HOME/platform-tools"
+  "$HOME/.npm-global/bin"
 )
 
 for apath in "${paths[@]}"; do
