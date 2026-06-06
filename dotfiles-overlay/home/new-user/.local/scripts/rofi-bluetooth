@@ -1,13 +1,17 @@
 #!/bin/sh
 # rofi-bluetooth — Bluetooth device management with Alt+c to copy command.
 
-selection=$(printf "Connect Nothing\nDisconnect Nothing\nReconnect Nothing\nProfile Nothing Hands Free Unit\nProfile Nothing A2DP Sink\nConnect Musicozy\nDisconnect Musicozy\nConnect Miniroll\nDisconnect Miniroll" | rofi -dmenu -i -p "Bluetooth" -kb-custom-1 "Alt+c")
+selection=$(printf "Nothing Noise Cancelling\nNothing Transparency\nNothing Adaptive ANC\nNothing ANC Off\nConnect Nothing\nDisconnect Nothing\nReconnect Nothing\nProfile Nothing Hands Free Unit\nProfile Nothing A2DP Sink\nConnect Musicozy\nDisconnect Musicozy\nConnect Miniroll\nDisconnect Miniroll" | rofi -dmenu -i -p "Bluetooth" -kb-custom-1 "Alt+c")
 exit_code=$?
 
 [ $exit_code -eq 1 ] && exit 0
 [ -z "$selection" ] && exit 0
 
 case "$selection" in
+    'Nothing Noise Cancelling') cmd='nothing-anc anc' ;;
+    'Nothing Transparency') cmd='nothing-anc transparency' ;;
+    'Nothing Adaptive ANC') cmd='nothing-anc adaptive' ;;
+    'Nothing ANC Off') cmd='nothing-anc off' ;;
     'Connect Nothing') cmd='bluetooth-connect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)"' ;;
     'Disconnect Nothing') cmd='bluetooth-disconnect "3C:B0:ED:A7:6A:88" "Nothing Headphone (1)"' ;;
     'Reconnect Nothing') cmd='bluetooth-nothing-reconnect' ;;

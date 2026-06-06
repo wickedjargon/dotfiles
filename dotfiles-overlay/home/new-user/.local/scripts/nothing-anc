@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""Set ANC mode on the Nothing Headphone (1) over Bluetooth RFCOMM.
+
+The Nothing X app talks to the headphones over a "NT LINK" Serial Port
+service on RFCOMM channel 15 (UUID aeac4a03-dff5-498f-843a-34487cf133eb).
+The control frames are the reverse-engineered Nothing 0x55 protocol
+(originally documented for the Nothing Ear (2), confirmed compatible with
+the Headphone (1)): a header, a little-endian command id, a length, the
+payload, and a trailing CRC16.
+
+Usage: nothing-anc {anc|transparency|adaptive|off}
+"""
+
+import socket
+import sys
+import time
+
+MAC = "3C:B0:ED:A7:6A:88"
+CHANNEL = 15  # NT LINK serial port
+
+# Pre-built command frames (hex), captured/derived from the Nothing protocol.
+MODES = {
+    "anc":          ("55:60:01:0f:f0:03:00:cf:01:01:00:e6:6f", "Noise Cancelling"),
+    "transparency": ("55:60:01:0f:f0:03:00:cb:01:07:00:c5:af", "Transparency"),
+    "adaptive":     ("55:60:01:0f:f0:03:00:dd:01:04:00:e5:3f", "Adaptive ANC"),
+    "off":          ("55:60:01:0f:f0:03:00:cd:01:05:00:c4:47", "ANC Off"),
+}
+
+
+def notify(title, message, urgency="normal"):
+    import subprocess
+    subprocess.run(["notify-send", "-u", urgency, title, message])
+
+
+def frame_bytes(hexstr):
+    return bytes(int(b, 16) for b in hexstr.split(":"))
+
+
+def send(frame, attempts=3):
+    """Open RFCOMM ch15, send the frame, wait for the ACK. Retry on failure."""
+    last_err = None
+    for attempt in range(attempts):
+        s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM,
+                          socket.BTPROTO_RFCOMM)
+        try:
+            s.settimeout(5)
+            s.connect((MAC, CHANNEL))
+            s.send(frame)
+            # Give the device a moment to ACK / apply the change.
+            s.settimeout(1.5)
+            try:
+                s.recv(64)
+            except socket.timeout:
+                pass
+            return True
+        except OSError as e:
+            last_err = e
+            time.sleep(0.6)
+        finally:
+            s.close()
+    raise last_err
+
+
+def main():
+    if len(sys.argv) != 2 or sys.argv[1] not in MODES:
+        print(f"Usage: nothing-anc {{{'|'.join(MODES)}}}")
+        sys.exit(1)
+
+    mode = sys.argv[1]
+    frame_hex, label = MODES[mode]
+
+    try:
+        send(frame_bytes(frame_hex))
+    except OSError as e:
+        msg = f"Could not reach Nothing Headphone ({e.strerror or e})"
+        print(msg)
+        notify("Nothing ANC", msg, "critical")
+        sys.exit(1)
+
+    print(f"✓ {label}")
+    notify("Nothing Headphone", label)
+
+
+if __name__ == "__main__":
+    main()
