@@ -146,7 +146,6 @@
   (setq inhibit-startup-message t)                        ;; no splash screen
   (setq use-short-answers t)                              ;; just type `y`, not `yes`
   (blink-cursor-mode -1)                                  ;; don't blink my cursor
-  (setq safe-local-variable-values '((checkdoc-minor-mode . t))) ;; make local variables safe
   (set-default 'truncate-lines t)                         ;; don't wrap my text
   (setq custom-file (locate-user-emacs-file "custom.el")) ;; separate custom.el file
   (when (file-exists-p custom-file) (load custom-file))   ;; when it exists, load it
@@ -1048,6 +1047,8 @@ TTY frames (standalone non-daemon only) get tty-dark."
 
 ;;; Other Language Support Packages
 
+(use-package go-mode :straight t :ensure t :defer t)
+
 (use-package gitignore-mode
   :straight (:host github :repo "magit/git-modes")
   :mode "\\.gitignore\\'"
@@ -1445,7 +1446,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   (dtrt-indent-global-mode +1)
   ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
   (dolist (fn '(eglot-format-buffer
-                elgot-format-region
+                eglot-format-region
                 indent-region
                 tabify
                 untabify))
@@ -1676,15 +1677,21 @@ With a prefix ARG always prompt for command to use."
 
 (use-package gptel
   :straight t
+  :defer t
   :config
   (setq gptel-model 'llama-3.3-70b-versatile
         gptel-backend (gptel-make-openai "Groq"
                         :host "api.groq.com"
                         :endpoint "/openai/v1/chat/completions"
                         :stream t
-                        :key (with-temp-buffer
-                               (insert-file-contents (expand-file-name ".gptel-api-key" user-emacs-directory))
-                               (string-trim (buffer-string)))
+                        ;; Read the key lazily (only when a request is made),
+                        ;; guarded so a missing file never breaks startup.
+                        :key (lambda ()
+                               (let ((key-file (expand-file-name ".gptel-api-key" user-emacs-directory)))
+                                 (when (file-exists-p key-file)
+                                   (with-temp-buffer
+                                     (insert-file-contents key-file)
+                                     (string-trim (buffer-string))))))
                         :models '(llama-3.3-70b-versatile
                                   qwen/qwen3-32b
                                   whisper-large-v3))))
