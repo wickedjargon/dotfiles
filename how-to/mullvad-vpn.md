@@ -2,7 +2,9 @@
 
 The `vpn` script manages WireGuard connections to Mullvad servers and allows you to change locations dynamically. Because it uses WireGuard directly instead of the Mullvad app, there is a specific setup process required on a fresh install.
 
-When you first deploy your dotfiles, `vpn` will fail until these steps are completed.
+Connections are managed through **NetworkManager** (`nmcli`), so no `sudo` or sudoers configuration is needed — importing and activating the tunnel goes through polkit for your active desktop session. The script never writes to `/etc/wireguard` and never calls `sudo`.
+
+When you first deploy your dotfiles, `vpn` will fail until the identity file (step 2) is created.
 
 ## 1. Generate WireGuard Configuration
 
@@ -28,39 +30,26 @@ Address = <Copy Address from downloaded config>
 
 > **Note:** Do not include the `[Interface]` or `[Peer]` headers in this file. It is just a storage location for these two values.
 
-## 3. Configure Sudoers Permissions
+## 3. Test the Connection
 
-`vpn` requires passwordless `sudo` access to perform three specific actions:
-1. Bring the WireGuard interface up (`wg-quick up`)
-2. Bring the WireGuard interface down (`wg-quick down`)
-3. Copy the dynamically generated configuration file into `/etc/wireguard/` (`cp`)
-
-Because the script may be invoked from contexts without a terminal, passwordless sudo is required.
-
-### Applying the Sudoers Rules
-
-Your dotfiles include a pre-configured sudoers drop-in file that explicitly grants these permissions. You must copy it to the system's sudoers directory and set the correct permissions.
-
-Run the following commands in your terminal (you will be prompted for your password once):
-
-```bash
-sudo cp ~/.config/mullvad/sudoers-mullvad /etc/sudoers.d/mullvad-vpn
-sudo chmod 0440 /etc/sudoers.d/mullvad-vpn
-```
-
-*(If you are running these commands from within a distrobox container, prefix the commands with `distrobox-host-exec`)*:
-
-```bash
-distrobox-host-exec sudo cp ~/.config/mullvad/sudoers-mullvad /etc/sudoers.d/mullvad-vpn
-distrobox-host-exec sudo chmod 0440 /etc/sudoers.d/mullvad-vpn
-```
-
-## 4. Test the Connection
-
-Once the identity file is created and the sudoers permissions are applied, the setup is complete.
+Once the identity file is created, the setup is complete — there is no sudoers step.
 
 1. Run `vpn connect` to connect to a random relay.
 2. Or run `vpn location` to see available locations, then `vpn location sweden` to connect to Sweden.
-3. The script will automatically generate the corresponding WireGuard configuration, place it in `/etc/wireguard/mullvad.conf`, and connect.
+3. The script generates the corresponding WireGuard configuration, imports it into NetworkManager as a connection named `mullvad`, and activates it.
 
 You can verify your connection and location by running `my-location` in the terminal.
+
+## Notes
+
+- The connection appears in NetworkManager as `mullvad` (`nmcli connection show`), and the live interface is `mullvad` (`/sys/class/net/mullvad`). The polybar VPN indicator keys off that interface.
+- To remove the VPN entirely: `vpn disconnect` then `nmcli connection delete mullvad`.
+
+### Migrating from the old sudoers-based setup
+
+Earlier versions used `wg-quick` + `/etc/wireguard` and required two sudoers drop-ins. If you set those up previously, you can remove them now (they are no longer used):
+
+```bash
+sudo rm -f /etc/sudoers.d/mullvad-vpn /etc/sudoers.d/wireguard
+sudo rm -f /etc/wireguard/mullvad.conf
+```

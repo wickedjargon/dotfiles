@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """vpn — manage Mullvad WireGuard VPN from the command line.
 
-Requires: wireguard-tools (wg-quick, wg), curl
+Connections are managed through NetworkManager (nmcli), so no root / sudoers
+setup is required: importing and activating a WireGuard profile goes through
+polkit for the active local session. The script never touches /etc/wireguard
+and never calls sudo.
+
+Requires: NetworkManager (nmcli), wireguard kernel support, curl
 """
 
 import json
@@ -44,9 +49,14 @@ def run(cmd, timeout=15):
 
 # ── Configuration ──────────────────────────────────────────────────
 IDENTITY_FILE = os.path.expanduser("~/.config/mullvad/identity.conf")
-NEXT_CONF = os.path.expanduser("~/.config/mullvad/mullvad-next.conf")
-WG_CONF = "/etc/wireguard/mullvad.conf"
-INTERFACE = "mullvad"
+# Import source for nmcli. Its basename (minus .conf) becomes the
+# NetworkManager connection id and the interface name, hence CONN_NAME.
+IMPORT_CONF = os.path.expanduser("~/.config/mullvad/mullvad.conf")
+CONN_NAME = "mullvad"
+# Records the relay we last connected to, so `vpn` (status) can show server
+# and location without root (NetworkManager does not expose wg handshake info
+# to non-root callers).
+STATE_FILE = os.path.expanduser("~/.cache/mullvad-current.json")
 RELAY_URL = "https://api.mullvad.net/www/relays/wireguard/"
 RELAY_CACHE = os.path.expanduser("~/.cache/mullvad-relays.json")
 
@@ -127,7 +137,8 @@ def _parse_relays(data):
             "city_name": relay.get("city_name", ""),
             "city_code": relay.get("city_code", ""),
             "ipv4_addr_in": relay.get("ipv4_addr_in", ""),
-            "public_key": relay.get("public_key", ""),
+            # The API field is "pubkey" (not "public_key").
+            "public_key": relay.get("pubkey", ""),
             "active": relay.get("active", False),
         })
     return [r for r in relays if r["active"] and r["ipv4_addr_in"]]
@@ -148,24 +159,57 @@ Endpoint = {relay['ipv4_addr_in']}:51820
 """
 
 
-# ── Status Parsing ─────────────────────────────────────────────────
+# ── Connection State (via NetworkManager) ──────────────────────────
 def _is_connected():
-    """Check if the VPN interface is active."""
-    result = run(["sudo", "-n", "wg", "show", INTERFACE])
-    return result.returncode == 0 and result.stdout.strip() != ""
+    """True if the NetworkManager VPN connection is active."""
+    result = run(["nmcli", "-t", "-f", "NAME", "connection", "show", "--active"])
+    if result.returncode != 0:
+        return False
+    return any(line.strip() == CONN_NAME for line in result.stdout.splitlines())
+
+
+def _write_state(relay):
+    """Record the relay we just connected to (for status display)."""
+    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+    with open(STATE_FILE, "w") as f:
+        json.dump({
+            "hostname": relay["hostname"],
+            "city": relay["city_name"],
+            "country": relay["country_name"],
+            "endpoint": relay["ipv4_addr_in"],
+        }, f)
+
+
+def _read_state():
+    """Read the recorded relay info, or None."""
+    try:
+        with open(STATE_FILE) as f:
+            return json.load(f)
+    except (IOError, json.JSONDecodeError):
+        return None
+
+
+def _clear_state():
+    """Remove the recorded relay info."""
+    try:
+        os.remove(STATE_FILE)
+    except FileNotFoundError:
+        pass
 
 
 def _get_current_endpoint():
-    """Get the current VPN endpoint address."""
-    result = run(["sudo", "-n", "wg", "show", INTERFACE, "endpoints"])
-    if result.returncode != 0:
+    """Get the endpoint IP of the active connection (from state)."""
+    state = _read_state()
+    return state.get("endpoint") if state else None
+
+
+def _read_counter(path):
+    """Read an integer from a sysfs file, or None."""
+    try:
+        with open(path) as f:
+            return int(f.read().strip())
+    except (IOError, ValueError):
         return None
-    # Format: <peer_key>\t<endpoint>
-    for line in result.stdout.strip().splitlines():
-        parts = line.split("\t")
-        if len(parts) >= 2:
-            return parts[1].split(":")[0]  # IP without port
-    return None
 
 
 def _find_relay_by_ip(relays, ip):
@@ -185,48 +229,21 @@ def cmd_status():
 
     print(f"{GREEN}●{RESET} VPN is {BOLD}connected{RESET}")
 
-    endpoint = _get_current_endpoint()
-    if endpoint:
-        print(f"  Endpoint   {endpoint}")
+    state = _read_state()
+    if state:
+        if state.get("endpoint"):
+            print(f"  Endpoint   {state['endpoint']}")
+        if state.get("hostname"):
+            print(f"  Server     {state['hostname']}")
+        if state.get("city") or state.get("country"):
+            print(f"  Location   {state.get('city', '')}, {state.get('country', '')}")
 
-        # Try to identify which relay
-        try:
-            data = _fetch_relays()
-            relays = _parse_relays(data)
-            relay = _find_relay_by_ip(relays, endpoint)
-            if relay:
-                print(f"  Server     {relay['hostname']}")
-                print(f"  Location   {relay['city_name']}, {relay['country_name']}")
-        except Exception:
-            pass
-
-    # Show transfer stats
-    result = run(["sudo", "-n", "wg", "show", INTERFACE, "transfer"])
-    if result.returncode == 0 and result.stdout.strip():
-        for line in result.stdout.strip().splitlines():
-            parts = line.split("\t")
-            if len(parts) >= 3:
-                rx = _human_bytes(int(parts[1]))
-                tx = _human_bytes(int(parts[2]))
-                print(f"  Transfer   {DIM}↓{RESET} {rx}  {DIM}↑{RESET} {tx}")
-
-    # Show handshake time
-    result = run(["sudo", "-n", "wg", "show", INTERFACE, "latest-handshakes"])
-    if result.returncode == 0 and result.stdout.strip():
-        import time
-        for line in result.stdout.strip().splitlines():
-            parts = line.split("\t")
-            if len(parts) >= 2 and parts[1].isdigit():
-                ts = int(parts[1])
-                if ts > 0:
-                    ago = int(time.time() - ts)
-                    if ago < 60:
-                        hs = f"{ago}s ago"
-                    elif ago < 3600:
-                        hs = f"{ago // 60}m ago"
-                    else:
-                        hs = f"{ago // 3600}h ago"
-                    print(f"  Handshake  {DIM}{hs}{RESET}")
+    # Transfer stats straight from sysfs (no root needed).
+    rx = _read_counter(f"/sys/class/net/{CONN_NAME}/statistics/rx_bytes")
+    tx = _read_counter(f"/sys/class/net/{CONN_NAME}/statistics/tx_bytes")
+    if rx is not None and tx is not None:
+        print(f"  Transfer   {DIM}↓{RESET} {_human_bytes(rx)}  "
+              f"{DIM}↑{RESET} {_human_bytes(tx)}")
 
 
 def _human_bytes(n):
@@ -271,7 +288,8 @@ def cmd_disconnect():
         return
 
     info("Disconnecting...")
-    result = run(["sudo", "-n", "wg-quick", "down", INTERFACE])
+    result = run(["nmcli", "connection", "down", CONN_NAME])
+    _clear_state()
     if result.returncode == 0:
         ok("Disconnected")
     else:
@@ -298,7 +316,8 @@ def cmd_location(args):
     # Disconnect first if connected
     if _is_connected():
         info("Disconnecting current VPN...")
-        run(["sudo", "-n", "wg-quick", "down", INTERFACE])
+        run(["nmcli", "connection", "down", CONN_NAME])
+        _clear_state()
 
     _do_connect(relay, private_key, address)
 
@@ -369,28 +388,37 @@ def _pick_relay(relays, query):
 
 
 def _do_connect(relay, private_key, address):
-    """Generate config and connect to a relay."""
+    """Generate config and connect to a relay via NetworkManager."""
     config = _generate_config(relay, private_key, address)
 
-    # Write temp config
-    with open(NEXT_CONF, "w") as f:
+    # Write the import source (basename 'mullvad' -> connection id 'mullvad').
+    os.makedirs(os.path.dirname(IMPORT_CONF), exist_ok=True)
+    with open(IMPORT_CONF, "w") as f:
         f.write(config)
-    os.chmod(NEXT_CONF, 0o600)
+    os.chmod(IMPORT_CONF, 0o600)
 
-    # Copy to /etc/wireguard (requires sudo)
     info(f"Connecting to {BOLD}{relay['hostname']}{RESET} "
          f"({relay['city_name']}, {relay['country_name']})...")
 
-    result = run(["sudo", "-n", "cp", NEXT_CONF, WG_CONF])
-    if result.returncode != 0:
-        die(f"Failed to install config (need sudoers): {result.stderr.strip()}")
+    # Replace any existing profile so re-imports pick up the new relay.
+    run(["nmcli", "connection", "delete", CONN_NAME])  # ignore if absent
 
-    result = run(["sudo", "-n", "wg-quick", "up", INTERFACE])
-    if result.returncode == 0:
-        ok(f"Connected to {relay['hostname']} "
-           f"({relay['city_name']}, {relay['country_name']})")
-    else:
+    result = run(["nmcli", "connection", "import",
+                  "type", "wireguard", "file", IMPORT_CONF])
+    if result.returncode != 0:
+        die(f"Failed to import config into NetworkManager: {result.stderr.strip()}")
+
+    # Pin the interface name so status checks (/sys/class/net/mullvad) are stable.
+    run(["nmcli", "connection", "modify", CONN_NAME,
+         "connection.interface-name", CONN_NAME])
+
+    result = run(["nmcli", "connection", "up", CONN_NAME])
+    if result.returncode != 0:
         die(f"Failed to connect: {result.stderr.strip()}")
+
+    _write_state(relay)
+    ok(f"Connected to {relay['hostname']} "
+       f"({relay['city_name']}, {relay['country_name']})")
 
 
 def cmd_list():
@@ -428,7 +456,7 @@ def cmd_refresh():
 HELP_TEXT = """\
 usage: vpn [command] [options]
 
-Manage Mullvad WireGuard VPN connections.
+Manage Mullvad WireGuard VPN connections (via NetworkManager).
 
 commands:
   (none)                        show connection status
@@ -458,10 +486,10 @@ def main():
         print(HELP_TEXT)
         sys.exit(0)
 
-    # Check for wg-quick
+    # Check for nmcli
     from shutil import which
-    if not which("wg-quick"):
-        die("wireguard-tools not installed (need wg-quick)")
+    if not which("nmcli"):
+        die("NetworkManager (nmcli) not installed")
 
     if len(sys.argv) < 2:
         cmd_status()

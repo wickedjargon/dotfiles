@@ -221,7 +221,7 @@ They still require tldr pages and bash completions.
 | `sched`      | ✓             | at, aplay          | ✓    | ✓          |
 | `rss`        | ✓             | (stdlib only)      | ✓    | ✓          |
 | `svc`        | ✓             | systemctl          | ✓    | ✓          |
-| `vpn`        | ✓             | wg-quick, curl     | ✓    | ✓          |
+| `vpn`        | ✓             | nmcli, curl        | ✓    | ✓          |
 | `mac`        | ✓             | ip (iproute2)      | ✓    | ✓          |
 | `theme`      | ✗             | various            | ✓    | ✓          |
 | `shorten-url`| ✗             | curl               | ✗    | ✗          |

@@ -1,8 +1,13 @@
 #!/bin/sh
-# Polybar hook script for VPN status
-# Outputs 🛡️ if any WireGuard interface is active, empty string otherwise
+# Polybar hook script for VPN status.
+# Outputs 🛡️ if the Mullvad WireGuard interface is up, empty string otherwise.
+#
+# No root needed: NetworkManager brings the tunnel up as a kernel interface
+# named "mullvad" (see the `vpn` script), visible in /sys/class/net, which is
+# world-readable. Checking for its presence avoids `sudo wg show`, so the
+# status bar no longer depends on any sudoers entry.
 
-if sudo -n wg show > /dev/null 2>&1 && [ -n "$(sudo -n wg show)" ]; then
+if [ -e /sys/class/net/mullvad ]; then
     echo "🛡️"
 else
     echo ""
