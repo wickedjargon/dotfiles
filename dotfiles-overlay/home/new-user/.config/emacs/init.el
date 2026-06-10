@@ -645,9 +645,8 @@ TTY frames (standalone non-daemon only) get tty-dark."
   (evil-leader/set-key "t T" 'fff-open-new-eshell)
   (evil-leader/set-key "t p" 'terminal-here)
 
-  ;; chatgpt
-  (evil-leader/set-key "g g" 'fff-switch-or-create-gptel)
-  (evil-leader/set-key "g G" 'fff-switch-to-new-gptel-buffer)
+  ;; claude code
+  (evil-leader/set-key "g g" 'agent-shell-anthropic-start-claude-code)
 
   ;; x: C-x prefixes
   (evil-leader/set-key "x b" 'switch-to-buffer)
@@ -1047,7 +1046,7 @@ TTY frames (standalone non-daemon only) get tty-dark."
 
 ;;; Other Language Support Packages
 
-(use-package go-mode :straight t :ensure t :defer t)
+(use-package go-mode :straight t :defer t)
 
 (use-package gitignore-mode
   :straight (:host github :repo "magit/git-modes")
@@ -1330,6 +1329,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
       "#haskell"
       "#linux"
       "#debian"
+      "#weather"
       "#latex")))
   (erc-hide-timestamps t)
   (erc-server-auto-reconnect t)
@@ -1675,23 +1675,25 @@ With a prefix ARG always prompt for command to use."
   :custom
   (webjump-use-internal-browser t))
 
-(use-package gptel
-  :straight t
+;; agent-shell deps. Install the ACP bridge:
+;;   distrobox enter archbox -- npm install -g @agentclientprotocol/claude-agent-acp
+(use-package shell-maker
+  :straight (shell-maker :type git :host github :repo "xenodium/shell-maker")
+  :defer t)
+
+(use-package acp
+  :straight (acp :type git :host github :repo "xenodium/acp.el")
+  :defer t)
+
+;; Start with M-x agent-shell-anthropic-start-claude-code (or `SPC g a').
+(use-package agent-shell
+  :straight (agent-shell :type git :host github :repo "xenodium/agent-shell")
   :defer t
+  :commands (agent-shell-anthropic-start-claude-code)
   :config
-  (setq gptel-model 'llama-3.3-70b-versatile
-        gptel-backend (gptel-make-openai "Groq"
-                        :host "api.groq.com"
-                        :endpoint "/openai/v1/chat/completions"
-                        :stream t
-                        ;; Read the key lazily (only when a request is made),
-                        ;; guarded so a missing file never breaks startup.
-                        :key (lambda ()
-                               (let ((key-file (expand-file-name ".gptel-api-key" user-emacs-directory)))
-                                 (when (file-exists-p key-file)
-                                   (with-temp-buffer
-                                     (insert-file-contents key-file)
-                                     (string-trim (buffer-string))))))
-                        :models '(llama-3.3-70b-versatile
-                                  qwen/qwen3-32b
-                                  whisper-large-v3))))
+  ;; Run the bridge inside archbox (node lives there, not on the host).
+  (setq agent-shell-anthropic-claude-acp-command
+        '("distrobox" "enter" "archbox" "--" "claude-agent-acp"))
+  (setq agent-shell-anthropic-default-session-mode-id "bypassPermissions")
+  (setq agent-shell-anthropic-authentication
+        (agent-shell-anthropic-make-authentication :login t)))
