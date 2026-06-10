@@ -1,0 +1,17 @@
+#!/bin/sh
+# poly-eth — Polybar wired / USB-tether status.
+# Prints "🌐 ETH" when any wired or USB-tethered interface is up, else "".
+#
+# Why a script instead of polybar's internal/network module: that module
+# auto-selects ONE wired interface once, at startup, and never re-scans. So a
+# phone tethered after polybar launched goes unnoticed until polybar restarts
+# (reload-desktop). This re-scans every interval, so newly-appeared interfaces
+# (e.g. an enx<mac> USB-tether device) show up immediately.
+
+for path in /sys/class/net/en*; do
+    [ -e "$path" ] || continue                            # no match -> literal glob
+    [ "$(cat "$path/operstate" 2>/dev/null)" = "up" ] || continue
+    echo "🌐 ETH"
+    exit 0
+done
+echo ""
