@@ -274,8 +274,8 @@ def is_project_dir(path):
 
 
 def open_project(path):
-    """Prompt to open project in emacsclient or antigravity"""
-    options = ["emacsclient", "antigravity"]
+    """Prompt to open project in emacsclient or code"""
+    options = ["emacsclient", "code"]
 
     exit_code, choice = rofi_select(options, prompt="Open project with")
     if exit_code != 0 or not choice:
@@ -283,8 +283,8 @@ def open_project(path):
 
     if choice == "emacsclient":
         subprocess.Popen(["emacsclient", "-c", str(path)])
-    elif choice == "antigravity":
-        subprocess.Popen(["antigravity", str(path)])
+    elif choice == "code":
+        subprocess.Popen(["code", str(path)])
 
 
 def normalize_path(raw_path):

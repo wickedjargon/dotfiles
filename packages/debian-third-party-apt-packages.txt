@@ -2,5 +2,5 @@
 # Format: package_name | key_url | repo_line
 # Lines starting with # are comments
 
-# Antigravity - AI coding assistant
-# antigravity | https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/ antigravity-debian main
+# Code editor (VS Code) is installed via distrobox / arch as visual-studio-code-bin
+# (see packages/arch-aur-packages.txt), not as a third-party APT package.

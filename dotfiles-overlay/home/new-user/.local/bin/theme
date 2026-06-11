@@ -67,8 +67,8 @@ THEMES = {
         # Zathura
         "zathura_bg": "#0d0e1c",
         "zathura_fg": "#ebdbb2",
-        # Antigravity (VS Code)
-        "antigravity_theme": "GitHub Dark Colorblind (Beta)",
+        # VS Code
+        "vscode_theme": "GitHub Dark Colorblind (Beta)",
         # Alacritty
         "alacritty_bg": "#0d0e1c",
         "alacritty_fg": "#ebdbb2",
@@ -148,8 +148,8 @@ THEMES = {
         # Zathura
         "zathura_bg": "#fbf1c7",
         "zathura_fg": "#3c3836",
-        # Antigravity (VS Code)
-        "antigravity_theme": "GitHub Light Colorblind (Beta)",
+        # VS Code
+        "vscode_theme": "GitHub Light Colorblind (Beta)",
         # Alacritty
         "alacritty_bg": "#fbf1c7",
         "alacritty_fg": "#3c3836",
@@ -539,11 +539,11 @@ def restart_services():
     print("  Services restarted (polybar, dunst, xob)")
 
 
-def switch_antigravity(theme):
-    """Update Antigravity (VS Code) color theme in settings.json."""
-    path = os.path.join(HOME, ".config", "Antigravity", "User", "settings.json")
+def switch_vscode(theme):
+    """Update VS Code color theme in settings.json."""
+    path = os.path.join(HOME, ".config", "Code", "User", "settings.json")
     if not os.path.exists(path):
-        print("  antigravity → skipped (settings.json not found)")
+        print("  vscode → skipped (settings.json not found)")
         return
     with open(path) as f:
         raw = f.read()
@@ -557,13 +557,13 @@ def switch_antigravity(theme):
     try:
         settings = json.loads(cleaned)
     except json.JSONDecodeError:
-        print("  antigravity → failed (could not parse settings.json)")
+        print("  vscode → failed (could not parse settings.json)")
         return
-    settings["workbench.colorTheme"] = theme["antigravity_theme"]
+    settings["workbench.colorTheme"] = theme["vscode_theme"]
     with open(path, "w") as f:
         json.dump(settings, f, indent=4)
         f.write("\n")
-    print(f"  antigravity → {theme['antigravity_theme']}")
+    print(f"  vscode → {theme['vscode_theme']}")
 
 
 def restart_xdg_portal():
@@ -782,7 +782,7 @@ def apply_theme(mode, no_restart=False):
         restart_services()
 
     # Milestone 3: Editors & portal
-    switch_antigravity(theme)
+    switch_vscode(theme)
     switch_alacritty(theme)
     switch_rofi(theme)
     switch_wallpaper(theme)

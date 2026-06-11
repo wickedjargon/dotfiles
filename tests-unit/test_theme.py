@@ -136,10 +136,10 @@ def fake_home(tmp_path, monkeypatch):
         'DMENU_FONT="monospace-10"\n'
     )
 
-    # Antigravity (VS Code)
-    antigravity = home / ".config" / "Antigravity" / "User"
-    antigravity.mkdir(parents=True)
-    (antigravity / "settings.json").write_text(
+    # VS Code
+    vscode = home / ".config" / "Code" / "User"
+    vscode.mkdir(parents=True)
+    (vscode / "settings.json").write_text(
         json.dumps(
             {
                 "editor.minimap.enabled": False,
@@ -575,43 +575,43 @@ class TestZathura:
 # ── Milestone 3 Tests ────────────────────────────────────────────────────────
 
 
-class TestAntigravity:
+class TestVSCode:
     def test_switch_to_light(self, fake_home):
-        theme_mod.switch_antigravity(theme_mod.THEMES["light"])
-        path = fake_home / ".config" / "Antigravity" / "User" / "settings.json"
+        theme_mod.switch_vscode(theme_mod.THEMES["light"])
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
         settings = json.loads(path.read_text())
         assert settings["workbench.colorTheme"] == "GitHub Light Colorblind (Beta)"
 
     def test_switch_to_dark(self, fake_home):
-        theme_mod.switch_antigravity(theme_mod.THEMES["light"])
-        theme_mod.switch_antigravity(theme_mod.THEMES["dark"])
-        path = fake_home / ".config" / "Antigravity" / "User" / "settings.json"
+        theme_mod.switch_vscode(theme_mod.THEMES["light"])
+        theme_mod.switch_vscode(theme_mod.THEMES["dark"])
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
         settings = json.loads(path.read_text())
         assert settings["workbench.colorTheme"] == "GitHub Dark Colorblind (Beta)"
 
     def test_preserves_other_settings(self, fake_home):
-        theme_mod.switch_antigravity(theme_mod.THEMES["light"])
-        path = fake_home / ".config" / "Antigravity" / "User" / "settings.json"
+        theme_mod.switch_vscode(theme_mod.THEMES["light"])
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
         settings = json.loads(path.read_text())
         assert settings["editor.minimap.enabled"] is False
         assert settings["window.restoreWindows"] == "none"
 
     def test_handles_comments(self, fake_home):
         """Verify the script can handle // comments in settings.json."""
-        path = fake_home / ".config" / "Antigravity" / "User" / "settings.json"
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
         path.write_text(
             "{\n"
             '    "workbench.colorTheme": "GitHub Dark Colorblind (Beta)"\n'
             '    // "some.commented.setting": true\n'
             "}\n"
         )
-        theme_mod.switch_antigravity(theme_mod.THEMES["light"])
+        theme_mod.switch_vscode(theme_mod.THEMES["light"])
         settings = json.loads(path.read_text())
         assert settings["workbench.colorTheme"] == "GitHub Light Colorblind (Beta)"
 
     def test_missing_config(self, fake_home):
-        os.remove(str(fake_home / ".config" / "Antigravity" / "User" / "settings.json"))
-        theme_mod.switch_antigravity(theme_mod.THEMES["light"])
+        os.remove(str(fake_home / ".config" / "Code" / "User" / "settings.json"))
+        theme_mod.switch_vscode(theme_mod.THEMES["light"])
 
 
 # ── Integration Tests ────────────────────────────────────────────────────────
@@ -643,7 +643,7 @@ class TestApplyTheme:
         content = (fake_home / ".config" / "dmenu" / "config").read_text()
         assert "-nb #E8E8EE" in content
 
-        path = fake_home / ".config" / "Antigravity" / "User" / "settings.json"
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
         settings = json.loads(path.read_text())
         assert settings["workbench.colorTheme"] == "GitHub Light Colorblind (Beta)"
 
@@ -659,7 +659,7 @@ class TestApplyTheme:
         content = (fake_home / ".config" / "polybar" / "config.ini").read_text()
         assert "#01010A" in content
 
-        path = fake_home / ".config" / "Antigravity" / "User" / "settings.json"
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
         settings = json.loads(path.read_text())
         assert settings["workbench.colorTheme"] == "GitHub Dark Colorblind (Beta)"
 
