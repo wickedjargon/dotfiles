@@ -52,7 +52,6 @@ sudo apt purge -y task-xfce-desktop
 
 # Remove leftover Xfce dependencies
 sudo apt purge -y \
-    gnome-keyring \
     cups-pk-helper \
     mate-polkit \
     xiccd \
