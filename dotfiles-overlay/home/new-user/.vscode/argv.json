@@ -9,5 +9,6 @@
 	// startx / no-display-manager setup. gnome-keyring is still installed
 	// and unlocked at login (see dotfiles-patches/etc/pam.d/login) for any
 	// other libsecret-based apps.
-	"password-store": "basic"
+	"password-store": "basic",
+	"enable-crash-reporter": true,
 }
