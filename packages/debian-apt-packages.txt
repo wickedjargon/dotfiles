@@ -134,6 +134,7 @@ fonts-dejavu             # DejaVu fonts (includes Core, Extra, Mono)
 build-essential          # Compilers and build tools (gcc, make, etc)
 gdb                      # GNU debugger
 clangd                   # C/C++ language server
+python3-pytest           # Python test framework (runs tests-unit/ suite)
 libpoppler-glib-dev      # PDF rendering library for pdf-tools (Emacs)
 libpng-dev               # PNG library for pdf-tools (Emacs)
 libx11-dev               # X11 client library development files
