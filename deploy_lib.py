@@ -538,7 +538,7 @@ def setup_third_party_repos(repos, tui, start_row):
     tui.show_progress(start_row, "Setting up third-party repositories...", success=None)
     tui.stdscr.refresh()
 
-    keyrings_dir = Path("/etc/apt/keyrings")
+    keyrings_dir = Path("/usr/share/keyrings")
     sources_dir = Path("/etc/apt/sources.list.d")
 
     # Create keyrings directory if it doesn't exist
@@ -556,7 +556,7 @@ def setup_third_party_repos(repos, tui, start_row):
     for package_name, key_url, repo_line in repos:
         try:
             # Download and install GPG key
-            key_filename = f"{package_name}-repo-key.gpg"
+            key_filename = f"{package_name}-archive-keyring.gpg"
             key_path = keyrings_dir / key_filename
 
             # Download key
