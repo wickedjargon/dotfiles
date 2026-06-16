@@ -1,3 +1,9 @@
+# Official (pacman) packages for the archbox Distrobox container.
+# Installed by scripts/install_arch_packages.py.
+#
+# NOTE: 32-bit (lib32-*) Steam libraries are intentionally NOT listed here.
+# They require the [multilib] repo and are owned by scripts/setup-steam.sh.
+age
 base
 base-devel
 bash-completion
@@ -10,10 +16,12 @@ git-lfs
 github-cli
 glibc-locales
 go
+godot
 gradle
 hugo
 imagemagick
 inetutils
+iw
 jdk17-openjdk
 less
 lsof
@@ -24,11 +32,14 @@ mtr
 nodejs
 npm
 nss-mdns
+ollama
 openssh
 pigz
 python
 python-black
 python-isort
+python-piexif
+python-pillow
 python-pyflakes
 python-pytest
 qemu-desktop
@@ -52,5 +63,6 @@ vulkan-intel
 vulkan-radeon
 wget
 words
+xdg-user-dirs
 xorg-xauth
 zip

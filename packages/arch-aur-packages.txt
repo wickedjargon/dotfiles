@@ -1,5 +1,10 @@
+# AUR packages for the archbox Distrobox container.
+# Installed by scripts/install_arch_packages.py (via yay).
+# yay itself is bootstrapped by that script and is not listed here.
 android-sdk
 android-sdk-build-tools
 android-sdk-platform-tools
+godot-export-templates-web-bin
 google-chrome
+mahjong
 visual-studio-code-bin
