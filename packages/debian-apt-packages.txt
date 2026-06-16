@@ -17,6 +17,8 @@ openresolv               # Used by wg-quick for DNS management
 firmware-mediatek         # MediaTek firmware (AWUS036ACM / MT7612U WiFi adapter)
 python3-googleapi        # Google API client library (for google-calendar)
 python3-google-auth-oauthlib  # Google OAuth2 authentication (for google-calendar)
+python3-pil              # Pillow imaging library (for upload: EXIF stripping)
+python3-piexif           # EXIF read/write (for upload: strip EXIF + spoof GPS)
 
 # Core System - Audio
 pipewire                 # The core PipeWire multimedia server
@@ -128,10 +130,16 @@ qt6-style-kvantum        # Kvantum theme engine for Qt6
 # Desktop Environment - Fonts
 fonts-noto-color-emoji   # Color emoji font from Google
 fonts-noto-core          # "No Tofu" font families (Latin, Greek, Cyrillic)
+fonts-noto-cjk           # "No Tofu" CJK fonts (Chinese, Japanese, Korean)
 fonts-dejavu             # DejaVu fonts (includes Core, Extra, Mono)
 
 # Development & Build Dependencies
 build-essential          # Compilers and build tools (gcc, make, etc)
+cmake                    # Cross-platform build system
+autoconf                 # Generates configure scripts (autotools)
+automake                 # Generates Makefile.in templates (autotools)
+libtool-bin              # Generic library build support script
+pkg-config               # Manages compile/link flags for libraries
 gdb                      # GNU debugger
 clangd                   # C/C++ language server
 python3-pytest           # Python test framework (runs tests-unit/ suite)
