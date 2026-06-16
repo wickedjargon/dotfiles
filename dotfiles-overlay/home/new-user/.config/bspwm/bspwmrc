@@ -50,6 +50,10 @@ bspc config pointer_follows_focus false
 # not on bspwm internal restarts (arg 3) which would pile up processes.
 if [ "${1:-0}" = "0" ]; then
 	systemctl --user import-environment DISPLAY XAUTHORITY
+	# Also update the D-Bus daemon's activation environment, not just systemd's.
+	# Without this, D-Bus-activated services (gcr-prompter, gpg pinentry) start
+	# with an empty DISPLAY and can't draw — GUI keyring/password prompts fail.
+	dbus-update-activation-environment DISPLAY XAUTHORITY
 	systemctl --user restart xdg-desktop-portal-gtk xdg-desktop-portal
 
 	# Apply theme colors to config files BEFORE starting polybar.
