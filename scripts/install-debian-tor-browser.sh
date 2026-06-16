@@ -39,7 +39,21 @@ fi
 
 echo "Latest stable version: $VERSION"
 
-TARBALL="tor-browser-linux-x86_64-$VERSION.tar.xz"
+# Map the machine architecture to Tor's Linux desktop build names. Tor only
+# publishes x86_64 and i686 tarballs for Linux desktop; the aarch64/armv7
+# builds in the dist listing are Android APKs, not desktop browsers. Fail
+# loudly on anything else rather than silently installing a wrong binary.
+case "$(uname -m)" in
+    x86_64 | amd64) ARCH=x86_64 ;;
+    i686 | i386) ARCH=i686 ;;
+    *)
+        echo "Error: no Tor Browser desktop build for architecture '$(uname -m)'." >&2
+        echo "Tor only ships x86_64 and i686 tarballs for Linux." >&2
+        exit 1
+        ;;
+esac
+
+TARBALL="tor-browser-linux-$ARCH-$VERSION.tar.xz"
 DOWNLOAD_URL="$TOR_DIST_URL/$VERSION/$TARBALL"
 TEMP_FILE=$(mktemp --suffix=.tar.xz)
 
