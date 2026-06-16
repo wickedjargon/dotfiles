@@ -32,39 +32,6 @@ cd dotfiles
 python3 deploy.py --username myuser --password mypass --yes
 ```
 
-## archbox (Arch Distrobox)
-
-Heavier and bleeding-edge GUI apps (Steam, Android SDK, VS Code, Godot,
-Telegram, Chrome, …) run inside an Arch Linux [Distrobox](https://distrobox.it/)
-container named `archbox`, on top of the stable Debian host. Recreate it from
-scratch with:
-
-```bash
-# On the HOST — build the container from packages/archbox.ini:
-./scripts/create-archbox.sh            # add --replace to rebuild from scratch
-
-# Then INSIDE the container, as your normal user:
-distrobox enter archbox
-python3 ~/d/projects/dotfiles/scripts/install_arch_packages.py   # pacman + AUR (bootstraps yay)
-~/d/projects/dotfiles/scripts/setup-steam.sh                     # Steam + lib32 multilib libs
-```
-
-Your home directory is shared with the host, so the dotfiles overlay is already
-present inside the container — only packages and the container itself need
-recreating.
-
-Package lists live in `packages/arch-pacman-packages.txt` and
-`packages/arch-aur-packages.txt`. Keep them honest with:
-
-```bash
-# Inside archbox — report drift between the lists and what's installed:
-~/d/projects/dotfiles/scripts/arch-sync-packages.sh
-~/d/projects/dotfiles/scripts/arch-sync-packages.sh --write   # rewrite lists from live state
-```
-
-`tests-live/arch-packages.sh` verifies every listed package is installed (it is
-a no-op on the Debian host, where `pacman` is absent).
-
 ## Post-Deployment
 
 After successfully running the deployment script, complete these manual steps:
@@ -135,3 +102,15 @@ adb push /tmp/private-key.asc /sdcard/Download/private-key.asc
 To configure the `vpn` tool to manage your Mullvad WireGuard connections, including the required `sudoers` setup, follow the guide here:
 
 [How to Set Up Mullvad VPN](how-to/mullvad-vpn.md)
+
+### 7. archbox (Arch Distrobox)
+
+```bash
+# On the HOST:
+./scripts/create-archbox.sh            # add --replace to rebuild from scratch
+
+# Inside the container:
+distrobox enter archbox
+python3 ~/d/projects/dotfiles/scripts/install_arch_packages.py
+~/d/projects/dotfiles/scripts/setup-steam.sh
+```
