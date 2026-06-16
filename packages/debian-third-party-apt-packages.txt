@@ -1,10 +1,15 @@
 # Third-Party APT Packages
 # Format: package_name | key_url | repo_line
 # Lines starting with # are comments
+#
+# The placeholder {codename} is replaced at deploy time with the running
+# Debian release codename (VERSION_CODENAME from /etc/os-release), so repo
+# lines follow the machine across Debian upgrades instead of being pinned to
+# a codename that 404s once that release ages out.
 
 # Tailscale — WireGuard mesh VPN. Required by the `psync` phone-sync tool,
 # which reaches the phone over the tailnet (MagicDNS host "pixel-8").
-tailscale | https://pkgs.tailscale.com/stable/debian/trixie.noarmor.gpg | deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian trixie main
+tailscale | https://pkgs.tailscale.com/stable/debian/{codename}.noarmor.gpg | deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian {codename} main
 
 # Code editor (VS Code) is installed via distrobox / arch as visual-studio-code-bin
 # (see packages/arch-aur-packages.txt), not as a third-party APT package.

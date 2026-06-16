@@ -498,14 +498,39 @@ def is_package_installed(package_name):
         return False
 
 
+def get_debian_codename():
+    """Return the running Debian release codename (e.g. "trixie").
+
+    Reads VERSION_CODENAME from /etc/os-release so third-party repo lines
+    track whatever release the machine is actually on, instead of being
+    pinned to a codename that disappears at the next Debian upgrade.
+    Returns None if it cannot be determined.
+    """
+    try:
+        with open("/etc/os-release", "r") as f:
+            for line in f:
+                key, _, value = line.partition("=")
+                if key == "VERSION_CODENAME":
+                    return value.strip().strip('"') or None
+    except (OSError, IOError):
+        pass
+    return None
+
+
 def read_third_party_packages_file(script_dir):
     """Read third-party package repository configurations
     Format: package_name | key_url | repo_line
     Returns list of tuples: (package_name, key_url, repo_line)
+
+    The placeholder {codename} in any field is substituted with the running
+    Debian release codename (from /etc/os-release). Lines using {codename}
+    are skipped if the codename cannot be determined.
     """
     packages_file = script_dir / "packages/debian-third-party-apt-packages.txt"
     if not packages_file.exists():
         return []
+
+    codename = get_debian_codename()
 
     repos = []
     with open(packages_file, "r") as f:
@@ -525,6 +550,18 @@ def read_third_party_packages_file(script_dir):
                 continue
 
             package_name, key_url, repo_line = parts
+
+            if "{codename}" in line:
+                if not codename:
+                    log_error(
+                        f"Skipping line {line_num} in third-party-apt-packages: "
+                        "could not determine Debian codename from /etc/os-release",
+                        context=f"File: {packages_file}, content: {line}",
+                    )
+                    continue
+                key_url = key_url.replace("{codename}", codename)
+                repo_line = repo_line.replace("{codename}", codename)
+
             repos.append((package_name, key_url, repo_line))
 
     return repos
