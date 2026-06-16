@@ -86,27 +86,36 @@ class TestDeploySystem(unittest.TestCase):
             
         mock_is_installed.side_effect = is_installed_side_effect
         
+        # apt-get update returns success so install proceeds
+        mock_run.return_value = MagicMock(returncode=0)
+
         # Run
         deploy_lib.install_packages(packages, MagicMock(), 0)
-        
-        # Verify apt-get install called ONLY for new-pkg
-        mock_run.assert_any_call(
-            ['apt-get', 'install', '-y', 'new-pkg'],
-            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-        
-        # Verify apt-get install NOT called for already-there
-        # (This is harder to test directly with assert_any_call, but we can inspect call_args_list)
+
         calls = mock_run.call_args_list
-        install_calls = [c for c in calls if 'install' in c[0][0]]
+
+        # Verify apt-get install called ONLY for new-pkg (not already-there).
+        # Commands now run non-interactively, so match on the command list
+        # rather than the full call signature.
+        install_calls = [
+            c for c in calls if c[0][0][:2] == ['apt-get', 'install']
+        ]
         self.assertEqual(len(install_calls), 1)
-        self.assertIn('new-pkg', install_calls[0][0][0])
-         
-        # Verify apt-get update was called
-        mock_run.assert_any_call(
-            ['apt-get', 'update'],
-            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        install_cmd = install_calls[0][0][0]
+        self.assertIn('new-pkg', install_cmd)
+        self.assertNotIn('already-there', install_cmd)
+
+        # Non-interactive hardening: noninteractive env, conffile policy, timeout
+        install_kwargs = install_calls[0][1]
+        self.assertEqual(
+            install_kwargs['env'].get('DEBIAN_FRONTEND'), 'noninteractive'
         )
+        self.assertIn('Dpkg::Options::=--force-confold', install_cmd)
+        self.assertIn('timeout', install_kwargs)
+
+        # Verify apt-get update was called
+        update_calls = [c for c in calls if c[0][0][:2] == ['apt-get', 'update']]
+        self.assertEqual(len(update_calls), 1)
 
     @patch('subprocess.Popen')
     def test_set_user_password(self, mock_popen):

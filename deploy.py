@@ -593,15 +593,10 @@ def main(argv=None):
 
     cli.show_progress(row, "Checking prerequisite packages...", success=None)
     try:
-        subprocess.run(
-            ["apt-get", "install", "-y", "curl", "gpg"],
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        deploy_lib.apt_get(["install", "-y", "curl", "gpg"], check=True, timeout=300)
         cli.show_progress(row, "Checking prerequisite packages...", success=True)
         row += 1
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         cli.show_progress(row, "Checking prerequisite packages...", success=False)
         json_result["warnings"].append(
             "Failed to install curl/gpg. Third-party repos may fail."
@@ -792,10 +787,10 @@ def main(argv=None):
     cli.show_progress(row, "Cleaning up...", success=None)
 
     try:
-        subprocess.run(["apt-get", "clean"], check=True, capture_output=True)
-        subprocess.run(["apt-get", "autoremove", "-y"], check=True, capture_output=True)
+        deploy_lib.apt_get(["clean"], check=True, timeout=120)
+        deploy_lib.apt_get(["autoremove", "-y"], check=True, timeout=600)
         cli.show_progress(row, "Cleaning up...", success=True)
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         deploy_lib.log_error("Cleanup failed", e)
         cli.show_progress(row, "Cleaning up...", success=False)
     row += 1

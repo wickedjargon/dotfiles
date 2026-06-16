@@ -10,6 +10,7 @@ This module is imported by deploy.py, which is the sole entry point.
 
 import datetime
 import os
+import pwd
 import re
 import shutil
 import subprocess
@@ -20,11 +21,16 @@ from pathlib import Path
 
 
 def run_command_with_retry(cmd, max_retries=3, delay=2, **kwargs):
-    """Run subprocess.run with retries"""
+    """Run subprocess.run with retries.
+
+    Retries on both non-zero exit (CalledProcessError) and timeouts, since a
+    slow network — the usual reason a key/download fetch fails — manifests as a
+    TimeoutExpired, not a failed exit code.
+    """
     for attempt in range(max_retries):
         try:
             return subprocess.run(cmd, **kwargs)
-        except subprocess.CalledProcessError as e:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             if attempt == max_retries - 1:
                 raise  # Re-raise on last attempt
 
@@ -32,6 +38,44 @@ def run_command_with_retry(cmd, max_retries=3, delay=2, **kwargs):
             log_error(f"Command failed (attempt {attempt + 1}/{max_retries}): {cmd}", e)
             time.sleep(delay)
     return None  # Should not be reached due to raise
+
+
+def apt_get(args, check=True, timeout=1800, quiet=True):
+    """Run `apt-get <args>` non-interactively.
+
+    Forces DEBIAN_FRONTEND=noninteractive plus conffile-handling options so a
+    fresh-machine run can never block on a dpkg/debconf prompt (which `-y`
+    alone does not answer), and always applies a timeout so a wedged apt can't
+    hang the deploy forever. Returns the CompletedProcess.
+    """
+    env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
+    cmd = ["apt-get", args[0]]
+    # Conffile policy only matters for commands that unpack packages.
+    if args[0] in ("install", "upgrade", "dist-upgrade", "full-upgrade"):
+        cmd += [
+            "-o",
+            "Dpkg::Options::=--force-confold",
+            "-o",
+            "Dpkg::Options::=--force-confdef",
+        ]
+    cmd += list(args[1:])
+    stream = subprocess.DEVNULL if quiet else None
+    return subprocess.run(
+        cmd, check=check, env=env, timeout=timeout, stdout=stream, stderr=stream
+    )
+
+
+def get_user_home(username):
+    """Return the user's real home directory.
+
+    Reads it from the passwd database rather than assuming /home/<username>,
+    which is wrong for system users or any account created with a non-default
+    home. Falls back to /home/<username> if the user isn't in passwd yet.
+    """
+    try:
+        return Path(pwd.getpwnam(username).pw_dir)
+    except KeyError:
+        return Path(f"/home/{username}")
 
 
 def get_log_file_path():
@@ -269,7 +313,7 @@ def clone_and_build_repos(repos, username, tui, start_row):
     if not repos:
         return True, None, start_row
 
-    home_dir = Path(f"/home/{username}")
+    home_dir = get_user_home(username)
     src_dir = home_dir / ".local" / "src"
 
     # Create .local/src directory
@@ -385,7 +429,7 @@ def clone_dotfiles_home(repos, username, tui, start_row):
     if not repos:
         return True, None, None, [], start_row
 
-    home_dir = Path(f"/home/{username}")
+    home_dir = get_user_home(username)
 
     backup_dir = None
     backed_up_items = []
@@ -679,41 +723,40 @@ def install_packages(packages, tui, start_row):
         tui.show_progress(start_row, "Enabling non-free repositories...", success=False)
         log_error("Failed to enable non-free repositories", e)
 
-    # Update apt cache first
+    # Update apt cache first. A single unreachable repo makes `apt-get update`
+    # exit non-zero; treat that as a warning and press on rather than aborting
+    # the entire package install — the working repos still have usable indexes.
     tui.show_progress(start_row, "Updating package cache...", success=None)
     tui.stdscr.refresh()
 
     try:
-        subprocess.run(
-            ["apt-get", "update"],
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        tui.show_progress(start_row, "Updating package cache...", success=True)
+        result = apt_get(["update"], check=False, timeout=600)
+        ok = result.returncode == 0
+        tui.show_progress(start_row, "Updating package cache...", success=ok)
+        if not ok:
+            log_error(
+                "apt-get update exited non-zero (a repo may be unreachable); "
+                "continuing with existing indexes"
+            )
         start_row += 1
-    except subprocess.CalledProcessError as e:
+    except subprocess.TimeoutExpired as e:
         tui.show_progress(start_row, "Updating package cache...", success=False)
-        log_error("Failed to update package cache", e)
-        return False, "Failed to update package cache", start_row + 1
+        log_error("apt-get update timed out; continuing with existing indexes", e)
+        start_row += 1
 
-    # Upgrade existing packages
+    # Upgrade existing packages. Non-fatal: if the upgrade fails or times out we
+    # still want to install the requested packages.
     tui.show_progress(start_row, "Upgrading system packages...", success=None)
     tui.stdscr.refresh()
 
     try:
-        subprocess.run(
-            ["apt-get", "upgrade", "-y"],
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        apt_get(["upgrade", "-y"], check=True, timeout=3600)
         tui.show_progress(start_row, "Upgrading system packages...", success=True)
         start_row += 1
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         tui.show_progress(start_row, "Upgrading system packages...", success=False)
-        log_error("Failed to upgrade system packages", e)
-        return False, "Failed to upgrade system packages", start_row + 1
+        log_error("Failed to upgrade system packages; continuing", e)
+        start_row += 1
 
     # Install packages one by one
     failed_packages = []
@@ -733,13 +776,8 @@ def install_packages(packages, tui, start_row):
 
         # Install the package
         try:
-            subprocess.run(
-                ["apt-get", "install", "-y", package],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        except subprocess.CalledProcessError as e:
+            apt_get(["install", "-y", package], check=True, timeout=600)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             log_error(f"Failed to install package: {package}", e)
             failed_packages.append(package)
 
@@ -782,7 +820,7 @@ def deploy_overlay(username, script_dir):
     if not overlay_dir.exists():
         return False, "dotfiles-overlay/ directory doesn't exist", None, []
 
-    home_dir = Path(f"/home/{username}")
+    home_dir = get_user_home(username)
 
     backup_dir = None
     backed_up_items = []
@@ -825,6 +863,19 @@ def deploy_overlay(username, script_dir):
 
                         display = f"~/{home_relative}"
                         backed_up_items.append(display)
+                else:
+                    # Back up an existing system file the first time we touch it,
+                    # so the original is recoverable (home files are backed up
+                    # above; system files would otherwise be clobbered silently).
+                    if dest_file.exists() or dest_file.is_symlink():
+                        sys_backup = Path(str(dest_file) + ".dotfiles.bak")
+                        if not sys_backup.exists():
+                            try:
+                                shutil.copy2(dest_file, sys_backup)
+                            except (OSError, IOError) as e:
+                                log_error(
+                                    f"Failed to back up system file {dest_file}", e
+                                )
 
                 # Create parent directories
                 dest_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1077,7 +1128,7 @@ def install_firefox_userjs(username, script_dir, tui, row):
     tui.stdscr.refresh()
 
     try:
-        home_dir = Path(f"/home/{username}")
+        home_dir = get_user_home(username)
         firefox_dir = home_dir / ".mozilla" / "firefox"
         # We learned that Firefox ESR on Debian ignores hardcoded profiles.ini setups
         # and instead creates hash-based locks (like Install3B6073811A6ABF12).
@@ -1092,8 +1143,13 @@ def install_firefox_userjs(username, script_dir, tui, row):
 
         # 2. Run Headless Firefox briefly
         # This forces Firefox-ESR to generate its true default profile and its installs.ini hashes
+        import glob
+
+        p = None
         try:
-            # We use Popen so that we don't block. We sleep to let it write profiles.ini.
+            # We use Popen so that we don't block. Firefox writes profiles.ini
+            # asynchronously, so poll for the generated profile (up to ~30s)
+            # instead of guessing a fixed sleep that races on slow disks.
             # This exactly replicates the LARBS librewolf deployment method.
             cmd = "firefox-esr --headless || firefox --headless"
             p = subprocess.Popen(
@@ -1101,13 +1157,16 @@ def install_firefox_userjs(username, script_dir, tui, row):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            time.sleep(4)
+            profiles = []
+            for _ in range(60):
+                time.sleep(0.5)
+                profiles = glob.glob(str(firefox_dir / "*.default*"))
+                if profiles:
+                    break
         except Exception as e:
             log_error(f"Failed to bootstrap firefox profile: {e}")
 
         # 3. Find whatever profiles it generated
-        import glob
-
         profiles = glob.glob(str(firefox_dir / "*.default*"))
 
         installed = False
