@@ -4,7 +4,7 @@ _theme() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
-    COMPREPLY=( $(compgen -W "--dark --light --toggle --no-restart --help" -- "$cur") )
+    COMPREPLY=( $(compgen -W "--dark --light --toggle --verify --no-restart --help" -- "$cur") )
 }
 
 complete -F _theme theme

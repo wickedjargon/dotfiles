@@ -14,6 +14,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 
 HOME = os.path.expanduser("~")
 STATE_FILE = os.path.join(HOME, ".config", "theme-mode")
@@ -855,6 +856,178 @@ def apply_theme(mode, no_restart=False):
     print(f"Done. Theme set to: {mode}")
 
 
+# ── Verify ─────────────────────────────────────────────────────────────────
+
+
+def build_verify_checks(theme):
+    """Return [(label, path, [expected_values])] for file-backed configs.
+
+    Expected values are derived straight from the THEMES dict so this stays in
+    sync with the switchers automatically. A value missing from its file means
+    that switcher did not apply — i.e. silent drift.
+    """
+    j = os.path.join
+    checks = [
+        ("gtk-2.0", j(HOME, ".gtkrc-2.0"), [theme["gtk_theme"]]),
+        (
+            "gtk-3.0",
+            j(HOME, ".config", "gtk-3.0", "settings.ini"),
+            [theme["gtk_theme"], theme["gtk_prefer_dark"]],
+        ),
+        (
+            "gtk-4.0",
+            j(HOME, ".config", "gtk-4.0", "settings.ini"),
+            [theme["gtk_theme"], theme["gtk_prefer_dark"]],
+        ),
+        ("qt5ct", j(HOME, ".config", "qt5ct", "qt5ct.conf"), [theme["qt_style"]]),
+        ("qt6ct", j(HOME, ".config", "qt6ct", "qt6ct.conf"), [theme["qt_style"]]),
+        (
+            "Kvantum",
+            j(HOME, ".config", "Kvantum", "kvantum.kvconfig"),
+            [theme["kvantum_theme"]],
+        ),
+        (
+            "polybar",
+            j(HOME, ".config", "polybar", "config.ini"),
+            [theme["polybar_bg"], theme["polybar_fg"]],
+        ),
+        (
+            "polybar/bspwm",
+            j(HOME, ".config", "polybar", "bspwm_custom.sh"),
+            [
+                theme["poly_focused_underline"],
+                theme["poly_foreground"],
+                theme["poly_empty"],
+                theme["poly_urgent"],
+            ],
+        ),
+        (
+            "bspwm",
+            j(HOME, ".config", "bspwm", "bspwmrc"),
+            [theme["bspwm_normal_border"], theme["bspwm_focused_border"]],
+        ),
+        (
+            "xob",
+            j(HOME, ".config", "xob", "styles.cfg"),
+            [theme["xob_fg"], theme["xob_bg"], theme["xob_border"]],
+        ),
+        (
+            "dunst",
+            j(HOME, ".config", "dunst", "dunstrc"),
+            [theme["dunst_bg"], theme["dunst_fg"], theme["dunst_crit_bg"]],
+        ),
+        (
+            "dmenu",
+            j(HOME, ".config", "dmenu", "config"),
+            [
+                theme["dmenu_nb"],
+                theme["dmenu_nf"],
+                theme["dmenu_sb"],
+                theme["dmenu_sf"],
+            ],
+        ),
+        (
+            "vscode",
+            j(HOME, ".config", "Code", "User", "settings.json"),
+            [theme["vscode_theme"]],
+        ),
+        (
+            "rofi",
+            j(HOME, ".config", "rofi", "config.rasi"),
+            [
+                theme["rofi_bg"],
+                theme["rofi_fg"],
+                theme["rofi_sel_bg"],
+                theme["rofi_sel_fg"],
+                theme["rofi_border"],
+            ],
+        ),
+        (
+            "calibre",
+            j(HOME, ".config", "calibre", "viewer-webengine.json"),
+            [theme["calibre_theme"]],
+        ),
+        (
+            "zathura",
+            j(HOME, ".config", "zathura", "zathurarc"),
+            [theme["zathura_bg"], theme["zathura_fg"]],
+        ),
+    ]
+    alac = [theme["alacritty_bg"], theme["alacritty_fg"]]
+    alac += list(theme["alacritty_normal"].values())
+    alac += list(theme["alacritty_bright"].values())
+    checks.append(
+        ("alacritty", j(HOME, ".config", "alacritty", "alacritty.toml"), alac)
+    )
+    return checks
+
+
+def verify_gsettings(theme):
+    """Check the live GNOME color-scheme matches the mode.
+
+    Returns "ok", "drift", or "skip" (gsettings unavailable).
+    """
+    try:
+        out = (
+            subprocess.run(
+                ["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            .stdout.strip()
+            .strip("'")
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return "skip"
+    return "ok" if out == theme["color_scheme"] else "drift"
+
+
+def verify_theme(mode):
+    """Re-read every themed config and confirm it reflects `mode`.
+
+    Catches silent drift: a config a switcher failed to update keeps the other
+    mode's values. Returns 0 if everything is in sync, 1 otherwise.
+    """
+    theme = THEMES[mode]
+    print(f"Verifying theme is applied as: {mode}")
+    problems = 0
+
+    for label, path, expected in build_verify_checks(theme):
+        if not os.path.exists(path):
+            print(f"  ○ {label} → skipped (config not found)")
+            continue
+        with open(path) as f:
+            content = f.read().lower()
+        missing = [v for v in expected if v.lower() not in content]
+        if missing:
+            problems += 1
+            warn(f"{label} → out of sync, missing: {', '.join(missing)}")
+        else:
+            print(f"  ✓ {label}")
+
+    gs = verify_gsettings(theme)
+    if gs == "drift":
+        problems += 1
+        warn(f"gsettings → color-scheme is not {theme['color_scheme']}")
+    elif gs == "ok":
+        print("  ✓ gsettings")
+    else:
+        print("  ○ gsettings → skipped (gsettings not available)")
+
+    # Runtime-only surfaces (no file to inspect): sxiv (xrdb), wallpaper (feh).
+    print("  ○ sxiv, wallpaper → runtime-only, not verified")
+
+    if problems:
+        print(
+            f"\n{problems} config(s) out of sync with '{mode}'. "
+            f"Re-run: theme --{mode}"
+        )
+        return 1
+    print(f"\nAll configs in sync with '{mode}'.")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Toggle desktop theme between dark and light."
@@ -863,6 +1036,11 @@ def main():
     group.add_argument("--dark", action="store_true", help="Switch to dark theme")
     group.add_argument("--light", action="store_true", help="Switch to light theme")
     group.add_argument("--toggle", action="store_true", help="Toggle theme")
+    group.add_argument(
+        "--verify",
+        action="store_true",
+        help="Check that the saved theme is fully applied across all configs",
+    )
     parser.add_argument(
         "--no-restart",
         action="store_true",
@@ -871,6 +1049,9 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.verify:
+        sys.exit(verify_theme(read_state()))
 
     if args.dark:
         mode = "dark"

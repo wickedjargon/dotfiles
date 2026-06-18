@@ -19,6 +19,10 @@
 
 `theme --dark --no-restart`
 
+- Verify the saved theme is fully applied across all configs (detects silent drift):
+
+`theme --verify`
+
 - Check current theme state:
 
 `cat ~/.config/theme-mode`

@@ -718,3 +718,62 @@ class TestReplaceInFileMisses:
             ],
         )
         assert misses == 1
+
+
+class TestVerify:
+    """verify_theme detects configs left out of sync with the saved mode."""
+
+    def test_in_sync_returns_zero(self, tmp_path, monkeypatch):
+        p = tmp_path / "conf"
+        p.write_text('theme "Arc-Dark" color #01010A\n')
+        monkeypatch.setattr(
+            theme_mod,
+            "build_verify_checks",
+            lambda theme: [("fake", str(p), ["Arc-Dark", "#01010A"])],
+        )
+        monkeypatch.setattr(theme_mod, "verify_gsettings", lambda theme: "skip")
+        assert theme_mod.verify_theme("dark") == 0
+
+    def test_drift_returns_one(self, tmp_path, monkeypatch):
+        p = tmp_path / "conf"
+        p.write_text('theme "Arc" color #E8E8EE\n')  # light values, verifying dark
+        monkeypatch.setattr(
+            theme_mod,
+            "build_verify_checks",
+            lambda theme: [("fake", str(p), ["Arc-Dark", "#01010A"])],
+        )
+        monkeypatch.setattr(theme_mod, "verify_gsettings", lambda theme: "skip")
+        assert theme_mod.verify_theme("dark") == 1
+
+    def test_case_insensitive_match(self, tmp_path, monkeypatch):
+        p = tmp_path / "conf"
+        p.write_text("color #01010a\n")  # lowercase in file
+        monkeypatch.setattr(
+            theme_mod,
+            "build_verify_checks",
+            lambda theme: [("fake", str(p), ["#01010A"])],  # uppercase expected
+        )
+        monkeypatch.setattr(theme_mod, "verify_gsettings", lambda theme: "skip")
+        assert theme_mod.verify_theme("dark") == 0
+
+    def test_missing_file_not_counted(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(
+            theme_mod,
+            "build_verify_checks",
+            lambda theme: [("fake", str(tmp_path / "nope"), ["x"])],
+        )
+        monkeypatch.setattr(theme_mod, "verify_gsettings", lambda theme: "skip")
+        assert theme_mod.verify_theme("dark") == 0
+
+    def test_gsettings_drift_counted(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(theme_mod, "build_verify_checks", lambda theme: [])
+        monkeypatch.setattr(theme_mod, "verify_gsettings", lambda theme: "drift")
+        assert theme_mod.verify_theme("dark") == 1
+
+    def test_build_checks_covers_switchers(self, fake_home):
+        checks = theme_mod.build_verify_checks(theme_mod.THEMES["dark"])
+        labels = {c[0] for c in checks}
+        for expected in ("gtk-3.0", "qt5ct", "alacritty", "rofi", "zathura", "vscode"):
+            assert expected in labels
+        for _label, _path, expected_values in checks:
+            assert expected_values  # never an empty expectation list
