@@ -678,3 +678,43 @@ class TestApplyTheme:
         mode = "light" if current == "dark" else "dark"
         theme_mod.apply_theme(mode)
         assert (fake_home / ".config" / "theme-mode").read_text().strip() == "dark"
+
+
+# ── Layer 1: guardrails & verify ─────────────────────────────────────────────
+
+
+class TestReplaceInFileMisses:
+    """replace_in_file reports patterns that matched nothing (silent drift)."""
+
+    def test_all_match_returns_zero(self, tmp_path):
+        p = tmp_path / "f"
+        p.write_text("background = #000000\n")
+        misses = theme_mod.replace_in_file(
+            str(p), [(r"(background = )#[0-9a-fA-F]+", r"\1#ffffff")]
+        )
+        assert misses == 0
+        assert "#ffffff" in p.read_text()
+
+    def test_no_match_returns_count(self, tmp_path):
+        p = tmp_path / "f"
+        p.write_text("nothing to see here\n")
+        misses = theme_mod.replace_in_file(
+            str(p),
+            [
+                (r"(background = )#[0-9a-fA-F]+", r"\1#ffffff"),
+                (r"(foreground = )#[0-9a-fA-F]+", r"\1#000000"),
+            ],
+        )
+        assert misses == 2
+
+    def test_partial_match(self, tmp_path):
+        p = tmp_path / "f"
+        p.write_text("background = #000000\n")
+        misses = theme_mod.replace_in_file(
+            str(p),
+            [
+                (r"(background = )#[0-9a-fA-F]+", r"\1#ffffff"),
+                (r"(foreground = )#[0-9a-fA-F]+", r"\1#000000"),
+            ],
+        )
+        assert misses == 1

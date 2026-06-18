@@ -219,13 +219,39 @@ def set_ini_values(path, section, values):
 
 
 def replace_in_file(path, replacements):
-    """Apply a list of (pattern, replacement) regex substitutions to a file."""
+    """Apply a list of (pattern, replacement) regex substitutions to a file.
+
+    Uses re.subn so callers can detect patterns that matched nothing. On an
+    existing file a zero-match substitution almost always means the target's
+    config format drifted (a key was renamed, spacing changed, or the app
+    rewrote the file). Returns the number of patterns that matched nothing so
+    callers can surface a warning instead of reporting a false success.
+    """
     with open(path) as f:
         content = f.read()
+    misses = 0
     for pattern, repl in replacements:
-        content = re.sub(pattern, repl, content)
+        content, n = re.subn(pattern, repl, content)
+        if n == 0:
+            misses += 1
     with open(path, "w") as f:
         f.write(content)
+    return misses
+
+
+def report(label, misses, success_msg, total):
+    """Print a switcher's result: success, or a drift warning on zero-matches.
+
+    `misses` is the count of patterns that matched nothing (from
+    replace_in_file); `total` is how many were attempted.
+    """
+    if misses:
+        warn(
+            f"{label} → {misses}/{total} color(s) not found "
+            f"(config format may have changed; file left partially/not updated)"
+        )
+    else:
+        print(f"  {success_msg}")
 
 
 def run_quiet(cmd):
@@ -234,6 +260,11 @@ def run_quiet(cmd):
         subprocess.run(cmd, capture_output=True)
     except FileNotFoundError:
         pass
+
+
+def warn(msg):
+    """Print a drift/no-match warning (loud, so silent failures surface)."""
+    print(f"  ⚠ {msg}")
 
 
 # ── Switchers ────────────────────────────────────────────────────────────────
@@ -288,8 +319,10 @@ def switch_qt(theme, version):
     config = configparser.ConfigParser()
     config.optionxform = str
     config.read(path)
-    if config.has_section("Appearance"):
-        config.set("Appearance", "style", theme["qt_style"])
+    if not config.has_section("Appearance"):
+        warn(f"{name} → [Appearance] section missing; not updated")
+        return
+    config.set("Appearance", "style", theme["qt_style"])
     with open(path, "w") as f:
         config.write(f)
     print(f"  {name} → {theme['qt_style']}")
@@ -343,14 +376,19 @@ def switch_polybar(theme):
     if not os.path.exists(path):
         print("  polybar → skipped (config not found)")
         return
-    replace_in_file(
+    misses = replace_in_file(
         path,
         [
             (r"(background\s*=\s*)#[0-9a-fA-F]+", rf'\1{theme["polybar_bg"]}'),
             (r"(foreground\s*=\s*)#[0-9a-fA-F]+", rf'\1{theme["polybar_fg"]}'),
         ],
     )
-    print(f"  polybar → bg:{theme['polybar_bg']} fg:{theme['polybar_fg']}")
+    report(
+        "polybar",
+        misses,
+        f"polybar → bg:{theme['polybar_bg']} fg:{theme['polybar_fg']}",
+        2,
+    )
 
 
 def switch_polybar_bspwm(theme):
@@ -359,7 +397,7 @@ def switch_polybar_bspwm(theme):
     if not os.path.exists(path):
         print("  polybar/bspwm_custom.sh → skipped (not found)")
         return
-    replace_in_file(
+    misses = replace_in_file(
         path,
         [
             (
@@ -371,7 +409,7 @@ def switch_polybar_bspwm(theme):
             (r'(COLOR_URGENT=)"#[0-9a-fA-F]+"', rf'\1"{theme["poly_urgent"]}"'),
         ],
     )
-    print("  polybar/bspwm_custom.sh → updated")
+    report("polybar/bspwm_custom.sh", misses, "polybar/bspwm_custom.sh → updated", 4)
 
 
 def switch_bspwm(theme):
@@ -385,29 +423,31 @@ def switch_bspwm(theme):
     )
     # Update config file
     path = os.path.join(HOME, ".config", "bspwm", "bspwmrc")
-    if os.path.exists(path):
-        replace_in_file(
-            path,
-            [
-                (
-                    r'(normal_border_color\s+)"#[0-9a-fA-F]+"',
-                    rf'\1"{theme["bspwm_normal_border"]}"',
-                ),
-                (
-                    r'(active_border_color\s+)"#[0-9a-fA-F]+"',
-                    rf'\1"{theme["bspwm_active_border"]}"',
-                ),
-                (
-                    r'(focused_border_color\s+)"#[0-9a-fA-F]+"',
-                    rf'\1"{theme["bspwm_focused_border"]}"',
-                ),
-                (
-                    r'(presel_feedback_color\s+)"#[0-9a-fA-F]+"',
-                    rf'\1"{theme["bspwm_presel_feedback"]}"',
-                ),
-            ],
-        )
-    print("  bspwm → borders updated")
+    if not os.path.exists(path):
+        print("  bspwm → borders updated (live only; bspwmrc not found)")
+        return
+    misses = replace_in_file(
+        path,
+        [
+            (
+                r'(normal_border_color\s+)"#[0-9a-fA-F]+"',
+                rf'\1"{theme["bspwm_normal_border"]}"',
+            ),
+            (
+                r'(active_border_color\s+)"#[0-9a-fA-F]+"',
+                rf'\1"{theme["bspwm_active_border"]}"',
+            ),
+            (
+                r'(focused_border_color\s+)"#[0-9a-fA-F]+"',
+                rf'\1"{theme["bspwm_focused_border"]}"',
+            ),
+            (
+                r'(presel_feedback_color\s+)"#[0-9a-fA-F]+"',
+                rf'\1"{theme["bspwm_presel_feedback"]}"',
+            ),
+        ],
+    )
+    report("bspwm", misses, "bspwm → borders updated", 4)
 
 
 def switch_xob(theme):
@@ -438,6 +478,7 @@ def switch_xob(theme):
             theme["xob_altoverflow_border"],
         ),
     ]
+    misses = 0
     for name, fg, bg, border in sections:
         # Match the named section and its three color values
         pattern = (
@@ -447,10 +488,12 @@ def switch_xob(theme):
             rf'(;\s*border\s*=\s*)"#[0-9a-fA-F]+"'
         )
         repl = rf'\1"{fg}"\2"{bg}"\3"{border}"'
-        content = re.sub(pattern, repl, content, flags=re.DOTALL)
+        content, n = re.subn(pattern, repl, content, flags=re.DOTALL)
+        if n == 0:
+            misses += 1
     with open(path, "w") as f:
         f.write(content)
-    print("  xob → updated")
+    report("xob", misses, "xob → updated", len(sections))
 
 
 def switch_dunst(theme):
@@ -461,6 +504,7 @@ def switch_dunst(theme):
         return
     with open(path) as f:
         content = f.read()
+    misses = 0
     # Replace urgency_low and urgency_normal (same colors)
     for section in ("urgency_low", "urgency_normal"):
         pattern = (
@@ -472,7 +516,9 @@ def switch_dunst(theme):
         repl = (
             rf'\1"{theme["dunst_bg"]}"\2"{theme["dunst_frame"]}"\3"{theme["dunst_fg"]}"'
         )
-        content = re.sub(pattern, repl, content, flags=re.DOTALL)
+        content, n = re.subn(pattern, repl, content, flags=re.DOTALL)
+        if n == 0:
+            misses += 1
     # Replace urgency_critical
     pattern = (
         r"(\[urgency_critical\]\s*"
@@ -481,10 +527,12 @@ def switch_dunst(theme):
         r'(\s*foreground\s*=\s*)"#[0-9a-fA-F]+"'
     )
     repl = rf'\1"{theme["dunst_crit_bg"]}"\2"{theme["dunst_crit_frame"]}"\3"{theme["dunst_fg"]}"'
-    content = re.sub(pattern, repl, content, flags=re.DOTALL)
+    content, n = re.subn(pattern, repl, content, flags=re.DOTALL)
+    if n == 0:
+        misses += 1
     with open(path, "w") as f:
         f.write(content)
-    print(f"  dunst → bg:{theme['dunst_bg']} fg:{theme['dunst_fg']}")
+    report("dunst", misses, f"dunst → bg:{theme['dunst_bg']} fg:{theme['dunst_fg']}", 3)
 
 
 def switch_dmenu(theme):
@@ -493,7 +541,7 @@ def switch_dmenu(theme):
     if not os.path.exists(path):
         print("  dmenu → skipped (config not found)")
         return
-    replace_in_file(
+    misses = replace_in_file(
         path,
         [
             (r"-nb\s+#[0-9a-fA-F]+", f'-nb {theme["dmenu_nb"]}'),
@@ -502,7 +550,7 @@ def switch_dmenu(theme):
             (r"-sf\s+#[0-9a-fA-F]+", f'-sf {theme["dmenu_sf"]}'),
         ],
     )
-    print(f"  dmenu → nb:{theme['dmenu_nb']} nf:{theme['dmenu_nf']}")
+    report("dmenu", misses, f"dmenu → nb:{theme['dmenu_nb']} nf:{theme['dmenu_nf']}", 4)
 
 
 def restart_services():
@@ -593,7 +641,8 @@ def switch_alacritty(theme):
     if not os.path.exists(path):
         print("  alacritty → skipped (config not found)")
         return
-    replace_in_file(
+    total = 2
+    misses = replace_in_file(
         path,
         [
             (
@@ -610,7 +659,8 @@ def switch_alacritty(theme):
     for section in ("normal", "bright"):
         colors = theme[f"alacritty_{section}"]
         for name, val in colors.items():
-            replace_in_file(
+            total += 1
+            misses += replace_in_file(
                 path,
                 [
                     (
@@ -619,7 +669,12 @@ def switch_alacritty(theme):
                     ),
                 ],
             )
-    print(f"  alacritty → bg:{theme['alacritty_bg']} fg:{theme['alacritty_fg']}")
+    report(
+        "alacritty",
+        misses,
+        f"alacritty → bg:{theme['alacritty_bg']} fg:{theme['alacritty_fg']}",
+        total,
+    )
 
 
 def switch_rofi(theme):
@@ -628,7 +683,7 @@ def switch_rofi(theme):
     if not os.path.exists(path):
         print("  rofi → skipped (config not found)")
         return
-    replace_in_file(
+    misses = replace_in_file(
         path,
         [
             (r"(background:\s*)#[0-9a-fA-F]+", rf'\g<1>{theme["rofi_bg"]}'),
@@ -645,7 +700,7 @@ def switch_rofi(theme):
             (r"(separator-color:\s*)#[0-9a-fA-F]+", rf'\g<1>{theme["rofi_border"]}'),
         ],
     )
-    print(f"  rofi → bg:{theme['rofi_bg']} fg:{theme['rofi_fg']}")
+    report("rofi", misses, f"rofi → bg:{theme['rofi_bg']} fg:{theme['rofi_fg']}", 6)
 
 
 def switch_wallpaper(theme):
@@ -674,13 +729,13 @@ def switch_calibre(theme):
     if not os.path.exists(path):
         print("  calibre → skipped (config not found)")
         return
-    replace_in_file(
+    misses = replace_in_file(
         path,
         [
             (r'("current_color_scheme":\s*)"[^"]+"', rf'\1"{theme["calibre_theme"]}"'),
         ],
     )
-    print(f"  calibre → {theme['calibre_theme']}")
+    report("calibre", misses, f"calibre → {theme['calibre_theme']}", 1)
 
 
 def switch_zathura(theme):
@@ -689,7 +744,7 @@ def switch_zathura(theme):
     if not os.path.exists(path):
         print("  zathura → skipped (config not found)")
         return
-    replace_in_file(
+    misses = replace_in_file(
         path,
         [
             (
@@ -712,7 +767,12 @@ def switch_zathura(theme):
             ),
         ],
     )
-    print(f"  zathura → bg:{theme['zathura_bg']} fg:{theme['zathura_fg']}")
+    report(
+        "zathura",
+        misses,
+        f"zathura → bg:{theme['zathura_bg']} fg:{theme['zathura_fg']}",
+        6,
+    )
 
 
 def switch_sxiv(theme):
