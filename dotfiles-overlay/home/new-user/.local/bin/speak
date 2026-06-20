@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""speak - Speak text aloud with edge-tts (Microsoft's online TTS).
+
+Usage:
+  speak                 Speak the current X PRIMARY selection (highlighted text).
+  speak some words      Speak the given words.
+  echo hi | speak -     Speak text read from stdin.
+
+Bound to a key, pressing it again while speaking stops playback (toggle).
+The voice can be overridden with the SPEAK_VOICE environment variable, e.g.
+  SPEAK_VOICE=en-GB-RyanNeural speak
+
+Requires an internet connection: edge-tts synthesizes the audio server-side.
+"""
+
+import os
+import signal
+import subprocess
+import sys
+from pathlib import Path
+from shutil import which
+
+# If running inside a distrobox container, re-exec on the host so we reach the
+# host's X selection and audio rather than the container's.
+if os.path.exists("/run/.containerenv"):
+    if which("distrobox-host-exec"):
+        os.execvp("distrobox-host-exec", ["distrobox-host-exec"] + sys.argv)
+
+VOICE = os.environ.get("SPEAK_VOICE", "en-US-AvaNeural")
+
+# Track the player so a second keypress can stop it.
+RUNTIME = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
+PIDFILE = Path(RUNTIME) / "speak.pid"
+
+
+def notify(msg, urgency="normal"):
+    if which("notify-send"):
+        subprocess.run(
+            ["notify-send", "-u", urgency, "-a", "speak", "speak", msg],
+            check=False,
+        )
+    else:
+        print(f"speak: {msg}", file=sys.stderr)
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def stop_if_speaking():
+    """Stop a still-running speak and return True; clean up stale pidfiles."""
+    try:
+        pid = int(PIDFILE.read_text().strip())
+    except (FileNotFoundError, ValueError):
+        return False
+    speaking = alive(pid)
+    if speaking:
+        try:
+            os.killpg(pid, signal.SIGTERM)  # kills the shell + edge-tts + mpv
+        except ProcessLookupError:
+            speaking = False
+    PIDFILE.unlink(missing_ok=True)
+    return speaking
+
+
+def get_text(argv):
+    if argv == ["-"]:
+        return sys.stdin.read()
+    if argv:
+        return " ".join(argv)
+    # No args: read the X PRIMARY selection (the highlighted text).
+    if not which("xclip"):
+        notify("xclip not installed (needed to read the selection)", "critical")
+        sys.exit(1)
+    res = subprocess.run(
+        ["xclip", "-selection", "primary", "-o"],
+        capture_output=True, text=True,
+    )
+    return res.stdout
+
+
+def main(argv):
+    # Toggle: a bare keypress while talking just stops playback.
+    was_speaking = stop_if_speaking()
+    if was_speaking and not argv:
+        return
+
+    for dep in ("edge-tts", "mpv"):
+        if not which(dep):
+            notify(f"{dep} not found in PATH", "critical")
+            sys.exit(1)
+
+    text = get_text(argv).strip()
+    if not text:
+        notify("Nothing selected to speak")
+        return
+
+    # Stream edge-tts' mp3 straight into mpv. The text is passed via the
+    # environment, not the command line, so a selection containing quotes,
+    # $(...) or backticks can't break quoting or inject shell commands.
+    env = {**os.environ, "SPEAK_TEXT": text, "SPEAK_VOICE": VOICE}
+    proc = subprocess.Popen(
+        'edge-tts --voice "$SPEAK_VOICE" --text "$SPEAK_TEXT" '
+        '| mpv --no-terminal --really-quiet --no-video -',
+        shell=True, start_new_session=True, env=env,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    PIDFILE.write_text(str(proc.pid))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

@@ -132,9 +132,9 @@ super + e
 super + comma
     rofi-explorer ~/d/audio/; mpd-notification
 
-# Scripts menu
+# Speak selected text (press again to stop)
 super + s
-    rofi-explorer "~/.local/bin/" --copy-name
+    speak
 
 # Instant fullscreen screenshotv
 F12
