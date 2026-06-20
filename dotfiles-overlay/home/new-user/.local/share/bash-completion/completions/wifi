@@ -7,7 +7,7 @@ _wifi() {
 
     # Complete subcommands at position 1
     if [ "$COMP_CWORD" -eq 1 ]; then
-        COMPREPLY=( $(compgen -W "list connect disconnect saved forget password rescan toggle help --help" -- "$cur") )
+        COMPREPLY=( $(compgen -W "list connect disconnect reconnect saved forget password rescan toggle help --help" -- "$cur") )
         return
     fi
 

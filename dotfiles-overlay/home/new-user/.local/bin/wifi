@@ -391,6 +391,26 @@ def cmd_disconnect():
         die(f"Failed to disconnect: {result.stderr.strip()}")
 
 
+def cmd_reconnect():
+    """Disconnect and reconnect to the current WiFi network."""
+    conn = get_active_connection()
+    if not conn:
+        die("Not connected to any WiFi network")
+
+    ssid = conn["ssid"]
+    info(f"Reconnecting to {BOLD}{ssid}{RESET}...")
+
+    down = nmcli("connection", "down", ssid)
+    if down.returncode != 0:
+        die(f"Failed to disconnect: {down.stderr.strip()}")
+
+    up = nmcli("connection", "up", ssid)
+    if up.returncode == 0:
+        ok(f"Reconnected to {ssid}")
+    else:
+        die(f"Disconnected, but failed to reconnect: {up.stderr.strip()}")
+
+
 def cmd_saved():
     """List saved WiFi connection profiles."""
     connections = get_saved_connections()
@@ -497,6 +517,7 @@ commands:
   list                          list available networks
   connect [SSID]                connect to a network
   disconnect                    disconnect from current network
+  reconnect                     disconnect and reconnect current network
   saved                         list saved connection profiles
   forget SSID                   delete a saved connection
   password [SSID]               show password of a connection
@@ -512,6 +533,7 @@ examples:
   wifi connect                  pick a network interactively
   wifi connect "My Network"     connect to a specific SSID
   wifi disconnect               disconnect from current network
+  wifi reconnect                bounce the current connection
   wifi saved                    list known networks
   wifi forget "Old Network"     remove a saved connection
   wifi password                 show current network's password
@@ -539,6 +561,7 @@ def main():
         "list": lambda: cmd_list(),
         "connect": lambda: cmd_connect(args),
         "disconnect": lambda: cmd_disconnect(),
+        "reconnect": lambda: cmd_reconnect(),
         "saved": lambda: cmd_saved(),
         "forget": lambda: cmd_forget(args),
         "password": lambda: cmd_password(args),

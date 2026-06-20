@@ -23,6 +23,10 @@
 
 `wifi disconnect`
 
+- Disconnect and reconnect the current network (bounce the connection):
+
+`wifi reconnect`
+
 - List saved/known connection profiles:
 
 `wifi saved`
