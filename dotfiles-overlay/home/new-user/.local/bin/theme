@@ -766,13 +766,37 @@ def switch_zathura(theme):
                 r"(set\s+statusbar-fg\s+\\*)#[0-9a-fA-F]+",
                 rf'\g<1>{theme["zathura_fg"]}',
             ),
+            (
+                r"(set\s+index-bg\s+\\*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["zathura_bg"]}',
+            ),
+            (
+                r"(set\s+index-fg\s+\\*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["zathura_fg"]}',
+            ),
+            (
+                r"(set\s+index-active-bg\s+\\*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["zathura_fg"]}',
+            ),
+            (
+                r"(set\s+index-active-fg\s+\\*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["zathura_bg"]}',
+            ),
+            (
+                r"(set\s+notification-bg\s+\\*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["zathura_bg"]}',
+            ),
+            (
+                r"(set\s+notification-fg\s+\\*)#[0-9a-fA-F]+",
+                rf'\g<1>{theme["zathura_fg"]}',
+            ),
         ],
     )
     report(
         "zathura",
         misses,
         f"zathura → bg:{theme['zathura_bg']} fg:{theme['zathura_fg']}",
-        6,
+        12,
     )
 
 

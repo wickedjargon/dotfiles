@@ -9,6 +9,12 @@ set recolor-lightcolor \#0d0e1c
 set recolor-darkcolor \#ebdbb2
 set statusbar-bg \#0d0e1c
 set statusbar-fg \#ebdbb2
+set index-bg \#0d0e1c
+set index-fg \#ebdbb2
+set index-active-bg \#ebdbb2
+set index-active-fg \#0d0e1c
+set notification-bg \#0d0e1c
+set notification-fg \#ebdbb2
 
 map u scroll half-up
 map d scroll half-down
