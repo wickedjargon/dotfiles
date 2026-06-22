@@ -66,3 +66,4 @@ words
 xdg-user-dirs
 xorg-xauth
 zip
+yt-dlp

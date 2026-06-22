@@ -64,7 +64,6 @@ wget                     # Network downloader
 net-tools                # Network tools (ifconfig, netstat, etc)
 nmap                     # Network scanner
 bind9-dnsutils           # DNS utilities (dig, nslookup, etc)
-yt-dlp                   # YouTube and video downloader
 mpc                      # Command-line MPD client
 mpd                      # Music Player Daemon
 ffmpeg                   # Tools for recording, converting and streaming audio and video
