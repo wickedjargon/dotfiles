@@ -8,6 +8,11 @@ Usage:
   speak some words      Speak the given words.
   echo hi | speak -     Speak text read from stdin.
 
+Options:
+  -u, --unwrap          Undo PDF-style hard line wrapping before speaking, so
+                        soft-wrapped lines don't cause pauses mid-sentence.
+                        Real paragraph breaks are preserved.
+
 Bound to a key, pressing it again while speaking stops playback (toggle).
 The voice can be overridden with the SPEAK_VOICE environment variable, e.g.
   SPEAK_VOICE=en-GB-RyanNeural speak
@@ -16,6 +21,7 @@ Requires an internet connection: edge-tts synthesizes the audio server-side.
 """
 
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -90,6 +96,28 @@ def active_window_class():
         return ""
 
 
+def unwrap_text(text):
+    """Undo PDF-style hard line wrapping so TTS doesn't pause mid-sentence.
+
+    PDFs end every visual line with a newline; edge-tts treats each as a clause
+    break, so a single sentence is read in choppy fragments. Join soft-wrapped
+    lines back into spaces while keeping real paragraph breaks (blank lines) as
+    a single pause.
+    """
+    # Re-join words split across a line break: "exam-\nple" -> "example".
+    text = re.sub(r"(\w)-\n(\w)", r"\1\2", text)
+    # Protect paragraph breaks (a blank line) with a sentinel before unwrapping.
+    para = "\x00"
+    text = re.sub(r"\n[ \t]*\n+", para, text)
+    # A lone newline within a paragraph is a soft wrap -> space.
+    text = re.sub(r"\s*\n\s*", " ", text)
+    # Restore paragraph breaks as real newlines (a natural TTS pause).
+    text = text.replace(para, "\n")
+    # Collapse runs of spaces/tabs left behind.
+    text = re.sub(r"[ \t]+", " ", text)
+    return text.strip()
+
+
 def get_text(argv):
     if argv == ["-"]:
         return sys.stdin.read()
@@ -119,9 +147,18 @@ def get_text(argv):
 
 
 def main(argv):
+    # Pull leading flags off the argument list; the rest is text to speak.
+    unwrap = False
+    args = []
+    for a in argv:
+        if a in ("-u", "--unwrap"):
+            unwrap = True
+        else:
+            args.append(a)
+
     # Toggle: a bare keypress while talking just stops playback.
     was_speaking = stop_if_speaking()
-    if was_speaking and not argv:
+    if was_speaking and not args:
         return
 
     for dep in ("edge-tts", "mpv"):
@@ -129,7 +166,10 @@ def main(argv):
             notify(f"{dep} not found in PATH", "critical")
             sys.exit(1)
 
-    text = get_text(argv).strip()
+    text = get_text(args)
+    if unwrap:
+        text = unwrap_text(text)
+    text = text.strip()
     if not text:
         notify("Nothing selected to speak")
         return

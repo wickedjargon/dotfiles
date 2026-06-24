@@ -136,6 +136,10 @@ super + comma
 super + s
     speak
 
+# Speak selected text, unwrapping PDF line breaks (press again to stop)
+super + u
+    speak --unwrap
+
 # Instant fullscreen screenshotv
 F12
     instant-screenshot
