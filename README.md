@@ -114,3 +114,20 @@ distrobox enter archbox
 python3 ~/d/projects/dotfiles/scripts/install_arch_packages.py
 ~/d/projects/dotfiles/scripts/setup-steam.sh
 ```
+
+### 8. Vimium Key Mappings
+
+I set `Custom key mappings` in the Vimium extension to this so that i only have the motion keys and nothing else.
+
+```
+unmapAll
+map h scrollLeft
+map j scrollDown
+map k scrollUp
+map l scrollRight
+map d scrollPageDown
+map u scrollPageUp
+map gg scrollToTop
+map G scrollToBottom
+```
+
