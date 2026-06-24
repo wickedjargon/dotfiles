@@ -2,7 +2,9 @@
 """speak - Speak text aloud with edge-tts (Microsoft's online TTS).
 
 Usage:
-  speak                 Speak the current X PRIMARY selection (highlighted text).
+  speak                 Speak the current selection (the X PRIMARY selection,
+                        or the CLIPBOARD when a clipboard-copying app like
+                        zathura is focused).
   speak some words      Speak the given words.
   echo hi | speak -     Speak text read from stdin.
 
@@ -69,20 +71,51 @@ def stop_if_speaking():
     return speaking
 
 
+def active_window_class():
+    """Lower-cased WM_CLASS of the focused window, or "" if it can't be read."""
+    if not (which("xdotool") and which("xprop")):
+        return ""
+    try:
+        win = subprocess.run(
+            ["xdotool", "getactivewindow"], capture_output=True, text=True,
+        )
+        wid = win.stdout.strip()
+        if not wid:
+            return ""
+        res = subprocess.run(
+            ["xprop", "-id", wid, "WM_CLASS"], capture_output=True, text=True,
+        )
+        return res.stdout.lower()
+    except OSError:
+        return ""
+
+
 def get_text(argv):
     if argv == ["-"]:
         return sys.stdin.read()
     if argv:
         return " ".join(argv)
-    # No args: read the X PRIMARY selection (the highlighted text).
+    # No args: read the highlighted text. Most apps put it in the X PRIMARY
+    # selection, but some copy the selection to the CLIPBOARD instead (e.g.
+    # zathura with "set selection-clipboard clipboard"). PRIMARY is almost never
+    # empty on a live session (it holds the last thing highlighted anywhere), so
+    # we can't just fall back on emptiness -- we'd return stale PRIMARY and never
+    # see the fresh CLIPBOARD text. Instead, when the focused window is one of
+    # those clipboard-copying apps, try CLIPBOARD first.
     if not which("xclip"):
         notify("xclip not installed (needed to read the selection)", "critical")
         sys.exit(1)
-    res = subprocess.run(
-        ["xclip", "-selection", "primary", "-o"],
-        capture_output=True, text=True,
-    )
-    return res.stdout
+    sels = ("primary", "clipboard")
+    if "zathura" in active_window_class():
+        sels = ("clipboard", "primary")
+    for sel in sels:
+        res = subprocess.run(
+            ["xclip", "-selection", sel, "-o"],
+            capture_output=True, text=True,
+        )
+        if res.stdout.strip():
+            return res.stdout
+    return ""
 
 
 def main(argv):
