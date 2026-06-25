@@ -1,5 +1,15 @@
 {
   "session_data": {
+    "keyboard_shortcuts": {
+      "left": ["ArrowLeft", "h"],
+      "right": ["ArrowRight", "l"],
+      "up": ["ArrowUp", "k"],
+      "down": ["ArrowDown", "j"],
+      "pageup": ["PageUp", "Shift+ ", "u"],
+      "pagedown": [" ", "PageDown", "d"],
+      "start_of_book": ["Ctrl+Home", "g"],
+      "end_of_book": ["Ctrl+End", "Shift+g"]
+    },
     "base_font_size": 27,
     "controls_help_shown_count": 2,
     "current_color_scheme": "sepia-dark",
