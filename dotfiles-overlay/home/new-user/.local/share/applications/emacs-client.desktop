@@ -2,7 +2,7 @@
 Name=Emacs Client
 GenericName=Text Editor
 Comment=Edit text with Emacs Client
-MimeType=text/plain;text/x-log;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-java;text/x-moc;text/x-pascal;text/x-tcl;text/x-tex;application/x-shellscript;text/x-c;text/x-c++;
+MimeType=text/plain;text/markdown;text/x-markdown;text/x-rst;text/x-org;text/asciidoc;text/troff;text/x-readme;text/x-tex;text/x-bibtex;application/x-latex;text/css;text/csv;text/tab-separated-values;text/xml;application/xml;application/json;text/x-json;application/json5;application/yaml;text/yaml;text/x-yaml;application/x-yaml;application/toml;text/x-toml;text/x-ini;text/x-properties;application/x-desktop;text/x-log;application/sql;text/x-sql;text/x-diff;text/x-patch;text/x-makefile;text/x-cmake;text/x-dockerfile;application/x-shellscript;text/x-sh;text/x-python;text/x-python3;text/x-script.python;application/x-perl;text/x-perl;application/x-ruby;text/x-ruby;text/x-lua;application/x-php;text/x-php;application/javascript;text/javascript;application/x-javascript;application/typescript;text/x-typescript;text/x-csrc;text/x-chdr;text/x-c;text/x-c++;text/x-c++src;text/x-c++hdr;text/x-java;text/x-csharp;text/x-go;text/x-rust;text/rust;text/x-haskell;text/x-literate-haskell;text/x-pascal;text/x-objcsrc;text/x-kotlin;text/x-scala;text/x-swift;text/x-vala;text/x-dsrc;text/x-fortran;text/x-lisp;text/x-common-lisp;text/x-emacs-lisp;text/x-elisp;text/x-scheme;text/x-clojure;text/x-ocaml;text/x-tcl;text/x-moc;text/x-gettext-translation;application/x-gettext-translation;
 Exec=emacsclient -c -a "" %F
 Icon=emacs
 Type=Application

@@ -1,22 +1,98 @@
 [Default Applications]
+# --- Text files: open everything text-like in emacs-client ---
+# mimeapps.list has no text/* wildcard, so structured-text formats (which carry
+# their own MIME type instead of falling back to text/plain) are listed here.
+# Plain text and markup
 text/plain=emacs-client.desktop
-text/css=emacs-client.desktop
-text/x-dsrc=emacs-client.desktop
-text/x-python=emacs-client.desktop
-text/x-log=emacs-client.desktop
-text/x-makefile=emacs-client.desktop
-application/x-shellscript=emacs-client.desktop
-text/x-c++hdr=emacs-client.desktop
-text/x-c++src=emacs-client.desktop
-text/x-chdr=emacs-client.desktop
-text/x-csrc=emacs-client.desktop
-text/x-java=emacs-client.desktop
-text/x-moc=emacscathy newman-client.desktop
-text/x-pascal=emacs-client.desktop
-text/x-tcl=emacs-client.desktop
+text/markdown=emacs-client.desktop
+text/x-markdown=emacs-client.desktop
+text/x-rst=emacs-client.desktop
+text/x-org=emacs-client.desktop
+text/asciidoc=emacs-client.desktop
+text/troff=emacs-client.desktop
+text/x-readme=emacs-client.desktop
 text/x-tex=emacs-client.desktop
+text/x-bibtex=emacs-client.desktop
+application/x-latex=emacs-client.desktop
+# Data / config formats
+text/css=emacs-client.desktop
+text/csv=emacs-client.desktop
+text/tab-separated-values=emacs-client.desktop
+text/xml=emacs-client.desktop
+application/xml=emacs-client.desktop
+application/json=emacs-client.desktop
+text/x-json=emacs-client.desktop
+application/json5=emacs-client.desktop
+application/yaml=emacs-client.desktop
+text/yaml=emacs-client.desktop
+text/x-yaml=emacs-client.desktop
+application/x-yaml=emacs-client.desktop
+application/toml=emacs-client.desktop
+text/x-toml=emacs-client.desktop
+text/x-ini=emacs-client.desktop
+text/x-properties=emacs-client.desktop
+application/x-desktop=emacs-client.desktop
+text/x-log=emacs-client.desktop
+application/sql=emacs-client.desktop
+text/x-sql=emacs-client.desktop
+text/x-diff=emacs-client.desktop
+text/x-patch=emacs-client.desktop
+text/x-makefile=emacs-client.desktop
+text/x-cmake=emacs-client.desktop
+text/x-dockerfile=emacs-client.desktop
+# Shell / scripting languages
+application/x-shellscript=emacs-client.desktop
+text/x-sh=emacs-client.desktop
+text/x-python=emacs-client.desktop
+text/x-python3=emacs-client.desktop
+text/x-script.python=emacs-client.desktop
+application/x-perl=emacs-client.desktop
+text/x-perl=emacs-client.desktop
+application/x-ruby=emacs-client.desktop
+text/x-ruby=emacs-client.desktop
+text/x-lua=emacs-client.desktop
+application/x-php=emacs-client.desktop
+text/x-php=emacs-client.desktop
+application/javascript=emacs-client.desktop
+text/javascript=emacs-client.desktop
+application/x-javascript=emacs-client.desktop
+application/typescript=emacs-client.desktop
+text/x-typescript=emacs-client.desktop
+# Compiled / systems languages
+text/x-csrc=emacs-client.desktop
+text/x-chdr=emacs-client.desktop
 text/x-c=emacs-client.desktop
 text/x-c++=emacs-client.desktop
+text/x-c++src=emacs-client.desktop
+text/x-c++hdr=emacs-client.desktop
+text/x-java=emacs-client.desktop
+text/x-csharp=emacs-client.desktop
+text/x-go=emacs-client.desktop
+text/x-rust=emacs-client.desktop
+text/rust=emacs-client.desktop
+text/x-haskell=emacs-client.desktop
+text/x-literate-haskell=emacs-client.desktop
+text/x-pascal=emacs-client.desktop
+text/x-objcsrc=emacs-client.desktop
+text/x-kotlin=emacs-client.desktop
+text/x-scala=emacs-client.desktop
+text/x-swift=emacs-client.desktop
+text/x-vala=emacs-client.desktop
+text/x-dsrc=emacs-client.desktop
+text/x-fortran=emacs-client.desktop
+# Lisps / functional
+text/x-lisp=emacs-client.desktop
+text/x-common-lisp=emacs-client.desktop
+text/x-emacs-lisp=emacs-client.desktop
+text/x-elisp=emacs-client.desktop
+text/x-scheme=emacs-client.desktop
+text/x-clojure=emacs-client.desktop
+text/x-ocaml=emacs-client.desktop
+# Misc tooling
+text/x-tcl=emacs-client.desktop
+text/x-moc=emacs-client.desktop
+text/x-gettext-translation=emacs-client.desktop
+application/x-gettext-translation=emacs-client.desktop
 x-scheme-handler/http=firefox-esr.desktop
 x-scheme-handler/https=firefox-esr.desktop
 x-scheme-handler/chrome=firefox-esr.desktop
