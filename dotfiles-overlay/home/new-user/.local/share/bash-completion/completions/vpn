@@ -29,7 +29,18 @@ try:
                 print(v)
 except: pass
 " 2>/dev/null)
-                COMPREPLY=( $(compgen -W "$locations" -- "$cur") )
+                # Match manually (not `compgen -W`, which would expand each
+                # name); keeps multi-word names like "New Zealand" intact and
+                # escapes spaces on insert via -o filenames. $cur is dequoted
+                # so `New\ Zealand` and "New Zealand" both match.
+                local name q="${cur#[\"\']}"
+                q="${q//\\/}"
+                COMPREPLY=()
+                while IFS= read -r name; do
+                    [ -n "$name" ] || continue
+                    [[ "$name" == "$q"* ]] && COMPREPLY+=( "$name" )
+                done <<< "$locations"
+                [ ${#COMPREPLY[@]} -gt 0 ] && compopt -o filenames 2>/dev/null
             fi
             ;;
     esac

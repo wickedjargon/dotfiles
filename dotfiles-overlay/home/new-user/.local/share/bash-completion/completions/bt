@@ -18,19 +18,19 @@ _bt() {
             # Suggest paired but disconnected device names
             local devs
             devs=$(bluetoothctl devices 2>/dev/null | sed 's/^Device [0-9A-F:]* //')
-            COMPREPLY=( $(compgen -W "$devs" -- "$cur") )
+            _bt_complete_names "$devs"
             ;;
         disconnect|reconnect|battery)
             # Suggest connected device names
             local devs
             devs=$(bluetoothctl devices Connected 2>/dev/null | sed 's/^Device [0-9A-F:]* //')
-            COMPREPLY=( $(compgen -W "$devs" -- "$cur") )
+            _bt_complete_names "$devs"
             ;;
         remove)
             # Suggest all paired device names
             local devs
             devs=$(bluetoothctl devices 2>/dev/null | sed 's/^Device [0-9A-F:]* //')
-            COMPREPLY=( $(compgen -W "$devs" -- "$cur") )
+            _bt_complete_names "$devs"
             ;;
         profile)
             # At position 2 (the profile), suggest profiles from pactl
@@ -43,10 +43,27 @@ _bt() {
                 # At position 3+, suggest connected devices
                 local devs
                 devs=$(bluetoothctl devices Connected 2>/dev/null | sed 's/^Device [0-9A-F:]* //')
-                COMPREPLY=( $(compgen -W "$devs" -- "$cur") )
+                _bt_complete_names "$devs"
             fi
             ;;
     esac
+}
+
+# Helper: populate COMPREPLY from a newline-separated list of device names,
+# preserving spaces/quotes. Matches manually rather than via `compgen -W`,
+# which would word-split AND *expand* each name — a device named $(...) or
+# `...` would execute on TAB (Bluetooth names are attacker-controlled).
+# $cur is dequoted so both `bt connect Foo\ Bar` and "Foo Bar" match; raw
+# names go into COMPREPLY and -o filenames escapes them on insertion.
+_bt_complete_names() {
+    local name q="${cur#[\"\']}"
+    q="${q//\\/}"
+    COMPREPLY=()
+    while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        [[ "$name" == "$q"* ]] && COMPREPLY+=( "$name" )
+    done <<< "$1"
+    [ ${#COMPREPLY[@]} -gt 0 ] && compopt -o filenames 2>/dev/null
 }
 
 complete -F _bt bt
