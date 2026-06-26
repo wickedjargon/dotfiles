@@ -5,17 +5,29 @@ _psync() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    # Complete --dir with the sync directory names (supports multiple values)
-    if [[ "$prev" == "--dir" ]] || _psync_after_dir; then
+    # Complete --dir / --to with the sync directory names
+    if [[ "$prev" == "--dir" || "$prev" == "--to" ]] || _psync_after_dir; then
         COMPREPLY=( $(compgen -W "notes audio video images screenshots other" -- "$cur") )
         return
     fi
 
     # First positional arg: command
     if [[ "$COMP_CWORD" -eq 1 ]]; then
-        COMPREPLY=( $(compgen -W "push pull sync status log" -- "$cur") )
+        COMPREPLY=( $(compgen -W "push pull sync add send status log" -- "$cur") )
         return
     fi
+
+    # add/send take real file paths as positional args
+    case "${COMP_WORDS[1]}" in
+        add|send)
+            if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $(compgen -W "--to --move --dry-run --quiet" -- "$cur") )
+            else
+                COMPREPLY=( $(compgen -f -- "$cur") )
+            fi
+            return
+            ;;
+    esac
 
     # Flags
     if [[ "$cur" == -* ]]; then

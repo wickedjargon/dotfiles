@@ -37,6 +37,22 @@
 
 `psync pull {{filename}}`
 
+- Add a file from anywhere into the right ~/d/ dir, auto-classified by type (no push):
+
+`psync add {{path/to/report.pdf}}`
+
+- Add a file but force the target dir (move instead of copy):
+
+`psync add --move --to {{other}} {{path/to/file}}`
+
+- Add a file into ~/d/ and push it to the phone in one step:
+
+`psync send {{path/to/photo.png}}`
+
+- Send a whole directory (--to is required to pick the target):
+
+`psync send --to {{notes}} {{path/to/mydir}}`
+
 - Pull the latest file from phone (path copied to clipboard):
 
 `psync pull --latest`

@@ -139,6 +139,12 @@ class TestBuildRsyncOpts:
         opts = psync.build_rsync_opts()
         assert "--update" not in opts
 
+    def test_secluded_args_always_on(self):
+        # -s sends paths over the protocol so spaces/globs in remote
+        # paths are safe; it should always be present.
+        opts = psync.build_rsync_opts()
+        assert "-s" in opts
+
 
 # ── Argument Parsing ─────────────────────────────────────────────────────────
 
@@ -242,7 +248,7 @@ class TestArgParsing:
         """Build the same parser as main() without running the full function."""
         import argparse
         parser = argparse.ArgumentParser()
-        parser.add_argument("command", choices=["push", "pull", "sync", "status", "log"])
+        parser.add_argument("command", choices=["push", "pull", "sync", "status", "log", "add", "send"])
         parser.add_argument("files", nargs="*")
         parser.add_argument("--latest", nargs="?", const=1, type=int)
         parser.add_argument("--nth", type=int, default=0)
@@ -251,7 +257,38 @@ class TestArgParsing:
         parser.add_argument("--dir", nargs="+", metavar="NAME")
         parser.add_argument("--quiet", action="store_true")
         parser.add_argument("--update", action="store_true")
+        parser.add_argument("--move", action="store_true")
+        parser.add_argument("--to", metavar="NAME")
         return parser
+
+    def test_add_is_valid(self):
+        parser = self._build_parser()
+        args = parser.parse_args(["add", "file.pdf"])
+        assert args.command == "add"
+        assert args.files == ["file.pdf"]
+
+    def test_send_is_valid(self):
+        parser = self._build_parser()
+        args = parser.parse_args(["send", "file.pdf"])
+        assert args.command == "send"
+
+    def test_move_flag(self):
+        parser = self._build_parser()
+        args = parser.parse_args(["add", "file.pdf", "--move"])
+        assert args.move is True
+
+    def test_move_false_by_default(self):
+        parser = self._build_parser()
+        args = parser.parse_args(["add", "file.pdf"])
+        assert args.move is False
+
+    def test_to_keeps_file_positional(self):
+        """--to is single-value so it must not swallow the filename
+        (the bug that --dir's nargs='+' had)."""
+        parser = self._build_parser()
+        args = parser.parse_args(["add", "--to", "other", "file.bin"])
+        assert args.to == "other"
+        assert args.files == ["file.bin"]
 
 
 # ── Directory Filtering ──────────────────────────────────────────────────────
@@ -655,8 +692,11 @@ class TestLogging:
         psync.setup_log()
         try:
             filename = os.path.basename(psync._log_path)
-            # Should match YYYY-MM-DDTHH-MM-SS.log
-            assert re.match(r"\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.log$", filename)
+            # Should match YYYY-MM-DDTHH-MM-SS-ffffff.log (microseconds keep
+            # sub-second runs from clobbering each other's logs)
+            assert re.match(
+                r"\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{6}\.log$", filename
+            )
         finally:
             psync.close_log()
             psync._log_path = None
@@ -1146,3 +1186,332 @@ class TestSyncCommand:
 
         psync.do_full_sync("push", dry_run=False, delete_flag=False)
         assert all("--update" not in opts for opts in captured_opts)
+
+
+# ── Classify ─────────────────────────────────────────────────────────────────
+
+
+class TestClassify:
+    def test_audio(self):
+        assert psync.classify_file("song.mp3") == "audio"
+        assert psync.classify_file("track.FLAC") == "audio"
+
+    def test_image(self):
+        assert psync.classify_file("pic.jpg") == "images"
+        assert psync.classify_file("photo.PNG") == "images"
+
+    def test_video(self):
+        assert psync.classify_file("clip.mp4") == "video"
+        assert psync.classify_file("movie.mkv") == "video"
+
+    def test_notes(self):
+        assert psync.classify_file("todo.md") == "notes"
+        assert psync.classify_file("report.pdf") == "notes"
+
+    def test_unknown_falls_back_to_other(self):
+        assert psync.classify_file("archive.xyz") == "other"
+        assert psync.classify_file("noext") == "other"
+
+    def test_never_classifies_as_screenshots(self):
+        # Images go to the top-level images dir, never the nested subfolder.
+        assert psync.classify_file("Screenshot_2026.png") == "images"
+
+
+# ── Add / Send ───────────────────────────────────────────────────────────────
+
+
+def _fake_dir_names(tmp_path):
+    base = tmp_path / "d"
+    return {
+        "audio": (str(base / "audio"), "/remote/Music"),
+        "images": (str(base / "images"), "/remote/DCIM"),
+        "video": (str(base / "video"), "/remote/Movies"),
+        "notes": (str(base / "notes"), "/remote/Notes"),
+        "other": (str(base / "other"), "/remote/Other"),
+        "screenshots": (str(base / "images" / "screenshots"),
+                        "/remote/Pictures/Screenshots"),
+    }
+
+
+class TestAddSend:
+    def test_add_copies_into_classified_dir(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        src = tmp_path / "incoming"
+        src.mkdir()
+        f = src / "song.mp3"
+        f.write_text("music")
+
+        summary = psync.do_add([str(f)], move=False, dir_override=None,
+                               push=False, dry_run=False)
+        dest = tmp_path / "d" / "audio" / "song.mp3"
+        assert dest.exists()
+        assert dest.read_text() == "music"
+        assert f.exists()  # copy leaves the original
+        assert "1 file added" in summary
+
+    def test_add_move_removes_original(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        f = tmp_path / "clip.mp4"
+        f.write_text("video")
+
+        psync.do_add([str(f)], move=True, dir_override=None,
+                     push=False, dry_run=False)
+        assert (tmp_path / "d" / "video" / "clip.mp4").exists()
+        assert not f.exists()  # move removes the original
+
+    def test_add_dir_override(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        f = tmp_path / "song.mp3"
+        f.write_text("music")
+
+        psync.do_add([str(f)], move=False, dir_override="other",
+                     push=False, dry_run=False)
+        # Forced into other/, not the auto-classified audio/
+        assert (tmp_path / "d" / "other" / "song.mp3").exists()
+        assert not (tmp_path / "d" / "audio" / "song.mp3").exists()
+
+    def test_add_collision_different_content_skips(self, tmp_path,
+                                                   monkeypatch, capsys):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        dest_dir = tmp_path / "d" / "notes"
+        dest_dir.mkdir(parents=True)
+        (dest_dir / "todo.md").write_text("existing")
+        f = tmp_path / "todo.md"
+        f.write_text("incoming")
+
+        psync.do_add([str(f)], move=False, dir_override=None,
+                     push=False, dry_run=False)
+        captured = capsys.readouterr()
+        assert "different" in captured.out
+        # Existing file untouched
+        assert (dest_dir / "todo.md").read_text() == "existing"
+
+    def test_add_identical_is_idempotent(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        dest_dir = tmp_path / "d" / "notes"
+        dest_dir.mkdir(parents=True)
+        (dest_dir / "todo.md").write_text("same")
+        f = tmp_path / "todo.md"
+        f.write_text("same")
+
+        summary = psync.do_add([str(f)], move=False, dir_override=None,
+                               push=False, dry_run=False)
+        assert "0 files added" in summary
+
+    def test_add_nonexistent_warns(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+
+        psync.do_add([str(tmp_path / "nope.mp3")], move=False,
+                     dir_override=None, push=False, dry_run=False)
+        captured = capsys.readouterr()
+        assert "No such file" in captured.out
+
+    def test_send_copies_and_pushes(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        f = tmp_path / "photo.png"
+        f.write_text("img")
+
+        rsync_calls = []
+        monkeypatch.setattr(psync, "run_rsync",
+                            lambda o, s, d: rsync_calls.append((s, d)) or (0, ""))
+        monkeypatch.setattr(psync, "phone_ssh",
+                            lambda *a: subprocess.CompletedProcess(a, 0))
+
+        summary = psync.do_add([str(f)], move=False, dir_override=None,
+                               push=True, dry_run=False)
+        dest = tmp_path / "d" / "images" / "photo.png"
+        assert dest.exists()
+        assert len(rsync_calls) == 1
+        assert str(dest) == rsync_calls[0][0]
+        assert rsync_calls[0][1].endswith("/remote/DCIM/photo.png")
+        assert "pushed" in summary
+
+    def test_add_does_not_push(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        f = tmp_path / "photo.png"
+        f.write_text("img")
+
+        rsync_calls = []
+        monkeypatch.setattr(psync, "run_rsync",
+                            lambda o, s, d: rsync_calls.append((s, d)) or (0, ""))
+
+        psync.do_add([str(f)], move=False, dir_override=None,
+                     push=False, dry_run=False)
+        assert len(rsync_calls) == 0
+
+    def test_add_directory_requires_to(self, tmp_path, monkeypatch, capsys):
+        """A directory without --to (dir_override) is rejected."""
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        d = tmp_path / "myproject"
+        d.mkdir()
+        (d / "a.txt").write_text("x")
+
+        summary = psync.do_add([str(d)], move=False, dir_override=None,
+                               push=False, dry_run=False)
+        captured = capsys.readouterr()
+        assert "explicit target" in captured.out
+        assert "0 files added" in summary
+        # Nothing copied anywhere
+        assert not (tmp_path / "d" / "other" / "myproject").exists()
+
+    def test_add_directory_with_to_merges(self, tmp_path, monkeypatch):
+        """A directory with --to is copied (merged) into the target dir."""
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        d = tmp_path / "myproject"
+        (d / "sub").mkdir(parents=True)
+        (d / "a.txt").write_text("hello")
+        (d / "sub" / "b.txt").write_text("world")
+
+        summary = psync.do_add([str(d)], move=False, dir_override="other",
+                               push=False, dry_run=False)
+        base = tmp_path / "d" / "other" / "myproject"
+        assert (base / "a.txt").read_text() == "hello"
+        assert (base / "sub" / "b.txt").read_text() == "world"
+        assert d.exists()  # copy leaves the original
+        assert "1 file added" in summary
+
+    def test_add_directory_merges_into_existing(self, tmp_path, monkeypatch):
+        """Copying onto an existing dir merges; incoming wins on clashes."""
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        existing = tmp_path / "d" / "other" / "myproject"
+        existing.mkdir(parents=True)
+        (existing / "keep.txt").write_text("keep")
+        (existing / "a.txt").write_text("old")
+
+        d = tmp_path / "myproject"
+        d.mkdir()
+        (d / "a.txt").write_text("new")
+
+        psync.do_add([str(d)], move=False, dir_override="other",
+                     push=False, dry_run=False)
+        assert (existing / "keep.txt").read_text() == "keep"  # untouched
+        assert (existing / "a.txt").read_text() == "new"      # overwritten
+
+    def test_add_directory_move_removes_original(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        d = tmp_path / "myproject"
+        d.mkdir()
+        (d / "a.txt").write_text("x")
+
+        psync.do_add([str(d)], move=True, dir_override="other",
+                     push=False, dry_run=False)
+        assert (tmp_path / "d" / "other" / "myproject" / "a.txt").exists()
+        assert not d.exists()  # move removes the original
+
+    def test_send_directory_pushes_into_parent(self, tmp_path, monkeypatch):
+        """Pushing a dir targets remote_dir/ so rsync recreates it as
+        remote_dir/basename (not remote_dir/basename/basename)."""
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        d = tmp_path / "myproject"
+        d.mkdir()
+        (d / "a.txt").write_text("x")
+
+        rsync_calls = []
+        monkeypatch.setattr(psync, "run_rsync",
+                            lambda o, s, d: rsync_calls.append((s, d)) or (0, ""))
+        monkeypatch.setattr(psync, "phone_ssh",
+                            lambda *a: subprocess.CompletedProcess(a, 0))
+
+        summary = psync.do_add([str(d)], move=False, dir_override="notes",
+                               push=True, dry_run=False)
+        dest = tmp_path / "d" / "notes" / "myproject"
+        assert dest.exists()
+        assert len(rsync_calls) == 1
+        # Source is the copied dir (no trailing slash), dest is the parent.
+        assert rsync_calls[0][0] == str(dest)
+        assert rsync_calls[0][1].endswith("/remote/Notes/")
+        assert "pushed" in summary
+
+    def test_add_directory_dry_run_copies_nothing(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        d = tmp_path / "myproject"
+        d.mkdir()
+        (d / "a.txt").write_text("x")
+
+        summary = psync.do_add([str(d)], move=False, dir_override="other",
+                               push=False, dry_run=True)
+        assert not (tmp_path / "d" / "other" / "myproject").exists()
+        assert "1 file added" in summary
+
+
+# ── Error Tracking / Exit Code ───────────────────────────────────────────────
+
+
+class TestErrorTracking:
+    """record_error() drives a non-zero exit code so failures are detectable."""
+
+    def test_successful_add_records_no_error(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        monkeypatch.setattr(psync, "_errors", 0)
+        f = tmp_path / "song.mp3"
+        f.write_text("music")
+
+        psync.do_add([str(f)], move=False, dir_override=None,
+                     push=False, dry_run=False)
+        assert psync._errors == 0
+
+    def test_add_nonexistent_records_error(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        monkeypatch.setattr(psync, "_errors", 0)
+
+        psync.do_add([str(tmp_path / "nope.mp3")], move=False,
+                     dir_override=None, push=False, dry_run=False)
+        assert psync._errors == 1
+
+    def test_add_collision_records_error(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        monkeypatch.setattr(psync, "_errors", 0)
+        dest_dir = tmp_path / "d" / "notes"
+        dest_dir.mkdir(parents=True)
+        (dest_dir / "todo.md").write_text("existing")
+        f = tmp_path / "todo.md"
+        f.write_text("incoming")
+
+        psync.do_add([str(f)], move=False, dir_override=None,
+                     push=False, dry_run=False)
+        assert psync._errors == 1
+
+    def test_file_sync_no_match_records_error(self, tmp_path, monkeypatch):
+        local = tmp_path / "notes"
+        local.mkdir()
+        monkeypatch.setattr(psync, "SYNC_DIRS", [(str(local), "/remote")])
+        monkeypatch.setattr(psync, "_quiet", False)
+        monkeypatch.setattr(psync, "_errors", 0)
+        monkeypatch.setattr(psync, "run_rsync", lambda o, s, d: (0, ""))
+
+        psync.do_file_sync("push", ["nope.txt"], dry_run=False,
+                           delete_flag=False)
+        assert psync._errors == 1
+
+    def test_full_sync_rsync_failure_records_error(self, tmp_path, monkeypatch):
+        local = tmp_path / "notes"
+        local.mkdir()
+        (local / "a.md").write_text("x")
+        monkeypatch.setattr(psync, "SYNC_DIRS", [(str(local), "/remote")])
+        monkeypatch.setattr(psync, "SYNC_EXCLUDES", {})
+        monkeypatch.setattr(psync, "_quiet", False)
+        monkeypatch.setattr(psync, "_errors", 0)
+        # rsync returns non-zero
+        monkeypatch.setattr(psync, "run_rsync", lambda o, s, d: (23, ""))
+        monkeypatch.setattr(psync, "phone_ssh",
+                            lambda *a: subprocess.CompletedProcess(a, 0))
+
+        psync.do_full_sync("push", dry_run=False, delete_flag=False)
+        assert psync._errors == 1

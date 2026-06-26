@@ -10,6 +10,7 @@ import argparse
 import atexit
 import configparser
 from datetime import datetime
+import filecmp
 import os
 import re
 import shlex
@@ -75,6 +76,7 @@ RESET = "\033[0m"
 _log_file = None
 _log_path = None
 _quiet = False
+_errors = 0  # count of failed operations; makes the process exit non-zero
 
 # ── Config File ─────────────────────────────────────────────────────
 
@@ -126,7 +128,7 @@ def setup_log():
     """Create log directory and open a timestamped log file."""
     global _log_file, _log_path
     os.makedirs(LOG_DIR, exist_ok=True)
-    stamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    stamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S-%f")
     _log_path = os.path.join(LOG_DIR, f"{stamp}.log")
     _log_file = open(_log_path, "w")
     _log_file.write(f"psync run: {datetime.now().isoformat()}\n")
@@ -184,6 +186,12 @@ def warn(msg):
 def die(msg):
     print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
     sys.exit(1)
+
+
+def record_error():
+    """Mark that an operation failed, so main() exits non-zero."""
+    global _errors
+    _errors += 1
 
 
 def header(msg):
@@ -340,6 +348,9 @@ def build_rsync_opts(use_delete=True, dry_run=False, delete_flag=False,
     """
     opts = [
         "-avz", "--progress", "--stats",
+        # Send file args over the rsync protocol instead of the remote
+        # shell, so paths with spaces or glob chars (*, ?, [) are safe.
+        "-s",
         "--exclude", ".*",
         "-e", f"ssh -p {PHONE_PORT}",
     ]
@@ -366,7 +377,6 @@ def do_full_sync(direction, dry_run, delete_flag, update=False):
     total_files = 0
     total_bytes = 0
 
-    errors = 0
     for local_dir, remote_dir in SYNC_DIRS:
         dir_name = os.path.basename(local_dir)
         opts = build_rsync_opts(use_delete=True,
@@ -405,7 +415,7 @@ def do_full_sync(direction, dry_run, delete_flag, update=False):
         if rc != 0:
             warn(f"rsync exited with code {rc} for {dir_name}")
             log_write(f"ERROR: rsync exit code {rc} for {dir_name}")
-            errors += 1
+            record_error()
 
         files, nbytes = parse_rsync_stats(output)
         total_files += files
@@ -473,6 +483,7 @@ def do_file_sync(direction, files, dry_run, delete_flag, update=False):
 
         if not matches:
             warn(f"No file matching '{filename}' found")
+            record_error()
             continue
 
         if len(matches) > 1:
@@ -481,6 +492,7 @@ def do_file_sync(direction, files, dry_run, delete_flag, update=False):
                 if not _quiet:
                     print(f"  {DIM}{fpath}{RESET}")
             warn("Please use a more specific filename")
+            record_error()
             continue
 
         # Exactly one match
@@ -507,6 +519,7 @@ def do_file_sync(direction, files, dry_run, delete_flag, update=False):
         if rc != 0:
             warn(f"rsync exited with code {rc} for {filename}")
             log_write(f"ERROR: rsync exit code {rc} for {filename}")
+            record_error()
             continue
 
         synced_count += 1
@@ -623,6 +636,7 @@ def do_latest_sync(direction, count, nth, dry_run, delete_flag, update=False):
         if rc != 0:
             warn(f"rsync exited with code {rc} for {basename}")
             log_write(f"ERROR: rsync exit code {rc} for {basename}")
+            record_error()
             continue
 
         synced += 1
@@ -678,7 +692,8 @@ def do_status():
         except OSError:
             continue
         # Extract direction from log header
-        m = re.search(r"^direction:\s+(push|pull|sync)$", head, re.MULTILINE)
+        m = re.search(r"^direction:\s+(push|pull|sync|send)$", head,
+                      re.MULTILINE)
         if not m:
             continue
         direction = m.group(1)
@@ -691,7 +706,7 @@ def do_status():
         except ValueError:
             continue
 
-        if direction in ("push", "sync") and not last_push:
+        if direction in ("push", "sync", "send") and not last_push:
             last_push = run_time
         if direction in ("pull", "sync") and not last_pull:
             last_pull = run_time
@@ -768,6 +783,193 @@ def resolve_dir_names(names):
     return filtered
 
 
+# ── Classify & ingest external files ───────────────────────────────
+_AUDIO_EXTS = {
+    ".mp3", ".flac", ".m4a", ".aac", ".ogg", ".opus", ".wav", ".wma",
+    ".aiff", ".alac",
+}
+_IMAGE_EXTS = {
+    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif", ".bmp",
+    ".tiff", ".tif", ".svg", ".avif",
+}
+_VIDEO_EXTS = {
+    ".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v", ".flv", ".wmv",
+    ".mpg", ".mpeg", ".3gp",
+}
+_NOTES_EXTS = {
+    ".md", ".txt", ".pdf", ".epub", ".org", ".rst", ".doc", ".docx",
+    ".odt", ".rtf", ".tex",
+}
+
+
+def classify_file(path):
+    """Return the sync-dir name a file belongs in, based on its extension.
+
+    Falls back to 'other' for anything unrecognized. Never returns
+    'screenshots' (a nested, pull-side subfolder of images).
+    """
+    ext = os.path.splitext(path)[1].lower()
+    if ext in _AUDIO_EXTS:
+        return "audio"
+    if ext in _IMAGE_EXTS:
+        return "images"
+    if ext in _VIDEO_EXTS:
+        return "video"
+    if ext in _NOTES_EXTS:
+        return "notes"
+    return "other"
+
+
+def do_add(files, move, dir_override, push, dry_run):
+    """Copy (or move) external files into the right ~/d/ dir, optionally push.
+
+    Each item is resolved relative to the current directory, classified by
+    extension (unless dir_override forces a target), and copied/moved to the
+    top of the matching ~/d/<dir>. Directories are accepted only when
+    dir_override is set (they have no extension to classify on) and are
+    merged into the target. When push is True each item is then rsync'd to
+    the phone. Returns a summary string.
+    """
+    verb = "move" if move else "copy"
+    past = "Moved" if move else "Copied"
+    if push:
+        header("SEND: file → Laptop library → Phone")
+    else:
+        header(f"ADD: file → Laptop library ({verb})")
+
+    added = 0
+    pushed = 0
+    for f in files:
+        src = os.path.abspath(os.path.expanduser(f))
+        if not os.path.exists(src):
+            warn(f"No such file: {f}")
+            record_error()
+            continue
+        # Directories have no extension to classify on, so they're only
+        # accepted when --to names the target explicitly.
+        is_dir = os.path.isdir(src)
+        if is_dir and not dir_override:
+            warn(f"Directory needs an explicit target — use --to NAME: {f}")
+            record_error()
+            continue
+        if not is_dir and not os.path.isfile(src):
+            warn(f"Not a regular file or directory: {f}")
+            record_error()
+            continue
+
+        dir_name = dir_override or classify_file(src)
+        local_dir, remote_dir = DIR_NAMES[dir_name]
+        basename = os.path.basename(src)
+        dest = os.path.join(local_dir, basename)
+        in_place = os.path.abspath(dest) == src
+        label = f"{basename}/" if is_dir else basename
+
+        if in_place:
+            info(f"{label} already in {dir_name}/")
+        elif is_dir:
+            # Merge the tree into the library (incoming wins on name
+            # clashes); no per-file content check, unlike single files.
+            if dry_run:
+                info(f"[dry-run] would {verb} {label} → {dir_name}/")
+                added += 1
+            else:
+                try:
+                    shutil.copytree(src, dest, dirs_exist_ok=True)
+                    if move:
+                        shutil.rmtree(src)
+                except OSError as e:
+                    warn(f"Failed to {verb} {label}: {e}")
+                    record_error()
+                    continue
+                ok(f"{past} {label} → {dir_name}/")
+                log_write(f"{verb.upper()}: {src} → {dest}")
+                added += 1
+        elif os.path.exists(dest):
+            if filecmp.cmp(src, dest, shallow=False):
+                info(f"{basename} already in {dir_name}/ (identical)")
+            else:
+                warn(f"{basename} exists in {dir_name}/ with different "
+                     "content — skipping")
+                record_error()
+                continue
+        elif dry_run:
+            info(f"[dry-run] would {verb} {basename} → {dir_name}/")
+            added += 1
+        else:
+            os.makedirs(local_dir, exist_ok=True)
+            try:
+                if move:
+                    shutil.move(src, dest)
+                else:
+                    shutil.copy2(src, dest)
+            except OSError as e:
+                warn(f"Failed to {verb} {basename}: {e}")
+                continue
+            ok(f"{past} {basename} → {dir_name}/")
+            log_write(f"{verb.upper()}: {src} → {dest}")
+            added += 1
+
+        if push:
+            # In dry-run the file may not be at dest yet; push from source.
+            push_src = dest if (not dry_run or os.path.exists(dest)) else src
+            opts = build_rsync_opts(use_delete=False, dry_run=dry_run)
+            if not dry_run:
+                phone_ssh(f"mkdir -p {shlex.quote(remote_dir)}")
+            # Files push to an exact remote path; a directory is dropped
+            # into remote_dir so rsync recreates it as remote_dir/basename
+            # (a trailing slash on the source would splat its contents).
+            remote_target = (f"{remote_dir}/" if is_dir
+                             else f"{remote_dir}/{basename}")
+            rc, _output = run_rsync(opts, push_src,
+                                    f"{PHONE_HOST}:{remote_target}")
+            if rc != 0:
+                warn(f"rsync exited with code {rc} for {label}")
+                log_write(f"ERROR: rsync exit code {rc} for {label}")
+                record_error()
+                continue
+            pushed += 1
+            ok(f"Pushed {label} → {dir_name}")
+
+    if push:
+        summary = (f"{added} file{'s' if added != 1 else ''} added, "
+                   f"{pushed} pushed")
+    else:
+        summary = f"{added} file{'s' if added != 1 else ''} added"
+    info(summary)
+    log_write(f"SUMMARY: {summary}")
+    return summary
+
+
+def do_add_send(args):
+    """Handle the `add` and `send` commands: ingest files into ~/d/."""
+    if args.dir:
+        die("add/send use --to NAME (not --dir) for the target directory")
+    if args.latest is not None or args.nth > 0:
+        die("--latest/--nth cannot be used with add/send")
+    if not args.files:
+        die(f"'{args.command}' requires at least one file")
+
+    dir_override = None
+    if args.to:
+        name = args.to.lower()
+        if name not in DIR_NAMES:
+            valid = ", ".join(sorted(DIR_NAMES.keys()))
+            die(f"Unknown directory '{args.to}'. Valid names: {valid}")
+        dir_override = name
+
+    push = args.command == "send"
+    if push:
+        preflight()
+    setup_log()
+    log_write(f"direction: {args.command}")
+
+    summary = do_add(args.files, args.move, dir_override, push, args.dry_run)
+
+    if _log_path and not _quiet:
+        print(f"{DIM}Log: {_log_path}{RESET}")
+    notify("psync", summary)
+
+
 # ── Main ────────────────────────────────────────────────────────────
 def main():
     global _quiet
@@ -790,6 +992,11 @@ examples:
   psync pull --dir notes       Pull only the notes directory
   psync push --dir notes audio Push notes and audio
   psync push todo.md           Push file matching "todo.md"
+  psync add report.pdf         Copy a file into the right ~/d/ dir (no push)
+  psync add --move clip.mp4    Move it into ~/d/ instead of copying
+  psync add --to other x.bin   Force the target directory
+  psync send --to notes mydir  Send a whole directory (--to required)
+  psync send photo.png         Copy into ~/d/, then push to phone
   psync pull --latest          Pull the single latest file
   psync pull --latest 3        Pull the 3 most recent files
   psync pull --nth 2           Pull the 2nd most recent file
@@ -803,13 +1010,13 @@ examples:
 
     parser.add_argument(
         "command",
-        choices=["push", "pull", "sync", "status", "log"],
-        help="push | pull | sync (push+pull) | status | log",
+        choices=["push", "pull", "sync", "status", "log", "add", "send"],
+        help="push | pull | sync (push+pull) | add | send | status | log",
     )
     parser.add_argument(
         "files",
         nargs="*",
-        help="specific filenames to sync",
+        help="specific filenames to sync, or files/dirs to add/send",
     )
     parser.add_argument(
         "--latest",
@@ -854,6 +1061,17 @@ examples:
         help="skip files that are newer on the destination "
              "(always on for sync)",
     )
+    parser.add_argument(
+        "--move",
+        action="store_true",
+        help="for add/send: move the file into ~/d/ instead of copying",
+    )
+    parser.add_argument(
+        "--to",
+        metavar="NAME",
+        help="for add/send: target ~/d/ dir, overriding auto-classification "
+             "(required to add/send a directory)",
+    )
 
     args = parser.parse_args()
 
@@ -867,6 +1085,11 @@ examples:
         return
 
     _quiet = args.quiet
+
+    # add / send: ingest external files into ~/d/ (send also pushes)
+    if args.command in ("add", "send"):
+        do_add_send(args)
+        sys.exit(1 if _errors else 0)
 
     # Validation
     if args.latest is not None and args.nth > 0:
@@ -922,6 +1145,9 @@ examples:
     # Desktop notification
     notify_body = "; ".join(summaries) if summaries else "Sync complete"
     notify("psync", notify_body)
+
+    # Exit non-zero if any transfer or file operation failed
+    sys.exit(1 if _errors else 0)
 
 
 if __name__ == "__main__":
