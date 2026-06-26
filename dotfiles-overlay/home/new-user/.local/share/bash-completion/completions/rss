@@ -23,21 +23,31 @@ _rss() {
 
     case "$cmd" in
         del|read|fetch|catchup)
-            # Complete with feed names (escaped for special characters)
+            # Complete with feed names, case-insensitively. Dequote $cur
+            # (strip a leading quote, drop backslash escapes) so both
+            # `rss read Foo\ Bar` and `rss read "Foo Bar"` match; emit raw
+            # names and let -o filenames escape the spaces on insertion.
+            local q="${cur#[\"\']}"
+            q="${q//\\/}"
             COMPREPLY=()
             while IFS= read -r name; do
                 [ -z "$name" ] && continue
-                if [[ "${name,,}" == "${cur,,}"* ]]; then
-                    COMPREPLY+=( "$(printf '%q' "$name")" )
+                if [[ "${name,,}" == "${q,,}"* ]]; then
+                    COMPREPLY+=( "$name" )
                 fi
             done < <(_rss_feed_names)
+            [ ${#COMPREPLY[@]} -gt 0 ] && compopt -o filenames 2>/dev/null
             ;;
         add)
             # No special completion for URLs
             ;;
         import)
-            # File completion for OPML files
-            COMPREPLY=( $(compgen -f -- "$cur") )
+            # File completion for OPML files (handles spaces/escaping)
+            if declare -F _filedir >/dev/null; then
+                _filedir
+            else
+                COMPREPLY=( $(compgen -f -- "$cur") )
+            fi
             ;;
     esac
 }

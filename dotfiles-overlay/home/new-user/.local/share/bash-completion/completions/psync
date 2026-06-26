@@ -22,6 +22,10 @@ _psync() {
         add|send)
             if [[ "$cur" == -* ]]; then
                 COMPREPLY=( $(compgen -W "--to --move --dry-run --quiet" -- "$cur") )
+            elif declare -F _filedir >/dev/null; then
+                # _filedir dequotes $cur and escapes spaces, so files/dirs
+                # with spaces complete from both `my\ file` and "my file".
+                _filedir
             else
                 COMPREPLY=( $(compgen -f -- "$cur") )
             fi

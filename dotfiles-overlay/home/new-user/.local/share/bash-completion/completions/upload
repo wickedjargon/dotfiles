@@ -21,10 +21,15 @@ _upload() {
 
     case "$cmd" in
         file)
-            # Complete flags and filenames
-            COMPREPLY=( $(compgen -W "--backend --preserve-filename --keep-exif" -- "$cur") )
-            # Also offer file completion
-            COMPREPLY+=( $(compgen -f -- "$cur") )
+            # Flags when the user is typing one, otherwise file completion
+            # (_filedir handles spaces/escaping for both quote styles).
+            if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $(compgen -W "--backend --preserve-filename --keep-exif" -- "$cur") )
+            elif declare -F _filedir >/dev/null; then
+                _filedir
+            else
+                COMPREPLY=( $(compgen -f -- "$cur") )
+            fi
             ;;
         selection)
             COMPREPLY=( $(compgen -W "--backend" -- "$cur") )
