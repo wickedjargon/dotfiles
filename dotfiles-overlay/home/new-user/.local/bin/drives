@@ -7,6 +7,7 @@ Requires: udisks2 (udisksctl), lsblk
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 
@@ -303,7 +304,7 @@ def cmd_open(partitions, args):
         shell = os.environ.get("SHELL", "/bin/sh")
         info(f"Opening {BOLD}{mountpoint}{RESET} in {terminal}...")
         subprocess.Popen(
-            [terminal, "-e", shell, "-c", f"cd '{mountpoint}' && exec {shell}"],
+            [terminal, "-e", shell, "-c", f"cd {shlex.quote(mountpoint)} && exec {shlex.quote(shell)}"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
     else:

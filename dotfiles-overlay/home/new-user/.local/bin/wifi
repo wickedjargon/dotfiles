@@ -86,8 +86,10 @@ def get_active_connection():
     """Get the active WiFi connection info.
 
     Returns a dict with keys:
-      ssid, device, signal, speed, ip, security
-    or None if not connected.
+      name, ssid, device, signal, speed, ip, security
+    where "name" is the connection profile name/ID (for nmcli connection
+    operations) and "ssid" is the broadcast SSID (for display).
+    Returns None if not connected.
     """
     result = nmcli("-t", "-f", "NAME,TYPE,DEVICE", "connection", "show", "--active")
     if result.returncode != 0:
@@ -108,8 +110,12 @@ def get_active_connection():
     if not wifi_name:
         return None
 
-    # Get detailed info from the device
-    info_dict = {"ssid": wifi_name, "device": wifi_device}
+    # Get detailed info from the device.
+    # "name" is the NetworkManager connection profile name/ID (required for
+    # nmcli connection up/down/show). "ssid" holds the broadcast SSID, used
+    # for display; it may differ from the profile name (renamed profiles,
+    # duplicates like "MyNet 1", hidden SSIDs).
+    info_dict = {"name": wifi_name, "ssid": wifi_name, "device": wifi_device}
 
     # Get SSID and signal from wifi list for current AP
     wifi_result = nmcli("-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY,FREQ,RATE",
@@ -383,8 +389,9 @@ def cmd_disconnect():
         return
 
     ssid = conn["ssid"]
+    name = conn.get("name", ssid)
     info(f"Disconnecting from {BOLD}{ssid}{RESET}...")
-    result = nmcli("connection", "down", ssid)
+    result = nmcli("connection", "down", name)
     if result.returncode == 0:
         ok(f"Disconnected from {ssid}")
     else:
@@ -398,13 +405,14 @@ def cmd_reconnect():
         die("Not connected to any WiFi network")
 
     ssid = conn["ssid"]
+    name = conn.get("name", ssid)
     info(f"Reconnecting to {BOLD}{ssid}{RESET}...")
 
-    down = nmcli("connection", "down", ssid)
+    down = nmcli("connection", "down", name)
     if down.returncode != 0:
         die(f"Failed to disconnect: {down.stderr.strip()}")
 
-    up = nmcli("connection", "up", ssid)
+    up = nmcli("connection", "up", name)
     if up.returncode == 0:
         ok(f"Reconnected to {ssid}")
     else:
@@ -419,7 +427,9 @@ def cmd_saved():
         return
 
     conn = get_active_connection()
-    current = conn["ssid"] if conn else None
+    # Saved connections are keyed by profile name, so compare against the
+    # active profile name (not the broadcast SSID) for the active marker.
+    current = conn.get("name", conn.get("ssid")) if conn else None
 
     print(f"{BOLD}Saved connections{RESET}")
     for c in connections:
@@ -452,6 +462,11 @@ def cmd_forget(args):
 def cmd_password(args):
     """Show the password of the current or specified WiFi network."""
     ssid = " ".join(args) if args else None
+    # "name" is the identifier passed to nmcli connection show (the profile
+    # name/ID). When the user supplies an argument it doubles as both; when we
+    # fall back to the active connection we use its profile name, which may
+    # differ from the broadcast SSID shown to the user.
+    name = ssid
 
     if not ssid:
         # Use current connection
@@ -459,10 +474,11 @@ def cmd_password(args):
         if not conn:
             die("Not connected. Specify an SSID: wifi password <SSID>")
         ssid = conn["ssid"]
+        name = conn.get("name", ssid)
 
     # Get password from saved connection
     result = nmcli("-s", "-t", "-f", "802-11-wireless-security.psk",
-                   "connection", "show", ssid)
+                   "connection", "show", name)
     if result.returncode != 0:
         die(f"No saved connection for '{ssid}'")
 

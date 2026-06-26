@@ -42,6 +42,25 @@ def run(cmd, timeout=10):
         return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
 
 
+def _ensure_sudo():
+    """Ensure sudo credentials are cached, prompting on the terminal if needed.
+
+    Returns True if sudo is usable. The fast path is a non-interactive
+    `sudo -n true`; if that fails we run an interactive `sudo -v` that inherits
+    the terminal (no captured stderr, no short timeout) so the password prompt
+    is visible and the user has time to type it.
+    """
+    # Fast path: credentials already cached.
+    if run(["sudo", "-n", "true"]).returncode == 0:
+        return True
+    # Refresh the credential cache interactively. Inheriting the terminal lets
+    # the prompt show; omitting the timeout lets the user actually respond.
+    try:
+        return subprocess.run(["sudo", "-v"]).returncode == 0
+    except FileNotFoundError:
+        return False
+
+
 # ── Interface Discovery ───────────────────────────────────────────
 def _get_interfaces():
     """Get network interfaces with their MAC addresses.
@@ -237,32 +256,29 @@ def _set_mac(iface_name, new_mac, label=""):
     info(f"Setting MAC on {BOLD}{iface_name}{RESET} → "
          f"{BOLD}{new_mac}{RESET}{label_str}")
 
+    # Authenticate up front so the (interactive) password prompt reaches the
+    # terminal instead of being silently captured and timed out below.
+    if not _ensure_sudo():
+        die("sudo authentication failed")
+
     # Bring down
     result = run(["sudo", "-n", "ip", "link", "set", iface_name, "down"])
     if result.returncode != 0:
-        # Try with password prompt
-        result = run(["sudo", "ip", "link", "set", iface_name, "down"])
-        if result.returncode != 0:
-            die(f"Failed to bring down {iface_name}: {result.stderr.strip()}")
+        die(f"Failed to bring down {iface_name}: {result.stderr.strip()}")
 
     # Set MAC
     result = run(["sudo", "-n", "ip", "link", "set", iface_name,
                    "address", new_mac])
     if result.returncode != 0:
-        result = run(["sudo", "ip", "link", "set", iface_name,
-                       "address", new_mac])
-        if result.returncode != 0:
-            # Try to bring interface back up before dying
-            run(["sudo", "ip", "link", "set", iface_name, "up"])
-            die(f"Failed to set MAC: {result.stderr.strip()}")
+        # Try to bring interface back up before dying
+        run(["sudo", "-n", "ip", "link", "set", iface_name, "up"])
+        die(f"Failed to set MAC: {result.stderr.strip()}")
 
     # Bring up
     result = run(["sudo", "-n", "ip", "link", "set", iface_name, "up"])
     if result.returncode != 0:
-        result = run(["sudo", "ip", "link", "set", iface_name, "up"])
-        if result.returncode != 0:
-            warn(f"MAC changed but failed to bring {iface_name} back up")
-            return
+        warn(f"MAC changed but failed to bring {iface_name} back up")
+        return
 
     ok(f"{iface_name} → {new_mac}")
 

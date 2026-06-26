@@ -264,9 +264,11 @@ def _google_event(text, reminder=False):
 
     try:
         target_dt = datetime.datetime.fromisoformat(start_str)
-        # Strip timezone info for local comparison (systemd uses local time)
+        # Convert to local time before stripping tzinfo so the alarm fires at
+        # the correct absolute time even when the event's timezone differs from
+        # the machine's local timezone (systemd uses naive local time).
         if target_dt.tzinfo is not None:
-            target_dt = target_dt.replace(tzinfo=None)
+            target_dt = target_dt.astimezone().replace(tzinfo=None)
     except ValueError:
         print(f"Error: could not parse start time '{start_str}'", file=sys.stderr)
         sys.exit(1)

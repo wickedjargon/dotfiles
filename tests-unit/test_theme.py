@@ -597,17 +597,23 @@ class TestVSCode:
         assert settings["window.restoreWindows"] == "none"
 
     def test_handles_comments(self, fake_home):
-        """Verify the script can handle // comments in settings.json."""
+        """Comments must survive a theme switch (settings.json is JSONC)."""
         path = fake_home / ".config" / "Code" / "User" / "settings.json"
         path.write_text(
             "{\n"
-            '    "workbench.colorTheme": "GitHub Dark Colorblind (Beta)"\n'
+            "    // leading comment\n"
+            '    "workbench.colorTheme": "GitHub Dark Colorblind (Beta)", // inline\n'
             '    // "some.commented.setting": true\n'
             "}\n"
         )
         theme_mod.switch_vscode(theme_mod.THEMES["light"])
-        settings = json.loads(path.read_text())
-        assert settings["workbench.colorTheme"] == "GitHub Light Colorblind (Beta)"
+        text = path.read_text()
+        # Value updated...
+        assert '"workbench.colorTheme": "GitHub Light Colorblind (Beta)"' in text
+        # ...and every comment preserved byte-for-byte.
+        assert "// leading comment" in text
+        assert "// inline" in text
+        assert '// "some.commented.setting": true' in text
 
     def test_missing_config(self, fake_home):
         os.remove(str(fake_home / ".config" / "Code" / "User" / "settings.json"))

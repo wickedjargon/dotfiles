@@ -276,19 +276,25 @@ def cmd_file(args):
             upload_path = processed
             tmp_path = processed
 
+    def _cleanup():
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
     url = upload_file_to_u(upload_path,
                            preserve_filename=opts.preserve_filename)
-    if tmp_path and os.path.exists(tmp_path):
-        os.unlink(tmp_path)
 
     if url:
+        _cleanup()
         copy_to_clipboard(url)
         ok(f"{url}")
         return
 
     warn("u.fftp.io failed, falling back to 0x0.st...")
 
-    url = upload_file_to_0x0(opts.file)
+    # Fall back with the SAME stripped/processed file, never the original,
+    # so EXIF/GPS metadata never leaks to the public 0x0.st host.
+    url = upload_file_to_0x0(upload_path)
+    _cleanup()
     if url:
         copy_to_clipboard(url)
         ok(f"{url}")
