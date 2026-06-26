@@ -145,6 +145,15 @@ class TestBuildRsyncOpts:
         opts = psync.build_rsync_opts()
         assert "-s" in opts
 
+    def test_excludes_hidden_by_default(self):
+        opts = psync.build_rsync_opts()
+        assert ".*" in opts
+
+    def test_exclude_hidden_false_omits_dotfile_exclude(self):
+        # Explicit single-file transfers must not drop dotfiles.
+        opts = psync.build_rsync_opts(exclude_hidden=False)
+        assert ".*" not in opts
+
 
 # ── Argument Parsing ─────────────────────────────────────────────────────────
 
@@ -567,6 +576,53 @@ class TestFileSync:
         summary = psync.do_file_sync("push", ["todo.md"], dry_run=False,
                                      delete_flag=False)
         assert "1 file synced" in summary
+
+    def test_push_dotfile_not_excluded(self, tmp_path, monkeypatch):
+        """An explicitly named dotfile must not be dropped by the .* exclude."""
+        local = tmp_path / "notes"
+        local.mkdir()
+        (local / ".env").write_text("secret")
+        monkeypatch.setattr(psync, "SYNC_DIRS", [(str(local), "/remote")])
+        monkeypatch.setattr(psync, "SYNC_EXCLUDES", {})
+        monkeypatch.setattr(psync, "_quiet", False)
+
+        captured = []
+        monkeypatch.setattr(psync, "run_rsync",
+                            lambda o, s, d: captured.append(list(o)) or (0, ""))
+        monkeypatch.setattr(psync, "phone_ssh",
+                            lambda *a: subprocess.CompletedProcess(a, 0))
+
+        psync.do_file_sync("push", [".env"], dry_run=False, delete_flag=False)
+        assert len(captured) == 1
+        assert ".*" not in captured[0]
+
+    def test_push_nested_sync_dir_not_double_matched(self, tmp_path,
+                                                     monkeypatch):
+        """A file under a nested sync dir (images/screenshots) is matched
+        once, not once per parent — no false 'Multiple matches' refusal."""
+        images = tmp_path / "images"
+        shots = images / "screenshots"
+        shots.mkdir(parents=True)
+        (shots / "shot.png").write_text("x")
+        monkeypatch.setattr(psync, "SYNC_DIRS", [
+            (str(images), "/remote/DCIM"),
+            (str(shots), "/remote/Pictures/Screenshots"),
+        ])
+        monkeypatch.setattr(psync, "SYNC_EXCLUDES",
+                            {str(images): ["screenshots"]})
+        monkeypatch.setattr(psync, "_quiet", False)
+
+        rsync_calls = []
+        monkeypatch.setattr(psync, "run_rsync",
+                            lambda o, s, d: rsync_calls.append((s, d)) or (0, ""))
+        monkeypatch.setattr(psync, "phone_ssh",
+                            lambda *a: subprocess.CompletedProcess(a, 0))
+
+        psync.do_file_sync("push", ["shot.png"], dry_run=False,
+                           delete_flag=False)
+        # Exactly one rsync call, routed to the dedicated screenshots remote.
+        assert len(rsync_calls) == 1
+        assert "Pictures/Screenshots" in rsync_calls[0][1]
 
 
 # ── Latest Sync ──────────────────────────────────────────────────────────────
@@ -1473,6 +1529,24 @@ class TestErrorTracking:
         psync.do_add([str(tmp_path / "nope.mp3")], move=False,
                      dir_override=None, push=False, dry_run=False)
         assert psync._errors == 1
+
+    def test_add_copy_failure_records_error(self, tmp_path, monkeypatch):
+        """A failed copy must record an error so the exit code is non-zero."""
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", False)
+        monkeypatch.setattr(psync, "_errors", 0)
+        f = tmp_path / "song.mp3"
+        f.write_text("music")
+
+        def boom(*a, **k):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(psync.shutil, "copy2", boom)
+
+        summary = psync.do_add([str(f)], move=False, dir_override=None,
+                               push=False, dry_run=False)
+        assert psync._errors == 1
+        assert "0 files added" in summary
 
     def test_add_collision_records_error(self, tmp_path, monkeypatch):
         monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))

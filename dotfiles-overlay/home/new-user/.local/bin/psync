@@ -11,6 +11,7 @@ import atexit
 import configparser
 from datetime import datetime
 import filecmp
+import fnmatch
 import os
 import re
 import shlex
@@ -339,21 +340,27 @@ def preflight():
 
 # ── Build rsync options ────────────────────────────────────────────
 def build_rsync_opts(use_delete=True, dry_run=False, delete_flag=False,
-                     update=False):
+                     update=False, exclude_hidden=True):
     """Build the rsync option list.
 
     Neither direction deletes by default. Use --delete to enable.
     When update is True, --update is added so newer destination files
     are not overwritten (used by the sync command).
+    When exclude_hidden is True, dotfiles are skipped — right for whole-tree
+    transfers, but callers syncing one explicitly-named file pass False so a
+    dotfile (e.g. .env) isn't silently dropped.
     """
     opts = [
         "-avz", "--progress", "--stats",
         # Send file args over the rsync protocol instead of the remote
         # shell, so paths with spaces or glob chars (*, ?, [) are safe.
         "-s",
-        "--exclude", ".*",
-        "-e", f"ssh -p {PHONE_PORT}",
     ]
+
+    if exclude_hidden:
+        opts += ["--exclude", ".*"]
+
+    opts += ["-e", f"ssh -p {PHONE_PORT}"]
 
     if use_delete and delete_flag:
         opts.append("--delete")
@@ -365,6 +372,23 @@ def build_rsync_opts(use_delete=True, dry_run=False, delete_flag=False,
         opts.append("--update")
 
     return opts
+
+
+def walk_synced(local_dir):
+    """os.walk local_dir, pruning subdirs listed in SYNC_EXCLUDES.
+
+    Some sync dirs nest inside others (e.g. images/screenshots is its own
+    entry under images). Without pruning, the local search would find files
+    under the nested dir twice — once per parent — yielding false "Multiple
+    matches" refusals and double uploads. Pruning the excluded subdirs gives
+    each file exactly one (local_dir, remote_dir) mapping.
+    """
+    excludes = SYNC_EXCLUDES.get(local_dir, [])
+    for root, dirs, fnames in os.walk(local_dir):
+        if excludes:
+            dirs[:] = [d for d in dirs
+                       if not any(fnmatch.fnmatch(d, pat) for pat in excludes)]
+        yield root, dirs, fnames
 
 
 # ── Full sync ──────────────────────────────────────────────────────
@@ -435,9 +459,10 @@ def do_full_sync(direction, dry_run, delete_flag, update=False):
 
 # ── Find files by name ─────────────────────────────────────────────
 def do_file_sync(direction, files, dry_run, delete_flag, update=False):
+    # Single explicit files: keep dotfiles (don't apply the .* exclude).
     opts = build_rsync_opts(use_delete=False,
                             dry_run=dry_run, delete_flag=delete_flag,
-                            update=update)
+                            update=update, exclude_hidden=False)
 
     if direction == "push":
         header("PUSHING files: Laptop → Phone")
@@ -454,7 +479,7 @@ def do_file_sync(direction, files, dry_run, delete_flag, update=False):
         if direction == "push":
             # Search locally
             for local_dir, remote_dir in SYNC_DIRS:
-                for root, _dirs, fnames in os.walk(local_dir):
+                for root, _dirs, fnames in walk_synced(local_dir):
                     for fn in fnames:
                         if fn == filename:
                             matches.append((local_dir, remote_dir,
@@ -509,6 +534,7 @@ def do_file_sync(direction, files, dry_run, delete_flag, update=False):
             prefix = f"{remote_dir}/"
             if not found_path.startswith(prefix):
                 warn(f"Unexpected remote path: {found_path}")
+                record_error()
                 continue
             rel_path = found_path[len(prefix):]
             local_file = os.path.join(local_dir, rel_path)
@@ -539,9 +565,10 @@ def do_file_sync(direction, files, dry_run, delete_flag, update=False):
 # ── Find latest/nth files ──────────────────────────────────────────
 def do_latest_sync(direction, count, nth, dry_run, delete_flag, update=False):
     """Sync the N most recent files, or the Nth most recent file."""
+    # Single explicit files: keep dotfiles (don't apply the .* exclude).
     opts = build_rsync_opts(use_delete=False,
                             dry_run=dry_run, delete_flag=delete_flag,
-                            update=update)
+                            update=update, exclude_hidden=False)
 
     if direction == "push":
         header("PUSHING latest files: Laptop → Phone")
@@ -556,7 +583,7 @@ def do_latest_sync(direction, count, nth, dry_run, delete_flag, update=False):
 
     if direction == "push":
         for local_dir, remote_dir in SYNC_DIRS:
-            for root, _dirs, fnames in os.walk(local_dir):
+            for root, _dirs, fnames in walk_synced(local_dir):
                 for fn in fnames:
                     fpath = os.path.join(root, fn)
                     try:
@@ -625,6 +652,7 @@ def do_latest_sync(direction, count, nth, dry_run, delete_flag, update=False):
             prefix = f"{remote_dir}/"
             if not found_path.startswith(prefix):
                 warn(f"Unexpected remote path: {found_path}")
+                record_error()
                 continue
             rel_path = found_path[len(prefix):]
             local_file = os.path.join(local_dir, rel_path)
@@ -904,6 +932,7 @@ def do_add(files, move, dir_override, push, dry_run):
                     shutil.copy2(src, dest)
             except OSError as e:
                 warn(f"Failed to {verb} {basename}: {e}")
+                record_error()
                 continue
             ok(f"{past} {basename} → {dir_name}/")
             log_write(f"{verb.upper()}: {src} → {dest}")
@@ -912,7 +941,10 @@ def do_add(files, move, dir_override, push, dry_run):
         if push:
             # In dry-run the file may not be at dest yet; push from source.
             push_src = dest if (not dry_run or os.path.exists(dest)) else src
-            opts = build_rsync_opts(use_delete=False, dry_run=dry_run)
+            # A single file is explicit — keep it even if it's a dotfile;
+            # a directory tree still skips hidden files (like full sync).
+            opts = build_rsync_opts(use_delete=False, dry_run=dry_run,
+                                    exclude_hidden=is_dir)
             if not dry_run:
                 phone_ssh(f"mkdir -p {shlex.quote(remote_dir)}")
             # Files push to an exact remote path; a directory is dropped
