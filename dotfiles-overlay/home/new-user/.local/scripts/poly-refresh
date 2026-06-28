@@ -1,0 +1,17 @@
+#!/bin/sh
+# Periodically refresh Polybar's custom/ipc modules.
+#
+# These modules only redraw when sent an IPC hook. Several have event-driven
+# triggers for user-initiated changes (bluetooth-connect/disconnect, the sxhkd
+# media keys for mpd), but state can also change with no event to hook:
+#   - USB headphones unplugged
+#   - headphones powered off or walked out of Bluetooth range
+#   - VPN brought up/down by NetworkManager
+#   - an mpd track ending, or mpd controlled from another client (mpc, ncmpcpp)
+#
+# This is the polling fallback. Polybar runs it on the [module/refresh] interval,
+# so keep that interval low enough (a couple of seconds) for near-immediate
+# updates without depending on every state change emitting an event.
+for m in vpn headphones miniroll musicozy mpd; do
+    polybar-msg action "$m" hook 0 >/dev/null 2>&1
+done

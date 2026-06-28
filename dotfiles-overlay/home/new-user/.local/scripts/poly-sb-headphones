@@ -13,6 +13,10 @@ if [ "$connected" = "yes" ]; then
     else
         echo "🎧 ?%"
     fi
+elif grep -qi 'Nothing Headphone' /proc/asound/cards; then
+    # Wired over USB: kernel registers an ALSA card even with no audio daemon.
+    # Battery isn't exposed over USB, so show just the headphone icon.
+    echo "🎧"
 else
     # Don't show anything when not connected
     echo ""
