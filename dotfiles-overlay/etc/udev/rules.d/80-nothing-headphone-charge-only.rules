@@ -1,0 +1,25 @@
+# Nothing Headphone (1): make the USB connection charge-only.
+#
+# A headphone firmware update made the device expose a USB Audio Class interface
+# that re-enumerates in a loop (a clean USB disconnect/reconnect every few
+# seconds, ~one drop per 6-13s observed). Each cycle removes the ALSA card, so
+# PipeWire yanks the default sink and reroutes playback to the built-in speakers
+# for ~1s. That is heard as periodic muting and sudden volume "spikes" (the
+# laptop speakers were set to 145%). These headphones are used over Bluetooth;
+# USB should only charge them.
+#
+# Deauthorizing the device stops the kernel from configuring ANY USB interface
+# (audio + HID consumer control) so no ALSA card or input device appears, while
+# VBUS keeps charging the battery.
+#
+# Note: deauthorizing is host-side only. The headphone still completes the USB
+# handshake (the kernel must read its descriptors to match it here), so the
+# device's firmware still sees a data host and disables its Bluetooth radio.
+# To charge AND keep Bluetooth pairing available, use a charge-only cable
+# (VBUS+GND, no D+/D-) or a USB data blocker instead.
+#
+# Identification: lsusb shows be58:0334 "Nothing Tech Nothing Headphone (1)".
+#
+# To temporarily re-enable USB audio: remove this file and re-run the deploy (or
+# `echo 1 | sudo tee /sys/bus/usb/devices/<dev>/authorized`), then replug.
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="be58", ATTR{idProduct}=="0334", ATTR{authorized}="0"
