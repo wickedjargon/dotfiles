@@ -926,24 +926,6 @@ def deploy_overlay(username, script_dir):
     except subprocess.CalledProcessError as e:
         log_error(f"Failed to chown home directory {home_dir}", e)
 
-    # Update font cache
-    try:
-        subprocess.run(["fc-cache", "-f"], check=True, capture_output=True)
-    except subprocess.CalledProcessError as e:
-        log_error("Failed to update font cache", e)
-
-    # Ensure fontconfig user configuration is enabled (50-user.conf)
-    user_conf_link = Path("/etc/fonts/conf.d/50-user.conf")
-    user_conf_target = Path("/usr/share/fontconfig/conf.avail/50-user.conf")
-
-    if not user_conf_link.exists() and user_conf_target.exists():
-        try:
-            user_conf_link.symlink_to(user_conf_target)
-        except (OSError, IOError) as e:
-            log_error(
-                "Failed to enable fontconfig user configuration (50-user.conf)", e
-            )
-
     if failed_files:
         error_msg = f"Failed to deploy: {', '.join([f[0] for f in failed_files])}"
         return False, error_msg, backup_dir, backed_up_items
@@ -1082,6 +1064,41 @@ def configure_keyd():
         return False, error_msg
 
 
+def configure_fonts():
+    """Refresh the font cache and enable fontconfig's user configuration.
+
+    Called after deploy_overlay has copied any font files into place. Rebuilds
+    the fontconfig cache (fc-cache) so newly deployed fonts are picked up, and
+    enables the user-config drop-in (/etc/fonts/conf.d/50-user.conf) so a user's
+    ~/.config/fontconfig is honored. Both steps are best-effort.
+
+    Returns: (success, error_message)
+    """
+    errors = []
+
+    # Rebuild the font cache so newly deployed fonts are picked up.
+    try:
+        subprocess.run(["fc-cache", "-f"], check=True, capture_output=True)
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        log_error("Failed to update font cache", e)
+        errors.append("fc-cache failed")
+
+    # Enable fontconfig user configuration (50-user.conf) if it's available and
+    # not already enabled.
+    user_conf_link = Path("/etc/fonts/conf.d/50-user.conf")
+    user_conf_target = Path("/usr/share/fontconfig/conf.avail/50-user.conf")
+    if not user_conf_link.exists() and user_conf_target.exists():
+        try:
+            user_conf_link.symlink_to(user_conf_target)
+        except (OSError, IOError) as e:
+            log_error(
+                "Failed to enable fontconfig user configuration (50-user.conf)", e
+            )
+            errors.append("50-user.conf symlink failed")
+
+    if errors:
+        return False, "; ".join(errors)
+    return True, None
 
 
 def install_firefox_extensions(script_dir):

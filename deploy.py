@@ -266,6 +266,15 @@ def dry_run_preview(args, script_dir):
             }
         )
 
+    # Fonts
+    steps.append(
+        {
+            "step": "fonts",
+            "action": "configure",
+            "detail": "Rebuild font cache and enable fontconfig user config",
+        }
+    )
+
     # Source repos
     src_repos = deploy_lib.read_git_packages_src_file(script_dir)
     if src_repos:
@@ -677,6 +686,15 @@ def main(argv=None):
             if not args.json:
                 print(f"  Backed up existing files to: {backup_dir.name}")
             row += 1
+
+    # ── Configure fonts ────────────────────────────────────────────
+
+    success, error = deploy_lib.configure_fonts()
+    if not success:
+        json_result["warnings"].append(f"fonts: {error}")
+        if not args.json:
+            print(f"\033[33m  Warning: {error}\033[0m")
+        row += 1
 
     # ── Clone and build source repos ───────────────────────────────
 
