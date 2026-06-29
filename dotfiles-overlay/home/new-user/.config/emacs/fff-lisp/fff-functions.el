@@ -1670,6 +1670,8 @@ The DWIM behaviour of this command is as follows:
 - When the region is active, disable it.
 - When a minibuffer is open, but not focused, close the minibuffer.
 - When the Completions buffer is selected, close it.
+- When `evil-mode' is active and not already in normal state, return
+  to normal state (so this acts as a universal escape).
 - In every other case use the regular `keyboard-quit'."
   (interactive)
   (cond
@@ -1679,6 +1681,9 @@ The DWIM behaviour of this command is as follows:
     (delete-completion-window))
    ((>  ( minibuffer-depth)  0)
     (abort-recursive-edit))
+   ((and (bound-and-true-p evil-local-mode)
+         (not (evil-normal-state-p)))
+    (evil-force-normal-state))
    (t
     (keyboard-quit))))
 
