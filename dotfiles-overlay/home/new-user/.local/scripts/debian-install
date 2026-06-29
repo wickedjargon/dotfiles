@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# debian-install — install Debian from the /tmp netinst ISO into a qcow2 disk.
+#
+# The disk is named using rofi-explorer's convention <name>.<arch>.<ramGB>.qcow2
+# so that, once installed, it can be booted straight from rofi-explorer (which
+# launches *.qcow2 files in QEMU).
+#
+# Launch from rofi-explorer the same way as debian-download. With no tty it
+# re-execs inside alacritty.
+set -euo pipefail
+
+if [ ! -t 1 ]; then
+    exec alacritty -e "$0" "$@"
+fi
+
+finish() { read -rp "Press Enter to close..."; }
+
+ISO=$(ls -1t /tmp/debian-*-amd64-netinst.iso 2>/dev/null | head -n1 || true)
+if [ -z "$ISO" ]; then
+    echo "!! No Debian ISO in /tmp. Run debian-download first." >&2
+    finish; exit 1
+fi
+
+for bin in qemu-system-x86_64 qemu-img; do
+    if ! command -v "$bin" >/dev/null 2>&1; then
+        echo "!! $bin not found." >&2
+        echo "   Install with: sudo apt install qemu-system-x86 qemu-utils" >&2
+        finish; exit 1
+    fi
+done
+
+# rofi-explorer parses the stem as <name>.<arch>.<ramGB> — keep these in sync.
+ARCH="x86_64"
+RAM_GB="2"
+DISK_GB="20"
+DISK="/tmp/debian.${ARCH}.${RAM_GB}GB.qcow2"
+
+if [ ! -f "$DISK" ]; then
+    echo ">> Creating ${DISK_GB}G disk: $DISK"
+    qemu-img create -f qcow2 "$DISK" "${DISK_GB}G"
+else
+    echo ">> Reusing existing disk: $DISK"
+fi
+
+# Use hardware acceleration when /dev/kvm is usable.
+KVM=()
+if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+    KVM=(-enable-kvm)
+else
+    echo "!! /dev/kvm not available — falling back to slow software emulation."
+fi
+
+echo ">> Booting the Debian installer from: $ISO"
+echo ">> When the install finishes and the VM powers off, you can boot the"
+echo ">> installed system from rofi-explorer by opening:"
+echo ">>     $DISK"
+echo
+
+qemu-system-x86_64 \
+    "${KVM[@]}" \
+    -m "${RAM_GB}G" \
+    -drive file="$DISK",format=qcow2 \
+    -cdrom "$ISO" \
+    -boot order=d \
+    -net user -net nic \
+    -device intel-hda -device hda-output \
+    -display gtk,zoom-to-fit=on
+
+echo ">> Installer session ended."
+echo ">> Disk: $DISK"
+finish

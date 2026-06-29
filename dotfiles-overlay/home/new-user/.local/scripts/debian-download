@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# debian-download — fetch the current Debian amd64 netinst ISO into /tmp.
+#
+# Built to be launched from rofi-explorer (run with --run-executables, or via
+# the Alt path). When started without a controlling terminal — i.e. from a GUI
+# launcher — it re-execs itself inside alacritty so progress is visible.
+set -euo pipefail
+
+# GUI launch has no tty: pop a terminal so the user can see/interact.
+if [ ! -t 1 ]; then
+    exec alacritty -e "$0" "$@"
+fi
+
+BASE="https://cdimage.debian.org/debian-cd/current/amd64/iso-cd"
+DEST_DIR="/tmp"
+
+finish() { read -rp "Press Enter to close..."; }
+
+echo ">> Looking up the current Debian netinst image..."
+ISO=$(curl -fsSL "$BASE/" \
+    | grep -oE 'debian-[0-9.]+-amd64-netinst\.iso' \
+    | head -n1)
+
+if [ -z "${ISO:-}" ]; then
+    echo "!! Could not determine the netinst filename from $BASE/" >&2
+    finish; exit 1
+fi
+
+DEST="$DEST_DIR/$ISO"
+echo ">> Downloading $ISO"
+echo "   -> $DEST"
+curl -fL --continue-at - -o "$DEST" "$BASE/$ISO"
+
+echo ">> Verifying SHA256 checksum..."
+EXPECTED=$(curl -fsSL "$BASE/SHA256SUMS" | awk -v f="$ISO" '$2 == f { print $1 }')
+if [ -n "$EXPECTED" ]; then
+    ACTUAL=$(sha256sum "$DEST" | awk '{ print $1 }')
+    if [ "$EXPECTED" = "$ACTUAL" ]; then
+        echo ">> Checksum OK."
+    else
+        echo "!! Checksum MISMATCH" >&2
+        echo "   expected: $EXPECTED" >&2
+        echo "   actual:   $ACTUAL" >&2
+        finish; exit 1
+    fi
+else
+    echo "!! No checksum entry found; skipping verification."
+fi
+
+echo
+echo ">> Done. ISO saved at: $DEST"
+echo ">> Next: run debian-install to install it into a QEMU disk."
+finish
