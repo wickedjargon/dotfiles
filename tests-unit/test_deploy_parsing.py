@@ -51,6 +51,23 @@ https://github.com/user/zsh.git .zsh
 
 
     @patch('pathlib.Path.exists')
+    def test_read_pipx_packages_file(self, mock_exists):
+        mock_exists.return_value = True
+        # Comments (full-line and inline), whitespace, and an invalid name
+        # that must be filtered out (no shell-unsafe characters survive).
+        content = """
+# pipx packages
+edge-tts   # inline comment
+  another_pkg
+# full line comment
+bad name with spaces
+"""
+        with patch('builtins.open', mock_open(read_data=content)):
+            packages = deploy_lib.read_pipx_packages_file(Path("/tmp"))
+
+            self.assertEqual(packages, ["edge-tts", "another_pkg"])
+
+    @patch('pathlib.Path.exists')
     def test_parsing_edge_cases(self, mock_exists):
         # Comprehensive test for comments, whitespace, and filtering
         mock_exists.return_value = True

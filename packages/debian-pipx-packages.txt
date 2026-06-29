@@ -1,0 +1,11 @@
+# pipx Packages
+# Format: one PyPI package name per line. Lines starting with # are comments;
+# inline comments after a # are stripped.
+#
+# These are Python CLI applications with no Debian package, installed per-user
+# via pipx (each into its own isolated venv under ~/.local/pipx, with the
+# entry-point symlinked into ~/.local/bin). pipx itself comes from the apt list.
+# Installed as the target user, never as root, so the binaries land on the
+# user's PATH rather than in /root.
+
+edge-tts   # Microsoft Edge online TTS engine — backs the `speak` tool bound to super+s / super+u

@@ -288,6 +288,17 @@ def dry_run_preview(args, script_dir):
                 }
             )
 
+    # pipx packages
+    pipx_packages = deploy_lib.read_pipx_packages_file(script_dir)
+    for pkg in pipx_packages:
+        steps.append(
+            {
+                "step": "pipx_install",
+                "action": "install",
+                "detail": f"{pkg} (pipx, per-user)",
+            }
+        )
+
     # Tor Browser
     if (script_dir / "scripts/install-debian-tor-browser.sh").exists():
         steps.append(
@@ -709,6 +720,28 @@ def main(argv=None):
         else:
             row += 1
             err = f"Failed to build: {', '.join(failed_repos)}"
+            json_result["errors"].append(err)
+            if not handle_error(args, cli, err):
+                json_result["success"] = False
+                if args.json:
+                    print(json_mod.dumps(json_result))
+                sys.exit(1)
+            had_errors = True
+            row += 3
+
+    # ── Install pipx packages (per-user) ───────────────────────────
+
+    pipx_packages = deploy_lib.read_pipx_packages_file(script_dir)
+    if pipx_packages:
+        success, failed_pipx, row = deploy_lib.install_pipx_packages(
+            pipx_packages, username, cli, row
+        )
+
+        if success:
+            row += 1
+        else:
+            row += 1
+            err = f"Failed to install pipx packages: {', '.join(failed_pipx)}"
             json_result["errors"].append(err)
             if not handle_error(args, cli, err):
                 json_result["success"] = False

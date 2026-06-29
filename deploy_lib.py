@@ -251,6 +251,42 @@ def read_git_packages_src_file(script_dir):
     return repos
 
 
+def read_pipx_packages_file(script_dir):
+    """Read PyPI package names from the pipx-packages file.
+
+    Format: one package name per line, `#` for comments (full-line or inline).
+    These are installed per-user via pipx, not apt (see install_pipx_packages).
+    """
+    packages_file = script_dir / "packages/debian-pipx-packages.txt"
+    if not packages_file.exists():
+        return []
+
+    packages = []
+    with open(packages_file, "r") as f:
+        for line_num, line in enumerate(f, 1):
+            line = line.strip()
+            # Skip empty lines and full-line comments
+            if not line or line.startswith("#"):
+                continue
+
+            # Handle inline comments
+            if "#" in line:
+                line = line.split("#")[0].strip()
+
+            if line:
+                # PyPI distribution names: letters/digits/._- only. Reject
+                # anything else so a malformed line can't reach the shell.
+                if not re.match(r"^[A-Za-z0-9][A-Za-z0-9._-]*$", line):
+                    log_error(
+                        f"Skipping invalid pipx package at line {line_num}",
+                        context=f"File: {packages_file}, name: {line}",
+                    )
+                    continue
+                packages.append(line)
+
+    return packages
+
+
 def is_safe_dest_path(dest_path):
     """Validate that destination path doesn't escape home directory"""
     # Reject absolute paths and path traversal attempts
@@ -782,6 +818,53 @@ def install_packages(packages, tui, start_row):
             failed_packages.append(package)
 
     # Summary
+    if failed_packages:
+        return False, failed_packages, start_row
+
+    return True, None, start_row
+
+
+def install_pipx_packages(packages, username, tui, start_row):
+    """Install PyPI CLI apps via pipx, as the target user (never root).
+
+    pipx is run through `runuser -u <username>`, which switches uid/gid and
+    sets HOME via PAM, so the venvs land under the user's ~/.local/pipx and the
+    entry points symlink into ~/.local/bin (on the user's PATH) rather than in
+    /root. Idempotent: pipx exits non-zero with an "already installed" message
+    when the package is present, which we treat as success.
+    """
+    if not packages:
+        return True, None, start_row
+
+    failed_packages = []
+
+    progress_row = start_row
+    start_row += 1
+
+    for i, package in enumerate(packages, 1):
+        progress_msg = f"Installing pipx Package {i}/{len(packages)}: {package[:30]}"
+        tui.show_message(progress_row, 4, progress_msg.ljust(60), color_pair=0)
+        tui.stdscr.refresh()
+
+        try:
+            subprocess.run(
+                ["runuser", "-u", username, "--", "pipx", "install", package],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+        except subprocess.CalledProcessError as e:
+            # Already-installed is not a failure — pipx reports it on stdout.
+            output = (e.stdout or "") + (e.stderr or "")
+            if "already seems to be installed" in output:
+                continue
+            log_error(f"Failed to install pipx package: {package}", e)
+            failed_packages.append(package)
+        except subprocess.TimeoutExpired as e:
+            log_error(f"Timed out installing pipx package: {package}", e)
+            failed_packages.append(package)
+
     if failed_packages:
         return False, failed_packages, start_row
 

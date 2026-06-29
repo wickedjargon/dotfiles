@@ -142,6 +142,7 @@ pkg-config               # Manages compile/link flags for libraries
 gdb                      # GNU debugger
 clangd                   # C/C++ language server
 python3-pytest           # Python test framework (runs tests-unit/ suite)
+pipx                     # Installs Python CLI apps in isolated venvs (edge-tts for the `speak` TTS tool)
 libpoppler-glib-dev      # PDF rendering library for pdf-tools (Emacs)
 libpng-dev               # PNG library for pdf-tools (Emacs)
 libx11-dev               # X11 client library development files
