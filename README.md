@@ -119,6 +119,8 @@ python3 ~/d/projects/dotfiles/scripts/install_arch_packages.py
 
 I set `Custom key mappings` in the Vimium extension to this so that i only have the motion keys and nothing else.
 
+# Insert your preferred key mappings here.
+
 ```
 unmapAll
 map h scrollLeft
@@ -129,5 +131,10 @@ map d scrollPageDown
 map u scrollPageUp
 map gg scrollToTop
 map G scrollToBottom
+map 0 zoomReset
+map = zoomIn
+map - zoomOut
+map H goBack
+map L goForward
 ```
 
