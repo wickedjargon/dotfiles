@@ -27,14 +27,39 @@ def notify(title, message, urgency="normal"):
     run_command(f'notify-send -u {urgency} "{title}" "{message}"')
 
 
-def bluetoothctl_connect(mac):
-    """Trust and connect command to bluetoothctl."""
-    cmd = f'printf "trust {mac}\\nconnect {mac}\\nexit\\n" | bluetoothctl'
-    stdout, stderr, code = run_command(cmd)
+def is_connected(mac):
+    """Return True if the device currently reports Connected: yes."""
+    stdout, _, _ = run_command(f'bluetoothctl info "{mac}"', timeout=3)
+    match = re.search(r'Connected:\s+(\w+)', stdout)
+    return bool(match and match.group(1).lower() == 'yes')
+
+
+def clear_pending(mac):
+    """Cancel any in-flight or half-open connection attempt.
+
+    A previous aborted try (e.g. the headphones were off, or got powered on
+    mid-attempt) can leave a pending connect inside bluetoothd. While it lingers,
+    every fresh `connect` fails immediately with org.bluez.Error.InProgress, so
+    the device "never connects again" until something cancels it. Issuing a
+    disconnect clears that state. Harmless when nothing is pending.
+    """
+    run_command(f'bluetoothctl disconnect "{mac}"', timeout=10)
+
+
+def bluetoothctl_connect(mac, timeout=20):
+    """Trust, then connect, BLOCKING until bluetoothd resolves the attempt.
+
+    Unlike a fire-and-forget `connect; exit`, this waits for the result, so a
+    device that is slow to wake from standby still completes on the first try.
+    If it exceeds the timeout, killing bluetoothctl cancels the pending attempt
+    rather than orphaning it inside bluetoothd.
+    """
+    run_command(f'bluetoothctl trust "{mac}"', timeout=5)
+    _, _, code = run_command(f'bluetoothctl connect "{mac}"', timeout=timeout)
     return code == 0
 
 
-def check_connected(mac, max_attempts=6, interval=0.5):
+def check_connected(mac, max_attempts=16, interval=0.5):
     """Poll bluetoothctl to verify device is connected."""
     for attempt in range(max_attempts):
         stdout, _, _ = run_command(f'bluetoothctl info "{mac}"', timeout=3)
@@ -96,11 +121,19 @@ def main():
 
     print(f"Connecting to {name}...")
 
-    # Step 1: Send connect command
+    # Step 0: Clear any stale/half-open attempt from a prior aborted try, so it
+    # can't make this connect fail with InProgress. Skip if already connected,
+    # to avoid disrupting a healthy session.
+    if not is_connected(mac):
+        clear_pending(mac)
+
+    # Step 1: Connect (blocks until bluetoothd resolves the attempt)
     bluetoothctl_connect(mac)
 
-    # Step 2: Verify connection (max 3 seconds)
+    # Step 2: Verify connection (poll up to ~8s for a slow cold-start)
     if not check_connected(mac):
+        # Cancel the failed/half-open attempt so the NEXT try starts clean.
+        clear_pending(mac)
         msg = f"Failed to connect to {name}"
         print(f"Error: {msg}")
         notify("Bluetooth Connection Failed", msg)
