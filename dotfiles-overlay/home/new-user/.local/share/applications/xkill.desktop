@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Kill Window (xkill)
+GenericName=Force Quit
+Comment=Click a window to force-kill the client that created it
+Exec=xkill
+Icon=process-stop
+Type=Application
+Terminal=false
+Categories=System;Utility;
+StartupNotify=false
+Keywords=kill;force;quit;close;window;xkill;
