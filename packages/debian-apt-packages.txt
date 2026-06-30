@@ -75,14 +75,18 @@ vis                      # Modal text editor combining vim and sam ideas
 distrobox                # Container management tool
 podman                   # Container management tool
 flatpak                  # Application sandboxing and distribution (needed for distrobox-host-exec)
-qemu-user-static         # QEMU user mode emulation binaries (static)
-binfmt-support           # Support for extra binary formats (for transparent emulation)
 usbutils                 # USB utilities (lsusb, etc)
 adb                      # Android Debug Bridge (USB file transfer, debugging)
 rsync                    # Remote sync utility
 fastfetch                # System information display tool
 rclone                   # Cloud storage sync utility
 pass                     # Standard unix password manager (GPG-encrypted)
+
+# Virtualization
+qemu-system-x86          # QEMU full-system emulator for x86/x86_64 (run VMs)
+qemu-utils               # QEMU disk image tools (qemu-img, qemu-nbd)
+qemu-user-static         # QEMU user-mode emulation (run foreign-arch binaries via binfmt)
+binfmt-support           # Register extra binary formats (transparent foreign-arch exec)
 
 # Graphical Applications
 firefox-esr              # Web browser (Extended Support Release)
