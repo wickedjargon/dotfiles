@@ -33,7 +33,11 @@ done
 ARCH="x86_64"
 RAM_GB="2"
 DISK_GB="20"
-DISK="/tmp/debian.${ARCH}.${RAM_GB}GB.qcow2"
+# Persist the installed disk under ~/virtual-machines (NOT /tmp, which is wiped
+# on reboot and would lose the install).
+VM_DIR="$HOME/virtual-machines"
+mkdir -p "$VM_DIR"
+DISK="${VM_DIR}/debian.${ARCH}.${RAM_GB}GB.qcow2"
 
 if [ ! -f "$DISK" ]; then
     echo ">> Creating ${DISK_GB}G disk: $DISK"
