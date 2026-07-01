@@ -4,7 +4,5 @@
 android-sdk
 android-sdk-build-tools
 android-sdk-platform-tools
-godot-export-templates-web-bin
 google-chrome
-mahjong
 visual-studio-code-bin

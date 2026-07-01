@@ -16,7 +16,6 @@ git-lfs
 github-cli
 glibc-locales
 go
-godot
 gradle
 hugo
 imagemagick
