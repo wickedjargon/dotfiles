@@ -136,6 +136,21 @@ def fake_home(tmp_path, monkeypatch):
         'DMENU_FONT="monospace-10"\n'
     )
 
+    # VS Code
+    vscode = home / ".config" / "Code" / "User"
+    vscode.mkdir(parents=True)
+    (vscode / "settings.json").write_text(
+        json.dumps(
+            {
+                "editor.minimap.enabled": False,
+                "workbench.colorTheme": "GitHub Dark Colorblind (Beta)",
+                "window.restoreWindows": "none",
+            },
+            indent=4,
+        )
+        + "\n"
+    )
+
     # Alacritty
     alacritty = home / ".config" / "alacritty"
     alacritty.mkdir(parents=True)
@@ -557,6 +572,54 @@ class TestZathura:
         theme_mod.switch_zathura(theme_mod.THEMES["light"])
 
 
+# ── Milestone 3 Tests ────────────────────────────────────────────────────────
+
+
+class TestVSCode:
+    def test_switch_to_light(self, fake_home):
+        theme_mod.switch_vscode(theme_mod.THEMES["light"])
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
+        settings = json.loads(path.read_text())
+        assert settings["workbench.colorTheme"] == "GitHub Light Colorblind (Beta)"
+
+    def test_switch_to_dark(self, fake_home):
+        theme_mod.switch_vscode(theme_mod.THEMES["light"])
+        theme_mod.switch_vscode(theme_mod.THEMES["dark"])
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
+        settings = json.loads(path.read_text())
+        assert settings["workbench.colorTheme"] == "GitHub Dark Colorblind (Beta)"
+
+    def test_preserves_other_settings(self, fake_home):
+        theme_mod.switch_vscode(theme_mod.THEMES["light"])
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
+        settings = json.loads(path.read_text())
+        assert settings["editor.minimap.enabled"] is False
+        assert settings["window.restoreWindows"] == "none"
+
+    def test_handles_comments(self, fake_home):
+        """Comments must survive a theme switch (settings.json is JSONC)."""
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
+        path.write_text(
+            "{\n"
+            "    // leading comment\n"
+            '    "workbench.colorTheme": "GitHub Dark Colorblind (Beta)", // inline\n'
+            '    // "some.commented.setting": true\n'
+            "}\n"
+        )
+        theme_mod.switch_vscode(theme_mod.THEMES["light"])
+        text = path.read_text()
+        # Value updated...
+        assert '"workbench.colorTheme": "GitHub Light Colorblind (Beta)"' in text
+        # ...and every comment preserved byte-for-byte.
+        assert "// leading comment" in text
+        assert "// inline" in text
+        assert '// "some.commented.setting": true' in text
+
+    def test_missing_config(self, fake_home):
+        os.remove(str(fake_home / ".config" / "Code" / "User" / "settings.json"))
+        theme_mod.switch_vscode(theme_mod.THEMES["light"])
+
+
 # ── Integration Tests ────────────────────────────────────────────────────────
 
 
@@ -586,6 +649,10 @@ class TestApplyTheme:
         content = (fake_home / ".config" / "dmenu" / "config").read_text()
         assert "-nb #E8E8EE" in content
 
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
+        settings = json.loads(path.read_text())
+        assert settings["workbench.colorTheme"] == "GitHub Light Colorblind (Beta)"
+
     def test_apply_dark(self, fake_home, monkeypatch):
         _mock_system(monkeypatch)
         theme_mod.apply_theme("light")
@@ -597,6 +664,10 @@ class TestApplyTheme:
 
         content = (fake_home / ".config" / "polybar" / "config.ini").read_text()
         assert "#01010A" in content
+
+        path = fake_home / ".config" / "Code" / "User" / "settings.json"
+        settings = json.loads(path.read_text())
+        assert settings["workbench.colorTheme"] == "GitHub Dark Colorblind (Beta)"
 
     def test_toggle_from_dark(self, fake_home, monkeypatch):
         _mock_system(monkeypatch)
@@ -708,7 +779,7 @@ class TestVerify:
     def test_build_checks_covers_switchers(self, fake_home):
         checks = theme_mod.build_verify_checks(theme_mod.THEMES["dark"])
         labels = {c[0] for c in checks}
-        for expected in ("gtk-3.0", "qt5ct", "alacritty", "rofi", "zathura"):
+        for expected in ("gtk-3.0", "qt5ct", "alacritty", "rofi", "zathura", "vscode"):
             assert expected in labels
         for _label, _path, expected_values in checks:
             assert expected_values  # never an empty expectation list

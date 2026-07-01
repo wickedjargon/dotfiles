@@ -30,7 +30,7 @@
 ;; - smartparens
 ;; - evil-snipe
 
-;; TODO: improve `space c p' file display:
+;; TODO: make `space c p' behave more like vscode.
 ;; only display file names (without path) or
 ;; display filenames first with path less prominent in grey next to it.
 
@@ -907,7 +907,7 @@ TTY frames (standalone non-daemon only) get tty-dark."
 
 (use-package svelte-mode :straight t :mode "\\.svelte\\'")
 
-;; live-reload preview server for HTML
+;; live server behavior of vs code
 (use-package simple-httpd :straight t :defer t)
 
 (use-package impatient-mode :straight t :defer t

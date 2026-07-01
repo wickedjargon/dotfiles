@@ -114,7 +114,7 @@ rofi                     # Window switcher, run dialog
 dunst                    # Lightweight notification daemon
 libnotify-bin            # Desktop notifications (notify-send)
 lxpolkit                 # Lightweight PolicyKit authentication agent
-gnome-keyring            # Secret service daemon (org.freedesktop.secrets for libsecret apps)
+gnome-keyring            # Secret service daemon (org.freedesktop.secrets for VS Code/libsecret)
 libpam-gnome-keyring     # PAM module: unlock the login keyring at tty login
 libsecret-tools          # secret-tool: store/lookup secrets (keyring testing)
 unclutter                # Hide mouse cursor when idle

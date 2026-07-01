@@ -899,6 +899,12 @@ but only if the buffer is read-only."
   (let ((filename (buffer-file-name)))
     (browse-url (concat "file://" filename))))
 
+(defun fff-open-current-dir-in-vscode ()
+  "Open the current directory in Visual Studio Code."
+  (interactive)
+  (let ((current-dir default-directory))
+    (start-process "vscode" nil "code" current-dir)))
+
 (defun fff-play-url-at-point-with-mpv ()
   "Play the URL at point with mpv if it's a valid URL."
   (interactive)

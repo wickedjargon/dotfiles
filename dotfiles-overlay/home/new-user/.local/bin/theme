@@ -68,6 +68,8 @@ THEMES = {
         # Zathura
         "zathura_bg": "#0d0e1c",
         "zathura_fg": "#ebdbb2",
+        # VS Code
+        "vscode_theme": "GitHub Dark Colorblind (Beta)",
         # Alacritty
         "alacritty_bg": "#0d0e1c",
         "alacritty_fg": "#ebdbb2",
@@ -147,6 +149,8 @@ THEMES = {
         # Zathura
         "zathura_bg": "#fbf1c7",
         "zathura_fg": "#3c3836",
+        # VS Code
+        "vscode_theme": "GitHub Light Colorblind (Beta)",
         # Alacritty
         "alacritty_bg": "#fbf1c7",
         "alacritty_fg": "#3c3836",
@@ -584,6 +588,45 @@ def restart_services():
     print("  Services restarted (polybar, dunst, xob)")
 
 
+def switch_vscode(theme):
+    """Update VS Code color theme in settings.json.
+
+    Edits only the "workbench.colorTheme" value with a targeted regex so that
+    all comments and custom formatting in the user's settings.json are left
+    byte-for-byte intact. settings.json is JSONC (comments allowed), so a
+    full parse-and-rewrite would destroy data and choke on inline comments.
+    """
+    path = os.path.join(HOME, ".config", "Code", "User", "settings.json")
+    if not os.path.exists(path):
+        print("  vscode → skipped (settings.json not found)")
+        return
+    with open(path) as f:
+        raw = f.read()
+    # JSON-escaped, quoted value (handles names needing escaping).
+    new_value = json.dumps(theme["vscode_theme"])
+    # Replace only the existing key's string value; a function repl avoids
+    # backreference interpretation of any backslashes in new_value.
+    content, n = re.subn(
+        r'("workbench\.colorTheme"\s*:\s*)"(?:[^"\\]|\\.)*"',
+        lambda m: m.group(1) + new_value,
+        raw,
+    )
+    if n == 0:
+        # Key absent — insert it as a new line right after the opening brace.
+        content, n = re.subn(
+            r"\{",
+            lambda m: m.group(0) + f'\n    "workbench.colorTheme": {new_value},',
+            raw,
+            count=1,
+        )
+        if n == 0:
+            print("  vscode → skipped (could not locate insertion point)")
+            return
+    with open(path, "w") as f:
+        f.write(content)
+    print(f"  vscode → {theme['vscode_theme']}")
+
+
 def restart_xdg_portal():
     """Restart xdg-desktop-portal-gtk to pick up theme changes."""
     try:
@@ -836,6 +879,7 @@ def apply_theme(mode, no_restart=False):
         restart_services()
 
     # Milestone 3: Editors & portal
+    switch_vscode(theme)
     switch_alacritty(theme)
     switch_rofi(theme)
     switch_wallpaper(theme)
@@ -917,6 +961,11 @@ def build_verify_checks(theme):
                 theme["dmenu_sb"],
                 theme["dmenu_sf"],
             ],
+        ),
+        (
+            "vscode",
+            j(HOME, ".config", "Code", "User", "settings.json"),
+            [theme["vscode_theme"]],
         ),
         (
             "rofi",
