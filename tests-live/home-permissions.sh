@@ -26,7 +26,7 @@ for dir in ".config" ".local" ".local/src" ".mozilla"; do
 done
 
 # Try a deeper spot-check of some common config directories
-for dir in "bspwm" "sxhkd" "polybar" "Code"; do
+for dir in "bspwm" "sxhkd" "polybar"; do
     target="$HOME_DIR/.config/$dir"
     if [ -d "$target" ]; then
         owner=$(stat -c '%U' "$target")

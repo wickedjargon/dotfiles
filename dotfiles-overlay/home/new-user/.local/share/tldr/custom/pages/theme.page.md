@@ -1,7 +1,7 @@
 # theme
 
 > Universal theme toggle for the desktop environment.
-> Switches GTK, Qt, Kvantum, polybar, bspwm, dunst, dmenu, rofi, alacritty, zathura, calibre, sxiv, xob, and VS Code between dark and light themes.
+> Switches GTK, Qt, Kvantum, polybar, bspwm, dunst, dmenu, rofi, alacritty, zathura, calibre, sxiv, and xob between dark and light themes.
 
 - Switch to dark theme:
 

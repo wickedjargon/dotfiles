@@ -1,7 +1,7 @@
 # Auto-unlock the GNOME login keyring on tty login (no display manager).
 # The auth line captures the login password; the session line starts
 # gnome-keyring-daemon and unlocks (or creates, on a fresh machine) the
-# login keyring with that password. This is what lets VS Code / libsecret
+# login keyring with that password. This is what lets libsecret-based apps
 # use the org.freedesktop.secrets store without the "OS keyring is not
 # available" warning. Lines are appended if missing (see deploy_patches).
 auth optional pam_gnome_keyring.so

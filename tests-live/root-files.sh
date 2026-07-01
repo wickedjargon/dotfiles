@@ -26,7 +26,6 @@ THEME_MANAGED="
 .config/Kvantum/kvantum.kvconfig
 .config/qt5ct/qt5ct.conf
 .config/qt6ct/qt6ct.conf
-.config/Code/User/settings.json
 .gtkrc-2.0
 .config/calibre/viewer-webengine.json
 .config/polybar/config.ini
