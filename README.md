@@ -117,9 +117,8 @@ python3 ~/d/projects/dotfiles/scripts/install_arch_packages.py
 
 ### 8. Vimium Key Mappings
 
-I set `Custom key mappings` in the Vimium extension to this so that i only have the motion keys and nothing else.
+I set `Custom key mappings` in the Vimium extension to the below so that i only have a small subset of the keybindings the extension uses.
 
-# Insert your preferred key mappings here.
 
 ```
 unmapAll
