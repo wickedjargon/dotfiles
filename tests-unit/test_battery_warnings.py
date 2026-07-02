@@ -26,15 +26,15 @@ class TestBatteryMonitor(unittest.TestCase):
         self.monitor = self.script.BatteryMonitor()
         self.monitor.notify = MagicMock()
         self.monitor.play_sound = MagicMock()
-        
+
         # Mock the get_file_content method
         self.monitor.get_file_content = MagicMock()
 
     def test_battery_critical(self):
         self.monitor.get_file_content.side_effect = lambda f: "Discharging" if f == "status" else "5"
-        
+
         self.monitor.check_battery()
-        
+
         self.monitor.notify.assert_called_with("critical", "Battery Critical", "Level is at 5%.")
         self.monitor.play_sound.assert_called()
         self.assertTrue(self.monitor.sent_10)
@@ -42,9 +42,9 @@ class TestBatteryMonitor(unittest.TestCase):
 
     def test_battery_low(self):
         self.monitor.get_file_content.side_effect = lambda f: "Discharging" if f == "status" else "15"
-        
+
         self.monitor.check_battery()
-        
+
         self.monitor.notify.assert_called_with("normal", "Battery Low", "Level is at 15%.")
         self.monitor.play_sound.assert_called()
         self.assertFalse(self.monitor.sent_10)
@@ -54,11 +54,11 @@ class TestBatteryMonitor(unittest.TestCase):
         # Setup: previously notified
         self.monitor.sent_10 = True
         self.monitor.sent_20 = True
-        
+
         self.monitor.get_file_content.side_effect = lambda f: "Charging" if f == "status" else "25"
-        
+
         self.monitor.check_battery()
-        
+
         self.monitor.notify.assert_called_with("low", "Charging", "Battery recovering...", expire_time=2000)
         self.assertFalse(self.monitor.sent_10)
         self.assertFalse(self.monitor.sent_20)
@@ -67,9 +67,9 @@ class TestBatteryMonitor(unittest.TestCase):
         # Already notified critical
         self.monitor.sent_10 = True
         self.monitor.get_file_content.side_effect = lambda f: "Discharging" if f == "status" else "5"
-        
+
         self.monitor.check_battery()
-        
+
         self.monitor.notify.assert_not_called()
 
     @patch('subprocess.run')
