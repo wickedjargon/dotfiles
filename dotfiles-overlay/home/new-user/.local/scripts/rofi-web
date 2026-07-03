@@ -8,7 +8,7 @@ search() {
     eval "$2"
 }
 
-selection=$(printf "Firefox\nFirefox Private\nGoogle Chrome\nTor Browser\nBookmarks\nUpload Selection\nGmail\nWhatsApp\nTelegram\nYouTube\nGoogle Calendar\nSearch Google\nSearch Yandex\nSearch Wiby\nSearch Wikipedia\nSearch YouTube\nSearch Yeetube\nYouTube to MPV" | rofi -dmenu -i -p "Web" -kb-custom-1 "Alt+c")
+selection=$(printf "Google Chrome\nFirefox\nFirefox Private\nTor Browser\nBookmarks\nUpload Selection\nGmail\nWhatsApp\nTelegram\nYouTube\nGoogle Calendar\nSearch Google\nSearch Yandex\nSearch Wiby\nSearch Wikipedia\nSearch YouTube\nSearch Yeetube\nYouTube to MPV" | rofi -dmenu -i -p "Web" -kb-custom-1 "Alt+c")
 exit_code=$?
 
 [ $exit_code -eq 1 ] && exit 0

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Google Chrome
+GenericName=Web Browser
+Comment=Access the Internet
+MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/x-extension-htm;application/x-extension-html;application/x-extension-shtml;application/x-extension-xhtml;application/x-extension-xht;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/chrome;
+Exec=/usr/bin/distrobox-enter -n archbox -- /usr/bin/google-chrome-stable %U
+Icon=google-chrome
+Type=Application
+Terminal=false
+Categories=Network;WebBrowser;
+StartupNotify=true
+StartupWMClass=Google-chrome
