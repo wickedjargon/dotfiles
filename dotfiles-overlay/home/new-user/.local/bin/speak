@@ -147,6 +147,10 @@ def get_text(argv):
 
 
 def main(argv):
+    if argv and argv[0] in ("-h", "--help"):
+        print(__doc__.strip())
+        return
+
     # Pull leading flags off the argument list; the rest is text to speak.
     unwrap = False
     args = []

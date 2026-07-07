@@ -1,0 +1,14 @@
+# bash completion for speak
+_speak() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    # Positional arguments are free text to speak; only offer flags
+    # ("-" reads from stdin).
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY=( $(compgen -W "-u --unwrap --help -" -- "$cur") )
+    fi
+}
+
+complete -F _speak speak

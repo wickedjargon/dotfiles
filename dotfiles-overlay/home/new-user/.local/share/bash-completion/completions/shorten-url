@@ -1,0 +1,13 @@
+# bash completion for shorten-url
+_shorten_url() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    # The positional argument is a URL (not completable); only offer flags.
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help" -- "$cur") )
+    fi
+}
+
+complete -F _shorten_url shorten-url

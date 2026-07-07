@@ -1,0 +1,19 @@
+# bash completion for brightness
+_brightness() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    # Only complete --help; the other arguments are numeric values
+    # (50, +10, -10) that can't usefully be completed. Restrict to
+    # "--" prefixes so typing "-10" is never hijacked.
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        case "$cur" in
+            --*)
+                COMPREPLY=( $(compgen -W "--help" -- "$cur") )
+                ;;
+        esac
+    fi
+}
+
+complete -F _brightness brightness
