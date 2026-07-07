@@ -1,0 +1,10 @@
+# bash completion for browser
+_browser() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    COMPREPLY=( $(compgen -W "--firefox --chrome --toggle --help" -- "$cur") )
+}
+
+complete -F _browser browser

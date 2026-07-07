@@ -202,7 +202,7 @@ Use decorated comment headers to separate logical sections:
 
 ## Non-Pass Scripts
 
-The following scripts do **not** follow the `pass` pattern (they use `argparse` with flags instead of verb subcommands): **`theme`**, **`shorten-url`**.
+The following scripts do **not** follow the `pass` pattern (they use `argparse` with flags instead of verb subcommands): **`theme`**, **`shorten-url`**, **`browser`**.
 
 They still require tldr pages and bash completions.
 
@@ -224,4 +224,5 @@ They still require tldr pages and bash completions.
 | `vpn`        | ✓             | nmcli, curl        | ✓    | ✓          |
 | `mac`        | ✓             | ip (iproute2)      | ✓    | ✓          |
 | `theme`      | ✗             | various            | ✓    | ✓          |
+| `browser`    | ✗             | (stdlib only)      | ✓    | ✓          |
 | `shorten-url`| ✗             | curl               | ✗    | ✗          |

@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""
+Set the default web browser for the desktop environment.
+
+Usage:
+    browser --firefox   Set Firefox as the default browser
+    browser --chrome    Set Google Chrome as the default browser
+    browser --toggle    Toggle between Firefox and Google Chrome
+
+Updates ~/.config/mimeapps.list (the xdg default used by xdg-open) and
+reorders the browser entries at the top of the rofi-web (super+w) menu
+so the default browser is listed first.
+"""
+
+import argparse
+import os
+import re
+import sys
+
+HOME = os.path.expanduser("~")
+MIMEAPPS = os.path.join(HOME, ".config", "mimeapps.list")
+ROFI_WEB = os.path.join(HOME, ".local", "scripts", "rofi-web")
+
+# MIME types / URL schemes that define the default browser in mimeapps.list.
+MIME_KEYS = [
+    "x-scheme-handler/http",
+    "x-scheme-handler/https",
+    "x-scheme-handler/chrome",
+    "text/html",
+    "application/x-extension-htm",
+    "application/x-extension-html",
+    "application/x-extension-shtml",
+    "application/xhtml+xml",
+    "application/x-extension-xhtml",
+    "application/x-extension-xht",
+]
+
+# ── Browser definitions ──────────────────────────────────────────────────────
+
+BROWSERS = {
+    "firefox": {
+        "label": "Firefox",
+        "desktop": "firefox-esr.desktop",
+        # Literal head of the rofi-web menu (the \n are printf escapes).
+        "rofi_order": r"Firefox\nFirefox Private\nGoogle Chrome",
+    },
+    "chrome": {
+        "label": "Google Chrome",
+        "desktop": "google-chrome.desktop",
+        "rofi_order": r"Google Chrome\nFirefox\nFirefox Private",
+    },
+}
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+
+def warn(msg):
+    """Print a drift/no-match warning (loud, so silent failures surface)."""
+    print(f"  ⚠ {msg}")
+
+
+def read_current():
+    """Return the current default browser name, or None if unrecognized."""
+    try:
+        with open(MIMEAPPS) as f:
+            content = f.read()
+    except FileNotFoundError:
+        return None
+    m = re.search(r"^x-scheme-handler/http=([^\s;]+)", content, re.MULTILINE)
+    if not m:
+        return None
+    for name, browser in BROWSERS.items():
+        if browser["desktop"] == m.group(1):
+            return name
+    return None
+
+
+# ── Switchers ────────────────────────────────────────────────────────────────
+
+
+def switch_mimeapps(browser):
+    """Point all browser MIME/scheme handlers in mimeapps.list at `browser`."""
+    if not os.path.exists(MIMEAPPS):
+        warn("mimeapps.list → not found; not updated")
+        return
+    with open(MIMEAPPS) as f:
+        content = f.read()
+    misses = 0
+    for key in MIME_KEYS:
+        # Both sections at once: [Default Applications] has bare values,
+        # [Added Associations] values end with ';' — preserved via \2.
+        pattern = rf"^({re.escape(key)}=)[^\s;]+(;?)$"
+        content, n = re.subn(
+            pattern, rf"\g<1>{browser['desktop']}\g<2>", content, flags=re.MULTILINE
+        )
+        if n == 0:
+            misses += 1
+    with open(MIMEAPPS, "w") as f:
+        f.write(content)
+    if misses:
+        warn(
+            f"mimeapps.list → {misses}/{len(MIME_KEYS)} handler(s) not found "
+            f"(file format may have changed; partially updated)"
+        )
+    else:
+        print(f"  mimeapps.list → {browser['desktop']}")
+
+
+def switch_rofi_web(browser):
+    """Reorder the rofi-web menu so `browser` is the first entry."""
+    if not os.path.exists(ROFI_WEB):
+        warn("rofi-web → not found; menu order not updated")
+        return
+    with open(ROFI_WEB) as f:
+        content = f.read()
+    desired = browser["rofi_order"]
+    if desired in content:
+        print(f"  rofi-web → {browser['label']} already first")
+        return
+    for other in BROWSERS.values():
+        if other["rofi_order"] in content:
+            content = content.replace(other["rofi_order"], desired)
+            with open(ROFI_WEB, "w") as f:
+                f.write(content)
+            print(f"  rofi-web → {browser['label']} first")
+            return
+    warn("rofi-web → browser entries not found (menu format may have changed)")
+
+
+# ── Main ─────────────────────────────────────────────────────────────────────
+
+
+def apply_browser(name):
+    """Set the default browser to `name` ('firefox' or 'chrome')."""
+    browser = BROWSERS[name]
+    print(f"Setting default browser to {browser['label']}:")
+    switch_mimeapps(browser)
+    switch_rofi_web(browser)
+    print(f"Done. Default browser: {browser['label']}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Set the default web browser (Firefox or Google Chrome)."
+    )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "--firefox", action="store_true", help="Set Firefox as default"
+    )
+    group.add_argument(
+        "--chrome", action="store_true", help="Set Google Chrome as default"
+    )
+    group.add_argument(
+        "--toggle", action="store_true", help="Toggle between the two browsers"
+    )
+
+    args = parser.parse_args()
+
+    if args.firefox:
+        name = "firefox"
+    elif args.chrome:
+        name = "chrome"
+    else:
+        name = "firefox" if read_current() == "chrome" else "chrome"
+
+    apply_browser(name)
+
+
+if __name__ == "__main__":
+    main()
