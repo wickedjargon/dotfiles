@@ -1,0 +1,63 @@
+#!/bin/sh
+# Keep the system timezone in sync with the machine's physical location
+# (like phones and macbooks do), based on IP geolocation.
+#
+# NetworkManager runs this as root on network events, so timedatectl needs
+# no polkit/sudoers setup. The wall clock itself stays NTP-synced (UTC) by
+# systemd-timesyncd regardless — only the timezone label is at stake here,
+# so every failure path below is a silent "do nothing, retry on the next
+# network event".
+#
+# VPN guard: if egress is routed through a tunnel device (mullvad, a
+# tailscale exit node, any tun*/wg*), the public IP geolocates to the VPN
+# country, so we skip. Tailscale without an exit node keeps the default
+# route on the real uplink and is not skipped. Taking the VPN down fires a
+# "down" event, so the timezone self-corrects on disconnect.
+
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+
+case "$2" in
+    up|down|connectivity-change) ;;
+    *) exit 0 ;;
+esac
+
+# Only act with full internet access (skips captive portals; once the portal
+# is passed, NM fires a connectivity-change to FULL and we run again).
+connectivity="${CONNECTIVITY_STATE:-$(nmcli networking connectivity 2>/dev/null)}"
+case "$connectivity" in
+    FULL|full) ;;
+    *) exit 0 ;;
+esac
+
+# VPN guard: skip when the default egress route goes through a tunnel.
+egress_dev=$(ip route get 1.1.1.1 2>/dev/null | sed -n 's/.* dev \([^ ]*\).*/\1/p')
+[ -n "$egress_dev" ] || exit 0
+case "$egress_dev" in
+    mullvad|tailscale*|tun*|wg*|ppp*) exit 0 ;;
+esac
+
+# Ask independent geolocation services for the timezone; first answer wins.
+# (ip-api.com's free tier is HTTP-only; the response is validated below.)
+tz=""
+for url in "https://ipapi.co/timezone" "http://ip-api.com/line/?fields=timezone"; do
+    tz=$(curl -sf --max-time 10 "$url" | tr -d '[:space:]')
+    [ -n "$tz" ] && break
+done
+[ -n "$tz" ] || exit 0
+
+# Validate: must look like Area/City, contain no junk or path traversal,
+# and name a real zoneinfo entry.
+case "$tz" in
+    */*) ;;
+    *) exit 0 ;;
+esac
+case "$tz" in
+    /*|*..*|*[!A-Za-z0-9/_+-]*) exit 0 ;;
+esac
+[ -f "/usr/share/zoneinfo/$tz" ] || exit 0
+
+current=$(timedatectl show -p Timezone --value 2>/dev/null)
+[ "$tz" = "$current" ] && exit 0
+
+timedatectl set-timezone "$tz" || exit 0
+logger -t auto-timezone "timezone changed: ${current:-unknown} -> $tz"
