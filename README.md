@@ -107,7 +107,7 @@ To configure the `vpn` tool to manage your Mullvad WireGuard connections, includ
 
 ```bash
 # On the HOST:
-./scripts/create-archbox.sh            # add --replace to rebuild from scratch
+~/d/projects/dotfiles/scripts/create-archbox.sh   # add --replace to rebuild from scratch
 
 # Inside the container:
 distrobox enter archbox
