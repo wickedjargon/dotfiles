@@ -1,0 +1,290 @@
+#!/usr/bin/env python3
+"""disk — internal storage usage and cleanup from the command line.
+
+The counterpart to `drives` (external media): shows filesystem usage,
+finds what is eating space, and reclaims the usual cache suspects.
+
+Requires: coreutils (du); sudo for apt/journal cleanup
+"""
+
+import os
+import shutil
+import subprocess
+import sys
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=120):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+def human(n):
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024:
+            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TB"
+
+
+# ── Filesystem Parsing ─────────────────────────────────────────────
+def parse_mounts(text):
+    """Real (device-backed) mounts from /proc/mounts content.
+
+    Returns [(device, mountpoint)], deduplicated by device keeping the
+    shortest mountpoint (bind mounts repeat the device).
+    """
+    seen = {}
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) < 2 or not parts[0].startswith("/dev/"):
+            continue
+        device, mountpoint = parts[0], parts[1]
+        # /proc/mounts octal-escapes spaces as \040
+        mountpoint = mountpoint.replace("\\040", " ")
+        if device not in seen or len(mountpoint) < len(seen[device]):
+            seen[device] = mountpoint
+    return sorted(seen.items(), key=lambda kv: kv[1])
+
+
+def fs_usage(mountpoint):
+    """(total, used, avail) bytes for a mountpoint, or None."""
+    try:
+        st = os.statvfs(mountpoint)
+    except OSError:
+        return None
+    total = st.f_blocks * st.f_frsize
+    avail = st.f_bavail * st.f_frsize
+    used = (st.f_blocks - st.f_bfree) * st.f_frsize
+    return total, used, avail
+
+
+def usage_bar(pct, width=12):
+    """A colored [####----] bar for a used-percentage."""
+    filled = round(pct / 100 * width)
+    if pct >= 90:
+        color = RED
+    elif pct >= 70:
+        color = YELLOW
+    else:
+        color = GREEN
+    return (f"{color}{'█' * filled}{RESET}"
+            f"{DIM}{'░' * (width - filled)}{RESET}")
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Show usage of all real filesystems."""
+    try:
+        with open("/proc/mounts") as f:
+            mounts = parse_mounts(f.read())
+    except OSError:
+        die("Cannot read /proc/mounts")
+    if not mounts:
+        die("No device-backed filesystems found")
+
+    width = max(len(mp) for _dev, mp in mounts)
+    for _device, mountpoint in mounts:
+        usage = fs_usage(mountpoint)
+        if not usage:
+            continue
+        total, used, avail = usage
+        pct = round(used * 100 / total) if total else 0
+        print(f"  {BOLD}{mountpoint:<{width}}{RESET}  "
+              f"{usage_bar(pct)} {pct:>3}%  "
+              f"{DIM}{human(avail)} free of {human(total)}{RESET}")
+
+
+def cmd_big(args):
+    """Largest entries directly under a path (default: home)."""
+    path = os.path.expanduser(args[0]) if args else os.path.expanduser("~")
+    count = int(args[1]) if len(args) > 1 and args[1].isdigit() else 15
+    if not os.path.isdir(path):
+        die(f"Not a directory: {path}")
+
+    info(f"Sizing {BOLD}{path}{RESET}...")
+    # -a includes plain files (du alone lists only directories);
+    # -x stays on one filesystem so /proc-style traps can't distort it.
+    result = run(["du", "-x", "-a", "-k", "--max-depth=1", path],
+                 timeout=600)
+    rows = []
+    for line in result.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) != 2:
+            continue
+        kb, entry = parts
+        if entry.rstrip("/") == path.rstrip("/"):
+            continue  # the total line
+        rows.append((int(kb) * 1024, entry))
+    rows.sort(reverse=True)
+
+    for size, entry in rows[:count]:
+        name = os.path.basename(entry)
+        marker = "/" if os.path.isdir(entry) else ""
+        print(f"  {human(size):>10}  {name}{marker}")
+
+
+# What `disk clean` knows how to reclaim. Each entry is:
+#   label, path-or-None, sudo command to clean (None = delete contents)
+def clean_targets():
+    home = os.path.expanduser("~")
+    targets = [
+        ("apt cache", "/var/cache/apt/archives",
+         ["sudo", "apt-get", "clean"]),
+        ("journal logs", "/var/log/journal",
+         ["sudo", "journalctl", "--vacuum-time=2weeks"]),
+        ("thumbnails", f"{home}/.cache/thumbnails", None),
+        ("trash", f"{home}/.local/share/Trash", None),
+        ("pip cache", f"{home}/.cache/pip", None),
+    ]
+    return [(label, path, cmd) for label, path, cmd in targets
+            if os.path.isdir(path)]
+
+
+def dir_size(path):
+    result = run(["du", "-sk", path], timeout=300)
+    try:
+        return int(result.stdout.split()[0]) * 1024
+    except (IndexError, ValueError):
+        return 0
+
+
+def _delete_contents(path):
+    for entry in os.listdir(path):
+        full = os.path.join(path, entry)
+        try:
+            if os.path.isdir(full) and not os.path.islink(full):
+                shutil.rmtree(full)
+            else:
+                os.unlink(full)
+        except OSError as e:
+            warn(f"Could not remove {full}: {e}")
+
+
+def cmd_clean():
+    """Show reclaimable space, confirm, then clean."""
+    targets = clean_targets()
+    sized = [(label, path, cmd, dir_size(path))
+             for label, path, cmd in targets]
+    sized = [t for t in sized if t[3] > 0]
+    if not sized:
+        ok("Nothing to clean")
+        return
+
+    total = sum(size for *_rest, size in sized)
+    print(f"{BOLD}Reclaimable{RESET}")
+    for label, path, _cmd, size in sized:
+        print(f"  {human(size):>10}  {label}  {DIM}{path}{RESET}")
+    print(f"  {BOLD}{human(total):>10}  total{RESET}\n")
+
+    try:
+        answer = input(f"{CYAN}▸{RESET} Clean all of the above? [y/N] ")
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return
+    if answer.strip().lower() not in ("y", "yes"):
+        info("Nothing cleaned")
+        return
+
+    for label, path, cmd, _size in sized:
+        info(f"Cleaning {label}...")
+        if cmd:
+            # System-owned: interactive so the sudo prompt is visible.
+            result = subprocess.run(cmd)
+            if result.returncode != 0:
+                warn(f"{label}: command failed")
+                continue
+        else:
+            _delete_contents(path)
+    ok(f"Reclaimed up to {human(total)}")
+
+
+def cmd_list():
+    """Machine-parseable filesystem usage."""
+    with open("/proc/mounts") as f:
+        mounts = parse_mounts(f.read())
+    for device, mountpoint in mounts:
+        usage = fs_usage(mountpoint)
+        if not usage:
+            continue
+        total, used, avail = usage
+        pct = round(used * 100 / total) if total else 0
+        print(f"{mountpoint}\t{device}\t{total}\t{used}\t{avail}\t{pct}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: disk [command] [options]
+
+Internal storage usage and cleanup.
+
+commands:
+  (none)                        show usage of all real filesystems
+  big [PATH] [N]                N largest entries under PATH (default ~, 15)
+  clean                         reclaim caches (shows sizes, asks first)
+  list                          machine-parseable usage
+
+`clean` covers the apt cache, old journal logs, thumbnails, trash,
+and the pip cache. System-owned items use sudo; nothing is removed
+without confirmation.
+
+examples:
+  disk                          how full is everything?
+  disk big                      what's eating my home directory?
+  disk big ~/d/video 10         ten largest under ~/d/video
+  disk clean                    free up space
+  disk list                     tab-separated fields"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "big":   lambda: cmd_big(args),
+        "clean": lambda: cmd_clean(),
+        "list":  lambda: cmd_list(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'disk --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()
