@@ -314,7 +314,10 @@ def parse_feed(xml_text):
         guid_el = item.find("guid")
         guid = guid_el.text if guid_el is not None else link
 
-        date_el = _find(item, "pubDate", "dc:date")
+        # Dublin Core date needs the {uri}local form — a bare "dc:" prefix
+        # never matches without a namespace map.
+        date_el = _find(item, "pubDate",
+                        "{http://purl.org/dc/elements/1.1/}date")
         date_str = date_el.text if date_el is not None else None
 
         # Content: prefer content:encoded, fall back to description
@@ -424,8 +427,10 @@ def resolve_youtube_url(url):
             die(f"Failed to fetch YouTube page: {e}")
         # Extract channel ID from meta tag or page source
         cid_match = _re.search(
-            r'(?:channel_id=|"channelId":"| \
-<link[^>]+rel="canonical"[^>]+href="https://www\.youtube\.com/channel/)([a-zA-Z0-9_-]{20,})',
+            r'(?:channel_id=|"channelId":"'
+            r'|<link[^>]+rel="canonical"[^>]+'
+            r'href="https://www\.youtube\.com/channel/'
+            r')([a-zA-Z0-9_-]{20,})',
             page)
         if cid_match:
             channel_id = cid_match.group(1)
@@ -468,11 +473,12 @@ def cmd_add(args):
     feeds.append(feed)
     save_feeds(feeds)
 
-    # Cache the fetched entries
+    # Cache the fetched entries. Store the feed's own title (not a custom
+    # name) so cmd_fetch can tell a user-chosen name from a tracked one.
     ensure_dirs()
     cache_path = os.path.join(CACHE_DIR, f"{feed_hash(url)}.json")
     with open(cache_path, "w") as f_out:
-        json.dump({"title": name, "entries": entries}, f_out, indent=2)
+        json.dump({"title": title or name, "entries": entries}, f_out, indent=2)
 
     ok(f'Added "{name}" ({url}) — {len(entries)} entries')
 
@@ -530,10 +536,13 @@ def cmd_fetch(args):
     for f in targets:
         try:
             info(f"Fetching {BOLD}{f['name']}{RESET}...")
+            old_title, _ = load_cached(f)
             title, entries = fetch_and_cache(f)
 
-            # Update feed title if it changed
-            if title and title != f["name"]:
+            # Follow a changed feed title only when the stored name was
+            # tracking it; a name that differs from the last fetched title
+            # was chosen by the user (rss add <url> NAME) — keep it.
+            if title and title != f["name"] and f["name"] == old_title:
                 for orig in feeds:
                     if orig["url"] == f["url"]:
                         orig["name"] = title
@@ -775,7 +784,11 @@ def cmd_import(args):
 
 
 def cmd_catchup(args):
-    """Mark all entries as read for a feed (or all feeds)."""
+    """Mark entries as read for a feed (or all feeds).
+
+    The newest entry of each feed is deliberately left unread, so a
+    catchup never hides the latest item from `rss read`.
+    """
     feeds = load_feeds()
     if not feeds:
         die("No feeds. Add one with: rss add <url>")
@@ -828,7 +841,7 @@ commands:
   del <name>                    unsubscribe from a feed
   fetch [name]                  refresh all feeds (or one)
   read [name]                   browse and read entries
-  catchup [name]                mark all entries as read
+  catchup [name]                mark as read (keeps newest entry unread)
   reset                         mark everything as unread
   list                          machine-parseable feed list
   export                        print feeds.opml to stdout
@@ -843,8 +856,8 @@ examples:
   rss read                      read unread entries
   rss read "Hacker News"        read entries from a specific feed
   rss del "Old Blog"            unsubscribe
-  rss catchup                   mark all feeds as read
-  rss catchup fireship          mark one feed as read
+  rss catchup                   catch up on all feeds (newest stays unread)
+  rss catchup fireship          catch up on one feed
   rss reset                     mark everything as unread
   rss export > backup.opml      export subscriptions
   rss import feeds.opml         import subscriptions"""
