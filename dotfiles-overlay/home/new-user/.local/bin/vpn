@@ -412,7 +412,9 @@ def _do_connect(relay, private_key, address):
     run(["nmcli", "connection", "modify", CONN_NAME,
          "connection.interface-name", CONN_NAME])
 
-    result = run(["nmcli", "connection", "up", CONN_NAME])
+    # nmcli itself waits up to 90s for activation; a short timeout here
+    # would report failure on a slow handshake that still succeeds.
+    result = run(["nmcli", "connection", "up", CONN_NAME], timeout=90)
     if result.returncode != 0:
         die(f"Failed to connect: {result.stderr.strip()}")
 
