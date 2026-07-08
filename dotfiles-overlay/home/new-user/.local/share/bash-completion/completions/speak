@@ -1,13 +1,63 @@
 # bash completion for speak
 _speak() {
-    local cur
+    local cur prev cache
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    cache="${XDG_CACHE_HOME:-$HOME/.cache}/speak/voices"
+
+    # Bash splits words on '=', so "--set voice=<TAB>" arrives as
+    # [--set][voice][=][...]; recover the KEY on either side of the '='.
+    local key=""
+    if [[ "$prev" == "=" ]]; then
+        key="${COMP_WORDS[COMP_CWORD-2]}"
+    elif [[ "$cur" == "=" ]]; then
+        key="$prev"
+        cur=""
+    fi
+    if [[ -n "$key" ]]; then
+        case "$key" in
+            voice)
+                [[ -r "$cache" ]] &&
+                    COMPREPLY=( $(compgen -W "$(cat "$cache")" -- "$cur") )
+                ;;
+            unwrap)
+                COMPREPLY=( $(compgen -W "on off" -- "$cur") )
+                ;;
+            rate)
+                COMPREPLY=( $(compgen -W "+10% +25% +50% -10% -25%" -- "$cur") )
+                ;;
+        esac
+        return
+    fi
+
+    case "$prev" in
+        --voice)
+            [[ -r "$cache" ]] &&
+                COMPREPLY=( $(compgen -W "$(cat "$cache")" -- "$cur") )
+            return
+            ;;
+        --rate)
+            COMPREPLY=( $(compgen -W "+10% +25% +50% -10% -25%" -- "$cur") )
+            return
+            ;;
+        --set)
+            compopt -o nospace 2>/dev/null
+            COMPREPLY=( $(compgen -W "voice= rate= unwrap=" -- "$cur") )
+            return
+            ;;
+        --voices)
+            [[ -r "$cache" ]] &&
+                COMPREPLY=( $(compgen -W "$(cat "$cache")" -- "$cur") )
+            return
+            ;;
+    esac
 
     # Positional arguments are free text to speak; only offer flags
     # ("-" reads from stdin).
     if [[ "$cur" == -* ]]; then
-        COMPREPLY=( $(compgen -W "-u --unwrap --help -" -- "$cur") )
+        COMPREPLY=( $(compgen -W "--voice --rate --set --show --voices \
+            -u --unwrap --no-unwrap --help -" -- "$cur") )
     fi
 }
 

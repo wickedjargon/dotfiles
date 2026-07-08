@@ -8,14 +8,27 @@ Usage:
   speak some words      Speak the given words.
   echo hi | speak -     Speak text read from stdin.
 
-Options:
+Options (for this run only):
+  --voice NAME          Speak with a different voice, e.g. en-GB-RyanNeural.
+  --rate RATE           Speak faster or slower, e.g. +25% or -10%.
   -u, --unwrap          Undo PDF-style hard line wrapping before speaking, so
                         soft-wrapped lines don't cause pauses mid-sentence.
-                        Real paragraph breaks are preserved.
+                        Real paragraph breaks are preserved. On by default.
+  --no-unwrap           Keep line breaks as-is.
+
+Settings (persisted in ~/.config/speak/config, used by every run,
+including keybindings):
+  --set KEY=VALUE       Save a setting and exit. Keys:
+                          voice   voice name, e.g. en-GB-RyanNeural
+                          rate    speech speed, e.g. +25% or -10%
+                          unwrap  on|off (default: on)
+  --show                Print the effective settings and their sources.
+  --voices [FILTER]     List available voices, optionally filtered,
+                        e.g. speak --voices en-GB
 
 Bound to a key, pressing it again while speaking stops playback (toggle).
-The voice can be overridden with the SPEAK_VOICE environment variable, e.g.
-  SPEAK_VOICE=en-GB-RyanNeural speak
+The voice and rate can also be overridden per-run with the SPEAK_VOICE and
+SPEAK_RATE environment variables.
 
 Requires an internet connection: edge-tts synthesizes the audio server-side.
 """
@@ -34,7 +47,17 @@ if os.path.exists("/run/.containerenv"):
     if which("distrobox-host-exec"):
         os.execvp("distrobox-host-exec", ["distrobox-host-exec"] + sys.argv)
 
-VOICE = os.environ.get("SPEAK_VOICE", "en-US-AvaNeural")
+CONFIG_FILE = (
+    Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+    / "speak" / "config"
+)
+VOICES_CACHE = (
+    Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    / "speak" / "voices"
+)
+
+DEFAULTS = {"voice": "en-US-AvaNeural", "rate": "+0%", "unwrap": "on"}
+ENV_VARS = {"voice": "SPEAK_VOICE", "rate": "SPEAK_RATE"}
 
 # Track the player so a second keypress can stop it.
 RUNTIME = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
@@ -50,6 +73,116 @@ def notify(msg, urgency="normal"):
     else:
         print(f"speak: {msg}", file=sys.stderr)
 
+
+# ── Settings ────────────────────────────────────────────────────────
+
+def load_config():
+    cfg = {}
+    try:
+        lines = CONFIG_FILE.read_text().splitlines()
+    except FileNotFoundError:
+        return cfg
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        cfg[key.strip()] = value.strip()
+    return cfg
+
+
+def effective_setting(key, cfg):
+    """Resolve a setting and say where it came from: env > config > default."""
+    env = ENV_VARS.get(key)
+    if env and os.environ.get(env):
+        return os.environ[env], "environment"
+    if key in cfg:
+        return cfg[key], "config"
+    return DEFAULTS[key], "default"
+
+
+def known_voices():
+    """Voice short names, cached after the first fetch from edge-tts.
+
+    Returns [] when the list can't be obtained (e.g. offline with no cache).
+    """
+    try:
+        return VOICES_CACHE.read_text().split()
+    except FileNotFoundError:
+        pass
+    res = subprocess.run(
+        ["edge-tts", "--list-voices"], capture_output=True, text=True,
+    )
+    if res.returncode != 0:
+        return []
+    names = [
+        line.split()[0]
+        for line in res.stdout.splitlines()
+        if line.split() and line.split()[0].endswith("Neural")
+    ]
+    if names:
+        VOICES_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        VOICES_CACHE.write_text("\n".join(names) + "\n")
+    return names
+
+
+def validate_setting(key, value):
+    """Return an error message, or None if the value is acceptable."""
+    if key not in DEFAULTS:
+        return f"unknown setting '{key}' (valid: {', '.join(sorted(DEFAULTS))})"
+    if key == "unwrap" and value not in ("on", "off"):
+        return "unwrap must be 'on' or 'off'"
+    if key == "rate" and not re.fullmatch(r"[+-]\d+%", value):
+        return "rate must look like +25% or -10%"
+    if key == "voice":
+        voices = known_voices()
+        if not voices:
+            print(
+                "speak: warning: could not fetch the voice list to verify "
+                "the name (offline?)", file=sys.stderr,
+            )
+        elif value not in voices:
+            return f"unknown voice '{value}' (see: speak --voices)"
+    return None
+
+
+def set_setting(assignment):
+    key, sep, value = assignment.partition("=")
+    key, value = key.strip(), value.strip()
+    if not sep or not key or not value:
+        print(f"speak: --set expects KEY=VALUE, got '{assignment}'",
+              file=sys.stderr)
+        sys.exit(2)
+    err = validate_setting(key, value)
+    if err:
+        print(f"speak: {err}", file=sys.stderr)
+        sys.exit(2)
+    cfg = load_config()
+    cfg[key] = value
+    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    CONFIG_FILE.write_text("".join(f"{k}={v}\n" for k, v in sorted(cfg.items())))
+    print(f"{key} = {value}")
+
+
+def show_settings():
+    cfg = load_config()
+    for key in sorted(DEFAULTS):
+        value, source = effective_setting(key, cfg)
+        print(f"{key} = {value}  ({source})")
+
+
+def list_voices(filters):
+    voices = known_voices()
+    if not voices:
+        print("speak: could not fetch the voice list (offline?)",
+              file=sys.stderr)
+        sys.exit(1)
+    for name in voices:
+        if all(f.lower() in name.lower() for f in filters):
+            print(name)
+
+
+# ── Playback ────────────────────────────────────────────────────────
 
 def alive(pid):
     try:
@@ -151,14 +284,60 @@ def main(argv):
         print(__doc__.strip())
         return
 
-    # Pull leading flags off the argument list; the rest is text to speak.
-    unwrap = False
+    cfg = load_config()
+
+    # Pull flags off the argument list; the rest is text to speak.
+    unwrap_flag = None   # None = use the persisted setting
+    voice = rate = None  # one-shot overrides
     args = []
-    for a in argv:
+    i = 0
+
+    def flag_value(name):
+        nonlocal i
+        i += 1
+        if i >= len(argv):
+            print(f"speak: {name} needs a value", file=sys.stderr)
+            sys.exit(2)
+        return argv[i]
+
+    while i < len(argv):
+        a = argv[i]
         if a in ("-u", "--unwrap"):
-            unwrap = True
+            unwrap_flag = True
+        elif a == "--no-unwrap":
+            unwrap_flag = False
+        elif a == "--voice":
+            voice = flag_value(a)
+        elif a.startswith("--voice="):
+            voice = a.partition("=")[2]
+        elif a == "--rate":
+            rate = flag_value(a)
+        elif a.startswith("--rate="):
+            rate = a.partition("=")[2]
+        elif a == "--set":
+            set_setting(flag_value(a))
+            return
+        elif a.startswith("--set="):
+            set_setting(a.partition("=")[2])
+            return
+        elif a == "--show":
+            show_settings()
+            return
+        elif a == "--voices":
+            list_voices(argv[i + 1:])
+            return
         else:
             args.append(a)
+        i += 1
+
+    # Catch a typo'd one-shot voice/rate here rather than as silence later
+    # (the edge-tts | mpv pipeline runs detached, so its errors are invisible).
+    for key, value in (("voice", voice), ("rate", rate)):
+        if value is not None:
+            err = validate_setting(key, value)
+            if err:
+                print(f"speak: {err}", file=sys.stderr)
+                sys.exit(2)
 
     # Toggle: a bare keypress while talking just stops playback.
     was_speaking = stop_if_speaking()
@@ -170,8 +349,15 @@ def main(argv):
             notify(f"{dep} not found in PATH", "critical")
             sys.exit(1)
 
+    if voice is None:
+        voice = effective_setting("voice", cfg)[0]
+    if rate is None:
+        rate = effective_setting("rate", cfg)[0]
+    if unwrap_flag is None:
+        unwrap_flag = effective_setting("unwrap", cfg)[0] == "on"
+
     text = get_text(args)
-    if unwrap:
+    if unwrap_flag:
         text = unwrap_text(text)
     text = text.strip()
     if not text:
@@ -181,9 +367,11 @@ def main(argv):
     # Stream edge-tts' mp3 straight into mpv. The text is passed via the
     # environment, not the command line, so a selection containing quotes,
     # $(...) or backticks can't break quoting or inject shell commands.
-    env = {**os.environ, "SPEAK_TEXT": text, "SPEAK_VOICE": VOICE}
+    env = {**os.environ, "SPEAK_TEXT": text, "SPEAK_VOICE": voice,
+           "SPEAK_RATE": rate}
     proc = subprocess.Popen(
-        'edge-tts --voice "$SPEAK_VOICE" --text "$SPEAK_TEXT" '
+        'edge-tts --voice "$SPEAK_VOICE" --rate="$SPEAK_RATE" '
+        '--text "$SPEAK_TEXT" '
         '| mpv --no-terminal --really-quiet --no-video -',
         shell=True, start_new_session=True, env=env,
         stdin=subprocess.DEVNULL,
