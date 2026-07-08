@@ -1,0 +1,20 @@
+# bash completion for font
+_font() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "list preview install help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        install|preview)
+            COMPREPLY=( $(compgen -f -- "$cur") )
+            ;;
+    esac
+}
+
+complete -o filenames -F _font font

@@ -1,0 +1,225 @@
+#!/usr/bin/env python3
+"""font — list, preview, and install fonts from the command line.
+
+Requires: fontconfig (fc-list, fc-match, fc-cache)
+Optional: imagemagick + an image viewer (preview)
+"""
+
+import os
+import subprocess
+import sys
+import tempfile
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=60):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+# ── Configuration ──────────────────────────────────────────────────
+USER_FONT_DIR = os.path.expanduser("~/.local/share/fonts")
+FONT_EXTS = (".ttf", ".otf", ".ttc", ".woff", ".woff2")
+SAMPLE = ("The quick brown fox jumps over the lazy dog\n"
+          "0123456789  ({[<!?@#$%&*>]})  il1I O0")
+
+
+def is_font_file(path):
+    return path.lower().endswith(FONT_EXTS)
+
+
+def font_families(filter_terms=()):
+    """Unique installed family names, optionally filtered."""
+    result = run(["fc-list", ":", "family"])
+    if result.returncode != 0:
+        return []
+    families = set()
+    for line in result.stdout.splitlines():
+        # A face can list several comma-separated family names.
+        for fam in line.split(","):
+            fam = fam.strip()
+            if fam:
+                families.add(fam)
+    names = sorted(families)
+    for term in filter_terms:
+        names = [n for n in names if term.lower() in n.lower()]
+    return names
+
+
+def resolve_font_file(name):
+    """Path of the font file fontconfig matches for a family name."""
+    result = run(["fc-match", "-f", "%{file}", name])
+    path = result.stdout.strip()
+    return path if result.returncode == 0 and os.path.isfile(path) else None
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_list(args):
+    """List installed font families (optionally filtered)."""
+    families = font_families(args)
+    if not families:
+        print(f"{DIM}No fonts match.{RESET}")
+        return
+    for name in families:
+        print(name)
+
+
+def cmd_preview(args):
+    """Render a sample of a font and open it in the image viewer."""
+    if not args:
+        die("Usage: font preview <FAMILY|FILE.ttf>")
+    if not (which("magick") or which("convert")):
+        die("imagemagick not installed (needed to render the preview)")
+
+    query = " ".join(args)
+    if is_font_file(query) and os.path.isfile(query):
+        font_file = query
+        label = os.path.basename(query)
+    else:
+        font_file = resolve_font_file(query)
+        if not font_file:
+            die(f"No installed font matches '{query}'")
+        label = query
+        # fc-match falls back to *something*; tell the user what they got.
+        matched = run(["fc-match", "-f", "%{family}", query]).stdout
+        if matched and query.lower() not in matched.lower():
+            warn(f"No exact match — previewing {matched.strip()}")
+            label = matched.strip()
+
+    tool = "magick" if which("magick") else "convert"
+    out = tempfile.NamedTemporaryFile(suffix=".png", delete=False,
+                                      prefix="font-preview-")
+    out.close()
+    result = run([tool, "-size", "1000x", "-background", "white",
+                  "-fill", "black", "-font", font_file, "-pointsize", "32",
+                  f"label:{label}\n\n{SAMPLE}", out.name])
+    if result.returncode != 0:
+        os.unlink(out.name)
+        die(f"Preview render failed: {result.stderr.strip()}")
+
+    viewer = next((v for v in ("nsxiv", "sxiv", "xdg-open")
+                   if which(v)), None)
+    if viewer:
+        subprocess.Popen([viewer, out.name],
+                         stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL)
+        ok(f"Preview of {BOLD}{label}{RESET}  {DIM}{out.name}{RESET}")
+    else:
+        ok(f"Preview written to {out.name}")
+
+
+def cmd_install(args):
+    """Copy font files into ~/.local/share/fonts and refresh the cache."""
+    if not args:
+        die("Usage: font install FILE.ttf...")
+    for f in args:
+        if not os.path.isfile(f):
+            die(f"File not found: {f}")
+        if not is_font_file(f):
+            die(f"Not a font file: {f} "
+                f"(expected {', '.join(FONT_EXTS)})")
+
+    os.makedirs(USER_FONT_DIR, exist_ok=True)
+    installed = []
+    for f in args:
+        dest = os.path.join(USER_FONT_DIR, os.path.basename(f))
+        if os.path.exists(dest):
+            warn(f"{os.path.basename(f)} already installed — overwriting")
+        with open(f, "rb") as src, open(dest, "wb") as dst:
+            dst.write(src.read())
+        installed.append(dest)
+
+    info("Refreshing font cache...")
+    result = run(["fc-cache", "-f", USER_FONT_DIR], timeout=120)
+    if result.returncode != 0:
+        warn("fc-cache failed — fonts may not appear until re-login")
+
+    for dest in installed:
+        # Confirm fontconfig actually picked it up.
+        listed = run(["fc-list", ":file"]).stdout
+        if dest in listed:
+            ok(f"Installed {os.path.basename(dest)}")
+        else:
+            warn(f"Copied {os.path.basename(dest)} but fontconfig "
+                 f"doesn't list it yet")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: font [command] [options]
+
+List, preview, and install fonts.
+
+commands:
+  (none) / list [FILTER]        list installed families
+  preview <FAMILY|FILE>         render a sample and open it
+  install FILE...               install into ~/.local/share/fonts
+
+Preview accepts an installed family name (fuzzy, via fc-match) or a
+.ttf/.otf file that isn't installed yet — useful for trying a font
+before installing it.
+
+examples:
+  font                          all installed families
+  font list mono                monospace-ish families
+  font preview "JetBrains Mono" what does it look like?
+  font preview ~/dl/new.ttf     try before installing
+  font install ~/dl/new.ttf     install + refresh cache"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not which("fc-list"):
+        die("fontconfig not installed (need fc-list)")
+
+    if len(sys.argv) < 2:
+        cmd_list([])
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "list":    lambda: cmd_list(args),
+        "preview": lambda: cmd_preview(args),
+        "install": lambda: cmd_install(args),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'font --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()
