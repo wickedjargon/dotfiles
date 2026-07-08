@@ -1,0 +1,13 @@
+# bash completion for dl
+_dl() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "audio help --help" -- "$cur") )
+        return
+    fi
+}
+
+complete -F _dl dl

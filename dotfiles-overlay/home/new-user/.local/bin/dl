@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""dl — download video or audio into the ~/d/ library.
+
+Downloads land in the same directories psync syncs to the phone:
+video → ~/d/video, audio → ~/d/audio.
+
+Requires: yt-dlp; ffmpeg (for audio extraction)
+"""
+
+import os
+import subprocess
+import sys
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+# ── Configuration ──────────────────────────────────────────────────
+# Matches psync's directory map, so downloads are one `psync push` away
+# from the phone.
+VIDEO_DIR = os.path.expanduser("~/d/video")
+AUDIO_DIR = os.path.expanduser("~/d/audio")
+OUTPUT_TEMPLATE = "%(title).150s.%(ext)s"
+
+
+def build_command(urls, audio=False):
+    """Assemble the yt-dlp invocation for a batch of URLs."""
+    target = AUDIO_DIR if audio else VIDEO_DIR
+    cmd = [
+        "yt-dlp",
+        "--no-playlist",
+        "-o", os.path.join(target, OUTPUT_TEMPLATE),
+    ]
+    if audio:
+        # -x keeps the best audio stream in its native container.
+        cmd.append("-x")
+    cmd.extend(urls)
+    return cmd
+
+
+def validate_urls(urls):
+    for url in urls:
+        if not url.startswith(("http://", "https://")):
+            die(f"Not a URL: {url}")
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def do_download(urls, audio=False):
+    validate_urls(urls)
+    target = AUDIO_DIR if audio else VIDEO_DIR
+    kind = "audio" if audio else "video"
+
+    os.makedirs(target, exist_ok=True)
+    info(f"Downloading {kind} → {target}")
+
+    # Run with inherited stdio so yt-dlp's progress bar shows live.
+    result = subprocess.run(build_command(urls, audio=audio))
+    if result.returncode != 0:
+        die("yt-dlp reported errors")
+
+    ok(f"Done — saved under {target}")
+    print(f"{DIM}Send to the phone with: psync push --latest"
+          f"{f' {len(urls)}' if len(urls) > 1 else ''}{RESET}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: dl [audio] URL...
+
+Download video or audio into the ~/d/ library (via yt-dlp).
+
+commands:
+  URL...                        download video(s) → ~/d/video
+  audio URL...                  extract audio → ~/d/audio
+
+Files land in the directories psync syncs, so `psync push --latest`
+sends the download straight to the phone. Playlists are not expanded
+(single video per URL).
+
+examples:
+  dl https://youtube.com/watch?v=xyz          video to ~/d/video
+  dl audio https://youtube.com/watch?v=xyz    audio to ~/d/audio
+  dl audio URL1 URL2                          several at once"""
+
+
+def main():
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not which("yt-dlp"):
+        die("yt-dlp not installed")
+
+    args = sys.argv[1:]
+    if args[0] == "audio":
+        if not which("ffmpeg"):
+            die("ffmpeg not installed (needed for audio extraction)")
+        if len(args) < 2:
+            die("Usage: dl audio URL...")
+        do_download(args[1:], audio=True)
+    else:
+        do_download(args, audio=False)
+
+
+if __name__ == "__main__":
+    main()
