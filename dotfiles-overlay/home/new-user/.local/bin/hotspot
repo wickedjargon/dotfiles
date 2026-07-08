@@ -1,0 +1,348 @@
+#!/usr/bin/env python3
+"""hotspot — share the internet connection over WiFi from the command line.
+
+Requires: NetworkManager (nmcli); optional: qrencode (qr), iw (clients)
+"""
+
+import re
+import secrets
+import socket
+import string
+import subprocess
+import sys
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=30):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+# ── Configuration ──────────────────────────────────────────────────
+CONN_NAME = "Hotspot"
+
+
+# ── nmcli Parsing ──────────────────────────────────────────────────
+def get_wifi_device():
+    """Find the WiFi device name (e.g. wlan0, wlp3s0)."""
+    result = run(["nmcli", "-t", "-f", "DEVICE,TYPE", "device"])
+    if result.returncode != 0:
+        return None
+    for line in result.stdout.strip().splitlines():
+        parts = line.split(":")
+        if len(parts) >= 2 and parts[1] == "wifi":
+            return parts[0]
+    return None
+
+
+def is_active():
+    """True if the hotspot connection is currently up."""
+    result = run(["nmcli", "-t", "-f", "NAME", "connection",
+                  "show", "--active"])
+    if result.returncode != 0:
+        return False
+    return any(line.strip() == CONN_NAME
+               for line in result.stdout.splitlines())
+
+
+def get_profile():
+    """Read the saved hotspot profile.
+
+    Returns a dict with keys ssid, password, band, iface — or None if
+    no profile exists.
+    """
+    result = run(["nmcli", "-s", "-t", "-f",
+                  "802-11-wireless.ssid,802-11-wireless-security.psk,"
+                  "802-11-wireless.band,connection.interface-name",
+                  "connection", "show", CONN_NAME])
+    if result.returncode != 0:
+        return None
+    profile = {"ssid": "", "password": "", "band": "", "iface": ""}
+    keys = {
+        "802-11-wireless.ssid": "ssid",
+        "802-11-wireless-security.psk": "password",
+        "802-11-wireless.band": "band",
+        "connection.interface-name": "iface",
+    }
+    for line in result.stdout.splitlines():
+        field, _, value = line.partition(":")
+        if field in keys:
+            profile[keys[field]] = value.strip()
+    return profile
+
+
+def client_macs(iface):
+    """MAC addresses of connected stations, or None if iw is unavailable."""
+    if not which("iw"):
+        return None
+    result = run(["iw", "dev", iface, "station", "dump"])
+    if result.returncode != 0:
+        return None
+    return re.findall(r"^Station\s+([0-9a-f:]{17})", result.stdout,
+                      re.MULTILINE | re.IGNORECASE)
+
+
+# ── Credentials ────────────────────────────────────────────────────
+def generate_password(length=12):
+    """Random WPA passphrase without look-alike characters."""
+    alphabet = "".join(c for c in string.ascii_letters + string.digits
+                       if c not in "0O1lI")
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def default_ssid():
+    return f"{socket.gethostname()}-hotspot"
+
+
+def qr_escape(value):
+    """Escape a value for the WIFI: QR payload (\\ ; , : " are special)."""
+    for ch in "\\;,:\"":
+        value = value.replace(ch, "\\" + ch)
+    return value
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Show hotspot state, credentials, and connected clients."""
+    profile = get_profile()
+
+    if not is_active():
+        print(f"{DIM}○{RESET} Hotspot is {BOLD}off{RESET}")
+        if profile:
+            print(f"  {DIM}Saved profile \"{profile['ssid']}\" — "
+                  f"start it with: hotspot on{RESET}")
+        return
+
+    print(f"{GREEN}●{RESET} Hotspot is {BOLD}on{RESET}")
+    if profile:
+        print(f"  SSID      {BOLD}{profile['ssid']}{RESET}")
+        if profile["password"]:
+            print(f"  Password  {profile['password']}")
+        if profile["band"]:
+            band = {"bg": "2.4 GHz", "a": "5 GHz"}.get(
+                profile["band"], profile["band"])
+            print(f"  Band      {band}")
+        if profile["iface"]:
+            print(f"  Device    {DIM}{profile['iface']}{RESET}")
+            macs = client_macs(profile["iface"])
+            if macs is not None:
+                count = len(macs)
+                print(f"  Clients   {count}")
+                for mac in macs:
+                    print(f"    {DIM}{mac}{RESET}")
+    print(f"  {DIM}Share credentials with: hotspot qr{RESET}")
+
+
+def cmd_on(args):
+    """Start the hotspot (reuses the saved profile when no args given)."""
+    if is_active():
+        warn("Hotspot is already on")
+        return
+
+    device = get_wifi_device()
+    if not device:
+        die("No WiFi device found")
+
+    profile = get_profile()
+
+    # Bare `hotspot on` with a saved profile: bring it back up unchanged.
+    if not args and profile:
+        info(f"Starting hotspot {BOLD}{profile['ssid']}{RESET} "
+             f"(saved profile)...")
+        result = run(["nmcli", "connection", "up", CONN_NAME], timeout=60)
+        if result.returncode != 0:
+            die(f"Failed to start hotspot: {result.stderr.strip()}")
+        ok(f"Hotspot on — SSID {BOLD}{profile['ssid']}{RESET}")
+        if profile["password"]:
+            print(f"  Password  {profile['password']}")
+        print(f"  {DIM}Share credentials with: hotspot qr{RESET}")
+        return
+
+    ssid = args[0] if args else default_ssid()
+    password = args[1] if len(args) > 1 else generate_password()
+    if not 8 <= len(password) <= 63:
+        die("Password must be 8-63 characters (WPA requirement)")
+
+    warn("Starting a hotspot disconnects any WiFi connection on "
+         f"{device}")
+    info(f"Starting hotspot {BOLD}{ssid}{RESET} on {device}...")
+
+    # Replace any existing profile so credentials don't accumulate as
+    # duplicate "Hotspot" connections (same pattern as vpn's re-import).
+    run(["nmcli", "connection", "delete", CONN_NAME])  # ignore if absent
+
+    result = run(["nmcli", "device", "wifi", "hotspot",
+                  "ifname", device, "con-name", CONN_NAME,
+                  "ssid", ssid, "password", password], timeout=60)
+    if result.returncode != 0:
+        die(f"Failed to start hotspot: {result.stderr.strip()}")
+
+    ok(f"Hotspot on — SSID {BOLD}{ssid}{RESET}")
+    print(f"  Password  {password}")
+    print(f"  {DIM}Share credentials with: hotspot qr{RESET}")
+
+
+def cmd_off():
+    """Stop the hotspot."""
+    if not is_active():
+        warn("Hotspot is not on")
+        return
+    info("Stopping hotspot...")
+    result = run(["nmcli", "connection", "down", CONN_NAME])
+    if result.returncode != 0:
+        die(f"Failed to stop hotspot: {result.stderr.strip()}")
+    ok("Hotspot off")
+
+
+def cmd_password():
+    """Print the hotspot SSID and password."""
+    profile = get_profile()
+    if not profile:
+        die("No hotspot profile found. Start one with: hotspot on")
+    if profile["password"]:
+        print(f"{BOLD}{profile['ssid']}{RESET}: {profile['password']}")
+    else:
+        warn(f"No password stored for \"{profile['ssid']}\"")
+
+
+def cmd_qr():
+    """Render the join-this-network QR code in the terminal."""
+    if not which("qrencode"):
+        die("qrencode not installed (needed to render the QR code)")
+    profile = get_profile()
+    if not profile:
+        die("No hotspot profile found. Start one with: hotspot on")
+    ssid = qr_escape(profile["ssid"])
+    password = qr_escape(profile["password"])
+    payload = f"WIFI:T:WPA;S:{ssid};P:{password};;"
+    result = run(["qrencode", "-t", "ansiutf8", payload])
+    if result.returncode != 0:
+        die(f"qrencode failed: {result.stderr.strip()}")
+    print(f"{BOLD}{profile['ssid']}{RESET}")
+    print(result.stdout)
+
+
+def cmd_clients():
+    """List connected client MAC addresses."""
+    if not is_active():
+        die("Hotspot is not on")
+    profile = get_profile()
+    iface = profile["iface"] if profile else None
+    if not iface:
+        iface = get_wifi_device()
+    if not iface:
+        die("Cannot determine the hotspot interface")
+    macs = client_macs(iface)
+    if macs is None:
+        die("iw not installed (needed to list clients)")
+    if not macs:
+        print(f"{DIM}No clients connected.{RESET}")
+        return
+    for mac in macs:
+        print(mac)
+
+
+def cmd_forget():
+    """Delete the saved hotspot profile."""
+    if not get_profile():
+        warn("No hotspot profile to forget")
+        return
+    if is_active():
+        info("Stopping hotspot first...")
+        run(["nmcli", "connection", "down", CONN_NAME])
+    result = run(["nmcli", "connection", "delete", CONN_NAME])
+    if result.returncode != 0:
+        die(f"Failed to delete profile: {result.stderr.strip()}")
+    ok("Hotspot profile forgotten")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: hotspot [command] [options]
+
+Share this machine's internet connection over WiFi (via NetworkManager).
+
+commands:
+  (none)                        show hotspot status and credentials
+  on [SSID] [PASSWORD]          start the hotspot
+  off                           stop the hotspot
+  password                      print the SSID and password
+  qr                            show a join-this-network QR code
+  clients                       list connected client MACs (needs iw)
+  forget                        delete the saved hotspot profile
+
+With no arguments, `on` reuses the saved profile if one exists;
+otherwise the SSID defaults to <hostname>-hotspot and a random
+password is generated and printed. Starting a hotspot disconnects
+any WiFi connection on the same radio.
+
+examples:
+  hotspot                       show status
+  hotspot on                    start with saved or default credentials
+  hotspot on MyNet              start with a custom SSID
+  hotspot on MyNet s3cretpass   custom SSID and password
+  hotspot qr                    QR code for phones to join
+  hotspot clients               who is connected
+  hotspot off                   stop sharing
+  hotspot forget                remove the saved profile"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not which("nmcli"):
+        die("NetworkManager not installed (need nmcli)")
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "on":       lambda: cmd_on(args),
+        "off":      lambda: cmd_off(),
+        "password": lambda: cmd_password(),
+        "qr":       lambda: cmd_qr(),
+        "clients":  lambda: cmd_clients(),
+        "forget":   lambda: cmd_forget(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'hotspot --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()
