@@ -31,7 +31,6 @@ mtr
 nodejs
 npm
 nss-mdns
-ollama
 openssh
 pigz
 python
