@@ -1,7 +1,9 @@
-"""Tests for the vm CLI (filename convention and qemu argv)."""
+"""Tests for the vm CLI (filename convention, qemu argv, ISO catalog)."""
 
 import json
 import os
+
+import pytest
 
 from helpers import get_bin_path, import_script
 
@@ -13,9 +15,18 @@ class TestParseVmFilename:
         assert vm.parse_vm_filename("debian.x86_64.1G.qcow2") == {
             "name": "debian", "arch": "x86_64", "ram": "1G"}
 
+    def test_gb_suffix_normalized(self):
+        # Older images use '2GB'; qemu -m only accepts '2G'.
+        assert vm.parse_vm_filename("debian.x86_64.2GB.qcow2") == {
+            "name": "debian", "arch": "x86_64", "ram": "2G"}
+
     def test_aarch64_and_megabytes(self):
         assert vm.parse_vm_filename("pi.aarch64.512M.qcow2") == {
             "name": "pi", "arch": "aarch64", "ram": "512M"}
+
+    def test_mb_suffix_normalized(self):
+        assert vm.parse_vm_filename("pi.aarch64.512MB.qcow2")["ram"] == \
+            "512M"
 
     def test_dotted_name(self):
         parsed = vm.parse_vm_filename("test.box.x86_64.2G.qcow2")
@@ -24,6 +35,82 @@ class TestParseVmFilename:
     def test_non_vm_files_rejected(self):
         assert vm.parse_vm_filename("notes.txt") is None
         assert vm.parse_vm_filename("debian.qcow2") is None
+
+
+class TestLatestMatch:
+    def test_picks_highest_version(self):
+        html = ('href="debian-12.9.0-amd64-netinst.iso"\n'
+                'href="debian-12.11.0-amd64-netinst.iso"\n'
+                'href="debian-12.10.0-amd64-netinst.iso"\n')
+        assert vm.latest_match(
+            html, r"debian-(\d+\.\d+\.\d+)-amd64-netinst\.iso") == \
+            "debian-12.11.0-amd64-netinst.iso"
+
+    def test_no_match_is_none(self):
+        assert vm.latest_match("nothing here", r"x-(\d+\.\d+)") is None
+
+
+class TestChecksumFromText:
+    def test_sums_file(self):
+        text = ("abc123  debian-12.11.0-amd64-netinst.iso\n"
+                "def456  debian-12.11.0-amd64-DVD-1.iso\n")
+        assert vm.checksum_from_text(
+            text, "debian-12.11.0-amd64-netinst.iso") == "abc123"
+
+    def test_binary_marker_stripped(self):
+        text = "abc123 *archlinux-x86_64.iso\n"
+        assert vm.checksum_from_text(text, "archlinux-x86_64.iso") == \
+            "abc123"
+
+    def test_bare_digest(self):
+        digest = "a" * 64
+        assert vm.checksum_from_text(digest + "\n", "any.iso") == digest
+
+    def test_missing_is_none(self):
+        assert vm.checksum_from_text("abc  other.iso", "mine.iso") is None
+
+
+class TestParseCreateOpts:
+    def test_defaults(self):
+        positional, opts = vm.parse_create_opts(["debian"])
+        assert positional == ["debian"]
+        assert opts["arch"] == "x86_64"
+        assert opts["name"] is None
+
+    def test_all_options(self):
+        positional, opts = vm.parse_create_opts(
+            ["alpine", "--name", "test", "--ram", "512M",
+             "--disk", "4G", "--arch", "aarch64"])
+        assert positional == ["alpine"]
+        assert opts == {"name": "test", "ram": "512M",
+                        "disk": "4G", "arch": "aarch64"}
+
+    def test_bad_arch_dies(self):
+        with pytest.raises(SystemExit):
+            vm.parse_create_opts(["debian", "--arch", "sparc"])
+
+    def test_missing_value_dies(self):
+        with pytest.raises(SystemExit):
+            vm.parse_create_opts(["debian", "--name"])
+
+
+class TestBuildCreateCommand:
+    def test_passes_options_through(self):
+        cmd = vm.build_create_command(
+            "/tmp/d.iso",
+            {"name": "test", "ram": "2G", "disk": "20G",
+             "arch": "x86_64"})
+        assert "/tmp/d.iso" in cmd
+        assert cmd[cmd.index("--name") + 1] == "test"
+        assert cmd[cmd.index("--ram") + 1] == "2G"
+        assert cmd[cmd.index("--disk-size") + 1] == "20G"
+
+    def test_omits_unset_options(self):
+        cmd = vm.build_create_command(
+            "/tmp/d.iso",
+            {"name": None, "ram": None, "disk": None, "arch": "x86_64"})
+        assert "--name" not in cmd
+        assert "--ram" not in cmd
 
 
 class TestBuildQemuCommand:

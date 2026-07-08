@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""vm — run and manage QEMU virtual machines from the command line.
+"""vm — the full QEMU VM lifecycle from the command line.
 
-Works with images created by create-qemu-vm: ~/virtual-machines/
-holds <name>.<arch>.<RAM>.qcow2 files, and that filename carries the
-launch parameters.
+Download an installer ISO, create a VM, run it, ssh in, and delete
+it. Images live in ~/virtual-machines as <name>.<arch>.<RAM>.qcow2 —
+the same convention create-qemu-vm writes and rofi-explorer (super+e)
+launches, so VMs made here show up everywhere.
 
-Requires: qemu-system-x86_64 / qemu-system-aarch64
+Requires: qemu-system-x86_64 / qemu-system-aarch64, curl (install)
 """
 
+import hashlib
 import json
 import os
 import re
@@ -16,6 +18,7 @@ import socket
 import subprocess
 import sys
 import time
+import urllib.request
 from shutil import which
 
 # ── Colors ──────────────────────────────────────────────────────────
@@ -44,16 +47,20 @@ RUNTIME = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
 DEFAULT_PORTS = {"x86_64": 2222, "aarch64": 2223}
 
 FILENAME_RE = re.compile(
-    r"^(?P<name>.+)\.(?P<arch>x86_64|aarch64)\.(?P<ram>\d+[GM])\.qcow2$")
+    r"^(?P<name>.+)\.(?P<arch>x86_64|aarch64)\.(?P<ram>\d+[GM]B?)\.qcow2$")
 
 
 def parse_vm_filename(filename):
-    """Parse create-qemu-vm's <name>.<arch>.<RAM>.qcow2 convention."""
+    """Parse the <name>.<arch>.<RAM>.qcow2 convention.
+
+    RAM appears both as '2G' (create-qemu-vm) and '2GB' (older
+    images); qemu only accepts the former, so normalize.
+    """
     m = FILENAME_RE.match(filename)
     if not m:
         return None
     return {"name": m.group("name"), "arch": m.group("arch"),
-            "ram": m.group("ram")}
+            "ram": re.sub(r"B$", "", m.group("ram"))}
 
 
 def state_path(name):
@@ -182,6 +189,215 @@ def build_qemu_command(vm, port, monitor, headless=False):
     return cmd
 
 
+# ── ISO Catalog ─────────────────────────────────────────────────────
+# create-qemu-vm boots the installer and writes the qcow2 with the
+# filename convention above; `vm install` just gets it a fresh ISO.
+CREATE_SCRIPT = os.path.expanduser("~/.local/scripts/create-qemu-vm")
+
+DISTRO_HELP = {
+    "debian": "netinst (x86_64, aarch64)",
+    "arch":   "official iso (x86_64)",
+    "alpine": "virt iso (x86_64, aarch64)",
+    "ubuntu": "live server (x86_64)",
+}
+
+
+def fetch_text(url, timeout=20):
+    req = urllib.request.Request(url, headers={"User-Agent": "vm/1.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read().decode(errors="replace")
+
+
+def latest_match(text, pattern):
+    """The highest-versioned filename matching `pattern` in a listing.
+
+    `pattern` must capture the dotted version as group 1; returns the
+    whole matched string, or None.
+    """
+    best = None
+    best_ver = ()
+    for m in re.finditer(pattern, text):
+        ver = tuple(int(p) for p in m.group(1).split("."))
+        if ver > best_ver:
+            best_ver = ver
+            best = m.group(0)
+    return best
+
+
+def resolve_iso(distro, arch):
+    """Find the latest ISO for a distro: (iso_url, checksum_url).
+
+    Dies for unknown distros or unsupported arches.
+    """
+    if distro == "debian":
+        deb_arch = "amd64" if arch == "x86_64" else "arm64"
+        base = (f"https://cdimage.debian.org/debian-cd/current/"
+                f"{deb_arch}/iso-cd/")
+        name = latest_match(
+            fetch_text(base),
+            rf"debian-(\d+\.\d+\.\d+)-{deb_arch}-netinst\.iso")
+        if not name:
+            die("Could not find the current Debian netinst ISO")
+        return base + name, base + "SHA512SUMS"
+
+    if distro == "arch":
+        if arch != "x86_64":
+            die("Arch ISOs are x86_64 only")
+        base = "https://geo.mirror.pkgbuild.com/iso/latest/"
+        return (base + "archlinux-x86_64.iso", base + "sha256sums.txt")
+
+    if distro == "alpine":
+        base = (f"https://dl-cdn.alpinelinux.org/alpine/latest-stable/"
+                f"releases/{arch}/")
+        name = latest_match(
+            fetch_text(base),
+            rf"alpine-virt-(\d+\.\d+\.\d+)-{arch}\.iso")
+        if not name:
+            die("Could not find the current Alpine virt ISO")
+        return base + name, base + name + ".sha256"
+
+    if distro == "ubuntu":
+        if arch != "x86_64":
+            die("Ubuntu ISOs here are x86_64 only")
+        base = "https://releases.ubuntu.com/"
+        listing = fetch_text(base)
+        versions = sorted(
+            {tuple(int(p) for p in v.split("."))
+             for v in re.findall(r'href="(\d\d\.\d\d(?:\.\d+)?)/"',
+                                 listing)},
+            reverse=True)
+        if not versions:
+            die("Could not list Ubuntu releases")
+        # The listing also shows unreleased versions (empty or missing
+        # dirs) — walk newest-first until one actually has the ISO.
+        for ver_tuple in versions:
+            ver = ".".join(str(p) for p in ver_tuple)
+            rel = f"{base}{ver}/"
+            try:
+                rel_listing = fetch_text(rel)
+            except OSError:
+                continue
+            name = latest_match(
+                rel_listing,
+                r"ubuntu-(\d\d\.\d\d(?:\.\d+)?)-live-server-amd64\.iso")
+            if name:
+                return rel + name, rel + "SHA256SUMS"
+        die("No Ubuntu live-server ISO found in any release directory")
+
+    valid = ", ".join(sorted(DISTRO_HELP))
+    die(f"Unknown distro '{distro}' (available: {valid})")
+
+
+def checksum_from_text(text, filename):
+    """Digest for `filename` from a SUMS-style file, or None.
+
+    Handles 'digest  name' lines (Debian/Arch/Ubuntu) and bare-digest
+    files (Alpine's per-ISO .sha256 also uses digest+name).
+    """
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[-1].lstrip("*") == filename:
+            return parts[0]
+    # Single bare digest with no filename column
+    stripped = text.strip()
+    if re.fullmatch(r"[0-9a-fA-F]{64}|[0-9a-fA-F]{128}", stripped):
+        return stripped
+    return None
+
+
+def file_digest(path, algo):
+    h = hashlib.new(algo)
+    with open(path, "rb") as f:
+        while chunk := f.read(1024 * 1024):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def verify_iso(path, checksum_url):
+    """True if the file matches its published checksum."""
+    try:
+        text = fetch_text(checksum_url)
+    except OSError:
+        warn("Could not fetch the checksum file — skipping verification")
+        return True
+    digest = checksum_from_text(text, os.path.basename(path))
+    if not digest:
+        warn("ISO not listed in the checksum file — skipping verification")
+        return True
+    algo = "sha512" if len(digest) == 128 else "sha256"
+    info(f"Verifying {algo} checksum...")
+    return file_digest(path, algo) == digest.lower()
+
+
+def download_iso(url, checksum_url):
+    """Download (resumable) into /tmp and verify. Returns the path."""
+    if not which("curl"):
+        die("curl not installed (needed to download the ISO)")
+    dest = os.path.join("/tmp", os.path.basename(url))
+
+    if os.path.exists(dest) and verify_iso(dest, checksum_url):
+        ok(f"Using already-downloaded {os.path.basename(dest)}")
+        return dest
+
+    info(f"Downloading {os.path.basename(url)}...")
+    # -C - resumes a partial download; interactive so the bar shows.
+    rc = subprocess.run(["curl", "-L", "-C", "-", "--fail",
+                         "-o", dest, url]).returncode
+    if rc != 0:
+        die("Download failed")
+    if not verify_iso(dest, checksum_url):
+        os.unlink(dest)
+        die("Checksum verification FAILED — corrupted or tampered "
+            "download removed")
+    ok("Checksum verified")
+    return dest
+
+
+def parse_create_opts(args):
+    """Split install/create args into positionals and creation options."""
+    opts = {"name": None, "ram": None, "disk": None, "arch": "x86_64"}
+    positional = []
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a in ("--name", "--ram", "--disk", "--arch"):
+            if i + 1 >= len(args):
+                die(f"{a} needs a value")
+            opts[a[2:]] = args[i + 1]
+            i += 2
+            continue
+        positional.append(a)
+        i += 1
+    if opts["arch"] not in ("x86_64", "aarch64"):
+        die("--arch must be x86_64 or aarch64")
+    return positional, opts
+
+
+def build_create_command(iso_path, opts):
+    """argv for create-qemu-vm from parsed options."""
+    script = which("create-qemu-vm") or CREATE_SCRIPT
+    cmd = [script, iso_path, "--arch", opts["arch"]]
+    if opts["name"]:
+        cmd += ["--name", opts["name"]]
+    if opts["ram"]:
+        cmd += ["--ram", opts["ram"]]
+    if opts["disk"]:
+        cmd += ["--disk-size", opts["disk"]]
+    return cmd
+
+
+def _run_create(iso_path, opts):
+    script = which("create-qemu-vm") or CREATE_SCRIPT
+    if not os.path.exists(script):
+        die("create-qemu-vm not found (expected in ~/.local/scripts)")
+    info("Handing off to create-qemu-vm — the installer will boot "
+         "in a QEMU window...")
+    rc = subprocess.run(build_create_command(iso_path, opts)).returncode
+    if rc != 0:
+        die(f"create-qemu-vm exited with code {rc}")
+    ok("VM created — it now shows up in `vm` and the super+e explorer")
+
+
 # ── Commands ────────────────────────────────────────────────────────
 def cmd_status():
     """List VMs and their state."""
@@ -307,31 +523,105 @@ def cmd_list():
               f"{v['port']}\t{v['path']}")
 
 
+def cmd_install(args):
+    """Download a distro's latest ISO (verified) and create a VM."""
+    positional, opts = parse_create_opts(args)
+    if not positional:
+        print(f"{BOLD}Available distros{RESET}")
+        for name, desc in sorted(DISTRO_HELP.items()):
+            print(f"  {name:<8} {DIM}{desc}{RESET}")
+        print(f"\n{DIM}Usage: vm install <distro> [--name N] [--ram 2G] "
+              f"[--disk 12G] [--arch aarch64]{RESET}")
+        return
+    distro = positional[0].lower()
+    if not opts["name"]:
+        opts["name"] = distro
+
+    info(f"Resolving the latest {distro} ISO...")
+    try:
+        iso_url, checksum_url = resolve_iso(distro, opts["arch"])
+    except OSError as e:
+        die(f"Could not reach the {distro} mirror: {e}")
+
+    iso_path = download_iso(iso_url, checksum_url)
+    _run_create(iso_path, opts)
+
+
+def cmd_create(args):
+    """Create a VM from a local ISO (wraps create-qemu-vm)."""
+    positional, opts = parse_create_opts(args)
+    if not positional:
+        die("Usage: vm create <file.iso> [--name N] [--ram 2G] "
+            "[--disk 12G] [--arch aarch64]")
+    iso_path = os.path.expanduser(positional[0])
+    if not os.path.isfile(iso_path):
+        die(f"ISO not found: {iso_path}")
+    _run_create(iso_path, opts)
+
+
+def cmd_delete(args):
+    """Delete a VM's disk image (asks first)."""
+    if not args:
+        die("Usage: vm delete <name>")
+    vm = resolve_vm(args[0])
+    if vm["pid"]:
+        die(f"{vm['name']} is running — stop it first: "
+            f"vm stop {vm['name']}")
+    size = os.path.getsize(vm["path"]) / 1024**3
+    try:
+        answer = input(f"{CYAN}▸{RESET} Permanently delete "
+                       f"{BOLD}{vm['name']}{RESET} "
+                       f"({os.path.basename(vm['path'])}, "
+                       f"{size:.1f}G)? [y/N] ")
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return
+    if answer.strip().lower() not in ("y", "yes"):
+        info("Nothing deleted")
+        return
+    os.unlink(vm["path"])
+    try:
+        os.unlink(state_path(vm["name"]))
+    except OSError:
+        pass
+    ok(f"Deleted {vm['name']}")
+
+
 # ── Help + Main ─────────────────────────────────────────────────────
 HELP_TEXT = """\
 usage: vm [command] [options]
 
-Run and manage QEMU VMs created by create-qemu-vm.
+The full QEMU VM lifecycle: download, install, run, ssh, delete.
 
 commands:
   (none)                        list VMs and their state
+  install [DISTRO] [opts]       download latest ISO (verified) + install
+  create <ISO> [opts]           create a VM from a local ISO
   start [NAME] [PORT]           boot a VM (add --headless for no window)
   stop [NAME]                   ACPI powerdown, SIGTERM fallback
   ssh [NAME] [USER]             ssh via the forwarded port
+  delete <NAME>                 delete the disk image (asks first)
   list                          machine-parseable VM list
 
-Images live in ~/virtual-machines as <name>.<arch>.<RAM>.qcow2; the
-filename carries the launch parameters. SSH forwards default to
-2222 (x86_64) / 2223 (aarch64), same as create-qemu-vm. NAME can be
-omitted when only one VM qualifies.
+install/create options: --name N  --ram 2G  --disk 12G  --arch aarch64
+Distros: debian, arch, alpine, ubuntu (bare `vm install` lists them).
+
+Images live in ~/virtual-machines as <name>.<arch>.<RAM>.qcow2 — the
+same convention rofi-explorer (super+e) launches, so VMs made here
+appear there too. ISO downloads are checksum-verified. SSH forwards
+default to 2222 (x86_64) / 2223 (aarch64). NAME can be omitted when
+only one VM qualifies.
 
 examples:
   vm                            what VMs exist, what's running?
+  vm install debian             fetch latest netinst, boot installer
+  vm install alpine --ram 512M  small VM
+  vm create ~/dl/custom.iso     install from a local ISO
   vm start                      boot the only VM
   vm start debian --headless    boot without a window
   vm ssh                        ssh into the running VM
-  vm ssh debian root            ssh as root
-  vm stop                       shut the running VM down"""
+  vm stop                       shut the running VM down
+  vm delete debian              remove the disk image"""
 
 
 def main():
@@ -347,10 +637,13 @@ def main():
     args = sys.argv[2:]
 
     commands = {
-        "start": lambda: cmd_start(args),
-        "stop":  lambda: cmd_stop(args),
-        "ssh":   lambda: cmd_ssh(args),
-        "list":  lambda: cmd_list(),
+        "install": lambda: cmd_install(args),
+        "create":  lambda: cmd_create(args),
+        "start":   lambda: cmd_start(args),
+        "stop":    lambda: cmd_stop(args),
+        "ssh":     lambda: cmd_ssh(args),
+        "delete":  lambda: cmd_delete(args),
+        "list":    lambda: cmd_list(),
     }
 
     if command not in commands:

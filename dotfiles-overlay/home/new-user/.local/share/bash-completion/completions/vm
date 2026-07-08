@@ -1,17 +1,41 @@
 # bash completion for vm
 _vm() {
-    local cur
+    local cur prev
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     if [ "$COMP_CWORD" -eq 1 ]; then
-        COMPREPLY=( $(compgen -W "start stop ssh list help --help" -- "$cur") )
+        COMPREPLY=( $(compgen -W "install create start stop ssh delete list help --help" -- "$cur") )
         return
     fi
 
     local cmd="${COMP_WORDS[1]}"
+    case "$prev" in
+        --arch)
+            COMPREPLY=( $(compgen -W "x86_64 aarch64" -- "$cur") )
+            return
+            ;;
+        --name|--ram|--disk)
+            return
+            ;;
+    esac
     case "$cmd" in
-        start|stop|ssh)
+        install)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                COMPREPLY=( $(compgen -W "debian arch alpine ubuntu" -- "$cur") )
+            else
+                COMPREPLY=( $(compgen -W "--name --ram --disk --arch" -- "$cur") )
+            fi
+            ;;
+        create)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                COMPREPLY=( $(compgen -f -X '!*.iso' -- "$cur") $(compgen -d -- "$cur") )
+            else
+                COMPREPLY=( $(compgen -W "--name --ram --disk --arch" -- "$cur") )
+            fi
+            ;;
+        start|stop|ssh|delete)
             if [ "$COMP_CWORD" -eq 2 ]; then
                 local -a names
                 mapfile -t names < <(ls -1 "$HOME/virtual-machines" 2>/dev/null | sed -n 's/\.\(x86_64\|aarch64\)\..*\.qcow2$//p')
@@ -21,4 +45,4 @@ _vm() {
     esac
 }
 
-complete -F _vm vm
+complete -o filenames -F _vm vm
