@@ -214,10 +214,10 @@ def get_saved_connections():
 
     connections = []
     for line in result.stdout.strip().splitlines():
-        parts = line.split(":")
+        parts = nmcli_split_line(line)
         if len(parts) >= 3 and "802-11-wireless" in parts[2]:
             connections.append({
-                "name": parts[0],
+                "name": parts[0].replace(r"\:", ":"),
                 "uuid": parts[1],
             })
     return connections
@@ -371,9 +371,11 @@ def _connect_with_password(ssid):
         die("No password entered")
 
     info(f"Connecting to {BOLD}{ssid}{RESET}...")
+    # --ask reads the password from stdin, keeping it out of argv
+    # (world-readable via /proc/*/cmdline while nmcli runs).
     result = subprocess.run(
-        ["nmcli", "device", "wifi", "connect", ssid, "password", password],
-        capture_output=True, text=True,
+        ["nmcli", "--ask", "device", "wifi", "connect", ssid],
+        input=password + "\n", capture_output=True, text=True,
     )
     if result.returncode == 0:
         ok(f"Connected to {ssid}")
