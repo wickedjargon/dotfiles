@@ -35,6 +35,10 @@ WRITE=0
 # Strip comments/blank lines and sort a package-list file.
 listed() { sed 's/#.*//' "$1" | awk 'NF' | sort -u; }
 
+# Print a package-list file's leading comment header (used by --write to
+# preserve it, regardless of how many lines it has).
+header() { awk '/^#/ { print; next } { exit }' "$1"; }
+
 # Live explicit native packages: explicitly installed, from official repos,
 # minus the lib32-* libraries owned by setup-steam.sh.
 live_pacman() {
@@ -73,11 +77,11 @@ AUR_LIVE="$(live_aur)"
 
 if [ $WRITE -eq 1 ]; then
     {
-        head -n 5 "$PACMAN_FILE"   # preserve the comment header
+        header "$PACMAN_FILE"
         echo "$PAC_LIVE"
     } > "$PACMAN_FILE.tmp" && mv "$PACMAN_FILE.tmp" "$PACMAN_FILE"
     {
-        head -n 3 "$AUR_FILE"
+        header "$AUR_FILE"
         echo "$AUR_LIVE"
     } > "$AUR_FILE.tmp" && mv "$AUR_FILE.tmp" "$AUR_FILE"
     echo "Lists rewritten from the live system. Review with: git diff packages/"

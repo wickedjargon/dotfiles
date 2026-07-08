@@ -28,7 +28,7 @@ YAY_GIT_URL = "https://aur.archlinux.org/yay.git"
 def read_package_list(filepath: Path) -> list[str]:
     """Read a package list file, returning non-empty, non-comment lines."""
     if not filepath.exists():
-        print(f"ERROR: Package list not found: {filepath}")
+        print(f"ERROR: Package list not found: {filepath}", file=sys.stderr)
         sys.exit(1)
     with open(filepath) as f:
         packages = []
@@ -86,7 +86,7 @@ def install_yay() -> bool:
             ["git", "clone", YAY_GIT_URL, yay_dir],
         )
         if clone_result.returncode != 0:
-            print("ERROR: Failed to clone yay repository.")
+            print("ERROR: Failed to clone yay repository.", file=sys.stderr)
             return False
 
         build_result = subprocess.run(
@@ -94,7 +94,7 @@ def install_yay() -> bool:
             cwd=yay_dir,
         )
         if build_result.returncode != 0:
-            print("ERROR: Failed to build/install yay.")
+            print("ERROR: Failed to build/install yay.", file=sys.stderr)
             return False
 
     print("yay installed successfully.")
@@ -127,8 +127,8 @@ def install_aur_packages(packages: list[str]) -> list[str]:
 def main():
     # Refuse to run as root
     if os.geteuid() == 0:
-        print("ERROR: Do not run this script as root.")
-        print("Run as a normal user; sudo will be invoked where needed.")
+        print("ERROR: Do not run this script as root.", file=sys.stderr)
+        print("Run as a normal user; sudo will be invoked where needed.", file=sys.stderr)
         sys.exit(1)
 
     print("=== Arch Package Installer ===\n")

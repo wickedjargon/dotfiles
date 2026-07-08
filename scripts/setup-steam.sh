@@ -108,7 +108,7 @@ sudo pacman -S --noconfirm --needed "${PACKAGES[@]}"
 # ── Step 4: Export Steam to host via distrobox ───────────────────────────────
 if command -v distrobox-export &>/dev/null; then
     info "Exporting Steam to the host desktop..."
-    distrobox-export --app steam 2>/dev/null || warn "distrobox-export failed (non-fatal)."
+    distrobox-export --app steam || warn "distrobox-export failed (non-fatal)."
 else
     warn "distrobox-export not found — skipping host-side app export."
     warn "You can launch Steam from inside the container with: steam"
