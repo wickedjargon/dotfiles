@@ -44,10 +44,8 @@ def find_device():
         die("no backlight interface found (/sys/class/backlight is missing)")
     if not devices:
         die("no backlight devices found under /sys/class/backlight")
-    # Prefer a real panel backlight over LED/keyboard interfaces if present.
-    for dev in devices:
-        if (dev / "max_brightness").exists():
-            return dev
+    # Everything under /sys/class/backlight is a panel backlight (keyboard
+    # and LED interfaces live under /sys/class/leds), so take the first.
     return devices[0]
 
 
