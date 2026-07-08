@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+"""share — serve a file or directory over HTTP for other devices.
+
+Binds to the Tailscale IP when available (reachable from any of your
+devices, anywhere), falling back to the LAN address. Anyone who can
+reach that address can download — stop the server when done.
+
+Requires: nothing (stdlib); optional: tailscale, qrencode (QR code)
+"""
+
+import http.server
+import os
+import socket
+import subprocess
+import sys
+import urllib.parse
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+DEFAULT_PORT = 8123
+
+
+def pick_address():
+    """(ip, scope) to serve on: tailnet if up, else the LAN address."""
+    try:
+        result = subprocess.run(["tailscale", "ip", "-4"],
+                                capture_output=True, text=True, timeout=5)
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip().splitlines()[0], "tailnet"
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    # UDP "connect" never sends a packet; it just picks the outbound ip.
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("9.9.9.9", 53))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip, "LAN"
+    except OSError:
+        return "0.0.0.0", "all interfaces"
+
+
+def build_url(ip, port, name=None):
+    url = f"http://{ip}:{port}/"
+    if name:
+        url += urllib.parse.quote(name)
+    return url
+
+
+def show_qr(url):
+    if not which("qrencode"):
+        return
+    result = subprocess.run(["qrencode", "-t", "ansiutf8", url],
+                            capture_output=True, text=True)
+    if result.returncode == 0:
+        print(result.stdout)
+
+
+# ── Servers ─────────────────────────────────────────────────────────
+def make_file_handler(filepath):
+    """Handler that serves exactly one file and nothing else.
+
+    SimpleHTTPRequestHandler would expose every sibling in the
+    directory; this serves only the named file, on any path, so both
+    the bare URL and the /filename URL work.
+    """
+    filename = os.path.basename(filepath)
+
+    class SingleFileHandler(http.server.BaseHTTPRequestHandler):
+        def _serve(self, head_only=False):
+            size = os.path.getsize(filepath)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Length", str(size))
+            self.send_header(
+                "Content-Disposition",
+                f'attachment; filename="{filename}"')
+            self.end_headers()
+            if head_only:
+                return
+            with open(filepath, "rb") as f:
+                while True:
+                    chunk = f.read(64 * 1024)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+
+        def do_GET(self):
+            try:
+                self._serve()
+            except (BrokenPipeError, ConnectionResetError):
+                return
+            print(f"{GREEN}✓{RESET} Sent to {self.client_address[0]}")
+
+        def do_HEAD(self):
+            self._serve(head_only=True)
+
+        def log_message(self, *args):
+            pass  # replaced by the explicit "Sent to" line
+
+    return SingleFileHandler
+
+
+def serve(target, port):
+    ip, scope = pick_address()
+    is_dir = os.path.isdir(target)
+
+    if is_dir:
+        handler = lambda *a, **kw: http.server.SimpleHTTPRequestHandler(
+            *a, directory=target, **kw)
+        url = build_url(ip, port)
+    else:
+        handler = make_file_handler(target)
+        url = build_url(ip, port, os.path.basename(target))
+
+    try:
+        server = http.server.ThreadingHTTPServer((ip, port), handler)
+    except OSError:
+        # Port busy — let the kernel pick a free one.
+        server = http.server.ThreadingHTTPServer((ip, 0), handler)
+        port = server.server_address[1]
+        url = (build_url(ip, port) if is_dir
+               else build_url(ip, port, os.path.basename(target)))
+
+    kind = "directory" if is_dir else "file"
+    info(f"Serving {kind} {BOLD}{target}{RESET} on the {scope}")
+    print(f"\n  {BOLD}{url}{RESET}\n")
+    show_qr(url)
+    print(f"{DIM}Ctrl+C to stop.{RESET}")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print()
+        ok("Stopped")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: share FILE|DIR [PORT]
+
+Serve a file or directory over HTTP so another device can download it.
+
+Binds to the Tailscale address when tailscaled is running (works from
+anywhere on your tailnet), otherwise the LAN address. Prints the URL
+and, when qrencode is installed, a QR code to scan. Serves until
+Ctrl+C — anyone who can reach the address can download.
+
+A single file is served alone (siblings are not exposed); a directory
+gets a browsable listing.
+
+examples:
+  share report.pdf              one file, URL + QR code
+  share ~/d/images/vacation     browsable directory listing
+  share big.iso 9000            use a specific port"""
+
+
+def main():
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    target = sys.argv[1]
+    if not os.path.exists(target):
+        die(f"No such file or directory: {target}")
+
+    port = DEFAULT_PORT
+    if len(sys.argv) > 2:
+        if not sys.argv[2].isdigit():
+            die(f"Not a port number: {sys.argv[2]}")
+        port = int(sys.argv[2])
+
+    serve(target, port)
+
+
+if __name__ == "__main__":
+    main()

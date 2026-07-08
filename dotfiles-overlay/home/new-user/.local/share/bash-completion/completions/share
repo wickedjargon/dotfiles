@@ -1,0 +1,13 @@
+# bash completion for share
+_share() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -f -- "$cur") $(compgen -W "help --help" -- "$cur") )
+        return
+    fi
+}
+
+complete -o filenames -F _share share
