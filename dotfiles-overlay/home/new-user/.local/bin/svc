@@ -79,44 +79,6 @@ def get_services(user=True):
     return services
 
 
-def get_timers(user=True):
-    """Get all timers with their status.
-
-    Returns a list of dicts with keys:
-      unit, active, sub, next, left
-    """
-    result = systemctl("list-timers", "--all",
-                       "--no-pager", "--no-legend", user=user)
-    if result.returncode != 0:
-        return []
-
-    timers = []
-    for line in result.stdout.strip().splitlines():
-        # Format: NEXT  LEFT  LAST  PASSED  UNIT  ACTIVATES
-        parts = line.split()
-        if not parts:
-            continue
-        # Find the .timer unit in the line
-        timer_unit = None
-        for p in parts:
-            if p.endswith(".timer"):
-                timer_unit = p
-                break
-        if not timer_unit:
-            continue
-
-        # Get timer status
-        info_result = systemctl("is-active", timer_unit, user=user)
-        active = info_result.stdout.strip()
-
-        timers.append({
-            "unit": timer_unit,
-            "active": active,
-            "raw": line.strip(),
-        })
-    return timers
-
-
 def get_unit_status(unit, user=True):
     """Get the active state of a unit."""
     result = systemctl("is-active", unit, user=user)
@@ -155,15 +117,17 @@ def resolve_unit(name, user=True):
         candidates.append((name_with_suffix, False))
 
     if not candidates:
-        # Try partial match on services
-        services = get_services(user=True) + get_services(user=False)
+        # Try partial match on services. Tag each entry with its scope up
+        # front — one listing per scope, instead of re-querying systemd
+        # for every match.
+        scoped = ([(s, True) for s in get_services(user=True)]
+                  + [(s, False) for s in get_services(user=False)])
         name_lower = name.lower()
         matches = []
-        for s in services:
+        for s, is_user in scoped:
             unit = s["unit"]
             bare = unit.rsplit(".", 1)[0] if "." in unit else unit
             if name_lower in bare.lower():
-                is_user = s in get_services(user=True)
                 matches.append((unit, is_user))
 
         # Deduplicate
