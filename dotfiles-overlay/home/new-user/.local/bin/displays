@@ -125,6 +125,9 @@ def post_apply():
 
 def notify(summary, body=""):
     """Send a desktop notification."""
+    from shutil import which
+    if not which("notify-send"):
+        return
     cmd = [
         "notify-send",
         "-h", "string:x-canonical-private-synchronous:display",
