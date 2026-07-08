@@ -9,6 +9,7 @@ import re
 import string
 import subprocess
 import sys
+from shutil import which
 
 ALARM_DIR = os.path.expanduser("~/.local/share/sched")
 ALARM_SOUND = "/usr/share/sounds/freedesktop/stereo/suspend-error.oga"
@@ -57,8 +58,8 @@ def parse_time_str(s):
     return None
 
 
-def parse_time(args):
-    """Parse time arguments into a datetime object.
+def try_parse_time(args):
+    """Parse time arguments into a datetime object, or None if unparseable.
 
     Supports:
       2pm, 2:30pm, 14:00        time only (smart day selection)
@@ -100,16 +101,13 @@ def parse_time(args):
             try:
                 date_part = datetime.date.fromisoformat(date_match.group(1))
             except ValueError:
-                print(f"Error: invalid date '{date_match.group(1)}'", file=sys.stderr)
-                sys.exit(1)
+                return None
             time_part = date_match.group(2).strip()
 
     # --- Parse the time component ---
     parsed_time = parse_time_str(time_part)
     if parsed_time is None:
-        print(f"Error: cannot parse time '{time_part}'", file=sys.stderr)
-        print("Examples: 2pm, 2:30pm, 14:00, +30m, +1h30m, tomorrow 9am", file=sys.stderr)
-        sys.exit(1)
+        return None
 
     if date_part:
         return datetime.datetime.combine(date_part, parsed_time)
@@ -119,6 +117,20 @@ def parse_time(args):
     if target <= now:
         target += datetime.timedelta(days=1)
     return target
+
+
+def parse_time(args):
+    """Like try_parse_time, but exits with an error message on invalid
+    input. Returns None only for empty or incomplete args (bare 'tomorrow')."""
+    result = try_parse_time(args)
+    if result is not None:
+        return result
+    time_str = ' '.join(args).strip()
+    if not time_str or time_str.lower() == "tomorrow":
+        return None
+    print(f"Error: cannot parse time '{time_str}'", file=sys.stderr)
+    print("Examples: 2pm, 2:30pm, 14:00, +30m, +1h30m, tomorrow 9am", file=sys.stderr)
+    sys.exit(1)
 
 
 def format_eta(delta):
@@ -213,7 +225,7 @@ def fire_alarm(alarm_id):
         title, body,
     ])
 
-    if os.path.exists(ALARM_SOUND):
+    if os.path.exists(ALARM_SOUND) and which("paplay"):
         subprocess.run(["paplay", ALARM_SOUND])
 
     # Clean up metadata file (alarm has fired)
@@ -448,9 +460,24 @@ examples:
             label = last
             time_args = time_args[:-1]
 
-    target = parse_time(time_args)
+    target = try_parse_time(time_args)
 
-    if target is None or target <= datetime.datetime.now():
+    # A quoted label starting with a digit (e.g. "3 hour nap") looks like
+    # a time token to the heuristic above; if the args don't parse as a
+    # whole, retry with the last one treated as the label.
+    if target is None and label is None and len(time_args) >= 2:
+        retry = try_parse_time(time_args[:-1])
+        if retry is not None:
+            label = time_args[-1]
+            target = retry
+
+    if target is None:
+        parse_time(time_args)  # exits with a detailed message on bad input
+        # Reached only for incomplete-but-valid forms (e.g. bare "tomorrow").
+        print("Error: alarm time is in the past or invalid.", file=sys.stderr)
+        sys.exit(1)
+
+    if target <= datetime.datetime.now():
         print("Error: alarm time is in the past or invalid.", file=sys.stderr)
         sys.exit(1)
 

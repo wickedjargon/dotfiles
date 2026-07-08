@@ -229,6 +229,8 @@ class TestFireAlarm:
 
         with patch.object(cal_mod, "ALARM_DIR", str(tmp_path)), \
              patch.object(cal_mod, "ALARM_SOUND", str(sound_file)), \
+             patch.object(cal_mod, "which",
+                          return_value="/usr/bin/paplay"), \
              patch("subprocess.run") as mock_run:
             cal_mod.fire_alarm("snd001")
 
@@ -384,3 +386,50 @@ class TestGenerateId:
         ids = {cal_mod.generate_id() for _ in range(100)}
         # With 36^6 possibilities, 100 samples should all be unique
         assert len(ids) == 100
+
+
+# ── main() label heuristic ─────────────────────────────────────────
+
+
+class TestLabelHeuristic:
+    """Tests for main()'s time/label argument splitting."""
+
+    def _run_main(self, monkeypatch, argv):
+        captured = {}
+        monkeypatch.setattr(
+            cal_mod, "set_alarm",
+            lambda target, label=None: captured.update(
+                target=target, label=label),
+        )
+        monkeypatch.setattr(cal_mod.sys, "argv", ["sched"] + argv)
+        cal_mod.main()
+        return captured
+
+    def test_word_label(self, monkeypatch):
+        captured = self._run_main(monkeypatch, ["11:59pm", "Take medicine"])
+        assert captured["label"] == "Take medicine"
+        assert captured["target"].hour == 23
+
+    def test_digit_leading_label(self, monkeypatch):
+        # "3 hour nap" starts with a digit, so the first-pass heuristic
+        # mistakes it for a time token; the retry recovers it as the label.
+        captured = self._run_main(monkeypatch, ["11:59pm", "3 hour nap"])
+        assert captured["label"] == "3 hour nap"
+        assert captured["target"].hour == 23
+
+    def test_no_label(self, monkeypatch):
+        captured = self._run_main(monkeypatch, ["11:59pm"])
+        assert captured["label"] is None
+
+
+class TestTryParseTime:
+    """try_parse_time is the non-exiting variant used by the heuristic."""
+
+    def test_garbage_returns_none(self):
+        assert cal_mod.try_parse_time(["gobbledygook"]) is None
+
+    def test_invalid_iso_date_returns_none(self):
+        assert cal_mod.try_parse_time(["2025-13-40", "2pm"]) is None
+
+    def test_valid_returns_datetime(self):
+        assert cal_mod.try_parse_time(["14:00"]) is not None
