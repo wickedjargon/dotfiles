@@ -19,6 +19,14 @@
 
 `img resize 1920 {{photo.jpg}}`
 
+- Rotate 90° clockwise (also 180, 270, -90):
+
+`img rotate 90 {{photo.jpg}}`
+
+- Bake the EXIF orientation into the pixels (upright everywhere):
+
+`img rotate auto {{photo.jpg}}`
+
 - Convert a phone HEIC photo to JPEG:
 
 `img convert jpg {{IMG_0042.heic}}`

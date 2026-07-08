@@ -38,6 +38,26 @@ class TestValidResizeSpec:
         assert not img.valid_resize_spec("x600")
 
 
+class TestValidRotateSpec:
+    def test_right_angles(self):
+        assert img.valid_rotate_spec("90")
+        assert img.valid_rotate_spec("180")
+        assert img.valid_rotate_spec("270")
+
+    def test_counter_clockwise(self):
+        assert img.valid_rotate_spec("-90")
+
+    def test_auto(self):
+        assert img.valid_rotate_spec("auto")
+
+    def test_arbitrary_angles_rejected(self):
+        assert not img.valid_rotate_spec("45")
+        assert not img.valid_rotate_spec("360")
+        assert not img.valid_rotate_spec("-180")
+        assert not img.valid_rotate_spec("left")
+        assert not img.valid_rotate_spec("")
+
+
 class TestGuards:
     def test_missing_file_dies(self):
         with pytest.raises(SystemExit):

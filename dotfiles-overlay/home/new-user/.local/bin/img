@@ -142,6 +142,36 @@ def cmd_resize(args):
            f"{DIM}({_human(os.path.getsize(dest))}){RESET}")
 
 
+def valid_rotate_spec(spec):
+    """Accept right angles 90/180/270, -90, or 'auto' (EXIF orientation)."""
+    return spec in ("90", "180", "270", "-90", "auto")
+
+
+def cmd_rotate(args):
+    """Rotate by a right angle, or bake in the EXIF orientation."""
+    if len(args) < 2:
+        die("Usage: img rotate <90|180|270|-90|auto> FILE...")
+    spec, files = args[0], args[1:]
+    if not valid_rotate_spec(spec):
+        die(f"Bad rotation '{spec}' (use 90, 180, 270, -90, or auto)")
+    if spec == "-90":
+        spec = "270"
+    check_files(files)
+    for f in files:
+        if spec == "auto":
+            dest = out_name(f, "oriented")
+            op = ["-auto-orient"]
+        else:
+            dest = out_name(f, f"r{spec}")
+            op = ["-rotate", spec]
+        _guard_output(dest)
+        result = magick(f, *op, dest)
+        if result.returncode != 0:
+            die(f"Rotate failed: {result.stderr.strip()}")
+        ok(f"{os.path.basename(dest)}  "
+           f"{DIM}({_human(os.path.getsize(dest))}){RESET}")
+
+
 def cmd_convert(args):
     """Convert to another format (e.g. HEIC from the phone to JPEG)."""
     if len(args) < 2:
@@ -191,6 +221,8 @@ commands:
   info FILE...                  dimensions, size, EXIF/GPS presence
   exif FILE...                  dump all metadata tags
   resize <SPEC> FILE...         resize (50%%, 1920, or 800x600)
+  rotate <ANGLE> FILE...        rotate 90/180/270/-90 clockwise, or
+                                auto (bake in the EXIF orientation)
   convert <FMT> FILE...         convert format (heic→jpg, png→webp...)
   strip FILE...                 remove all metadata → FILE-clean.ext
 
@@ -201,6 +233,8 @@ examples:
   img info photo.jpg            does this photo leak location?
   img resize 50% photo.jpg      half size → photo-50pct.jpg
   img resize 1920 photo.jpg     max width 1920 → photo-1920.jpg
+  img rotate 90 photo.jpg       clockwise → photo-r90.jpg
+  img rotate auto photo.jpg     upright per EXIF → photo-oriented.jpg
   img convert jpg IMG_0042.heic phone photo → IMG_0042.jpg
   img strip photo.jpg           shareable copy → photo-clean.jpg
   img exif photo.jpg            full metadata dump"""
@@ -221,6 +255,7 @@ def main():
         "info":    lambda: cmd_info(args),
         "exif":    lambda: cmd_exif(args),
         "resize":  lambda: cmd_resize(args),
+        "rotate":  lambda: cmd_rotate(args),
         "convert": lambda: cmd_convert(args),
         "strip":   lambda: cmd_strip(args),
     }

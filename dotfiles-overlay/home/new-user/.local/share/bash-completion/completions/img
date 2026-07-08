@@ -5,7 +5,7 @@ _img() {
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ "$COMP_CWORD" -eq 1 ]; then
-        COMPREPLY=( $(compgen -W "info exif resize convert strip help --help" -- "$cur") )
+        COMPREPLY=( $(compgen -W "info exif resize rotate convert strip help --help" -- "$cur") )
         return
     fi
 
@@ -14,6 +14,12 @@ _img() {
         convert)
             if [ "$COMP_CWORD" -eq 2 ]; then
                 COMPREPLY=( $(compgen -W "jpg png webp tiff avif" -- "$cur") )
+                return
+            fi
+            ;;
+        rotate)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                COMPREPLY=( $(compgen -W "90 180 270 -90 auto" -- "$cur") )
                 return
             fi
             ;;
