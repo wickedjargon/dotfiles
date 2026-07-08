@@ -1,0 +1,25 @@
+# bash completion for img
+_img() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "info exif resize convert strip help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        convert)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                COMPREPLY=( $(compgen -W "jpg png webp tiff avif" -- "$cur") )
+                return
+            fi
+            ;;
+    esac
+    # Fall through to filenames for FILE arguments
+    COMPREPLY=( $(compgen -f -- "$cur") )
+}
+
+complete -o filenames -F _img img

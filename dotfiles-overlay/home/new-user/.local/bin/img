@@ -1,0 +1,237 @@
+#!/usr/bin/env python3
+"""img — everyday image operations from the command line.
+
+Never modifies the original file; results go to a new file next to it.
+
+Requires: imagemagick (magick or convert/identify)
+Optional: exiftool (lossless metadata stripping)
+"""
+
+import os
+import re
+import subprocess
+import sys
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=120):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+def magick(*args, timeout=120):
+    """Run an ImageMagick operation (IM7 magick, or legacy convert)."""
+    tool = ["magick"] if which("magick") else ["convert"]
+    return run(tool + list(args), timeout=timeout)
+
+
+def identify(*args):
+    tool = (["magick", "identify"] if which("magick")
+            else ["identify"])
+    return run(tool + list(args))
+
+
+def out_name(path, tag, new_ext=None):
+    """Derive the output filename: photo.jpg -> photo-<tag>.jpg."""
+    stem, ext = os.path.splitext(path)
+    if new_ext:
+        ext = "." + new_ext.lstrip(".")
+    return f"{stem}-{tag}{ext}" if tag else f"{stem}{ext}"
+
+
+def check_files(files):
+    if not files:
+        die("No files given")
+    for f in files:
+        if not os.path.isfile(f):
+            die(f"File not found: {f}")
+
+
+def _guard_output(dest):
+    if os.path.exists(dest):
+        die(f"Output already exists: {dest}")
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_info(files):
+    """Dimensions, format, size, and whether EXIF/GPS data is present."""
+    check_files(files)
+    for f in files:
+        result = identify("-format",
+                          "%wx%h %m", f)
+        dims = result.stdout.strip() if result.returncode == 0 else "?"
+        size = os.path.getsize(f)
+        exif = identify("-format", "%[EXIF:*]", f).stdout
+        gps = "GPS" in exif
+        tags = ""
+        if exif.strip():
+            tags = f"  {YELLOW}EXIF{RESET}" if not gps else \
+                   f"  {YELLOW}EXIF+GPS{RESET}"
+        print(f"  {BOLD}{os.path.basename(f)}{RESET}  {dims}  "
+              f"{_human(size)}{tags}")
+
+
+def _human(n):
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024:
+            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TB"
+
+
+def cmd_exif(files):
+    """Dump all EXIF tags."""
+    check_files(files)
+    for f in files:
+        if len(files) > 1:
+            print(f"{BOLD}{f}{RESET}")
+        if which("exiftool"):
+            result = run(["exiftool", f])
+        else:
+            result = identify("-format", "%[EXIF:*]", f)
+        text = result.stdout.strip()
+        print(text if text else f"{DIM}(no EXIF data){RESET}")
+
+
+def valid_resize_spec(spec):
+    """Accept 50%, 1920 (width), or 800x600."""
+    return bool(re.fullmatch(r"\d+%|\d+|\d+x\d+", spec))
+
+
+def cmd_resize(args):
+    """Resize to a percentage, width, or exact geometry."""
+    if len(args) < 2:
+        die("Usage: img resize <50%|1920|800x600> FILE...")
+    spec, files = args[0], args[1:]
+    if not valid_resize_spec(spec):
+        die(f"Bad size '{spec}' (use 50%, 1920, or 800x600)")
+    check_files(files)
+    tag = spec.replace("%", "pct")
+    for f in files:
+        dest = out_name(f, tag)
+        _guard_output(dest)
+        result = magick(f, "-resize", spec, dest)
+        if result.returncode != 0:
+            die(f"Resize failed: {result.stderr.strip()}")
+        ok(f"{os.path.basename(dest)}  "
+           f"{DIM}({_human(os.path.getsize(dest))}){RESET}")
+
+
+def cmd_convert(args):
+    """Convert to another format (e.g. HEIC from the phone to JPEG)."""
+    if len(args) < 2:
+        die("Usage: img convert <jpg|png|webp|...> FILE...")
+    fmt, files = args[0].lstrip(".").lower(), args[1:]
+    check_files(files)
+    for f in files:
+        dest = out_name(f, "", new_ext=fmt)
+        if os.path.abspath(dest) == os.path.abspath(f):
+            warn(f"{f} is already .{fmt}")
+            continue
+        _guard_output(dest)
+        result = magick(f, dest)
+        if result.returncode != 0:
+            die(f"Convert failed: {result.stderr.strip()}")
+        ok(f"{os.path.basename(dest)}  "
+           f"{DIM}({_human(os.path.getsize(dest))}){RESET}")
+
+
+def cmd_strip(files):
+    """Remove all metadata (EXIF, GPS, XMP) into a -clean copy."""
+    check_files(files)
+    lossless = bool(which("exiftool"))
+    if not lossless:
+        warn("exiftool not installed — falling back to imagemagick, "
+             "which re-encodes JPEGs (slight quality loss)")
+    for f in files:
+        dest = out_name(f, "clean")
+        _guard_output(dest)
+        if lossless:
+            result = run(["exiftool", "-all=", "-o", dest, f])
+        else:
+            result = magick(f, "-strip", dest)
+        if result.returncode != 0:
+            die(f"Strip failed: {result.stderr.strip()}")
+        ok(f"{os.path.basename(dest)}  {DIM}(metadata removed){RESET}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: img <command> [options] FILE...
+
+Everyday image operations. Originals are never modified; results go
+to a new file next to the source (photo.jpg → photo-800.jpg).
+
+commands:
+  info FILE...                  dimensions, size, EXIF/GPS presence
+  exif FILE...                  dump all metadata tags
+  resize <SPEC> FILE...         resize (50%%, 1920, or 800x600)
+  convert <FMT> FILE...         convert format (heic→jpg, png→webp...)
+  strip FILE...                 remove all metadata → FILE-clean.ext
+
+Stripping uses exiftool when available (lossless); without it,
+imagemagick re-encodes.
+
+examples:
+  img info photo.jpg            does this photo leak location?
+  img resize 50% photo.jpg      half size → photo-50pct.jpg
+  img resize 1920 photo.jpg     max width 1920 → photo-1920.jpg
+  img convert jpg IMG_0042.heic phone photo → IMG_0042.jpg
+  img strip photo.jpg           shareable copy → photo-clean.jpg
+  img exif photo.jpg            full metadata dump"""
+
+
+def main():
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not (which("magick") or which("convert")):
+        die("imagemagick not installed")
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "info":    lambda: cmd_info(args),
+        "exif":    lambda: cmd_exif(args),
+        "resize":  lambda: cmd_resize(args),
+        "convert": lambda: cmd_convert(args),
+        "strip":   lambda: cmd_strip(args),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'img --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()
