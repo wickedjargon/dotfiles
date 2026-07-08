@@ -1,0 +1,13 @@
+# bash completion for update
+_update() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "all apt flatpak firmware tools help --help" -- "$cur") )
+        return
+    fi
+}
+
+complete -F _update update

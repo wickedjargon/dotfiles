@@ -1,0 +1,255 @@
+#!/usr/bin/env python3
+"""update — one view of everything updatable on this machine.
+
+Covers apt, flatpak, firmware (fwupd), and self-updating tools
+(yt-dlp). Status is read-only; applying updates uses sudo where
+needed and runs interactively so prompts are visible.
+
+Requires: apt; optional: flatpak, fwupdmgr, yt-dlp
+"""
+
+import os
+import re
+import subprocess
+import sys
+import time
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=60):
+    """Run a command captured (for status checks)."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+def run_live(cmd):
+    """Run a command with inherited stdio (sudo/apt prompts visible)."""
+    return subprocess.run(cmd).returncode
+
+
+APT_LISTS = "/var/lib/apt/lists"
+
+
+# ── Status Probes ──────────────────────────────────────────────────
+def parse_apt_upgradable(text):
+    """Count from `apt-get -s upgrade`: 'N upgraded, M newly installed...'"""
+    m = re.search(r"^(\d+) upgraded, (\d+) newly installed", text,
+                  re.MULTILINE)
+    if not m:
+        return None
+    return int(m.group(1)) + int(m.group(2))
+
+
+def apt_upgradable():
+    result = run(["apt-get", "-s", "-o", "Debug::NoLocking=true",
+                  "upgrade"], timeout=120)
+    if result.returncode != 0:
+        return None
+    return parse_apt_upgradable(result.stdout)
+
+
+def apt_lists_age_hours():
+    """Hours since apt package lists were last refreshed, or None."""
+    try:
+        newest = max(
+            os.path.getmtime(os.path.join(APT_LISTS, f))
+            for f in os.listdir(APT_LISTS)
+            if os.path.isfile(os.path.join(APT_LISTS, f)))
+    except (OSError, ValueError):
+        return None
+    return (time.time() - newest) / 3600
+
+
+def flatpak_updates():
+    if not which("flatpak"):
+        return None
+    result = run(["flatpak", "remote-ls", "--updates"], timeout=60)
+    if result.returncode != 0:
+        return None
+    return len([l for l in result.stdout.splitlines() if l.strip()])
+
+
+def firmware_updates():
+    """Count of pending firmware updates, or None if unknowable."""
+    if not which("fwupdmgr"):
+        return None
+    result = run(["fwupdmgr", "get-updates"], timeout=30)
+    # Exit 2 with "No updates available" means clean; other failures
+    # (no metadata, no daemon) are unknowable.
+    if "No updates available" in result.stdout + result.stderr:
+        return 0
+    if result.returncode != 0:
+        return None
+    return len(re.findall(r"^│?[─└├\s]*New version:", result.stdout,
+                          re.MULTILINE)) or 1
+
+
+def _count_line(label, count, stale_note=""):
+    if count is None:
+        print(f"  {DIM}○{RESET} {label:<10} {DIM}unavailable{RESET}")
+    elif count == 0:
+        print(f"  {GREEN}●{RESET} {label:<10} up to date{stale_note}")
+    else:
+        print(f"  {YELLOW}●{RESET} {label:<10} {BOLD}{count}{RESET} "
+              f"update{'s' if count != 1 else ''} pending{stale_note}")
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Show pending updates per source."""
+    age = apt_lists_age_hours()
+    note = ""
+    if age is None:
+        note = f"  {DIM}(lists never refreshed){RESET}"
+    elif age > 48:
+        note = f"  {YELLOW}(lists {age / 24:.0f}d old — run: " \
+               f"update apt){RESET}"
+    else:
+        note = f"  {DIM}(lists {age:.0f}h old){RESET}"
+    _count_line("apt", apt_upgradable(), note)
+    _count_line("flatpak", flatpak_updates())
+    _count_line("firmware", firmware_updates())
+    if which("yt-dlp"):
+        print(f"  {DIM}○{RESET} {'yt-dlp':<10} "
+              f"{DIM}check with: update tools{RESET}")
+
+
+def cmd_apt():
+    """Refresh lists and apply apt upgrades (interactive)."""
+    info("Updating apt package lists...")
+    if run_live(["sudo", "apt", "update"]) != 0:
+        die("apt update failed")
+    info("Upgrading packages...")
+    if run_live(["sudo", "apt", "full-upgrade"]) != 0:
+        die("apt full-upgrade failed")
+    ok("apt up to date")
+
+
+def cmd_flatpak():
+    if not which("flatpak"):
+        die("flatpak not installed")
+    info("Updating flatpaks...")
+    if run_live(["flatpak", "update", "-y"]) != 0:
+        die("flatpak update failed")
+    ok("flatpak up to date")
+
+
+def cmd_firmware():
+    if not which("fwupdmgr"):
+        die("fwupd not installed")
+    info("Refreshing firmware metadata...")
+    run_live(["fwupdmgr", "refresh"])  # exits nonzero when fresh; fine
+    info("Applying firmware updates...")
+    rc = run_live(["fwupdmgr", "update"])
+    if rc == 0:
+        ok("Firmware up to date")
+    else:
+        # fwupdmgr exits 2 for "nothing to do"
+        info("No firmware updates applied")
+
+
+def cmd_tools():
+    """Self-update tools that manage their own binaries."""
+    if not which("yt-dlp"):
+        die("No self-updating tools found (yt-dlp)")
+    info("Updating yt-dlp...")
+    rc = run_live(["yt-dlp", "-U"])
+    if rc != 0:
+        warn("yt-dlp self-update failed (apt-managed copies "
+             "update via apt instead)")
+    else:
+        ok("Tools checked")
+
+
+def cmd_all():
+    """Everything, in order."""
+    cmd_apt()
+    if which("flatpak"):
+        cmd_flatpak()
+    if which("fwupdmgr"):
+        cmd_firmware()
+    if which("yt-dlp"):
+        cmd_tools()
+    ok("All sources updated")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: update [command]
+
+One view of everything updatable: apt, flatpak, firmware, tools.
+
+commands:
+  (none)                        show pending updates per source
+  all                           update everything, in order
+  apt                           apt update + full-upgrade
+  flatpak                       update flatpaks
+  firmware                      refresh + apply firmware (fwupd)
+  tools                         self-update yt-dlp
+
+Status is read-only. Applying updates runs interactively (sudo and
+apt prompts are visible) — nothing is auto-confirmed except flatpak.
+
+examples:
+  update                        what's pending?
+  update all                    patch everything
+  update apt                    just the system packages
+  update firmware               just device firmware"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not which("apt-get"):
+        die("apt not found (Debian-family only)")
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+
+    commands = {
+        "all":      cmd_all,
+        "apt":      cmd_apt,
+        "flatpak":  cmd_flatpak,
+        "firmware": cmd_firmware,
+        "tools":    cmd_tools,
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'update --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()
