@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=QEMU VM
+GenericName=Virtual Machine
+Comment=Boot a qcow2 disk image with vm start
+MimeType=application/x-qemu-disk;
+Exec=vm start %f
+Icon=qemu
+Type=Application
+Terminal=false
+Categories=System;Emulator;
+NoDisplay=true

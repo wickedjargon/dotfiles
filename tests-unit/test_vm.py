@@ -170,3 +170,55 @@ class TestReadState:
     def test_missing_state_is_none(self, tmp_path, monkeypatch):
         monkeypatch.setattr(vm, "RUNTIME", str(tmp_path))
         assert vm.read_state("debian") is None
+
+
+class TestVmFromPath:
+    def test_parses_path_outside_vm_dir(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(vm, "RUNTIME", str(tmp_path))
+        monkeypatch.setattr(vm, "qemu_pid_for", lambda p: None)
+        img = tmp_path / "debian.x86_64.2GB.qcow2"
+        img.touch()
+        result = vm.vm_from_path(str(img))
+        assert result["name"] == "debian"
+        assert result["arch"] == "x86_64"
+        assert result["ram"] == "2G"
+        assert result["path"] == str(img)
+        assert result["port"] == 2222
+
+    def test_unconventional_filename_dies(self, tmp_path):
+        with pytest.raises(SystemExit):
+            vm.vm_from_path(str(tmp_path / "image.qcow2"))
+
+    def test_missing_file_dies(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(vm, "RUNTIME", str(tmp_path))
+        with pytest.raises(SystemExit):
+            vm.vm_from_path(str(tmp_path / "gone.x86_64.1G.qcow2"))
+
+
+class TestResolveVmByPath:
+    def test_path_bypasses_vm_dir(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(vm, "RUNTIME", str(tmp_path))
+        monkeypatch.setattr(vm, "qemu_pid_for", lambda p: None)
+        img = tmp_path / "debian.x86_64.2GB.qcow2"
+        img.touch()
+        result = vm.resolve_vm(str(img), want_running=False)
+        assert result["name"] == "debian"
+
+    def test_bare_qcow2_filename_resolves_in_cwd(self, tmp_path,
+                                                 monkeypatch):
+        monkeypatch.setattr(vm, "RUNTIME", str(tmp_path))
+        monkeypatch.setattr(vm, "qemu_pid_for", lambda p: None)
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "debian.x86_64.2GB.qcow2").touch()
+        result = vm.resolve_vm("debian.x86_64.2GB.qcow2",
+                               want_running=False)
+        assert result["path"] == str(tmp_path / "debian.x86_64.2GB.qcow2")
+
+    def test_already_running_path_dies_for_start(self, tmp_path,
+                                                 monkeypatch):
+        monkeypatch.setattr(vm, "RUNTIME", str(tmp_path))
+        monkeypatch.setattr(vm, "qemu_pid_for", lambda p: 12345)
+        img = tmp_path / "debian.x86_64.2GB.qcow2"
+        img.touch()
+        with pytest.raises(SystemExit):
+            vm.resolve_vm(str(img), want_running=False)

@@ -127,8 +127,38 @@ def get_vms():
     return vms
 
 
+def vm_from_path(path):
+    """VM dict from an explicit path to a <name>.<arch>.<RAM>.qcow2."""
+    path = os.path.abspath(os.path.expanduser(path))
+    parsed = parse_vm_filename(os.path.basename(path))
+    if not parsed:
+        die(f"'{os.path.basename(path)}' doesn't match the "
+            "<name>.<arch>.<RAM>.qcow2 convention")
+    if not os.path.isfile(path):
+        die(f"No such file: {path}")
+    state = read_state(parsed["name"])
+    pid = state["pid"] if state else qemu_pid_for(path)
+    return {
+        **parsed,
+        "path": path,
+        "pid": pid,
+        "port": (state or {}).get("port", DEFAULT_PORTS[parsed["arch"]]),
+    }
+
+
 def resolve_vm(name=None, want_running=None):
-    """Pick a VM by name, or auto-select the single candidate."""
+    """Pick a VM by name or qcow2 path, or auto-select the single
+    candidate."""
+    # A path (xdg-open hands us one) works from any directory, not
+    # just VM_DIR.
+    if name and (os.sep in name or name.endswith(".qcow2")):
+        vm = vm_from_path(name)
+        if want_running is True and not vm["pid"]:
+            die(f"VM '{vm['name']}' is not running")
+        if want_running is False and vm["pid"]:
+            die(f"VM '{vm['name']}' is already running")
+        return vm
+
     vms = get_vms()
     if want_running is True:
         candidates = [v for v in vms if v["pid"]]
@@ -610,7 +640,8 @@ Images live in ~/virtual-machines as <name>.<arch>.<RAM>.qcow2 — the
 same convention rofi-explorer (super+e) launches, so VMs made here
 appear there too. ISO downloads are checksum-verified. SSH forwards
 default to 2222 (x86_64) / 2223 (aarch64). NAME can be omitted when
-only one VM qualifies.
+only one VM qualifies, or can be a path to a qcow2 file anywhere
+(this is what xdg-open uses for application/x-qemu-disk).
 
 examples:
   vm                            what VMs exist, what's running?

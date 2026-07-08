@@ -27,6 +27,10 @@
 
 `vm start {{debian}} --headless`
 
+- Boot a qcow2 image by path, from anywhere (also what xdg-open does):
+
+`vm start {{~/dl/debian.x86_64.2GB.qcow2}}`
+
 - SSH into the running VM via its forwarded port:
 
 `vm ssh`
