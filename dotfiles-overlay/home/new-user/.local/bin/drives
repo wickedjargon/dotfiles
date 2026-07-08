@@ -264,7 +264,7 @@ def cmd_eject(partitions, args):
     # Get the parent disk device for power-off (e.g. /dev/sdb from /dev/sdb1)
     dev_basename = os.path.basename(p["name"])
     # Strip trailing partition number to get the disk
-    disk_match = re.match(r"^(sd[a-z]+|nvme\d+n\d+)", dev_basename)
+    disk_match = re.match(r"^(sd[a-z]+|nvme\d+n\d+|mmcblk\d+)", dev_basename)
     if disk_match:
         disk_device = f"/dev/{disk_match.group(1)}"
     else:
