@@ -1,0 +1,24 @@
+# bash completion for vm
+_vm() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "start stop ssh list help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        start|stop|ssh)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                local -a names
+                mapfile -t names < <(ls -1 "$HOME/virtual-machines" 2>/dev/null | sed -n 's/\.\(x86_64\|aarch64\)\..*\.qcow2$//p')
+                COMPREPLY=( $(compgen -W "${names[*]}" -- "$cur") )
+            fi
+            ;;
+    esac
+}
+
+complete -F _vm vm

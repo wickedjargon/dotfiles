@@ -1,0 +1,365 @@
+#!/usr/bin/env python3
+"""vm — run and manage QEMU virtual machines from the command line.
+
+Works with images created by create-qemu-vm: ~/virtual-machines/
+holds <name>.<arch>.<RAM>.qcow2 files, and that filename carries the
+launch parameters.
+
+Requires: qemu-system-x86_64 / qemu-system-aarch64
+"""
+
+import json
+import os
+import re
+import signal
+import socket
+import subprocess
+import sys
+import time
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+# ── Configuration ──────────────────────────────────────────────────
+VM_DIR = os.path.expanduser("~/virtual-machines")
+RUNTIME = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
+# Same arch→ssh-port defaults create-qemu-vm uses.
+DEFAULT_PORTS = {"x86_64": 2222, "aarch64": 2223}
+
+FILENAME_RE = re.compile(
+    r"^(?P<name>.+)\.(?P<arch>x86_64|aarch64)\.(?P<ram>\d+[GM])\.qcow2$")
+
+
+def parse_vm_filename(filename):
+    """Parse create-qemu-vm's <name>.<arch>.<RAM>.qcow2 convention."""
+    m = FILENAME_RE.match(filename)
+    if not m:
+        return None
+    return {"name": m.group("name"), "arch": m.group("arch"),
+            "ram": m.group("ram")}
+
+
+def state_path(name):
+    return os.path.join(RUNTIME, f"vm-{name}.json")
+
+
+def read_state(name):
+    """{'pid', 'port', 'monitor'} for a VM we started, or None."""
+    try:
+        with open(state_path(name)) as f:
+            state = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+    try:
+        os.kill(state["pid"], 0)
+    except (ProcessLookupError, KeyError):
+        try:
+            os.unlink(state_path(name))
+        except OSError:
+            pass
+        return None
+    except PermissionError:
+        pass
+    return state
+
+
+def qemu_pid_for(image_path):
+    """Pid of a running qemu using this image (also finds externally
+    started VMs, e.g. via dmenu-explorer)."""
+    for entry in os.listdir("/proc"):
+        if not entry.isdigit():
+            continue
+        try:
+            with open(f"/proc/{entry}/cmdline", "rb") as f:
+                cmdline = f.read().decode(errors="replace")
+        except OSError:
+            continue
+        if "qemu-system" in cmdline and image_path in cmdline:
+            return int(entry)
+    return None
+
+
+def get_vms():
+    """All VMs with their parsed parameters and running state."""
+    vms = []
+    try:
+        files = sorted(os.listdir(VM_DIR))
+    except FileNotFoundError:
+        return vms
+    for filename in files:
+        parsed = parse_vm_filename(filename)
+        if not parsed:
+            continue
+        path = os.path.join(VM_DIR, filename)
+        state = read_state(parsed["name"])
+        pid = state["pid"] if state else qemu_pid_for(path)
+        vms.append({
+            **parsed,
+            "path": path,
+            "pid": pid,
+            "port": (state or {}).get("port",
+                                      DEFAULT_PORTS[parsed["arch"]]),
+        })
+    return vms
+
+
+def resolve_vm(name=None, want_running=None):
+    """Pick a VM by name, or auto-select the single candidate."""
+    vms = get_vms()
+    if want_running is True:
+        candidates = [v for v in vms if v["pid"]]
+    elif want_running is False:
+        candidates = [v for v in vms if not v["pid"]]
+    else:
+        candidates = vms
+
+    if name:
+        for v in candidates:
+            if v["name"] == name:
+                return v
+        die(f"No {'running ' if want_running else ''}VM named '{name}' "
+            f"in {VM_DIR}")
+
+    if not candidates:
+        state = {True: "running", False: "stopped"}.get(want_running, "")
+        die(f"No {state + ' ' if state else ''}VMs found in {VM_DIR}")
+    if len(candidates) == 1:
+        return candidates[0]
+
+    print("Multiple VMs:", file=sys.stderr)
+    for v in candidates:
+        dot = f"{GREEN}●{RESET}" if v["pid"] else f"{DIM}○{RESET}"
+        print(f"  {dot} {v['name']}  {DIM}{v['arch']} {v['ram']}{RESET}",
+              file=sys.stderr)
+    print(f"\nSpecify one, e.g.: vm start {candidates[0]['name']}",
+          file=sys.stderr)
+    sys.exit(1)
+
+
+# ── Launch ──────────────────────────────────────────────────────────
+def build_qemu_command(vm, port, monitor, headless=False):
+    """qemu argv for booting an installed VM from its disk."""
+    cmd = [f"qemu-system-{vm['arch']}", "-m", vm["ram"]]
+    if vm["arch"] == "x86_64":
+        if os.path.exists("/dev/kvm"):
+            cmd.append("-enable-kvm")
+        cmd += [
+            "-drive", f"file={vm['path']},format=qcow2",
+            "-netdev", f"user,id=net0,hostfwd=tcp::{port}-:22",
+            "-device", "virtio-net-pci,netdev=net0",
+            "-device", "intel-hda", "-device", "hda-output",
+        ]
+    else:  # aarch64, mirroring create-qemu-vm
+        cmd += [
+            "-machine", "virt", "-cpu", "cortex-a57",
+            "-drive", f"file={vm['path']},format=qcow2,if=virtio",
+            "-netdev", f"user,id=net0,hostfwd=tcp::{port}-:22",
+            "-device", "virtio-net-pci,netdev=net0",
+            "-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd",
+            "-device", "virtio-gpu-pci",
+            "-device", "qemu-xhci",
+            "-device", "usb-kbd", "-device", "usb-mouse",
+        ]
+    cmd += ["-monitor", f"unix:{monitor},server,nowait"]
+    cmd += ["-display", "none" if headless else "gtk,zoom-to-fit=on"]
+    return cmd
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """List VMs and their state."""
+    vms = get_vms()
+    if not vms:
+        print(f"{DIM}No VMs in {VM_DIR}.{RESET} "
+              f"Create one with: create-qemu-vm")
+        return
+    width = max(len(v["name"]) for v in vms)
+    for v in vms:
+        size = os.path.getsize(v["path"])
+        size_str = f"{size / 1024**3:.1f}G"
+        if v["pid"]:
+            print(f"  {GREEN}●{RESET} {BOLD}{v['name']:<{width}}{RESET}  "
+                  f"{v['arch']}  {v['ram']}  {size_str}  "
+                  f"{DIM}pid {v['pid']}, ssh -p {v['port']}{RESET}")
+        else:
+            print(f"  {DIM}○{RESET} {v['name']:<{width}}  "
+                  f"{DIM}{v['arch']}  {v['ram']}  {size_str}{RESET}")
+
+
+def cmd_start(args):
+    """Boot a VM (detached)."""
+    headless = "--headless" in args
+    args = [a for a in args if a != "--headless"]
+    name = args[0] if args else None
+    port_override = int(args[1]) if len(args) > 1 and args[1].isdigit() \
+        else None
+
+    vm = resolve_vm(name, want_running=False)
+    if not which(f"qemu-system-{vm['arch']}"):
+        die(f"qemu-system-{vm['arch']} not installed")
+
+    port = port_override or DEFAULT_PORTS[vm["arch"]]
+    monitor = os.path.join(RUNTIME, f"vm-{vm['name']}.monitor")
+    cmd = build_qemu_command(vm, port, monitor, headless=headless)
+
+    mode = "headless" if headless else "with display"
+    info(f"Starting {BOLD}{vm['name']}{RESET} ({vm['arch']}, {vm['ram']}, "
+         f"{mode})...")
+    proc = subprocess.Popen(
+        cmd, start_new_session=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    time.sleep(1)
+    if proc.poll() is not None:
+        die(f"QEMU exited immediately (code {proc.returncode}) — "
+            f"port {port} may be in use")
+
+    with open(state_path(vm["name"]), "w") as f:
+        json.dump({"pid": proc.pid, "port": port, "monitor": monitor}, f)
+    ok(f"{vm['name']} running  "
+       f"{DIM}(ssh: vm ssh {vm['name']}, stop: vm stop {vm['name']}){RESET}")
+
+
+def _monitor_powerdown(monitor):
+    """Ask the guest to power down via the QEMU monitor socket."""
+    try:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(3)
+        s.connect(monitor)
+        s.recv(4096)  # banner
+        s.sendall(b"system_powerdown\n")
+        s.close()
+        return True
+    except OSError:
+        return False
+
+
+def cmd_stop(args):
+    """Shut a VM down (ACPI powerdown, SIGTERM fallback)."""
+    vm = resolve_vm(args[0] if args else None, want_running=True)
+    state = read_state(vm["name"]) or {}
+    monitor = state.get("monitor",
+                        os.path.join(RUNTIME, f"vm-{vm['name']}.monitor"))
+
+    info(f"Stopping {BOLD}{vm['name']}{RESET}...")
+    if _monitor_powerdown(monitor):
+        # Give the guest a chance to shut down cleanly.
+        for _ in range(30):
+            if not vm["pid"] or not _alive(vm["pid"]):
+                break
+            time.sleep(1)
+    if vm["pid"] and _alive(vm["pid"]):
+        warn("Guest didn't power down — terminating QEMU")
+        try:
+            os.kill(vm["pid"], signal.SIGTERM)
+        except (ProcessLookupError, PermissionError):
+            pass
+    try:
+        os.unlink(state_path(vm["name"]))
+    except OSError:
+        pass
+    ok(f"{vm['name']} stopped")
+
+
+def _alive(pid):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def cmd_ssh(args):
+    """ssh into a running VM through its forwarded port."""
+    name = args[0] if args else None
+    user = args[1] if len(args) > 1 else os.environ.get("USER", "root")
+    vm = resolve_vm(name, want_running=True)
+    os.execvp("ssh", ["ssh", "-p", str(vm["port"]),
+                      f"{user}@localhost"])
+
+
+def cmd_list():
+    """Machine-parseable VM list."""
+    for v in get_vms():
+        state = "running" if v["pid"] else "stopped"
+        print(f"{v['name']}\t{v['arch']}\t{v['ram']}\t{state}\t"
+              f"{v['port']}\t{v['path']}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: vm [command] [options]
+
+Run and manage QEMU VMs created by create-qemu-vm.
+
+commands:
+  (none)                        list VMs and their state
+  start [NAME] [PORT]           boot a VM (add --headless for no window)
+  stop [NAME]                   ACPI powerdown, SIGTERM fallback
+  ssh [NAME] [USER]             ssh via the forwarded port
+  list                          machine-parseable VM list
+
+Images live in ~/virtual-machines as <name>.<arch>.<RAM>.qcow2; the
+filename carries the launch parameters. SSH forwards default to
+2222 (x86_64) / 2223 (aarch64), same as create-qemu-vm. NAME can be
+omitted when only one VM qualifies.
+
+examples:
+  vm                            what VMs exist, what's running?
+  vm start                      boot the only VM
+  vm start debian --headless    boot without a window
+  vm ssh                        ssh into the running VM
+  vm ssh debian root            ssh as root
+  vm stop                       shut the running VM down"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "start": lambda: cmd_start(args),
+        "stop":  lambda: cmd_stop(args),
+        "ssh":   lambda: cmd_ssh(args),
+        "list":  lambda: cmd_list(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'vm --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()
