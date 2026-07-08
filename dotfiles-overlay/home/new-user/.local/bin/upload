@@ -8,9 +8,11 @@ Backends: 0x0.st (public, anonymous), u.fftp.io (private, API key)
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 
 # ── Colors ──────────────────────────────────────────────────────────
 RED = "\033[0;31m"
@@ -87,6 +89,19 @@ def read_api_key():
         return None
 
 
+@contextmanager
+def auth_header_args(api_key):
+    """Yield curl args for the Authorization header, passed via a temp
+    file (curl's -H @file) so the key never shows in /proc/*/cmdline."""
+    hf = tempfile.NamedTemporaryFile("w", suffix=".hdr", delete=False)
+    try:
+        hf.write(f"Authorization: Bearer {api_key}\n")
+        hf.close()
+        yield ["-H", f"@{hf.name}"]
+    finally:
+        os.unlink(hf.name)
+
+
 # ── EXIF ────────────────────────────────────────────────────────────
 def _deg_to_rational(deg, minutes, seconds):
     return (
@@ -104,9 +119,10 @@ def strip_exif_and_troll(filepath):
 
     try:
         import piexif
-        from PIL import Image
+    except ImportError:
+        return filepath
 
-        img = Image.open(filepath)
+    try:
         gps_ifd = {
             piexif.GPSIFD.GPSLatitudeRef: b"N",
             piexif.GPSIFD.GPSLatitude: _deg_to_rational(*PYONGYANG_LAT),
@@ -115,10 +131,23 @@ def strip_exif_and_troll(filepath):
         }
         exif_bytes = piexif.dump({"GPS": gps_ifd})
         tmp = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
-        img.save(tmp.name, exif=exif_bytes)
+        tmp.close()
+        try:
+            if ext in (".jpg", ".jpeg"):
+                # Swap the EXIF segment in a byte-for-byte copy — no
+                # re-encode, so the JPEG loses no quality. (XMP, if any,
+                # is untouched; camera GPS lives in EXIF.)
+                shutil.copyfile(filepath, tmp.name)
+                piexif.insert(exif_bytes, tmp.name)
+            else:
+                from PIL import Image
+
+                img = Image.open(filepath)
+                img.save(tmp.name, exif=exif_bytes)
+        except Exception:
+            os.unlink(tmp.name)
+            raise
         return tmp.name
-    except ImportError:
-        return filepath
     except Exception:
         return filepath
 
@@ -151,19 +180,19 @@ def upload_file_to_u(filepath, preserve_filename=False):
     api_key = read_api_key()
     if not api_key:
         return None
-    cmd = [
-        "curl", "-fsS",
-        "--connect-timeout", "5",
-        "--max-time", "60",
-        "-H", f"Authorization: Bearer {api_key}",
-        "-F", f"file=@{filepath}",
-    ]
-    if preserve_filename:
-        cmd += ["-F", "preserve_filename=true"]
-    cmd.append(U_UPLOAD_URL)
-
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        with auth_header_args(api_key) as auth:
+            cmd = [
+                "curl", "-fsS",
+                "--connect-timeout", "5",
+                "--max-time", "60",
+                *auth,
+                "-F", f"file=@{filepath}",
+            ]
+            if preserve_filename:
+                cmd += ["-F", "preserve_filename=true"]
+            cmd.append(U_UPLOAD_URL)
+            result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip()
         return None
@@ -200,18 +229,19 @@ def upload_text_to_u(content):
     if not api_key:
         return None
     try:
-        result = subprocess.run(
-            [
-                "curl", "-fsS",
-                "--connect-timeout", "5",
-                "--max-time", "30",
-                "-H", f"Authorization: Bearer {api_key}",
-                "-F", "file=@-;filename=paste.txt",
-                U_UPLOAD_URL,
-            ],
-            input=content,
-            capture_output=True, text=True,
-        )
+        with auth_header_args(api_key) as auth:
+            result = subprocess.run(
+                [
+                    "curl", "-fsS",
+                    "--connect-timeout", "5",
+                    "--max-time", "30",
+                    *auth,
+                    "-F", "file=@-;filename=paste.txt",
+                    U_UPLOAD_URL,
+                ],
+                input=content,
+                capture_output=True, text=True,
+            )
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip()
         return None
@@ -220,6 +250,41 @@ def upload_text_to_u(content):
 
 
 # ── Commands ────────────────────────────────────────────────────────
+def _pick_attempts(forced, backends):
+    """Return the ordered [(name, upload_fn)] list for a run.
+
+    `backends` maps backend id → (display name, fn). Default order is
+    u.fftp.io first with 0x0.st as fallback; a forced backend skips
+    the fallback.
+    """
+    if forced:
+        return [backends[forced]]
+    return [backends["u"], backends["0x0"]]
+
+
+def _run_attempts(attempts, use_notify=False):
+    """Try each (name, fn) in order, warning between fallbacks.
+
+    Returns (url, backend_name) — (None, None) if every backend failed.
+    """
+    for i, (name, fn) in enumerate(attempts):
+        url = fn()
+        if url:
+            return url, name
+        if i < len(attempts) - 1:
+            nxt = attempts[i + 1][0]
+            warn(f"{name} failed, falling back to {nxt}...")
+            if use_notify:
+                notify(f"{name} failed", f"Falling back to {nxt}...")
+    return None, None
+
+
+def _failure_msg(attempts):
+    if len(attempts) == 1:
+        return f"Upload to {attempts[0][0]} failed"
+    return "Both " + " and ".join(name for name, _ in attempts) + " failed"
+
+
 def cmd_file(args):
     """Upload a file."""
     parser = argparse.ArgumentParser(prog="upload file", add_help=False)
@@ -238,36 +303,8 @@ def cmd_file(args):
     basename = os.path.basename(opts.file)
     info(f"Uploading {BOLD}{basename}{RESET}...")
 
-    # Forced backend
-    if opts.backend == "0x0":
-        url = upload_file_to_0x0(opts.file)
-        if url:
-            copy_to_clipboard(url)
-            ok(f"{url}")
-        else:
-            die("Upload to 0x0.st failed")
-        return
-
-    if opts.backend == "u":
-        upload_path = opts.file
-        tmp_path = None
-        if not opts.keep_exif:
-            processed = strip_exif_and_troll(opts.file)
-            if processed != opts.file:
-                upload_path = processed
-                tmp_path = processed
-        url = upload_file_to_u(upload_path,
-                               preserve_filename=opts.preserve_filename)
-        if tmp_path and os.path.exists(tmp_path):
-            os.unlink(tmp_path)
-        if url:
-            copy_to_clipboard(url)
-            ok(f"{url}")
-        else:
-            die("Upload to u.fftp.io failed")
-        return
-
-    # Default: u.fftp.io → 0x0.st fallback
+    # Strip EXIF before any upload — including a forced 0x0.st — so
+    # GPS metadata never reaches a public host unless --keep-exif.
     upload_path = opts.file
     tmp_path = None
     if not opts.keep_exif:
@@ -276,30 +313,24 @@ def cmd_file(args):
             upload_path = processed
             tmp_path = processed
 
-    def _cleanup():
+    backends = {
+        "u": ("u.fftp.io", lambda: upload_file_to_u(
+            upload_path, preserve_filename=opts.preserve_filename)),
+        "0x0": ("0x0.st", lambda: upload_file_to_0x0(upload_path)),
+    }
+    attempts = _pick_attempts(opts.backend, backends)
+
+    try:
+        url, _ = _run_attempts(attempts)
+    finally:
         if tmp_path and os.path.exists(tmp_path):
             os.unlink(tmp_path)
 
-    url = upload_file_to_u(upload_path,
-                           preserve_filename=opts.preserve_filename)
-
-    if url:
-        _cleanup()
-        copy_to_clipboard(url)
-        ok(f"{url}")
-        return
-
-    warn("u.fftp.io failed, falling back to 0x0.st...")
-
-    # Fall back with the SAME stripped/processed file, never the original,
-    # so EXIF/GPS metadata never leaks to the public 0x0.st host.
-    url = upload_file_to_0x0(upload_path)
-    _cleanup()
     if url:
         copy_to_clipboard(url)
         ok(f"{url}")
     else:
-        die("Both u.fftp.io and 0x0.st failed")
+        die(_failure_msg(attempts))
 
 
 def cmd_selection(args):
@@ -314,51 +345,24 @@ def cmd_selection(args):
         notify("Upload Failed", "No text selected")
         die("No text selected")
 
-    # Forced backend
-    if opts.backend == "0x0":
-        notify("Uploading...", "Uploading selection to 0x0.st")
-        url = upload_text_to_0x0(content)
-        if url:
-            copy_to_clipboard(url)
-            ok(f"{url}")
-            notify("Upload Successful", f"URL copied: {url}")
-        else:
-            notify("Upload Failed", "Could not upload to 0x0.st")
-            die("Upload to 0x0.st failed")
-        return
+    backends = {
+        "u": ("u.fftp.io", lambda: upload_text_to_u(content)),
+        "0x0": ("0x0.st", lambda: upload_text_to_0x0(content)),
+    }
+    attempts = _pick_attempts(opts.backend, backends)
 
-    if opts.backend == "u":
-        notify("Uploading...", "Uploading selection to u.fftp.io")
-        url = upload_text_to_u(content)
-        if url:
-            copy_to_clipboard(url)
-            ok(f"{url}")
-            notify("Upload Successful", f"URL copied: {url}")
-        else:
-            notify("Upload Failed", "Could not upload to u.fftp.io")
-            die("Upload to u.fftp.io failed")
-        return
+    notify("Uploading...", f"Uploading selection to {attempts[0][0]}")
+    url, used = _run_attempts(attempts, use_notify=True)
 
-    # Default: u.fftp.io → 0x0.st fallback
-    notify("Uploading...", "Uploading selection to u.fftp.io")
-    url = upload_text_to_u(content)
     if url:
         copy_to_clipboard(url)
         ok(f"{url}")
-        notify("Upload Successful", f"URL copied: {url}")
-        return
-
-    notify("u.fftp.io failed", "Falling back to 0x0.st...")
-    warn("u.fftp.io failed, falling back to 0x0.st...")
-
-    url = upload_text_to_0x0(content)
-    if url:
-        copy_to_clipboard(url)
-        ok(f"{url}")
-        notify("Upload Successful", f"URL copied (via 0x0.st): {url}")
+        via = f" (via {used})" if used != attempts[0][0] else ""
+        notify("Upload Successful", f"URL copied{via}: {url}")
     else:
-        notify("Upload Failed", "Both u.fftp.io and 0x0.st failed")
-        die("Both u.fftp.io and 0x0.st failed")
+        msg = _failure_msg(attempts)
+        notify("Upload Failed", msg)
+        die(msg)
 
 
 # ── Help + Main ─────────────────────────────────────────────────────

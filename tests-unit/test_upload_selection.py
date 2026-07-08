@@ -180,6 +180,30 @@ class TestUpload(unittest.TestCase):
             capture_output=True, timeout=5,
         )
 
+    @patch('subprocess.run')
+    def test_api_key_not_in_curl_argv_text(self, mock_run):
+        """The bearer token travels via a header file, never argv."""
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout="https://u.fftp.io/abc123\n"
+        )
+        with patch.object(self.script, 'read_api_key',
+                          return_value="SECRETKEY"):
+            self.script.upload_text_to_u("hello")
+        cmd = mock_run.call_args[0][0]
+        self.assertFalse(any("SECRETKEY" in str(part) for part in cmd))
+        self.assertIn("-H", cmd)
+
+    @patch('subprocess.run')
+    def test_api_key_not_in_curl_argv_file(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout="https://u.fftp.io/def456\n"
+        )
+        with patch.object(self.script, 'read_api_key',
+                          return_value="SECRETKEY"):
+            self.script.upload_file_to_u("/tmp/test.png")
+        cmd = mock_run.call_args[0][0]
+        self.assertFalse(any("SECRETKEY" in str(part) for part in cmd))
+
 
 if __name__ == '__main__':
     unittest.main()
