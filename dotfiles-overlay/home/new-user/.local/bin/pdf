@@ -1,0 +1,254 @@
+#!/usr/bin/env python3
+"""pdf — everyday PDF operations from the command line.
+
+Never modifies the original file; results go to a new file next to it.
+
+Requires: poppler-utils (pdfinfo, pdftotext, pdfunite)
+Optional: ghostscript (compress, split)
+"""
+
+import os
+import re
+import subprocess
+import sys
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=300):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+def _human(n):
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024:
+            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TB"
+
+
+def _need(tool, package):
+    if not which(tool):
+        die(f"{tool} not installed (apt install {package})")
+
+
+def _check_pdf(path):
+    if not os.path.isfile(path):
+        die(f"File not found: {path}")
+
+
+def _guard_output(dest):
+    if os.path.exists(dest):
+        die(f"Output already exists: {dest}")
+
+
+def parse_page_range(spec):
+    """Parse '5-10' or '7' into (first, last), or None if invalid."""
+    m = re.fullmatch(r"(\d+)(?:-(\d+))?", spec)
+    if not m:
+        return None
+    first = int(m.group(1))
+    last = int(m.group(2)) if m.group(2) else first
+    if first < 1 or last < first:
+        return None
+    return first, last
+
+
+def _gs(dest, *args, timeout=600):
+    """Run ghostscript writing to dest."""
+    return run(["gs", "-dBATCH", "-dNOPAUSE", "-dQUIET",
+                "-sDEVICE=pdfwrite", f"-sOutputFile={dest}", *args],
+               timeout=timeout)
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_info(args):
+    """Pages, dimensions, and metadata."""
+    if not args:
+        die("Usage: pdf info FILE...")
+    _need("pdfinfo", "poppler-utils")
+    for f in args:
+        _check_pdf(f)
+        if len(args) > 1:
+            print(f"{BOLD}{f}{RESET}")
+        result = run(["pdfinfo", f])
+        if result.returncode != 0:
+            die(f"pdfinfo failed: {result.stderr.strip()}")
+        wanted = ("Title", "Author", "Pages", "Page size", "Encrypted")
+        for line in result.stdout.splitlines():
+            if line.split(":", 1)[0] in wanted:
+                print(f"  {line}")
+        print(f"  Size:           {_human(os.path.getsize(f))}")
+
+
+def cmd_text(args):
+    """Extract plain text to stdout (pipes nicely into speak -)."""
+    if not args:
+        die("Usage: pdf text FILE")
+    _need("pdftotext", "poppler-utils")
+    _check_pdf(args[0])
+    result = run(["pdftotext", "-layout", args[0], "-"])
+    if result.returncode != 0:
+        die(f"pdftotext failed: {result.stderr.strip()}")
+    print(result.stdout, end="")
+
+
+def cmd_merge(args):
+    """Concatenate PDFs; the last argument is the new output file."""
+    if len(args) < 3:
+        die("Usage: pdf merge IN1.pdf IN2.pdf ... OUT.pdf")
+    *inputs, dest = args
+    for f in inputs:
+        _check_pdf(f)
+    # The output must not exist — this both prevents clobbering and
+    # catches the "forgot to give an output name" mistake.
+    _guard_output(dest)
+
+    info(f"Merging {len(inputs)} files → {BOLD}{dest}{RESET}")
+    if which("pdfunite"):
+        result = run(["pdfunite", *inputs, dest])
+    elif which("gs"):
+        result = _gs(dest, *inputs)
+    else:
+        die("Neither pdfunite (poppler-utils) nor gs (ghostscript) "
+            "is installed")
+    if result.returncode != 0:
+        die(f"Merge failed: {result.stderr.strip()}")
+    ok(f"{dest}  {DIM}({_human(os.path.getsize(dest))}){RESET}")
+
+
+def cmd_split(args):
+    """Extract a page range into a new file."""
+    if len(args) < 2:
+        die("Usage: pdf split FILE.pdf <N|N-M>")
+    _need("gs", "ghostscript")
+    src, spec = args[0], args[1]
+    _check_pdf(src)
+    pages = parse_page_range(spec)
+    if not pages:
+        die(f"Bad page range '{spec}' (use 7 or 5-10)")
+    first, last = pages
+
+    stem, _ = os.path.splitext(src)
+    tag = f"p{first}" if first == last else f"p{first}-{last}"
+    dest = f"{stem}-{tag}.pdf"
+    _guard_output(dest)
+
+    info(f"Extracting pages {first}-{last} → {BOLD}{dest}{RESET}")
+    result = _gs(dest, f"-dFirstPage={first}", f"-dLastPage={last}", src)
+    if result.returncode != 0:
+        die(f"Split failed: {result.stderr.strip()}")
+    ok(f"{dest}  {DIM}({_human(os.path.getsize(dest))}){RESET}")
+
+
+PRESETS = ("screen", "ebook", "printer")
+
+
+def cmd_compress(args):
+    """Shrink a PDF with ghostscript (default preset: ebook)."""
+    if not args:
+        die("Usage: pdf compress FILE.pdf [screen|ebook|printer]")
+    _need("gs", "ghostscript")
+    src = args[0]
+    preset = args[1] if len(args) > 1 else "ebook"
+    if preset not in PRESETS:
+        die(f"Bad preset '{preset}' (use {', '.join(PRESETS)})")
+    _check_pdf(src)
+
+    stem, _ = os.path.splitext(src)
+    dest = f"{stem}-small.pdf"
+    _guard_output(dest)
+
+    info(f"Compressing with /{preset} → {BOLD}{dest}{RESET}")
+    result = _gs(dest, f"-dPDFSETTINGS=/{preset}",
+                 "-dCompatibilityLevel=1.4", src)
+    if result.returncode != 0:
+        die(f"Compress failed: {result.stderr.strip()}")
+
+    before = os.path.getsize(src)
+    after = os.path.getsize(dest)
+    if after >= before:
+        os.unlink(dest)
+        warn(f"No gain ({_human(after)} ≥ {_human(before)}) — "
+             "already compact; output discarded")
+        return
+    pct = round((1 - after / before) * 100)
+    ok(f"{dest}  {DIM}{_human(before)} → {_human(after)} "
+       f"(-{pct}%){RESET}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: pdf <command> [options]
+
+Everyday PDF operations. Originals are never modified; results go to
+a new file next to the source.
+
+commands:
+  info FILE...                  pages, size, and metadata
+  text FILE                     extract plain text to stdout
+  merge IN... OUT.pdf           concatenate (OUT must not exist)
+  split FILE <N|N-M>            extract pages → FILE-pN-M.pdf
+  compress FILE [PRESET]        shrink → FILE-small.pdf
+                                (presets: screen, ebook, printer)
+
+examples:
+  pdf info paper.pdf            how many pages, how big?
+  pdf text paper.pdf | speak -  listen to a paper
+  pdf merge a.pdf b.pdf all.pdf combine into all.pdf
+  pdf split book.pdf 5-20       just the chapter you need
+  pdf compress scan.pdf         email-sized copy
+  pdf compress scan.pdf screen  smallest, lowest quality"""
+
+
+def main():
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "info":     lambda: cmd_info(args),
+        "text":     lambda: cmd_text(args),
+        "merge":    lambda: cmd_merge(args),
+        "split":    lambda: cmd_split(args),
+        "compress": lambda: cmd_compress(args),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'pdf --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

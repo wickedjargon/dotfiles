@@ -1,0 +1,24 @@
+# bash completion for pdf
+_pdf() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "info text merge split compress help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        compress)
+            if [ "$COMP_CWORD" -eq 3 ]; then
+                COMPREPLY=( $(compgen -W "screen ebook printer" -- "$cur") )
+                return
+            fi
+            ;;
+    esac
+    COMPREPLY=( $(compgen -f -X '!*.pdf' -- "$cur") $(compgen -d -- "$cur") )
+}
+
+complete -o filenames -F _pdf pdf
