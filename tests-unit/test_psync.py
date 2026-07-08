@@ -560,7 +560,8 @@ class TestFileSync:
 
         psync.do_file_sync("push", ["nonexistent.txt"], dry_run=False, delete_flag=False)
         captured = capsys.readouterr()
-        assert "No file matching" in captured.out
+        # Failures go to stderr so --quiet can't hide them
+        assert "No file matching" in captured.err
 
     def test_returns_summary(self, tmp_path, monkeypatch):
         local = tmp_path / "notes"
@@ -1342,7 +1343,7 @@ class TestAddSend:
         psync.do_add([str(f)], move=False, dir_override=None,
                      push=False, dry_run=False)
         captured = capsys.readouterr()
-        assert "different" in captured.out
+        assert "different" in captured.err
         # Existing file untouched
         assert (dest_dir / "todo.md").read_text() == "existing"
 
@@ -1366,7 +1367,7 @@ class TestAddSend:
         psync.do_add([str(tmp_path / "nope.mp3")], move=False,
                      dir_override=None, push=False, dry_run=False)
         captured = capsys.readouterr()
-        assert "No such file" in captured.out
+        assert "No such file" in captured.err
 
     def test_send_copies_and_pushes(self, tmp_path, monkeypatch):
         monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
@@ -1414,7 +1415,7 @@ class TestAddSend:
         summary = psync.do_add([str(d)], move=False, dir_override=None,
                                push=False, dry_run=False)
         captured = capsys.readouterr()
-        assert "explicit target" in captured.out
+        assert "explicit target" in captured.err
         assert "0 files added" in summary
         # Nothing copied anywhere
         assert not (tmp_path / "d" / "other" / "myproject").exists()
@@ -1589,3 +1590,30 @@ class TestErrorTracking:
 
         psync.do_full_sync("push", dry_run=False, delete_flag=False)
         assert psync._errors == 1
+
+
+class TestQuietErrors:
+    """--quiet suppresses chatter but must never hide failures."""
+
+    def test_add_error_shown_in_quiet_mode(self, tmp_path, monkeypatch,
+                                           capsys):
+        monkeypatch.setattr(psync, "DIR_NAMES", _fake_dir_names(tmp_path))
+        monkeypatch.setattr(psync, "_quiet", True)
+
+        psync.do_add([str(tmp_path / "nope.mp3")], move=False,
+                     dir_override=None, push=False, dry_run=False)
+        captured = capsys.readouterr()
+        assert "No such file" in captured.err
+
+    def test_file_sync_error_shown_in_quiet_mode(self, tmp_path, monkeypatch,
+                                                 capsys):
+        local = tmp_path / "notes"
+        local.mkdir()
+        monkeypatch.setattr(psync, "SYNC_DIRS", [(str(local), "/remote")])
+        monkeypatch.setattr(psync, "_quiet", True)
+        monkeypatch.setattr(psync, "run_rsync", lambda o, s, d: (0, ""))
+
+        psync.do_file_sync("push", ["nonexistent.txt"], dry_run=False,
+                           delete_flag=False)
+        captured = capsys.readouterr()
+        assert "No file matching" in captured.err

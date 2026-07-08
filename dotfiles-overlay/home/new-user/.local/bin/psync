@@ -184,6 +184,12 @@ def warn(msg):
         print(f"{YELLOW}!{RESET} {msg}")
 
 
+def err(msg):
+    """Report a failure. Unlike warn(), never suppressed by --quiet
+    (the --quiet contract is "errors still shown")."""
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+
+
 def die(msg):
     print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
     sys.exit(1)
@@ -437,7 +443,7 @@ def do_full_sync(direction, dry_run, delete_flag, update=False):
             )
 
         if rc != 0:
-            warn(f"rsync exited with code {rc} for {dir_name}")
+            err(f"rsync exited with code {rc} for {dir_name}")
             log_write(f"ERROR: rsync exit code {rc} for {dir_name}")
             record_error()
 
@@ -507,16 +513,15 @@ def do_file_sync(direction, files, dry_run, delete_flag, update=False):
                     matches.append(tuple(parts))
 
         if not matches:
-            warn(f"No file matching '{filename}' found")
+            err(f"No file matching '{filename}' found")
             record_error()
             continue
 
         if len(matches) > 1:
-            warn(f"Multiple matches for '{filename}':")
+            err(f"Multiple matches for '{filename}':")
             for _, _, fpath in matches:
-                if not _quiet:
-                    print(f"  {DIM}{fpath}{RESET}")
-            warn("Please use a more specific filename")
+                print(f"  {DIM}{fpath}{RESET}", file=sys.stderr)
+            err("Please use a more specific filename")
             record_error()
             continue
 
@@ -533,7 +538,7 @@ def do_file_sync(direction, files, dry_run, delete_flag, update=False):
         else:
             prefix = f"{remote_dir}/"
             if not found_path.startswith(prefix):
-                warn(f"Unexpected remote path: {found_path}")
+                err(f"Unexpected remote path: {found_path}")
                 record_error()
                 continue
             rel_path = found_path[len(prefix):]
@@ -543,7 +548,7 @@ def do_file_sync(direction, files, dry_run, delete_flag, update=False):
                                     local_file)
 
         if rc != 0:
-            warn(f"rsync exited with code {rc} for {filename}")
+            err(f"rsync exited with code {rc} for {filename}")
             log_write(f"ERROR: rsync exit code {rc} for {filename}")
             record_error()
             continue
@@ -651,7 +656,7 @@ def do_latest_sync(direction, count, nth, dry_run, delete_flag, update=False):
         else:
             prefix = f"{remote_dir}/"
             if not found_path.startswith(prefix):
-                warn(f"Unexpected remote path: {found_path}")
+                err(f"Unexpected remote path: {found_path}")
                 record_error()
                 continue
             rel_path = found_path[len(prefix):]
@@ -662,7 +667,7 @@ def do_latest_sync(direction, count, nth, dry_run, delete_flag, update=False):
                                     local_file)
 
         if rc != 0:
-            warn(f"rsync exited with code {rc} for {basename}")
+            err(f"rsync exited with code {rc} for {basename}")
             log_write(f"ERROR: rsync exit code {rc} for {basename}")
             record_error()
             continue
@@ -870,18 +875,18 @@ def do_add(files, move, dir_override, push, dry_run):
     for f in files:
         src = os.path.abspath(os.path.expanduser(f))
         if not os.path.exists(src):
-            warn(f"No such file: {f}")
+            err(f"No such file: {f}")
             record_error()
             continue
         # Directories have no extension to classify on, so they're only
         # accepted when --to names the target explicitly.
         is_dir = os.path.isdir(src)
         if is_dir and not dir_override:
-            warn(f"Directory needs an explicit target — use --to NAME: {f}")
+            err(f"Directory needs an explicit target — use --to NAME: {f}")
             record_error()
             continue
         if not is_dir and not os.path.isfile(src):
-            warn(f"Not a regular file or directory: {f}")
+            err(f"Not a regular file or directory: {f}")
             record_error()
             continue
 
@@ -906,7 +911,7 @@ def do_add(files, move, dir_override, push, dry_run):
                     if move:
                         shutil.rmtree(src)
                 except OSError as e:
-                    warn(f"Failed to {verb} {label}: {e}")
+                    err(f"Failed to {verb} {label}: {e}")
                     record_error()
                     continue
                 ok(f"{past} {label} → {dir_name}/")
@@ -916,8 +921,8 @@ def do_add(files, move, dir_override, push, dry_run):
             if filecmp.cmp(src, dest, shallow=False):
                 info(f"{basename} already in {dir_name}/ (identical)")
             else:
-                warn(f"{basename} exists in {dir_name}/ with different "
-                     "content — skipping")
+                err(f"{basename} exists in {dir_name}/ with different "
+                    "content — skipping")
                 record_error()
                 continue
         elif dry_run:
@@ -931,7 +936,7 @@ def do_add(files, move, dir_override, push, dry_run):
                 else:
                     shutil.copy2(src, dest)
             except OSError as e:
-                warn(f"Failed to {verb} {basename}: {e}")
+                err(f"Failed to {verb} {basename}: {e}")
                 record_error()
                 continue
             ok(f"{past} {basename} → {dir_name}/")
@@ -955,7 +960,7 @@ def do_add(files, move, dir_override, push, dry_run):
             rc, _output = run_rsync(opts, push_src,
                                     f"{PHONE_HOST}:{remote_target}")
             if rc != 0:
-                warn(f"rsync exited with code {rc} for {label}")
+                err(f"rsync exited with code {rc} for {label}")
                 log_write(f"ERROR: rsync exit code {rc} for {label}")
                 record_error()
                 continue
