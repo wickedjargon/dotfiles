@@ -1,0 +1,315 @@
+#!/usr/bin/env python3
+"""trash — safe delete via the XDG trash, with list/restore/empty.
+
+Implements the freedesktop.org trash spec (~/.local/share/Trash)
+directly — no trash-cli dependency.
+"""
+
+import os
+import shutil
+import subprocess
+import sys
+import urllib.parse
+from datetime import datetime
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+# ── Configuration ──────────────────────────────────────────────────
+DATA_HOME = os.environ.get("XDG_DATA_HOME") or \
+    os.path.expanduser("~/.local/share")
+TRASH_DIR = os.path.join(DATA_HOME, "Trash")
+
+
+def files_dir():
+    return os.path.join(TRASH_DIR, "files")
+
+
+def info_dir():
+    return os.path.join(TRASH_DIR, "info")
+
+
+def ensure_dirs():
+    os.makedirs(files_dir(), exist_ok=True)
+    os.makedirs(info_dir(), exist_ok=True)
+
+
+def unique_name(name):
+    """A trash filename that doesn't collide with existing entries."""
+    if not os.path.exists(os.path.join(files_dir(), name)):
+        return name
+    stem, ext = os.path.splitext(name)
+    i = 2
+    while os.path.exists(os.path.join(files_dir(), f"{stem}.{i}{ext}")):
+        i += 1
+    return f"{stem}.{i}{ext}"
+
+
+def write_trashinfo(name, original_path):
+    stamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    # The spec percent-encodes the path (RFC 2396); '/' stays literal.
+    encoded = urllib.parse.quote(original_path)
+    content = (f"[Trash Info]\n"
+               f"Path={encoded}\n"
+               f"DeletionDate={stamp}\n")
+    with open(os.path.join(info_dir(), f"{name}.trashinfo"), "w") as f:
+        f.write(content)
+
+
+def parse_trashinfo(text):
+    """(original_path, deletion_datetime_or_None) from .trashinfo content."""
+    path = None
+    date = None
+    for line in text.splitlines():
+        if line.startswith("Path="):
+            path = urllib.parse.unquote(line[5:])
+        elif line.startswith("DeletionDate="):
+            try:
+                date = datetime.fromisoformat(line[13:])
+            except ValueError:
+                pass
+    return path, date
+
+
+def entries():
+    """All trash entries: [(name, original_path, deleted_at)] newest first."""
+    result = []
+    try:
+        names = os.listdir(files_dir())
+    except FileNotFoundError:
+        return result
+    for name in names:
+        info_path = os.path.join(info_dir(), f"{name}.trashinfo")
+        original, date = None, None
+        try:
+            with open(info_path) as f:
+                original, date = parse_trashinfo(f.read())
+        except OSError:
+            pass
+        result.append((name, original or "?", date))
+    result.sort(key=lambda e: e[2] or datetime.min, reverse=True)
+    return result
+
+
+def entry_size(name):
+    path = os.path.join(files_dir(), name)
+    try:
+        result = subprocess.run(["du", "-sk", path],
+                                capture_output=True, text=True, timeout=60)
+        return int(result.stdout.split()[0]) * 1024
+    except Exception:
+        return 0
+
+
+def human(n):
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024:
+            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TB"
+
+
+def age(date):
+    if not date:
+        return "?"
+    days = (datetime.now() - date).days
+    if days == 0:
+        return "today"
+    if days == 1:
+        return "1d ago"
+    return f"{days}d ago"
+
+
+def _remove_entry(name):
+    path = os.path.join(files_dir(), name)
+    if os.path.isdir(path) and not os.path.islink(path):
+        shutil.rmtree(path)
+    else:
+        os.unlink(path)
+    info_file = os.path.join(info_dir(), f"{name}.trashinfo")
+    if os.path.exists(info_file):
+        os.unlink(info_file)
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_trash(paths):
+    """Move files/directories to the trash."""
+    ensure_dirs()
+    for p in paths:
+        src = os.path.abspath(os.path.expanduser(p))
+        if not os.path.lexists(src):
+            warn(f"No such file: {p}")
+            continue
+        if src == os.path.expanduser("~") or src == "/":
+            die(f"Refusing to trash {src}")
+        name = unique_name(os.path.basename(src.rstrip("/")))
+        # The info file is written first: if the move fails halfway the
+        # entry is still restorable, never orphaned.
+        write_trashinfo(name, src)
+        try:
+            shutil.move(src, os.path.join(files_dir(), name))
+        except OSError as e:
+            os.unlink(os.path.join(info_dir(), f"{name}.trashinfo"))
+            die(f"Failed to trash {p}: {e}")
+        ok(f"Trashed {os.path.basename(src)}  "
+           f"{DIM}(restore with: trash restore {name}){RESET}")
+
+
+def cmd_list():
+    """Show trash contents, newest first."""
+    items = entries()
+    if not items:
+        print(f"{DIM}Trash is empty.{RESET}")
+        return
+    total = 0
+    for name, original, date in items:
+        size = entry_size(name)
+        total += size
+        print(f"  {BOLD}{name:<28}{RESET} {human(size):>10}  "
+              f"{age(date):<8}  {DIM}{original}{RESET}")
+    print(f"\n{DIM}{len(items)} item{'s' if len(items) != 1 else ''}, "
+          f"{human(total)} — restore with: trash restore <name>{RESET}")
+
+
+def cmd_restore(args):
+    """Put an entry back where it came from."""
+    if not args:
+        die("Usage: trash restore <name>")
+    query = " ".join(args)
+
+    matches = [e for e in entries() if e[0] == query]
+    if not matches:
+        matches = [e for e in entries() if query.lower() in e[0].lower()]
+    if not matches:
+        die(f"No trash entry matching '{query}'")
+    if len(matches) > 1:
+        print("Multiple entries match:", file=sys.stderr)
+        for name, original, date in matches:
+            print(f"  ○ {name}  {DIM}{original}{RESET}", file=sys.stderr)
+        print(f"\nSpecify one, e.g.: trash restore {matches[0][0]}",
+              file=sys.stderr)
+        sys.exit(1)
+
+    name, original, _date = matches[0]
+    if original == "?":
+        die(f"'{name}' has no recorded original path — "
+            f"recover it manually from {files_dir()}")
+    if os.path.lexists(original):
+        die(f"Cannot restore: {original} already exists")
+
+    os.makedirs(os.path.dirname(original), exist_ok=True)
+    try:
+        shutil.move(os.path.join(files_dir(), name), original)
+    except OSError as e:
+        die(f"Restore failed: {e}")
+    info_file = os.path.join(info_dir(), f"{name}.trashinfo")
+    if os.path.exists(info_file):
+        os.unlink(info_file)
+    ok(f"Restored {original}")
+
+
+def cmd_empty(args):
+    """Delete everything, or only entries older than N days."""
+    items = entries()
+    if not items:
+        print(f"{DIM}Trash is already empty.{RESET}")
+        return
+
+    if args:
+        if not args[0].isdigit():
+            die("Usage: trash empty [DAYS]")
+        days = int(args[0])
+        old = [e for e in items
+               if e[2] and (datetime.now() - e[2]).days >= days]
+        if not old:
+            print(f"{DIM}Nothing older than {days} days.{RESET}")
+            return
+        for name, _original, _date in old:
+            _remove_entry(name)
+        ok(f"Deleted {len(old)} item{'s' if len(old) != 1 else ''} "
+           f"older than {days} days")
+        return
+
+    total = sum(entry_size(name) for name, *_ in items)
+    try:
+        answer = input(f"{CYAN}▸{RESET} Permanently delete "
+                       f"{len(items)} item{'s' if len(items) != 1 else ''} "
+                       f"({human(total)})? [y/N] ")
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return
+    if answer.strip().lower() not in ("y", "yes"):
+        info("Nothing deleted")
+        return
+    for name, _original, _date in items:
+        _remove_entry(name)
+    ok(f"Trash emptied — {human(total)} freed")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: trash [command|FILE...]
+
+Safe delete via the XDG trash (~/.local/share/Trash).
+
+commands:
+  (none)                        list trash contents
+  FILE...                       move files/directories to the trash
+  restore <NAME>                put an entry back where it came from
+  empty                         delete everything (asks first)
+  empty <DAYS>                  delete entries older than DAYS days
+
+Restore knows the original path and refuses to overwrite anything
+that reappeared there.
+
+examples:
+  trash old-notes.txt           delete, but recoverably
+  trash                         what's in the trash?
+  trash restore old-notes.txt   bring it back
+  trash empty 30                purge entries older than a month
+  trash empty                   purge everything"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if len(sys.argv) < 2:
+        cmd_list()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    # Subcommands win unless a file of the same name exists (./list).
+    commands = {
+        "list":    lambda: cmd_list(),
+        "restore": lambda: cmd_restore(args),
+        "empty":   lambda: cmd_empty(args),
+    }
+    if command in commands and not os.path.lexists(command):
+        commands[command]()
+        return
+
+    cmd_trash(sys.argv[1:])
+
+
+if __name__ == "__main__":
+    main()
