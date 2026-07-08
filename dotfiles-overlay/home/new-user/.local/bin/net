@@ -1,0 +1,256 @@
+#!/usr/bin/env python3
+"""net — diagnose internet connectivity from the command line.
+
+Requires: iproute2 (ip), iputils (ping)
+Optional: tailscale, speedtest-cli (speed)
+"""
+
+import os
+import re
+import subprocess
+import sys
+import urllib.error
+import urllib.request
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=10):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+# ── Probes ──────────────────────────────────────────────────────────
+PROBE_IP = "1.1.1.1"
+PROBE_HOST = "debian.org"
+# Returns HTTP 204 on the open internet; a captive portal intercepts it.
+PORTAL_URL = "http://connectivitycheck.gstatic.com/generate_204"
+VPN_IFACE = "mullvad"  # interface name pinned by the vpn script
+
+
+def parse_default_route(text):
+    """Extract (gateway, device) from `ip route show default` output."""
+    m = re.search(r"default via (\S+) dev (\S+)", text)
+    return (m.group(1), m.group(2)) if m else None
+
+
+def default_route():
+    return parse_default_route(run(["ip", "route", "show", "default"]).stdout)
+
+
+def parse_route_dev(text):
+    """Extract the outgoing device from `ip route get` output."""
+    m = re.search(r"\bdev (\S+)", text)
+    return m.group(1) if m else None
+
+
+def route_dev(target=PROBE_IP):
+    """Which interface the kernel would use to reach target."""
+    return parse_route_dev(run(["ip", "route", "get", target]).stdout)
+
+
+def ping_ok(host, wait=2):
+    return run(["ping", "-c", "1", "-W", str(wait), host],
+               timeout=wait + 3).returncode == 0
+
+
+def dns_ok(host=PROBE_HOST):
+    return run(["getent", "ahosts", host], timeout=5).returncode == 0
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def portal_check(url=PORTAL_URL):
+    """Return 'ok', 'portal', or 'fail' for the captive-portal probe."""
+    opener = urllib.request.build_opener(_NoRedirect)
+    try:
+        with opener.open(url, timeout=5) as resp:
+            status = resp.status
+    except urllib.error.HTTPError as e:
+        status = e.code
+    except Exception:
+        return "fail"
+    if status == 204:
+        return "ok"
+    # A redirect or an injected 200 page means a portal is in the way.
+    return "portal"
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def _step(label, passed, detail="", hint=""):
+    """Print one ladder rung; return whether it passed."""
+    if passed:
+        print(f"{GREEN}✓{RESET} {label:<16} {detail}")
+    else:
+        print(f"{RED}✗{RESET} {label:<16} {detail}")
+        if hint:
+            print(f"  {DIM}{hint}{RESET}")
+    return passed
+
+
+def cmd_status():
+    """Run the connectivity ladder and report the first broken rung."""
+    problems = 0
+
+    route = default_route()
+    if not _step("Route", route is not None,
+                 f"via {route[0]} on {route[1]}" if route else "no default route",
+                 "No default route — is WiFi/ethernet connected? Try: wifi"):
+        sys.exit(1)
+    gateway, dev = route
+
+    if not _step("Gateway", ping_ok(gateway), gateway,
+                 "The router isn't answering — check the local network."):
+        problems += 1
+
+    if not _step("Internet", ping_ok(PROBE_IP), f"ping {PROBE_IP}",
+                 "LAN is fine but nothing beyond the router — ISP or "
+                 "router uplink problem."):
+        problems += 1
+
+    if not _step("DNS", dns_ok(), f"resolve {PROBE_HOST}",
+                 "IP connectivity works but names don't resolve — "
+                 "check resolvers with: dns"):
+        problems += 1
+
+    portal = portal_check()
+    if portal == "portal":
+        _step("HTTP", False, "captive portal detected",
+              "Open a browser and log in to the network's portal page.")
+        problems += 1
+    elif not _step("HTTP", portal == "ok", PORTAL_URL.split("/")[2],
+                   "HTTP is blocked or intercepted."):
+        problems += 1
+
+    # VPN sanity: if the mullvad interface exists, traffic should use it.
+    if os.path.isdir(f"/sys/class/net/{VPN_IFACE}"):
+        out_dev = route_dev()
+        if not _step("VPN", out_dev == VPN_IFACE,
+                     f"traffic via {out_dev or '?'}",
+                     f"VPN is up but traffic leaves via {out_dev} — "
+                     "possible leak; try: vpn disconnect && vpn connect"):
+            problems += 1
+
+    if problems:
+        sys.exit(1)
+    print(f"\n{DIM}All checks passed.{RESET}")
+
+
+def cmd_ip():
+    """Show local addresses and the public IP."""
+    result = run(["ip", "-o", "-4", "addr", "show"])
+    for line in result.stdout.splitlines():
+        m = re.match(r"\d+:\s+(\S+)\s+inet\s+(\S+)", line)
+        if not m or m.group(1) == "lo":
+            continue
+        print(f"  {m.group(1):<12} {m.group(2)}")
+
+    try:
+        req = urllib.request.Request("https://icanhazip.com",
+                                     headers={"User-Agent": "curl/8"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            public = resp.read().decode().strip()
+        print(f"  {'public':<12} {BOLD}{public}{RESET}")
+    except Exception:
+        warn("Could not determine the public IP (offline?)")
+
+
+def cmd_ping(args):
+    """Continuous ping (Ctrl+C to stop)."""
+    host = args[0] if args else PROBE_IP
+    os.execvp("ping", ["ping", host])
+
+
+def cmd_speed():
+    """Run a speed test, if a tester is installed."""
+    for tool, argv in (("speedtest", ["speedtest"]),
+                       ("speedtest-cli", ["speedtest-cli", "--simple"]),
+                       ("fast", ["fast"])):
+        if which(tool):
+            os.execvp(argv[0], argv)
+    die("No speed test tool found (install speedtest-cli)")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: net [command]
+
+Diagnose internet connectivity.
+
+commands:
+  (none)                        run the connectivity ladder
+  ip                            show local and public IP addresses
+  ping [HOST]                   continuous ping (default 1.1.1.1)
+  speed                         run a speed test (needs speedtest-cli)
+
+The ladder checks, in order: default route, gateway ping, internet
+ping, DNS resolution, captive portal, and (when the VPN is up) that
+traffic actually leaves through it. The first broken rung tells you
+where the problem lives.
+
+examples:
+  net                           why is the internet broken?
+  net ip                        what are my addresses?
+  net ping                      watch connectivity live
+  net ping 192.168.1.1          ping the router
+  net speed                     how fast is this connection?"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not which("ip"):
+        die("iproute2 not installed (need 'ip' command)")
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "ip":    lambda: cmd_ip(),
+        "ping":  lambda: cmd_ping(args),
+        "speed": lambda: cmd_speed(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'net --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()
