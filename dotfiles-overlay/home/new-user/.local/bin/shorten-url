@@ -6,6 +6,7 @@ import os
 import subprocess
 import sys
 import json
+import tempfile
 
 SHORTEN_URL = "https://tinyurl.fftp.io/api/shorten"
 API_KEY_FILE = os.path.expanduser("~/.config/tinyurl/api_key")
@@ -29,24 +30,30 @@ def copy_to_clipboard(text):
 
 def shorten_url(url):
     api_key = _read_api_key()
-    cmd = [
-        "curl", "-fsS",
-        "--connect-timeout", "5",
-        "--max-time", "10",
-        "-H", f"Authorization: Bearer {api_key}",
-        "-H", "Content-Type: application/json",
-        "-d", json.dumps({"url": url}),
-        SHORTEN_URL,
-    ]
-
+    # The key goes to curl via a header file (-H @file), not argv —
+    # argv is world-readable in /proc/*/cmdline while curl runs.
+    hdr = tempfile.NamedTemporaryFile("w", suffix=".hdr", delete=False)
     try:
+        hdr.write(f"Authorization: Bearer {api_key}\n")
+        hdr.close()
+        cmd = [
+            "curl", "-fsS",
+            "--connect-timeout", "5",
+            "--max-time", "10",
+            "-H", f"@{hdr.name}",
+            "-H", "Content-Type: application/json",
+            "-d", json.dumps({"url": url}),
+            SHORTEN_URL,
+        ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0 and result.stdout.strip():
             data = json.loads(result.stdout.strip())
             return data.get("short_url")
         return None
-    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
+    except (FileNotFoundError, json.JSONDecodeError):
         return None
+    finally:
+        os.unlink(hdr.name)
 
 
 def main():
