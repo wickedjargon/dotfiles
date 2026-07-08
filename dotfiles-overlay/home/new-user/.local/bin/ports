@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""ports — show and free listening network ports.
+
+Requires: iproute2 (ss)
+"""
+
+import os
+import re
+import signal
+import subprocess
+import sys
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=10):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+# ── ss Parsing ──────────────────────────────────────────────────────
+def parse_ss_line(line):
+    """Parse one `ss -tulpnH` line into a dict, or None.
+
+    Returns keys: proto, addr, port, procs — procs is a list of
+    (name, pid) tuples (empty when ss can't see the owner).
+    """
+    parts = line.split()
+    if len(parts) < 5:
+        return None
+    proto = parts[0]
+    local = parts[4]
+    addr, _, port = local.rpartition(":")
+    if not port.isdigit():
+        return None
+    procs = re.findall(r'\("([^"]+)",pid=(\d+)', line)
+    return {
+        "proto": proto,
+        "addr": addr,
+        "port": int(port),
+        "procs": [(name, int(pid)) for name, pid in procs],
+    }
+
+
+def get_listening():
+    """All listening sockets, sorted by port."""
+    result = run(["ss", "-tulpnH"])
+    if result.returncode != 0:
+        die(f"ss failed: {result.stderr.strip()}")
+    entries = []
+    for line in result.stdout.splitlines():
+        entry = parse_ss_line(line)
+        if entry:
+            entries.append(entry)
+    return sorted(entries, key=lambda e: (e["port"], e["proto"]))
+
+
+def pids_on_port(port):
+    """Unique pids listening on the given port."""
+    pids = []
+    for e in get_listening():
+        if e["port"] == port:
+            for _name, pid in e["procs"]:
+                if pid not in pids:
+                    pids.append(pid)
+    return pids
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def _print_entries(entries):
+    unknown_owner = False
+    for e in entries:
+        if e["procs"]:
+            proc_str = ", ".join(f"{name} {DIM}({pid}){RESET}"
+                                 for name, pid in e["procs"])
+        else:
+            proc_str = f"{DIM}-{RESET}"
+            unknown_owner = True
+        # Pad before coloring — ANSI codes would count toward the width.
+        scope = f"{e['addr']:<24}"
+        # Highlight sockets reachable from other machines.
+        if e["addr"] in ("0.0.0.0", "[::]", "*"):
+            scope = f"{YELLOW}{scope}{RESET}"
+        print(f"  {BOLD}{e['port']:>5}{RESET}  {e['proto']:<4} "
+              f"{scope} {proc_str}")
+    if unknown_owner:
+        print(f"\n{DIM}Some owners hidden — run with sudo to see "
+              f"all process names.{RESET}")
+
+
+def cmd_status(args):
+    """Show listening ports, optionally filtered to one port."""
+    entries = get_listening()
+    if args:
+        if not args[0].isdigit():
+            die(f"Not a port number: {args[0]}")
+        port = int(args[0])
+        entries = [e for e in entries if e["port"] == port]
+        if not entries:
+            print(f"{DIM}Nothing is listening on port {port}.{RESET}")
+            return
+    if not entries:
+        print(f"{DIM}Nothing is listening.{RESET}")
+        return
+    _print_entries(entries)
+
+
+def cmd_kill(args):
+    """Terminate whatever is listening on a port."""
+    if not args or not args[0].isdigit():
+        die("Usage: ports kill <port>")
+    port = int(args[0])
+
+    pids = pids_on_port(port)
+    if not pids:
+        # The port may be owned by a process ss can't inspect as this user.
+        entries = [e for e in get_listening() if e["port"] == port]
+        if entries:
+            die(f"Port {port} is in use but the owner is not visible — "
+                f"try: sudo ports kill {port}")
+        die(f"Nothing is listening on port {port}")
+
+    for pid in pids:
+        try:
+            name = os.path.basename(
+                os.readlink(f"/proc/{pid}/exe"))
+        except OSError:
+            name = str(pid)
+        info(f"Terminating {BOLD}{name}{RESET} (pid {pid})...")
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except PermissionError:
+            die(f"Permission denied for pid {pid} — "
+                f"try: sudo ports kill {port}")
+        except ProcessLookupError:
+            continue
+        ok(f"Sent SIGTERM to {name} ({pid})")
+
+
+def cmd_list():
+    """Machine-parseable list of listening sockets."""
+    for e in get_listening():
+        procs = ",".join(f"{name}:{pid}" for name, pid in e["procs"])
+        print(f"{e['port']}\t{e['proto']}\t{e['addr']}\t{procs}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: ports [command] [port]
+
+Show and free listening network ports.
+
+commands:
+  (none)                        show all listening ports
+  <PORT>                        show what's on a specific port
+  kill <PORT>                   SIGTERM whatever is listening there
+  list                          machine-parseable socket list
+
+Addresses shown in yellow (0.0.0.0, [::]) are reachable from other
+machines. Owners of root-owned sockets need sudo to be visible.
+
+examples:
+  ports                         what's listening?
+  ports 3000                    who is on port 3000?
+  ports kill 3000               free port 3000
+  ports list                    tab-separated fields"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not which("ss"):
+        die("iproute2 not installed (need 'ss' command)")
+
+    if len(sys.argv) < 2:
+        cmd_status([])
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    # A bare port number filters the status view.
+    if command.isdigit():
+        cmd_status([command])
+        return
+
+    commands = {
+        "kill": lambda: cmd_kill(args),
+        "list": lambda: cmd_list(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'ports --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

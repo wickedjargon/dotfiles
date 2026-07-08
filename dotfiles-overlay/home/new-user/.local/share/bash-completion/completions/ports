@@ -1,0 +1,13 @@
+# bash completion for ports
+_ports() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "kill list help --help" -- "$cur") )
+        return
+    fi
+}
+
+complete -F _ports ports
