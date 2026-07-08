@@ -35,6 +35,7 @@ Requires an internet connection: edge-tts synthesizes the audio server-side.
 
 import os
 import re
+import shlex
 import signal
 import subprocess
 import sys
@@ -46,6 +47,12 @@ from shutil import which
 if os.path.exists("/run/.containerenv"):
     if which("distrobox-host-exec"):
         os.execvp("distrobox-host-exec", ["distrobox-host-exec"] + sys.argv)
+
+# The re-exec lands here with host-spawn's minimal PATH (no ~/.local/bin),
+# which would hide edge-tts. Make sure our own directory is searched.
+_bindir = os.path.dirname(os.path.abspath(__file__))
+if _bindir not in os.environ.get("PATH", "").split(os.pathsep):
+    os.environ["PATH"] = _bindir + os.pathsep + os.environ.get("PATH", "")
 
 CONFIG_FILE = (
     Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
@@ -62,6 +69,22 @@ ENV_VARS = {"voice": "SPEAK_VOICE", "rate": "SPEAK_RATE"}
 # Track the player so a second keypress can stop it.
 RUNTIME = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
 PIDFILE = Path(RUNTIME) / "speak.pid"
+
+
+def edge_tts_cmd():
+    """How to invoke edge-tts: the CLI if present, else the module.
+
+    Wiping ~/.local/bin deletes the pip/pipx launcher script but leaves
+    the package in ~/.local/lib, so `python3 -m edge_tts` still works.
+    Returns None when neither is available.
+    """
+    if which("edge-tts"):
+        return ["edge-tts"]
+    try:
+        import edge_tts  # noqa: F401
+    except ImportError:
+        return None
+    return [sys.executable, "-m", "edge_tts"]
 
 
 def notify(msg, urgency="normal"):
@@ -110,8 +133,11 @@ def known_voices():
         return VOICES_CACHE.read_text().split()
     except FileNotFoundError:
         pass
+    cmd = edge_tts_cmd()
+    if cmd is None:
+        return []
     res = subprocess.run(
-        ["edge-tts", "--list-voices"], capture_output=True, text=True,
+        cmd + ["--list-voices"], capture_output=True, text=True,
     )
     if res.returncode != 0:
         return []
@@ -344,10 +370,14 @@ def main(argv):
     if was_speaking and not args:
         return
 
-    for dep in ("edge-tts", "mpv"):
-        if not which(dep):
-            notify(f"{dep} not found in PATH", "critical")
-            sys.exit(1)
+    edge = edge_tts_cmd()
+    if edge is None:
+        notify("edge-tts not found (no CLI in PATH, no python module)",
+               "critical")
+        sys.exit(1)
+    if not which("mpv"):
+        notify("mpv not found in PATH", "critical")
+        sys.exit(1)
 
     if voice is None:
         voice = effective_setting("voice", cfg)[0]
@@ -370,7 +400,7 @@ def main(argv):
     env = {**os.environ, "SPEAK_TEXT": text, "SPEAK_VOICE": voice,
            "SPEAK_RATE": rate}
     proc = subprocess.Popen(
-        'edge-tts --voice "$SPEAK_VOICE" --rate="$SPEAK_RATE" '
+        f'{shlex.join(edge)} --voice "$SPEAK_VOICE" --rate="$SPEAK_RATE" '
         '--text "$SPEAK_TEXT" '
         '| mpv --no-terminal --really-quiet --no-video -',
         shell=True, start_new_session=True, env=env,
