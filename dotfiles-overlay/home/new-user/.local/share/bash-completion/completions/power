@@ -1,0 +1,20 @@
+# bash completion for power
+_power() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "caffeine suspend hibernate list help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        caffeine)
+            COMPREPLY=( $(compgen -W "on off" -- "$cur") )
+            ;;
+    esac
+}
+
+complete -F _power power

@@ -1,0 +1,352 @@
+#!/usr/bin/env python3
+"""power — battery status and sleep control from the command line.
+
+Requires: systemd (systemctl, systemd-inhibit)
+"""
+
+import os
+import signal
+import subprocess
+import sys
+from pathlib import Path
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+# ── Configuration ──────────────────────────────────────────────────
+POWER_SUPPLY_ROOT = Path("/sys/class/power_supply")
+
+# Caffeine keeps a detached systemd-inhibit alive; its pid lives here so a
+# later run can stop it (same pattern as speak's player pidfile).
+RUNTIME = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
+PIDFILE = Path(RUNTIME) / "power-caffeine.pid"
+
+
+# ── sysfs Parsing ──────────────────────────────────────────────────
+def _read(path):
+    """Read a sysfs value as a stripped string, or None."""
+    try:
+        return path.read_text().strip()
+    except (OSError, ValueError):
+        return None
+
+
+def _read_int(path):
+    val = _read(path)
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return None
+
+
+def get_batteries():
+    """Read all batteries from sysfs.
+
+    Returns a list of dicts with keys:
+      name, capacity, status, remaining_min (or None),
+      health (or None), full, design, unit
+    """
+    batteries = []
+    try:
+        supplies = sorted(POWER_SUPPLY_ROOT.iterdir())
+    except FileNotFoundError:
+        return batteries
+
+    for dev in supplies:
+        if _read(dev / "type") != "Battery":
+            continue
+
+        capacity = _read_int(dev / "capacity")
+        status = (_read(dev / "status") or "Unknown")
+
+        # Rate/level pairs come in energy (µWh/µW) or charge (µAh/µA)
+        # flavors depending on the driver; either way hours = level/rate.
+        now = _read_int(dev / "energy_now")
+        full = _read_int(dev / "energy_full")
+        design = _read_int(dev / "energy_full_design")
+        rate = _read_int(dev / "power_now")
+        unit = "Wh"
+        if now is None:
+            now = _read_int(dev / "charge_now")
+            full = _read_int(dev / "charge_full")
+            design = _read_int(dev / "charge_full_design")
+            rate = _read_int(dev / "current_now")
+            unit = "Ah"
+
+        remaining_min = None
+        if rate and now is not None:
+            if status == "Discharging":
+                remaining_min = round(now / rate * 60)
+            elif status == "Charging" and full is not None:
+                remaining_min = round((full - now) / rate * 60)
+
+        health = None
+        if full and design:
+            health = round(full * 100 / design)
+
+        batteries.append({
+            "name": dev.name,
+            "capacity": capacity,
+            "status": status,
+            "remaining_min": remaining_min,
+            "health": health,
+            "full": full,
+            "design": design,
+            "unit": unit,
+        })
+
+    return batteries
+
+
+def ac_online():
+    """True/False if an AC adapter reports its state, else None."""
+    try:
+        supplies = sorted(POWER_SUPPLY_ROOT.iterdir())
+    except FileNotFoundError:
+        return None
+    for dev in supplies:
+        if _read(dev / "type") == "Mains":
+            online = _read_int(dev / "online")
+            if online is not None:
+                return online == 1
+    return None
+
+
+def format_duration(minutes):
+    """Format a minute count as e.g. '3h 20m' or '45m'."""
+    hours, mins = divmod(int(minutes), 60)
+    if hours > 0:
+        return f"{hours}h {mins:02d}m"
+    return f"{mins}m"
+
+
+# ── Caffeine ────────────────────────────────────────────────────────
+def _alive(pid):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def caffeine_pid():
+    """Pid of the running caffeine inhibitor, or None (cleans stale files)."""
+    try:
+        pid = int(PIDFILE.read_text().strip())
+    except (FileNotFoundError, ValueError):
+        return None
+    if not _alive(pid):
+        PIDFILE.unlink(missing_ok=True)
+        return None
+    return pid
+
+
+def _xset(*args):
+    """Adjust X screen blanking, quietly skipping when unavailable."""
+    if not os.environ.get("DISPLAY") or not which("xset"):
+        return
+    subprocess.run(["xset", *args], capture_output=True)
+
+
+def caffeine_on():
+    if caffeine_pid():
+        warn("Caffeine is already on")
+        return
+    if not which("systemd-inhibit"):
+        die("systemd-inhibit not found (need systemd)")
+    # The inhibitor lives as long as the wrapped sleep does; detach it so
+    # it survives this process, and record the pid to stop it later.
+    proc = subprocess.Popen(
+        ["systemd-inhibit", "--what=sleep:idle", "--who=power",
+         "--why=power caffeine", "sleep", "infinity"],
+        start_new_session=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    PIDFILE.write_text(str(proc.pid))
+    _xset("s", "off", "-dpms")
+    ok("Caffeine on — sleep and screen blanking inhibited")
+
+
+def caffeine_off():
+    pid = caffeine_pid()
+    if not pid:
+        warn("Caffeine is not on")
+        return
+    try:
+        os.killpg(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+    PIDFILE.unlink(missing_ok=True)
+    _xset("s", "on", "+dpms")
+    ok("Caffeine off — normal sleep behavior restored")
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Show battery, AC, and caffeine state."""
+    batteries = get_batteries()
+
+    if not batteries:
+        print(f"{DIM}○{RESET} No battery detected")
+    for b in batteries:
+        cap = b["capacity"]
+        if cap is None:
+            dot, cap_str = f"{DIM}○{RESET}", "?"
+        else:
+            if cap > 60:
+                color = GREEN
+            elif cap > 20:
+                color = YELLOW
+            else:
+                color = RED
+            dot = f"{color}●{RESET}"
+            cap_str = f"{cap}%"
+
+        state = b["status"].lower()
+        extra = ""
+        if b["remaining_min"]:
+            when = ("until full" if b["status"] == "Charging"
+                    else "remaining")
+            extra = f", ~{format_duration(b['remaining_min'])} {when}"
+        print(f"{dot} {BOLD}{b['name']}{RESET}  {cap_str}  "
+              f"{DIM}({state}{extra}){RESET}")
+
+        if b["health"] is not None:
+            full = b["full"] / 1e6
+            design = b["design"] / 1e6
+            print(f"  Health    {b['health']}%  "
+                  f"{DIM}({full:.1f} of {design:.1f} {b['unit']} design){RESET}")
+
+    ac = ac_online()
+    if ac is not None:
+        ac_str = (f"{GREEN}plugged in{RESET}" if ac
+                  else f"{DIM}unplugged{RESET}")
+        print(f"  AC        {ac_str}")
+
+    if caffeine_pid():
+        print(f"  Caffeine  {GREEN}on{RESET}  "
+              f"{DIM}(sleep inhibited — power caffeine off){RESET}")
+    else:
+        print(f"  Caffeine  {DIM}off{RESET}")
+
+
+def cmd_caffeine(args):
+    """Toggle (or explicitly set) the sleep inhibitor."""
+    mode = args[0] if args else None
+    if mode not in (None, "on", "off"):
+        die("Usage: power caffeine [on|off]")
+    if mode is None:
+        mode = "off" if caffeine_pid() else "on"
+    if mode == "on":
+        caffeine_on()
+    else:
+        caffeine_off()
+
+
+def _sleep_via(verb):
+    """Suspend or hibernate, releasing caffeine first so it can't block."""
+    if caffeine_pid():
+        info("Caffeine is on — turning it off first")
+        caffeine_off()
+    result = subprocess.run(["systemctl", verb],
+                            capture_output=True, text=True)
+    if result.returncode != 0:
+        die(f"Failed to {verb}: {result.stderr.strip()}")
+
+
+def cmd_suspend():
+    info("Suspending...")
+    _sleep_via("suspend")
+
+
+def cmd_hibernate():
+    info("Hibernating...")
+    _sleep_via("hibernate")
+
+
+def cmd_list():
+    """Machine-parseable battery list."""
+    for b in get_batteries():
+        cap = b["capacity"] if b["capacity"] is not None else ""
+        rem = b["remaining_min"] if b["remaining_min"] is not None else ""
+        health = b["health"] if b["health"] is not None else ""
+        print(f"{b['name']}\t{cap}\t{b['status']}\t{rem}\t{health}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: power [command]
+
+Battery status and sleep control.
+
+commands:
+  (none)                        show battery, AC, and caffeine status
+  caffeine [on|off]             inhibit sleep/screen blanking (toggle)
+  suspend                       suspend to RAM
+  hibernate                     hibernate to disk
+  list                          machine-parseable battery list
+
+Caffeine runs a detached systemd-inhibit (sleep + idle) and turns off X
+screen blanking; it persists until turned off. Suspend and hibernate
+release caffeine first so it cannot block them.
+
+examples:
+  power                         show battery and caffeine status
+  power caffeine                toggle the sleep inhibitor
+  power caffeine on             keep the machine awake
+  power caffeine off            back to normal sleep behavior
+  power suspend                 suspend now
+  power hibernate               hibernate now
+  power list                    tab-separated battery fields"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "caffeine":  lambda: cmd_caffeine(args),
+        "suspend":   lambda: cmd_suspend(),
+        "hibernate": lambda: cmd_hibernate(),
+        "list":      lambda: cmd_list(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'power --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()
