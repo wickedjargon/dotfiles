@@ -58,6 +58,21 @@ class TestValidRotateSpec:
         assert not img.valid_rotate_spec("")
 
 
+class TestValidFlipSpec:
+    def test_short_forms(self):
+        assert img.valid_flip_spec("h")
+        assert img.valid_flip_spec("v")
+
+    def test_long_forms(self):
+        assert img.valid_flip_spec("horizontal")
+        assert img.valid_flip_spec("vertical")
+
+    def test_garbage_rejected(self):
+        assert not img.valid_flip_spec("x")
+        assert not img.valid_flip_spec("hv")
+        assert not img.valid_flip_spec("")
+
+
 class TestGuards:
     def test_missing_file_dies(self):
         with pytest.raises(SystemExit):

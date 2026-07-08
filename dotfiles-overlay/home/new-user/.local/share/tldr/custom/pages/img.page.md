@@ -27,6 +27,10 @@
 
 `img rotate auto {{photo.jpg}}`
 
+- Mirror left-right (h) or top-bottom (v):
+
+`img flip h {{photo.jpg}}`
+
 - Convert a phone HEIC photo to JPEG:
 
 `img convert jpg {{IMG_0042.heic}}`

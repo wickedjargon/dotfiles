@@ -172,6 +172,31 @@ def cmd_rotate(args):
            f"{DIM}({_human(os.path.getsize(dest))}){RESET}")
 
 
+def valid_flip_spec(spec):
+    """Accept h/horizontal (mirror left-right) or v/vertical (top-bottom)."""
+    return spec in ("h", "horizontal", "v", "vertical")
+
+
+def cmd_flip(args):
+    """Mirror horizontally (left-right) or vertically (top-bottom)."""
+    if len(args) < 2:
+        die("Usage: img flip <h|v> FILE...")
+    spec, files = args[0].lower(), args[1:]
+    if not valid_flip_spec(spec):
+        die(f"Bad direction '{spec}' (use h/horizontal or v/vertical)")
+    axis = spec[0]
+    check_files(files)
+    for f in files:
+        dest = out_name(f, f"flip{axis}")
+        _guard_output(dest)
+        # ImageMagick's -flop mirrors left-right; -flip is top-bottom.
+        result = magick(f, "-flop" if axis == "h" else "-flip", dest)
+        if result.returncode != 0:
+            die(f"Flip failed: {result.stderr.strip()}")
+        ok(f"{os.path.basename(dest)}  "
+           f"{DIM}({_human(os.path.getsize(dest))}){RESET}")
+
+
 def cmd_convert(args):
     """Convert to another format (e.g. HEIC from the phone to JPEG)."""
     if len(args) < 2:
@@ -223,6 +248,7 @@ commands:
   resize <SPEC> FILE...         resize (50%%, 1920, or 800x600)
   rotate <ANGLE> FILE...        rotate 90/180/270/-90 clockwise, or
                                 auto (bake in the EXIF orientation)
+  flip <h|v> FILE...            mirror left-right (h) or top-bottom (v)
   convert <FMT> FILE...         convert format (heic→jpg, png→webp...)
   strip FILE...                 remove all metadata → FILE-clean.ext
 
@@ -235,6 +261,7 @@ examples:
   img resize 1920 photo.jpg     max width 1920 → photo-1920.jpg
   img rotate 90 photo.jpg       clockwise → photo-r90.jpg
   img rotate auto photo.jpg     upright per EXIF → photo-oriented.jpg
+  img flip h photo.jpg          mirror image → photo-fliph.jpg
   img convert jpg IMG_0042.heic phone photo → IMG_0042.jpg
   img strip photo.jpg           shareable copy → photo-clean.jpg
   img exif photo.jpg            full metadata dump"""
@@ -256,6 +283,7 @@ def main():
         "exif":    lambda: cmd_exif(args),
         "resize":  lambda: cmd_resize(args),
         "rotate":  lambda: cmd_rotate(args),
+        "flip":    lambda: cmd_flip(args),
         "convert": lambda: cmd_convert(args),
         "strip":   lambda: cmd_strip(args),
     }
