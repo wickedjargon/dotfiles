@@ -1,0 +1,321 @@
+#!/usr/bin/env python3
+"""dns — show and switch DNS resolvers from the command line.
+
+Requires: NetworkManager (nmcli)
+"""
+
+import ipaddress
+import re
+import socket
+import subprocess
+import sys
+import time
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=15):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+def nmcli_split_line(line):
+    """Split an nmcli -t line respecting \\: escapes (SSIDs with colons)."""
+    return re.split(r"(?<!\\):", line)
+
+
+# ── Configuration ──────────────────────────────────────────────────
+PRESETS = {
+    "cloudflare": ["1.1.1.1", "1.0.0.1"],
+    "quad9":      ["9.9.9.9", "149.112.112.112"],
+    "google":     ["8.8.8.8", "8.8.4.4"],
+}
+MULLVAD_DNS = "10.64.0.1"  # what the vpn script configures
+TEST_HOSTS = ["debian.org", "wikipedia.org"]
+
+
+# ── Resolver State ──────────────────────────────────────────────────
+def parse_resolv_conf(text):
+    """Nameserver IPs from resolv.conf content."""
+    return re.findall(r"^\s*nameserver\s+(\S+)", text, re.MULTILINE)
+
+
+def resolv_servers():
+    try:
+        with open("/etc/resolv.conf") as f:
+            return parse_resolv_conf(f.read())
+    except OSError:
+        return []
+
+
+def active_connections():
+    """Active wifi/ethernet connections as (name, device) tuples."""
+    result = run(["nmcli", "-t", "-f", "NAME,TYPE,DEVICE",
+                  "connection", "show", "--active"])
+    if result.returncode != 0:
+        return []
+    conns = []
+    for line in result.stdout.strip().splitlines():
+        parts = nmcli_split_line(line)
+        if len(parts) >= 3 and parts[1] in ("802-11-wireless",
+                                            "802-3-ethernet"):
+            conns.append((parts[0].replace(r"\:", ":"), parts[2]))
+    return conns
+
+
+def connection_dns(name):
+    """(manual_servers, ignore_auto) for a connection profile."""
+    servers = run(["nmcli", "-g", "ipv4.dns",
+                   "connection", "show", name]).stdout.strip()
+    ignore = run(["nmcli", "-g", "ipv4.ignore-auto-dns",
+                  "connection", "show", name]).stdout.strip()
+    return ([s for s in servers.split(",") if s], ignore == "yes")
+
+
+def vpn_active():
+    result = run(["nmcli", "-t", "-f", "NAME", "connection",
+                  "show", "--active"])
+    return any(line.strip() == "mullvad"
+               for line in result.stdout.splitlines())
+
+
+def _preset_name(servers):
+    for name, ips in PRESETS.items():
+        if servers and all(s in ips for s in servers):
+            return name
+    return None
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Show current resolvers and where they come from."""
+    conns = active_connections()
+    if not conns:
+        warn("No active wifi/ethernet connection")
+    for name, device in conns:
+        servers, ignore = connection_dns(name)
+        if servers:
+            label = _preset_name(servers)
+            src = f"manual{f' ({label})' if label else ''}"
+            print(f"{GREEN}●{RESET} {BOLD}{name}{RESET}  "
+                  f"{DIM}({device}){RESET}")
+            print(f"  DNS       {', '.join(servers)}  {DIM}[{src}]{RESET}")
+        else:
+            print(f"{GREEN}●{RESET} {BOLD}{name}{RESET}  "
+                  f"{DIM}({device}){RESET}")
+            print(f"  DNS       {DIM}from DHCP (automatic){RESET}")
+        if ignore and not servers:
+            warn("ignore-auto-dns is set but no manual servers configured")
+
+    system = resolv_servers()
+    if system:
+        note = ""
+        if system == ["127.0.0.53"]:
+            note = f"  {DIM}(systemd-resolved stub){RESET}"
+        print(f"  In use    {', '.join(system)}{note}")
+
+    if vpn_active():
+        if MULLVAD_DNS in system:
+            print(f"  VPN       {GREEN}using Mullvad DNS{RESET} "
+                  f"({MULLVAD_DNS})")
+        else:
+            warn(f"VPN is up but resolvers aren't {MULLVAD_DNS} — "
+                 "possible DNS leak")
+
+
+def _resolve_target(name=None):
+    """Pick the connection to modify (auto-select when only one)."""
+    conns = active_connections()
+    if not conns:
+        die("No active wifi/ethernet connection")
+    if name:
+        for conn in conns:
+            if conn[0] == name:
+                return conn
+        die(f"'{name}' is not an active connection")
+    if len(conns) == 1:
+        return conns[0]
+    print("Multiple active connections:", file=sys.stderr)
+    for cname, device in conns:
+        print(f"  ○ {cname}  {DIM}({device}){RESET}", file=sys.stderr)
+    print(f"\nSpecify one, e.g.: dns set cloudflare \"{conns[0][0]}\"",
+          file=sys.stderr)
+    sys.exit(1)
+
+
+def parse_servers(args):
+    """Resolve a preset name or a list of IPs into server addresses."""
+    if len(args) == 1 and args[0] in PRESETS:
+        return PRESETS[args[0]]
+    servers = []
+    for arg in args:
+        try:
+            ipaddress.ip_address(arg)
+        except ValueError:
+            valid = ", ".join(sorted(PRESETS))
+            die(f"'{arg}' is not an IP address or preset ({valid}, auto)")
+        servers.append(arg)
+    return servers
+
+
+def cmd_set(args):
+    """Point the active connection at a preset or custom resolvers."""
+    if not args:
+        valid = ", ".join(sorted(PRESETS))
+        die(f"Usage: dns set <{valid}|auto|IP...> [connection]")
+
+    if args[0] == "auto":
+        name, _ = _resolve_target(args[1] if len(args) > 1 else None)
+        info(f"Restoring DHCP DNS on {BOLD}{name}{RESET}...")
+        result = run(["nmcli", "connection", "modify", name,
+                      "ipv4.dns", "", "ipv4.ignore-auto-dns", "no"])
+        if result.returncode != 0:
+            die(f"Failed: {result.stderr.strip()}")
+        _reapply(name)
+        ok(f"{name} → automatic (DHCP) DNS")
+        return
+
+    # A trailing non-IP, non-preset arg names the connection to modify.
+    server_args = list(args)
+    conn_name = None
+    if len(server_args) > 1 and server_args[-1] not in PRESETS:
+        try:
+            ipaddress.ip_address(server_args[-1])
+        except ValueError:
+            conn_name = server_args.pop()
+
+    servers = parse_servers(server_args)
+    name, _ = _resolve_target(conn_name)
+
+    label = _preset_name(servers) or ", ".join(servers)
+    info(f"Setting DNS on {BOLD}{name}{RESET} → {label}...")
+    result = run(["nmcli", "connection", "modify", name,
+                  "ipv4.dns", " ".join(servers),
+                  "ipv4.ignore-auto-dns", "yes"])
+    if result.returncode != 0:
+        die(f"Failed: {result.stderr.strip()}")
+    _reapply(name)
+    ok(f"{name} → {', '.join(servers)}")
+
+
+def _reapply(name):
+    """Bounce the connection so the new DNS takes effect."""
+    info("Reapplying connection...")
+    result = run(["nmcli", "connection", "up", name], timeout=60)
+    if result.returncode != 0:
+        warn(f"Settings saved but reconnect failed: "
+             f"{result.stderr.strip()}")
+
+
+def cmd_test():
+    """Time a few lookups to confirm resolution works."""
+    failures = 0
+    for host in TEST_HOSTS:
+        start = time.monotonic()
+        try:
+            socket.getaddrinfo(host, None)
+            ms = (time.monotonic() - start) * 1000
+            ok(f"{host:<18} {ms:.0f} ms")
+        except OSError:
+            print(f"{RED}✗{RESET} {host:<18} failed")
+            failures += 1
+    if failures:
+        sys.exit(1)
+
+
+def cmd_flush():
+    """Flush the system DNS cache, when one exists."""
+    if resolv_servers() == ["127.0.0.53"] and which("resolvectl"):
+        result = run(["resolvectl", "flush-caches"])
+        if result.returncode == 0:
+            ok("Flushed systemd-resolved cache")
+        else:
+            die(f"Failed to flush: {result.stderr.strip()}")
+    else:
+        info("No system DNS cache to flush (glibc doesn't cache)")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: dns [command] [options]
+
+Show and switch DNS resolvers (via NetworkManager).
+
+commands:
+  (none)                        show current resolvers and their source
+  set <PRESET|IP...> [CONN]     use a preset or custom servers
+  set auto [CONN]               back to DHCP-provided DNS
+  test                          time lookups against current resolvers
+  flush                         flush the system DNS cache (if any)
+
+presets: cloudflare (1.1.1.1), quad9 (9.9.9.9), google (8.8.8.8)
+
+Changes apply to the active wifi/ethernet connection (auto-selected
+when there is exactly one) and persist in its NetworkManager profile.
+When the Mullvad VPN is up, status warns if resolvers bypass it.
+
+examples:
+  dns                           what am I resolving with?
+  dns set cloudflare            switch to 1.1.1.1
+  dns set quad9                 switch to 9.9.9.9
+  dns set 192.168.1.5           use a local resolver
+  dns set auto                  back to the router's DNS
+  dns test                      is resolution working, and how fast?
+  dns flush                     drop cached entries"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not which("nmcli"):
+        die("NetworkManager not installed (need nmcli)")
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "set":   lambda: cmd_set(args),
+        "test":  lambda: cmd_test(),
+        "flush": lambda: cmd_flush(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'dns --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

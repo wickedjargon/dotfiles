@@ -1,0 +1,22 @@
+# bash completion for dns
+_dns() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "set test flush help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        set)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                COMPREPLY=( $(compgen -W "cloudflare quad9 google auto" -- "$cur") )
+            fi
+            ;;
+    esac
+}
+
+complete -F _dns dns
