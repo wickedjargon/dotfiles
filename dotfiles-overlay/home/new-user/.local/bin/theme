@@ -9,10 +9,9 @@ Usage:
 """
 
 import argparse
-import configparser
-import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -203,16 +202,58 @@ def write_state(mode):
 
 
 def set_ini_values(path, section, values):
-    """Set key=value pairs in an INI-style config file."""
-    config = configparser.ConfigParser()
-    config.optionxform = str  # preserve case
-    config.read(path)
-    if not config.has_section(section):
-        config.add_section(section)
-    for key, val in values.items():
-        config.set(section, key, val)
+    """Set key=value pairs in an INI-style config file.
+
+    Edits the text line by line instead of round-tripping through
+    configparser, which would strip comments and reorder keys.
+    """
+    try:
+        with open(path) as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        lines = []
+
+    remaining = dict(values)
+    out = []
+    in_section = False
+    insert_at = None  # position in `out` just past the target section
+
+    def _section_end():
+        # Insert before any blank lines that pad the end of the section.
+        pos = len(out)
+        while pos > 0 and not out[pos - 1].strip():
+            pos -= 1
+        return pos
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            if in_section:
+                insert_at = _section_end()
+            in_section = stripped[1:-1].strip() == section
+        elif (in_section and "=" in line
+              and not stripped.startswith(("#", ";"))):
+            key = line.split("=", 1)[0].strip()
+            if key in remaining:
+                # Keep the line's own "key = " spacing, replace the value.
+                head = re.match(r"^(.*?=[ \t]*)", line).group(1)
+                line = f"{head}{remaining.pop(key)}\n"
+        out.append(line)
+    if in_section:
+        insert_at = _section_end()
+
+    if remaining:
+        if insert_at is None:
+            if out and out[-1].strip():
+                out.append("\n")
+            out.append(f"[{section}]\n")
+            insert_at = len(out)
+        for key, val in remaining.items():
+            out.insert(insert_at, f"{key}={val}\n")
+            insert_at += 1
+
     with open(path, "w") as f:
-        config.write(f)
+        f.writelines(out)
 
 
 def replace_in_file(path, replacements):
@@ -276,9 +317,9 @@ def switch_gtkrc2(theme):
     print(f"  .gtkrc-2.0 → {theme['gtk_theme']}")
 
 
-def switch_gtk3(theme):
-    """Update ~/.config/gtk-3.0/settings.ini"""
-    path = os.path.join(HOME, ".config", "gtk-3.0", "settings.ini")
+def _switch_gtk_settings(theme, version):
+    """Update ~/.config/gtk-<version>.0/settings.ini"""
+    path = os.path.join(HOME, ".config", f"gtk-{version}.0", "settings.ini")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     set_ini_values(
         path,
@@ -288,22 +329,15 @@ def switch_gtk3(theme):
             "gtk-application-prefer-dark-theme": theme["gtk_prefer_dark"],
         },
     )
-    print(f"  gtk-3.0 → {theme['gtk_theme']}")
+    print(f"  gtk-{version}.0 → {theme['gtk_theme']}")
+
+
+def switch_gtk3(theme):
+    _switch_gtk_settings(theme, 3)
 
 
 def switch_gtk4(theme):
-    """Update ~/.config/gtk-4.0/settings.ini"""
-    path = os.path.join(HOME, ".config", "gtk-4.0", "settings.ini")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    set_ini_values(
-        path,
-        "Settings",
-        {
-            "gtk-theme-name": theme["gtk_theme"],
-            "gtk-application-prefer-dark-theme": theme["gtk_prefer_dark"],
-        },
-    )
-    print(f"  gtk-4.0 → {theme['gtk_theme']}")
+    _switch_gtk_settings(theme, 4)
 
 
 def switch_qt(theme, version):
@@ -313,15 +347,12 @@ def switch_qt(theme, version):
     if not os.path.exists(path):
         print(f"  {name} → skipped (config not found)")
         return
-    config = configparser.ConfigParser()
-    config.optionxform = str
-    config.read(path)
-    if not config.has_section("Appearance"):
+    with open(path) as f:
+        content = f.read()
+    if not re.search(r"^\[Appearance\]", content, re.MULTILINE):
         warn(f"{name} → [Appearance] section missing; not updated")
         return
-    config.set("Appearance", "style", theme["qt_style"])
-    with open(path, "w") as f:
-        config.write(f)
+    set_ini_values(path, "Appearance", {"style": theme["qt_style"]})
     print(f"  {name} → {theme['qt_style']}")
 
 
@@ -676,11 +707,16 @@ def switch_rofi(theme):
 def switch_wallpaper(theme):
     """Set solid color background using feh."""
     color = theme["feh_bg"]
-    bg_path = "/tmp/theme_bg.png"
+    # Not /tmp: feh records this path in ~/.fehbg, which re-runs at login,
+    # so the image must survive reboots.
+    bg_path = os.path.join(HOME, ".cache", "theme_bg.png")
+    # ImageMagick 7 deprecates `convert` in favor of `magick`.
+    magick = "magick" if shutil.which("magick") else "convert"
     try:
+        os.makedirs(os.path.dirname(bg_path), exist_ok=True)
         # Create a tiny 1x1 solid color image using ImageMagick
         subprocess.run(
-            ["convert", "-size", "1x1", f"xc:{color}", bg_path],
+            [magick, "-size", "1x1", f"xc:{color}", bg_path],
             check=True,
             capture_output=True,
         )

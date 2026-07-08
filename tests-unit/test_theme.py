@@ -503,7 +503,9 @@ class TestWallpaper:
 
         monkeypatch.setattr(theme_mod.subprocess, "run", mock_run)
         theme_mod.switch_wallpaper(theme_mod.THEMES["light"])
-        assert any("convert" in c and "#CCCCCC" in c[3] for c in calls)
+        # The binary is magick (IM7) or convert (IM6), whichever exists
+        assert any(c[0] in ("magick", "convert") and "#CCCCCC" in c[3]
+                   for c in calls)
         assert any("feh" in c for c in calls)
 
     def test_switch_calls_convert_and_feh_dark(self, fake_home, monkeypatch):
@@ -515,7 +517,8 @@ class TestWallpaper:
 
         monkeypatch.setattr(theme_mod.subprocess, "run", mock_run)
         theme_mod.switch_wallpaper(theme_mod.THEMES["dark"])
-        assert any("convert" in c and "#000000" in c[3] for c in calls)
+        assert any(c[0] in ("magick", "convert") and "#000000" in c[3]
+                   for c in calls)
         assert any("feh" in c for c in calls)
 
 
@@ -712,3 +715,47 @@ class TestVerify:
             assert expected in labels
         for _label, _path, expected_values in checks:
             assert expected_values  # never an empty expectation list
+
+
+class TestSetIniValues:
+    """set_ini_values must edit values without mangling the rest of the file."""
+
+    def test_preserves_comments_and_other_sections(self, tmp_path):
+        path = tmp_path / "settings.ini"
+        path.write_text(
+            "# top comment\n"
+            "[Settings]\n"
+            "gtk-theme-name=Arc-Dark\n"
+            "; keep this comment\n"
+            "other-key=1\n"
+            "\n"
+            "[Other]\n"
+            "x=2\n"
+        )
+        theme_mod.set_ini_values(
+            str(path), "Settings",
+            {"gtk-theme-name": "Arc", "new-key": "yes"},
+        )
+        content = path.read_text()
+        assert "# top comment" in content
+        assert "; keep this comment" in content
+        assert "other-key=1" in content
+
+        config = configparser.ConfigParser()
+        config.read(str(path))
+        assert config.get("Settings", "gtk-theme-name") == "Arc"
+        assert config.get("Settings", "new-key") == "yes"
+        assert config.get("Other", "x") == "2"
+
+    def test_preserves_spacing_style(self, tmp_path):
+        path = tmp_path / "qt5ct.conf"
+        path.write_text("[Appearance]\nstyle = kvantum-dark\n")
+        theme_mod.set_ini_values(str(path), "Appearance", {"style": "kvantum"})
+        assert "style = kvantum\n" in path.read_text()
+
+    def test_creates_missing_file_and_section(self, tmp_path):
+        path = tmp_path / "new.ini"
+        theme_mod.set_ini_values(str(path), "General", {"theme": "KvArc"})
+        config = configparser.ConfigParser()
+        config.read(str(path))
+        assert config.get("General", "theme") == "KvArc"
