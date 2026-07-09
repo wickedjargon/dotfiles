@@ -1,14 +1,40 @@
 {
   "session_data": {
     "keyboard_shortcuts": {
-      "left": ["ArrowLeft", "h"],
-      "right": ["ArrowRight", "l"],
-      "up": ["ArrowUp", "k"],
-      "down": ["ArrowDown", "j"],
-      "pageup": ["PageUp", "Shift+ ", "u"],
-      "pagedown": [" ", "PageDown", "d"],
-      "start_of_book": ["Ctrl+Home", "g"],
-      "end_of_book": ["Ctrl+End", "Shift+g"]
+      "left": [
+        {"key": "ArrowLeft", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false},
+        {"key": "h", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
+      ],
+      "right": [
+        {"key": "ArrowRight", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false},
+        {"key": "l", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
+      ],
+      "up": [
+        {"key": "ArrowUp", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false},
+        {"key": "k", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
+      ],
+      "down": [
+        {"key": "ArrowDown", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false},
+        {"key": "j", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
+      ],
+      "pageup": [
+        {"key": "PageUp", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false},
+        {"key": " ", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": true},
+        {"key": "u", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
+      ],
+      "pagedown": [
+        {"key": " ", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false},
+        {"key": "PageDown", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false},
+        {"key": "d", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
+      ],
+      "start_of_book": [
+        {"key": "Home", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": false},
+        {"key": "g", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
+      ],
+      "end_of_book": [
+        {"key": "End", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": false},
+        {"key": "g", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": true}
+      ]
     },
     "base_font_size": 27,
     "controls_help_shown_count": 2,
