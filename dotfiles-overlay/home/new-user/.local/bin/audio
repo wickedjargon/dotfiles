@@ -1,0 +1,432 @@
+#!/usr/bin/env python3
+"""audio — control volume and audio devices from the command line.
+
+Requires: wireplumber (wpctl), pulseaudio-utils (pactl)
+"""
+
+import json
+import re
+import subprocess
+import sys
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN = "\033[0;36m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):
+    print(f"{CYAN}▸{RESET} {msg}")
+
+
+def ok(msg):
+    print(f"{GREEN}✓{RESET} {msg}")
+
+
+def warn(msg):
+    print(f"{YELLOW}!{RESET} {msg}")
+
+
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=5):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+# ── Parsing ─────────────────────────────────────────────────────────
+MAX_VOLUME = 150  # software boost beyond this only distorts
+
+
+def parse_percent(s):
+    """Parse '115%' or '115' into an int, or None."""
+    if s is None:
+        return None
+    m = re.fullmatch(r"(\d+)%?", s.strip())
+    return int(m.group(1)) if m else None
+
+
+def valid_volume_spec(s):
+    """Validate a target volume (0-150). Returns int or None."""
+    pct = parse_percent(s)
+    if pct is None or pct > MAX_VOLUME:
+        return None
+    return pct
+
+
+def valid_step_spec(s):
+    """Validate an up/down step (1-50). Returns int or None."""
+    pct = parse_percent(s)
+    if pct is None or not 1 <= pct <= 50:
+        return None
+    return pct
+
+
+def parse_wpctl_volume(text):
+    """Parse 'Volume: 1.15 [MUTED]' into (percent, muted), or None."""
+    m = re.search(r"Volume:\s+([\d.]+)", text)
+    if not m:
+        return None
+    return round(float(m.group(1)) * 100), "[MUTED]" in text
+
+
+def volume_pct(volume):
+    """Max channel percentage from a pactl JSON volume dict."""
+    pcts = []
+    for chan in volume.values():
+        pct = parse_percent(chan.get("value_percent", ""))
+        if pct is not None:
+            pcts.append(pct)
+    return max(pcts) if pcts else 0
+
+
+def app_label(props):
+    """Human name for a stream from its pactl properties."""
+    return (props.get("application.name")
+            or props.get("media.name")
+            or props.get("application.process.binary")
+            or "unknown")
+
+
+def find_matches(items, query):
+    """Match devices/apps by name or description, exact before partial."""
+    q = query.lower()
+    exact = [i for i in items
+             if q in (i["name"].lower(), i["desc"].lower())]
+    if exact:
+        return exact
+    return [i for i in items
+            if q in i["name"].lower() or q in i["desc"].lower()]
+
+
+# ── PipeWire state ──────────────────────────────────────────────────
+def pactl_json(*args):
+    """Run pactl with JSON output and return the parsed result."""
+    result = run(["pactl", "-f", "json"] + list(args))
+    if result.returncode != 0:
+        die(f"pactl failed: {result.stderr.strip() or 'is PipeWire running?'}")
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        die("Could not parse pactl output")
+
+
+def get_default_name(kind):
+    """Default sink or source name ('sink' or 'source')."""
+    result = run(["pactl", f"get-default-{kind}"])
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def get_devices(kind):
+    """List sinks or sources as dicts: name, desc, pct, muted, default."""
+    default = get_default_name(kind)
+    devices = []
+    for d in pactl_json("list", f"{kind}s"):
+        if kind == "source" and d["name"].endswith(".monitor"):
+            continue
+        devices.append({
+            "name": d["name"],
+            "desc": d["description"],
+            "pct": volume_pct(d.get("volume", {})),
+            "muted": d.get("mute", False),
+            "default": d["name"] == default,
+        })
+    return devices
+
+
+def get_apps():
+    """List playback streams as dicts: index, name, desc, pct, muted."""
+    apps = []
+    for s in pactl_json("list", "sink-inputs"):
+        label = app_label(s.get("properties", {}))
+        apps.append({
+            "index": s["index"],
+            "name": label,
+            "desc": label,
+            "pct": volume_pct(s.get("volume", {})),
+            "muted": s.get("mute", False),
+        })
+    return apps
+
+
+def resolve(items, query, what):
+    """Pick one item by (partial) name, or die with the candidates."""
+    matches = find_matches(items, query)
+    if len(matches) == 1:
+        return matches[0]
+    if not matches:
+        print(f"Error: no {what} matches '{query}'.", file=sys.stderr)
+        candidates = items
+    else:
+        print(f"Multiple {what}s match '{query}':", file=sys.stderr)
+        candidates = matches
+    for i in candidates:
+        print(f"  {DIM}○{RESET} {i['desc']}", file=sys.stderr)
+    sys.exit(1)
+
+
+# ── Display ─────────────────────────────────────────────────────────
+def _volume_str(pct, muted):
+    if muted:
+        return f"{YELLOW}{pct}% muted{RESET}"
+    return f"{pct}%"
+
+
+def _print_device_line(d, indent="  "):
+    dot = f"{GREEN}●{RESET}" if d["default"] else f"{DIM}○{RESET}"
+    name = f"{BOLD}{d['desc']}{RESET}" if d["default"] else d["desc"]
+    print(f"{indent}{dot} {name}  {_volume_str(d['pct'], d['muted'])}")
+
+
+def _print_devices(title, devices):
+    print(f"{BOLD}{title}{RESET}")
+    if not devices:
+        print(f"  {DIM}none{RESET}")
+        return
+    for d in devices:
+        _print_device_line(d)
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Bare command — outputs, inputs, and what's playing."""
+    _print_devices("Outputs", get_devices("sink"))
+    print()
+    _print_devices("Inputs", get_devices("source"))
+
+    apps = get_apps()
+    if apps:
+        print(f"\n{BOLD}Playing{RESET}")
+        for a in apps:
+            print(f"  {a['name']}  {_volume_str(a['pct'], a['muted'])}")
+
+
+def _wpctl_volume(target, *args):
+    """Change volume on a wpctl target and report the new state."""
+    result = run(["wpctl", "set-volume", "-l", str(MAX_VOLUME / 100),
+                  target] + list(args))
+    if result.returncode != 0:
+        die(f"wpctl failed: {result.stderr.strip()}")
+    _report_volume(target)
+
+
+def _report_volume(target):
+    result = run(["wpctl", "get-volume", target])
+    parsed = parse_wpctl_volume(result.stdout)
+    if not parsed:
+        die("Could not read volume")
+    pct, muted = parsed
+    label = "Mic" if "SOURCE" in target else "Volume"
+    ok(f"{label} {_volume_str(pct, muted)}")
+
+
+def cmd_volume(args, target="@DEFAULT_AUDIO_SINK@"):
+    """Handle up/down/set/mute on a sink or source target."""
+    verb = args[0]
+    if verb in ("mute", "unmute"):
+        state = "1" if verb == "mute" else "0"
+        result = run(["wpctl", "set-mute", target, state])
+        if result.returncode != 0:
+            die(f"wpctl failed: {result.stderr.strip()}")
+        _report_volume(target)
+    elif verb in ("up", "down"):
+        step = valid_step_spec(args[1]) if len(args) > 1 else 5
+        if step is None:
+            die(f"Invalid step '{args[1]}' (use 1-50)")
+        sign = "+" if verb == "up" else "-"
+        _wpctl_volume(target, f"{step}%{sign}")
+    elif verb == "set":
+        pct = valid_volume_spec(args[1]) if len(args) > 1 else None
+        if pct is None:
+            die(f"Specify a volume 0-{MAX_VOLUME}.\n"
+                "Usage: audio set 60")
+        _wpctl_volume(target, f"{pct}%")
+
+
+def cmd_mic(args):
+    """Mic status, or up/down/set/mute on the default source."""
+    if not args:
+        _print_devices("Inputs", get_devices("source"))
+        return
+    if args[0] not in ("up", "down", "set", "mute", "unmute"):
+        die(f"Unknown mic command '{args[0]}'.\n"
+            "Usage: audio mic [up|down|set N|mute|unmute]")
+    cmd_volume(args, target="@DEFAULT_AUDIO_SOURCE@")
+
+
+def _switch_device(kind, query, what):
+    """Set the default sink/source and move existing streams to it."""
+    device = resolve(get_devices(kind), query, what)
+    if device["default"]:
+        ok(f"{device['desc']} is already the default {what}")
+        return
+
+    result = run(["pactl", f"set-default-{kind}", device["name"]])
+    if result.returncode != 0:
+        die(f"Failed to switch: {result.stderr.strip()}")
+
+    # Move live streams so the change is audible immediately
+    stream_kind = "sink-inputs" if kind == "sink" else "source-outputs"
+    move = "move-sink-input" if kind == "sink" else "move-source-output"
+    streams = run(["pactl", "list", "short", stream_kind])
+    for line in streams.stdout.splitlines():
+        if line.strip():
+            run(["pactl", move, line.split()[0], device["name"]])
+
+    ok(f"Default {what} is now {BOLD}{device['desc']}{RESET}")
+
+
+def cmd_out(args):
+    """List outputs, or switch the default output."""
+    if not args:
+        _print_devices("Outputs", get_devices("sink"))
+        return
+    _switch_device("sink", " ".join(args), "output")
+
+
+def cmd_in(args):
+    """List inputs, or switch the default input."""
+    if not args:
+        _print_devices("Inputs", get_devices("source"))
+        return
+    _switch_device("source", " ".join(args), "input")
+
+
+def cmd_apps():
+    """List apps that are playing audio."""
+    apps = get_apps()
+    if not apps:
+        print("Nothing is playing.")
+        return
+    for a in apps:
+        print(f"  {a['name']}  {_volume_str(a['pct'], a['muted'])}")
+
+
+def cmd_app(args):
+    """Set one app's volume or toggle its mute."""
+    if not args:
+        die("Specify an app.\nUsage: audio app NAME [VOLUME|mute]")
+
+    apps = get_apps()
+    if not apps:
+        die("Nothing is playing")
+
+    # Last arg may be the action; everything before it is the name
+    action = None
+    name_args = args
+    if len(args) > 1 and (args[-1] in ("mute", "unmute")
+                          or valid_volume_spec(args[-1]) is not None):
+        action = args[-1]
+        name_args = args[:-1]
+
+    app = resolve(apps, " ".join(name_args), "app")
+
+    if action is None:
+        print(f"  {app['name']}  {_volume_str(app['pct'], app['muted'])}")
+        return
+
+    if action in ("mute", "unmute"):
+        state = "1" if action == "mute" else "0"
+        result = run(["pactl", "set-sink-input-mute",
+                      str(app["index"]), state])
+        if result.returncode != 0:
+            die(f"Failed: {result.stderr.strip()}")
+        ok(f"{app['name']} {action}d")
+    else:
+        pct = valid_volume_spec(action)
+        result = run(["pactl", "set-sink-input-volume",
+                      str(app["index"]), f"{pct}%"])
+        if result.returncode != 0:
+            die(f"Failed: {result.stderr.strip()}")
+        ok(f"{app['name']} volume {pct}%")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: audio [command]
+
+Control volume and audio devices from the command line.
+
+commands:
+  (none)                        show outputs, inputs, and what's playing
+  up [N]                        raise volume by N% (default 5)
+  down [N]                      lower volume by N% (default 5)
+  set N                         set volume to N% (0-150)
+  mute                          mute the output
+  unmute                        unmute the output
+  mic [up|down|set N|mute|unmute]  same controls for the microphone
+  out [DEVICE]                  list outputs, or switch the default output
+  in [DEVICE]                   list inputs, or switch the default input
+  apps                          list apps playing audio
+  app NAME [N|mute|unmute]      set an app's volume or its mute state
+
+DEVICE and NAME match by partial name, case-insensitive.
+Switching a device also moves streams that are already playing.
+
+examples:
+  audio                         what's the current setup
+  audio up                      a bit louder
+  audio set 60                  set volume to 60%
+  audio mute                    silence (audio unmute to undo)
+  audio mic mute                mute the microphone
+  audio out                     list available outputs
+  audio out hdmi                send sound to the HDMI output
+  audio app chrome 50           turn Chrome down to 50%
+  audio app spotify mute        mute Spotify only"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    for tool, pkg in (("wpctl", "wireplumber"), ("pactl", "pulseaudio-utils")):
+        if not which(tool):
+            die(f"{tool} not installed (apt install {pkg})")
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "up": lambda: cmd_volume([command] + args),
+        "down": lambda: cmd_volume([command] + args),
+        "set": lambda: cmd_volume([command] + args),
+        "mute": lambda: cmd_volume([command]),
+        "unmute": lambda: cmd_volume([command]),
+        "mic": lambda: cmd_mic(args),
+        "out": lambda: cmd_out(args),
+        "in": lambda: cmd_in(args),
+        "apps": lambda: cmd_apps(),
+        "app": lambda: cmd_app(args),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'audio --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

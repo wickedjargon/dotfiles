@@ -1,0 +1,64 @@
+# bash completion for audio
+_audio() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Complete subcommands at position 1
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "up down set mute unmute mic out in apps app help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+
+    case "$cmd" in
+        mic)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                COMPREPLY=( $(compgen -W "up down set mute unmute" -- "$cur") )
+            fi
+            ;;
+        out)
+            # Suggest sink names (no spaces in pactl short names)
+            local sinks
+            sinks=$(pactl list short sinks 2>/dev/null | cut -f2)
+            COMPREPLY=( $(compgen -W "$sinks" -- "$cur") )
+            ;;
+        in)
+            # Suggest source names, skipping sink monitors
+            local sources
+            sources=$(pactl list short sources 2>/dev/null | cut -f2 | grep -v '\.monitor$')
+            COMPREPLY=( $(compgen -W "$sources" -- "$cur") )
+            ;;
+        app)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                # Suggest names of apps currently playing
+                local apps
+                apps=$(pactl list sink-inputs 2>/dev/null | sed -n 's/^\t\tapplication\.name = "\(.*\)"$/\1/p')
+                _audio_complete_names "$apps"
+            else
+                COMPREPLY=( $(compgen -W "mute unmute" -- "$cur") )
+            fi
+            ;;
+    esac
+}
+
+# Helper: populate COMPREPLY from a newline-separated list of names,
+# preserving spaces/quotes. Matches manually rather than via `compgen -W`,
+# which would word-split AND *expand* each name — an app named $(...) or
+# `...` would execute on TAB (application names are attacker-controlled).
+# $cur is dequoted so both `audio app Foo\ Bar` and "Foo Bar" match; raw
+# names go into COMPREPLY and -o filenames escapes them on insertion.
+_audio_complete_names() {
+    local name q="${cur#[\"\']}"
+    q="${q//\\/}"
+    COMPREPLY=()
+    while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        [[ "$name" == "$q"* ]] && COMPREPLY+=( "$name" )
+    done <<< "$1"
+    [ ${#COMPREPLY[@]} -gt 0 ] && compopt -o filenames 2>/dev/null
+}
+
+complete -F _audio audio
