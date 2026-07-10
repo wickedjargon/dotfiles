@@ -1,0 +1,296 @@
+#!/usr/bin/env python3
+"""kokoro - Offline neural TTS with the Kokoro-82M model (via sherpa-onnx).
+
+Speaks text locally on the CPU with quality close to online TTS -- far more
+natural than espeak. Used by `speak` as its offline fallback, and usable
+directly. Synthesis is chunked by sentence and the next chunk is generated
+while the current one plays, so speech starts quickly even for long texts.
+
+Usage:
+  kokoro some words        Speak the given words.
+  echo hi | kokoro         Speak text read from stdin.
+  kokoro --install         Download the sherpa-onnx runtime (~28 MB) and the
+                           Kokoro v1.0 model (~350 MB) into
+                           ~/.local/share/kokoro. Needs only curl and tar, so
+                           it runs the same on the host or inside a distrobox
+                           container (the shared $HOME makes the install
+                           visible to both).
+  kokoro --ready           Exit 0 if the runtime, model, and mpv are usable
+                           (used by `speak` to pick its offline engine).
+  kokoro --voices          List the English voices.
+
+Options:
+  --voice NAME|ID          Voice (default: af_heart, or $KOKORO_VOICE).
+                           af_*/am_* are American, bf_*/bm_* are British.
+  --speed FACTOR           Playback speed, e.g. 1.25 (default: 1.0, or
+                           $KOKORO_SPEED). Applied by mpv, pitch-corrected.
+
+Bound to no key itself: `speak` calls this automatically when offline.
+"""
+
+import os
+import re
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+from shutil import which
+
+BASE = (
+    Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local/share")
+    / "kokoro"
+)
+
+SHERPA_VERSION = "1.13.4"
+SHERPA_URL = (
+    "https://github.com/k2-fsa/sherpa-onnx/releases/download/"
+    f"v{SHERPA_VERSION}/sherpa-onnx-v{SHERPA_VERSION}-linux-x64-shared.tar.bz2"
+)
+SHERPA_DIR = BASE / "sherpa-onnx"
+TTS_BIN = SHERPA_DIR / "bin" / "sherpa-onnx-offline-tts"
+
+MODEL_NAME = "kokoro-multi-lang-v1_0"
+MODEL_URL = (
+    "https://github.com/k2-fsa/sherpa-onnx/releases/download/"
+    f"tts-models/{MODEL_NAME}.tar.bz2"
+)
+MODEL_DIR = BASE / MODEL_NAME
+
+# English speakers of kokoro-multi-lang-v1_0 in speaker-id order (ids 0-27;
+# 28-52 are the Chinese voices, selectable by number). The order matches the
+# table in the sherpa-onnx docs:
+# https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html
+VOICES = [
+    "af_alloy", "af_aoede", "af_bella", "af_heart", "af_jessica",
+    "af_kore", "af_nicole", "af_nova", "af_river", "af_sarah", "af_sky",
+    "am_adam", "am_echo", "am_eric", "am_fenrir", "am_liam",
+    "am_michael", "am_onyx", "am_puck", "am_santa",
+    "bf_alice", "bf_emma", "bf_isabella", "bf_lily",
+    "bm_daniel", "bm_fable", "bm_george", "bm_lewis",
+]
+
+RUNTIME = os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir()
+
+
+def die(msg):
+    print(f"kokoro: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def ready():
+    return TTS_BIN.is_file() and (MODEL_DIR / "model.onnx").is_file() \
+        and which("mpv")
+
+
+# ── Install ─────────────────────────────────────────────────────────
+
+def fetch_and_extract(url, done_marker, rename_from=None, rename_to=None):
+    """Download a tarball into BASE and unpack it there, resumably."""
+    if done_marker.exists():
+        print(f"already installed: {done_marker}")
+        return
+    tarball = BASE / url.rpartition("/")[2]
+    print(f"downloading {tarball.name} ...")
+    rc = subprocess.run(
+        ["curl", "-L", "--fail", "-C", "-", "-o", str(tarball), url]
+    ).returncode
+    # 22/33 with an existing file usually means "already fully downloaded"
+    # (HTTP 416 on resume); let extraction be the judge then.
+    if rc != 0 and not (rc in (22, 33) and tarball.is_file()):
+        die(f"download failed: {url}\n(re-run to resume)")
+    print(f"extracting {tarball.name} ...")
+    if subprocess.run(["tar", "-xjf", str(tarball), "-C", str(BASE)]).returncode:
+        die(f"extraction failed: {tarball}")
+    if rename_from and rename_to:
+        if (BASE / rename_to).exists():  # leftover from a broken install
+            shutil.rmtree(BASE / rename_to)
+        (BASE / rename_from).rename(BASE / rename_to)
+    tarball.unlink()
+
+
+def install():
+    for tool in ("curl", "tar"):
+        if not which(tool):
+            die(f"{tool} is required for --install")
+    BASE.mkdir(parents=True, exist_ok=True)
+
+    fetch_and_extract(
+        SHERPA_URL, TTS_BIN,
+        rename_from=f"sherpa-onnx-v{SHERPA_VERSION}-linux-x64-shared",
+        rename_to="sherpa-onnx",
+    )
+    fetch_and_extract(MODEL_URL, MODEL_DIR / "model.onnx")
+
+    missing = [
+        f for f in ("model.onnx", "voices.bin", "tokens.txt",
+                    "lexicon-us-en.txt", "espeak-ng-data")
+        if not (MODEL_DIR / f).exists()
+    ]
+    if missing:
+        die(f"model files missing after extraction: {', '.join(missing)}")
+
+    print("running a test synthesis ...")
+    wav = Path(RUNTIME) / "kokoro-install-test.wav"
+    res = synth("This is Kokoro, speaking entirely offline.", 3, wav)
+    if res.returncode != 0 or not wav.is_file() or wav.stat().st_size == 0:
+        die("test synthesis failed:\n" + res.stdout + res.stderr)
+    print(f"OK -- test clip at {wav}")
+    if not which("mpv"):
+        print("note: mpv not found in this environment; playback happens on "
+              "the host, where speak runs, so that is fine inside a container.")
+    print("installed. Try: kokoro hello world")
+
+
+# ── Synthesis and playback ──────────────────────────────────────────
+
+def synth(text, sid, out_wav, wait=True):
+    """Run sherpa-onnx to render `text` into `out_wav` (24 kHz wav)."""
+    # British voices (b*) get the British lexicon for their pronunciations.
+    accent = "gb" if 20 <= sid <= 27 else "us"
+    lexicon = MODEL_DIR / f"lexicon-{accent}-en.txt"
+    if not lexicon.is_file():
+        lexicon = MODEL_DIR / "lexicon-us-en.txt"
+    cmd = [
+        str(TTS_BIN),
+        f"--kokoro-model={MODEL_DIR}/model.onnx",
+        f"--kokoro-voices={MODEL_DIR}/voices.bin",
+        f"--kokoro-tokens={MODEL_DIR}/tokens.txt",
+        f"--kokoro-data-dir={MODEL_DIR}/espeak-ng-data",
+        f"--kokoro-lexicon={lexicon}",
+        f"--num-threads={max(1, (os.cpu_count() or 2) // 2)}",
+        f"--sid={sid}",
+        f"--output-filename={out_wav}",
+        text,
+    ]
+    # The shared build finds its libs via rpath, but belt-and-braces:
+    env = {**os.environ, "LD_LIBRARY_PATH": str(SHERPA_DIR / "lib")}
+    run = subprocess.run if wait else subprocess.Popen
+    return run(cmd, env=env, stdout=subprocess.PIPE,
+               stderr=subprocess.PIPE, text=True)
+
+
+def play(wav, speed):
+    cmd = ["mpv", "--no-terminal", "--really-quiet", "--no-video"]
+    if speed != 1.0:
+        cmd.append(f"--speed={speed}")  # mpv pitch-corrects by default
+    subprocess.run(cmd + [str(wav)], check=False)
+
+
+def split_chunks(text):
+    """Sentences grouped into chunks: a small first chunk so speech starts
+    fast, larger ones after so the model works efficiently."""
+    sentences = re.split(r"(?<=[.!?…])\s+", text)
+    # Hard-split anything enormous (no punctuation) at a word boundary.
+    parts = []
+    for s in sentences:
+        while len(s) > 500:
+            cut = s.rfind(" ", 0, 500)
+            cut = cut if cut > 0 else 500
+            parts.append(s[:cut])
+            s = s[cut:].lstrip()
+        if s:
+            parts.append(s)
+    chunks, limit = [], 150
+    for p in parts:
+        if chunks and len(chunks[-1]) + len(p) < limit:
+            chunks[-1] += " " + p
+        else:
+            chunks.append(p)
+            limit = 500  # only the first chunk stays small
+    return chunks
+
+
+def resolve_voice(name):
+    if name.isdigit():
+        return int(name)
+    if name in VOICES:
+        return VOICES.index(name)
+    die(f"unknown voice '{name}' (see: kokoro --voices)")
+
+
+def speak_text(text, voice, speed):
+    if not ready():
+        die("not installed (run: kokoro --install) or mpv missing")
+    sid = resolve_voice(voice)
+    try:
+        speed = float(speed)
+    except ValueError:
+        die(f"--speed must be a number, got '{speed}'")
+
+    chunks = split_chunks(text)
+    workdir = Path(tempfile.mkdtemp(prefix="kokoro-", dir=RUNTIME))
+    # `speak` stops playback by killing our process group; turn the SIGTERM
+    # into a normal exit so the finally-cleanup below still runs.
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
+    try:
+        wav = lambda i: workdir / f"{i}.wav"
+        pending = synth(chunks[0], sid, wav(0), wait=False)
+        for i in range(len(chunks)):
+            pending.wait()
+            if pending.returncode != 0:
+                err = pending.stderr.read() if pending.stderr else ""
+                die(f"synthesis failed on chunk {i + 1}:\n{err}")
+            if i + 1 < len(chunks):
+                pending = synth(chunks[i + 1], sid, wav(i + 1), wait=False)
+            play(wav(i), speed)
+            wav(i).unlink(missing_ok=True)
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+
+
+# ── CLI ─────────────────────────────────────────────────────────────
+
+def main(argv):
+    voice = os.environ.get("KOKORO_VOICE", "af_heart")
+    speed = os.environ.get("KOKORO_SPEED", "1.0")
+    args = []
+    i = 0
+    while i < len(argv):
+        a = argv[i]
+        if a in ("-h", "--help"):
+            print(__doc__.strip())
+            return
+        elif a == "--install":
+            install()
+            return
+        elif a == "--ready":
+            sys.exit(0 if ready() else 1)
+        elif a == "--voices":
+            kind = {"af": "American female", "am": "American male",
+                    "bf": "British female", "bm": "British male"}
+            for n, name in enumerate(VOICES):
+                print(f"{n:2}  {name:14} {kind[name[:2]]}")
+            return
+        elif a in ("--voice", "--speed"):
+            i += 1
+            if i >= len(argv):
+                die(f"{a} needs a value")
+            if a == "--voice":
+                voice = argv[i]
+            else:
+                speed = argv[i]
+        elif a.startswith("--voice="):
+            voice = a.partition("=")[2]
+        elif a.startswith("--speed="):
+            speed = a.partition("=")[2]
+        else:
+            args.append(a)
+        i += 1
+
+    if args and args != ["-"]:
+        text = " ".join(args)
+    elif not sys.stdin.isatty() or args == ["-"]:
+        text = sys.stdin.read()
+    else:
+        print(__doc__.strip())
+        return
+    text = text.strip()
+    if not text:
+        die("nothing to speak")
+    speak_text(text, voice, speed)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
