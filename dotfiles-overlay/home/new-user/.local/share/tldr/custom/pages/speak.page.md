@@ -1,6 +1,7 @@
 # speak
 
 > Speak text aloud with edge-tts (Microsoft's online TTS).
+> When offline, uses the configured offline engine (espeak by default).
 > With no arguments, speaks the highlighted text (X selection).
 > Running it again while speaking stops playback (toggle).
 > PDF-style hard line wrapping is undone by default (see unwrap setting).
@@ -24,6 +25,14 @@
 - Persist a setting for every run, including the super+s keybinding:
 
 `speak --set {{voice=en-GB-RyanNeural}}`
+
+- Use Kokoro neural TTS when offline instead of espeak (see `kokoro --install`):
+
+`speak --set offline=kokoro`
+
+- Speak a specific string with a specific engine (edge, kokoro, or espeak):
+
+`speak --engine {{kokoro}} {{some words to say}}`
 
 - Show the effective settings and where each comes from:
 

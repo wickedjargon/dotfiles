@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""speak - Speak text aloud with edge-tts (Microsoft's online TTS).
+"""speak - Speak text aloud with edge-tts, or espeak-ng when offline.
 
 Usage:
   speak                 Speak the current selection (the X PRIMARY selection,
@@ -11,6 +11,8 @@ Usage:
 Options (for this run only):
   --voice NAME          Speak with a different voice, e.g. en-GB-RyanNeural.
   --rate RATE           Speak faster or slower, e.g. +25% or -10%.
+  --engine NAME         Speak with a specific engine, skipping the automatic
+                        choice: edge (online), kokoro, or espeak.
   -u, --unwrap          Undo PDF-style hard line wrapping before speaking, so
                         soft-wrapped lines don't cause pauses mid-sentence.
                         Real paragraph breaks are preserved. On by default.
@@ -19,9 +21,11 @@ Options (for this run only):
 Settings (persisted in ~/.config/speak/config, used by every run,
 including keybindings):
   --set KEY=VALUE       Save a setting and exit. Keys:
-                          voice   voice name, e.g. en-GB-RyanNeural
-                          rate    speech speed, e.g. +25% or -10%
-                          unwrap  on|off (default: on)
+                          voice    voice name, e.g. en-GB-RyanNeural
+                          rate     speech speed, e.g. +25% or -10%
+                          unwrap   on|off (default: on)
+                          offline  offline engine: espeak (default) or
+                                   kokoro (natural; see kokoro --install)
   --show                Print the effective settings and their sources.
   --voices [FILTER]     List available voices, optionally filtered,
                         e.g. speak --voices en-GB
@@ -30,13 +34,16 @@ Bound to a key, pressing it again while speaking stops playback (toggle).
 The voice and rate can also be overridden per-run with the SPEAK_VOICE and
 SPEAK_RATE environment variables.
 
-Requires an internet connection: edge-tts synthesizes the audio server-side.
+edge-tts (Microsoft's TTS) synthesizes the audio server-side, so it needs an
+internet connection; without one, speak uses the configured offline engine:
+espeak-ng by default, or Kokoro after `speak --set offline=kokoro`.
 """
 
 import os
 import re
 import shlex
 import signal
+import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -63,7 +70,8 @@ VOICES_CACHE = (
     / "speak" / "voices"
 )
 
-DEFAULTS = {"voice": "en-US-AvaNeural", "rate": "+0%", "unwrap": "on"}
+DEFAULTS = {"voice": "en-US-AvaNeural", "rate": "+0%", "unwrap": "on",
+            "offline": "espeak"}
 ENV_VARS = {"voice": "SPEAK_VOICE", "rate": "SPEAK_RATE"}
 
 # Track the player so a second keypress can stop it.
@@ -85,6 +93,44 @@ def edge_tts_cmd():
     except ImportError:
         return None
     return [sys.executable, "-m", "edge_tts"]
+
+
+def online(timeout=1.5):
+    """Whether the edge-tts endpoint looks reachable (a cheap TCP connect)."""
+    try:
+        with socket.create_connection(
+            ("speech.platform.bing.com", 443), timeout=timeout
+        ):
+            return True
+    except OSError:
+        return False
+
+
+def espeak_voice(voice):
+    """Map an edge-tts voice like en-US-AvaNeural to an espeak-ng voice."""
+    m = re.match(r"([a-zA-Z]{2,3})-([a-zA-Z]{2})-", voice)
+    return f"{m.group(1)}-{m.group(2)}".lower() if m else "en"
+
+
+def espeak_speed(rate):
+    """Map an edge-tts rate like +25% to espeak-ng's words per minute."""
+    m = re.fullmatch(r"([+-]\d+)%", rate)
+    pct = int(m.group(1)) if m else 0
+    return str(max(80, round(175 * (1 + pct / 100))))
+
+
+def kokoro_speed(rate):
+    """Map an edge-tts rate like +25% to a playback factor like 1.25."""
+    m = re.fullmatch(r"([+-]\d+)%", rate)
+    pct = int(m.group(1)) if m else 0
+    return f"{max(0.25, 1 + pct / 100):g}"
+
+
+def kokoro_ready():
+    """Whether the kokoro script and its model are installed and usable."""
+    return which("kokoro") and subprocess.run(
+        ["kokoro", "--ready"], capture_output=True,
+    ).returncode == 0
 
 
 def notify(msg, urgency="normal"):
@@ -158,6 +204,12 @@ def validate_setting(key, value):
         return f"unknown setting '{key}' (valid: {', '.join(sorted(DEFAULTS))})"
     if key == "unwrap" and value not in ("on", "off"):
         return "unwrap must be 'on' or 'off'"
+    if key == "offline":
+        if value not in ("espeak", "kokoro"):
+            return "offline must be 'espeak' or 'kokoro'"
+        if value == "kokoro" and not kokoro_ready():
+            print("speak: warning: kokoro is not installed yet "
+                  "(run: kokoro --install)", file=sys.stderr)
     if key == "rate" and not re.fullmatch(r"[+-]\d+%", value):
         return "rate must look like +25% or -10%"
     if key == "voice":
@@ -313,8 +365,8 @@ def main(argv):
     cfg = load_config()
 
     # Pull flags off the argument list; the rest is text to speak.
-    unwrap_flag = None   # None = use the persisted setting
-    voice = rate = None  # one-shot overrides
+    unwrap_flag = None            # None = use the persisted setting
+    voice = rate = engine = None  # one-shot overrides
     args = []
     i = 0
 
@@ -340,6 +392,10 @@ def main(argv):
             rate = flag_value(a)
         elif a.startswith("--rate="):
             rate = a.partition("=")[2]
+        elif a == "--engine":
+            engine = flag_value(a)
+        elif a.startswith("--engine="):
+            engine = a.partition("=")[2]
         elif a == "--set":
             set_setting(flag_value(a))
             return
@@ -364,19 +420,42 @@ def main(argv):
             if err:
                 print(f"speak: {err}", file=sys.stderr)
                 sys.exit(2)
+    if engine is not None and engine not in ("edge", "kokoro", "espeak"):
+        print("speak: --engine must be 'edge', 'kokoro' or 'espeak'",
+              file=sys.stderr)
+        sys.exit(2)
 
     # Toggle: a bare keypress while talking just stops playback.
     was_speaking = stop_if_speaking()
     if was_speaking and not args:
         return
 
+    # Pick the engine: edge-tts when its endpoint is reachable, else the
+    # configured offline engine. No fallback chain beyond that -- if the
+    # chosen engine is unusable, say so rather than silently degrade.
+    # --engine skips the automatic choice for this run.
     edge = edge_tts_cmd()
-    if edge is None:
-        notify("edge-tts not found (no CLI in PATH, no python module)",
-               "critical")
-        sys.exit(1)
-    if not which("mpv"):
-        notify("mpv not found in PATH", "critical")
+    online_ready = edge is not None and which("mpv")
+    auto = engine is None
+    if auto:
+        engine = ("edge" if online_ready and online()
+                  else effective_setting("offline", cfg)[0])
+    if engine == "edge":
+        if not online_ready:
+            notify("edge-tts or mpv not found", "critical")
+            sys.exit(1)
+    elif engine == "kokoro":
+        if not kokoro_ready():
+            notify("kokoro is not installed (run: kokoro --install)",
+                   "critical")
+            sys.exit(1)
+    elif engine == "espeak":
+        if not which("espeak-ng"):
+            notify("espeak-ng not found in PATH", "critical")
+            sys.exit(1)
+    else:  # a hand-edited config can hold anything
+        notify(f"unknown offline engine '{engine}' in config "
+               "(use espeak or kokoro)", "critical")
         sys.exit(1)
 
     if voice is None:
@@ -394,15 +473,30 @@ def main(argv):
         notify("Nothing selected to speak")
         return
 
-    # Stream edge-tts' mp3 straight into mpv. The text is passed via the
-    # environment, not the command line, so a selection containing quotes,
-    # $(...) or backticks can't break quoting or inject shell commands.
-    env = {**os.environ, "SPEAK_TEXT": text, "SPEAK_VOICE": voice,
-           "SPEAK_RATE": rate}
+    # The text is passed via the environment, not the command line, so a
+    # selection containing quotes, $(...) or backticks can't break quoting
+    # or inject shell commands.
+    env = {**os.environ, "SPEAK_TEXT": text}
+    if engine != "edge" and auto:
+        why = "offline" if online_ready else "edge-tts/mpv unavailable"
+        notify(f"{why} — speaking with "
+               f"{'Kokoro' if engine == 'kokoro' else 'espeak-ng'}", "low")
+    if engine == "edge":
+        # Stream edge-tts' mp3 straight into mpv.
+        env["SPEAK_VOICE"], env["SPEAK_RATE"] = voice, rate
+        cmd = (f'{shlex.join(edge)} --voice "$SPEAK_VOICE" '
+               '--rate="$SPEAK_RATE" --text "$SPEAK_TEXT" '
+               '| mpv --no-terminal --really-quiet --no-video -')
+    elif engine == "kokoro":
+        env["SPEAK_RATE"] = kokoro_speed(rate)
+        cmd = 'printf %s "$SPEAK_TEXT" | kokoro --speed "$SPEAK_RATE"'
+    else:
+        env["SPEAK_VOICE"] = espeak_voice(voice)
+        env["SPEAK_RATE"] = espeak_speed(rate)
+        cmd = ('printf %s "$SPEAK_TEXT" | '
+               'espeak-ng --stdin -v "$SPEAK_VOICE" -s "$SPEAK_RATE"')
     proc = subprocess.Popen(
-        f'{shlex.join(edge)} --voice "$SPEAK_VOICE" --rate="$SPEAK_RATE" '
-        '--text "$SPEAK_TEXT" '
-        '| mpv --no-terminal --really-quiet --no-video -',
+        cmd,
         shell=True, start_new_session=True, env=env,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,

@@ -27,6 +27,9 @@ _speak() {
             rate)
                 COMPREPLY=( $(compgen -W "+10% +25% +50% -10% -25%" -- "$cur") )
                 ;;
+            offline)
+                COMPREPLY=( $(compgen -W "espeak kokoro" -- "$cur") )
+                ;;
         esac
         return
     fi
@@ -41,9 +44,13 @@ _speak() {
             COMPREPLY=( $(compgen -W "+10% +25% +50% -10% -25%" -- "$cur") )
             return
             ;;
+        --engine)
+            COMPREPLY=( $(compgen -W "edge kokoro espeak" -- "$cur") )
+            return
+            ;;
         --set)
             compopt -o nospace 2>/dev/null
-            COMPREPLY=( $(compgen -W "voice= rate= unwrap=" -- "$cur") )
+            COMPREPLY=( $(compgen -W "voice= rate= unwrap= offline=" -- "$cur") )
             return
             ;;
         --voices)
@@ -56,8 +63,8 @@ _speak() {
     # Positional arguments are free text to speak; only offer flags
     # ("-" reads from stdin).
     if [[ "$cur" == -* ]]; then
-        COMPREPLY=( $(compgen -W "--voice --rate --set --show --voices \
-            -u --unwrap --no-unwrap --help -" -- "$cur") )
+        COMPREPLY=( $(compgen -W "--voice --rate --engine --set --show \
+            --voices -u --unwrap --no-unwrap --help -" -- "$cur") )
     fi
 }
 
