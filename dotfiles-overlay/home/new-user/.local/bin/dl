@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
-"""dl — download video or audio into the ~/d/ library.
+"""dl — download video, audio, or files into the ~/d/ library.
 
 Downloads land in the same directories psync syncs to the phone:
-video → ~/d/video, audio → ~/d/audio.
+video → ~/d/video, audio → ~/d/audio, documents → ~/d/notes,
+images → ~/d/images, archives → ~/d/other.
 
-Requires: yt-dlp; ffmpeg (for audio extraction). On the Debian host
-both are reached through the archbox container (shared $HOME means
-downloads land in the same place).
+Media URLs go through yt-dlp; direct file URLs (recognized by
+extension) are fetched with curl — no container needed.
+
+Requires: yt-dlp; ffmpeg (for audio extraction); curl (for direct
+files). On the Debian host yt-dlp is reached through the archbox
+container (shared $HOME means downloads land in the same place).
 """
 
 import os
 import shlex
 import subprocess
 import sys
+import urllib.parse
 from shutil import which
 
 # ── Colors ──────────────────────────────────────────────────────────
@@ -39,7 +44,24 @@ def die(msg):
 # from the phone.
 VIDEO_DIR = os.path.expanduser("~/d/video")
 AUDIO_DIR = os.path.expanduser("~/d/audio")
+NOTES_DIR = os.path.expanduser("~/d/notes")
+IMAGES_DIR = os.path.expanduser("~/d/images")
+OTHER_DIR = os.path.expanduser("~/d/other")
 OUTPUT_TEMPLATE = "%(title).150s.%(ext)s"
+
+# Direct-download types: URL extension → target dir. Mirrors psync's
+# classify_file() so every file lands where psync expects it. Media
+# extensions stay with yt-dlp, and unknown extensions (.html, none)
+# also go to yt-dlp in case the page holds a video.
+DIRECT_DIRS = {}
+for _ext in (".md", ".txt", ".pdf", ".epub", ".org", ".rst", ".doc",
+             ".docx", ".odt", ".rtf", ".tex"):
+    DIRECT_DIRS[_ext] = NOTES_DIR
+for _ext in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif",
+             ".bmp", ".tiff", ".tif", ".svg", ".avif"):
+    DIRECT_DIRS[_ext] = IMAGES_DIR
+for _ext in (".zip", ".tar", ".gz", ".tgz", ".bz2", ".xz", ".7z", ".rar"):
+    DIRECT_DIRS[_ext] = OTHER_DIR
 
 ARCHBOX = "archbox"
 
@@ -106,9 +128,37 @@ def validate_urls(urls):
             die(f"Not a URL: {url}")
 
 
+def direct_target(url):
+    """Target dir for a direct file URL, or None to defer to yt-dlp."""
+    ext = os.path.splitext(urllib.parse.urlparse(url).path)[1].lower()
+    return DIRECT_DIRS.get(ext)
+
+
 # ── Commands ────────────────────────────────────────────────────────
+def do_fetch(urls):
+    """Download direct file URLs with curl into their psync dirs."""
+    if not which("curl"):
+        die("curl not installed")
+    for url in urls:
+        target = direct_target(url)
+        os.makedirs(target, exist_ok=True)
+        name = os.path.basename(
+            urllib.parse.unquote(urllib.parse.urlparse(url).path))
+        path = os.path.join(target, name)
+        base, ext = os.path.splitext(path)
+        n = 1
+        while os.path.exists(path):
+            path = f"{base} ({n}){ext}"
+            n += 1
+        info(f"Downloading file → {path}")
+        result = subprocess.run(
+            ["curl", "-L", "--fail", "--remove-on-error", "-o", path, url])
+        if result.returncode != 0:
+            die("curl reported errors")
+        ok(f"Saved {shlex.quote(path)}")
+
+
 def do_download(urls, audio=False, prefix=()):
-    validate_urls(urls)
     target = AUDIO_DIR if audio else VIDEO_DIR
     kind = "audio" if audio else "video"
 
@@ -137,27 +187,31 @@ def do_download(urls, audio=False, prefix=()):
     ok(f"Done — saved under {target}")
     for path in downloaded:
         print(f"{DIM}Play with: mpv {shlex.quote(path)}{RESET}")
-    print(f"{DIM}Send to the phone with: psync push --latest"
-          f"{f' {len(urls)}' if len(urls) > 1 else ''}{RESET}")
 
 
 # ── Help + Main ─────────────────────────────────────────────────────
 HELP_TEXT = """\
 usage: dl [audio] URL...
 
-Download video or audio into the ~/d/ library (via yt-dlp).
+Download video, audio, or files into the ~/d/ library.
 
 commands:
   URL...                        download video(s) → ~/d/video
   audio URL...                  extract audio → ~/d/audio
 
-Files land in the directories psync syncs, so `psync push --latest`
-sends the download straight to the phone. Playlists are not expanded
-(single video per URL).
+Direct file URLs are sorted by extension the way psync classifies
+them: documents (pdf, epub, txt, ...) → ~/d/notes, images →
+~/d/images, archives → ~/d/other. Everything else goes through
+yt-dlp. Files land in the directories psync syncs, so `psync push
+--latest` sends the download straight to the phone. Playlists are
+not expanded (single video per URL).
+
+Quote URLs containing ( ) & or spaces — the shell eats them bare.
 
 examples:
   dl https://youtube.com/watch?v=xyz          video to ~/d/video
   dl audio https://youtube.com/watch?v=xyz    audio to ~/d/audio
+  dl "https://example.com/report(1).pdf"      document to ~/d/notes
   dl audio URL1 URL2                          several at once"""
 
 
@@ -166,20 +220,32 @@ def main():
         print(HELP_TEXT)
         sys.exit(0)
 
-    prefix = container_prefix()
-    where = f" (in {ARCHBOX})" if prefix else ""
-    if not tool_available(prefix, "yt-dlp"):
-        die(f"yt-dlp not installed{where}")
-
     args = sys.argv[1:]
-    if args[0] == "audio":
-        if not tool_available(prefix, "ffmpeg"):
-            die(f"ffmpeg not installed{where} (needed for audio extraction)")
-        if len(args) < 2:
+    audio = args[0] == "audio"
+    if audio:
+        args = args[1:]
+        if not args:
             die("Usage: dl audio URL...")
-        do_download(args[1:], audio=True, prefix=prefix)
-    else:
-        do_download(args, audio=False, prefix=prefix)
+    validate_urls(args)
+
+    files = [u for u in args if direct_target(u)]
+    media = [u for u in args if not direct_target(u)]
+    if audio and files:
+        die("audio mode takes video/audio URLs, not direct file links")
+
+    if files:
+        do_fetch(files)
+    if media:
+        prefix = container_prefix()
+        where = f" (in {ARCHBOX})" if prefix else ""
+        if not tool_available(prefix, "yt-dlp"):
+            die(f"yt-dlp not installed{where}")
+        if audio and not tool_available(prefix, "ffmpeg"):
+            die(f"ffmpeg not installed{where} (needed for audio extraction)")
+        do_download(media, audio=audio, prefix=prefix)
+
+    print(f"{DIM}Send to the phone with: psync push --latest"
+          f"{f' {len(args)}' if len(args) > 1 else ''}{RESET}")
 
 
 if __name__ == "__main__":
