@@ -34,6 +34,28 @@
       "end_of_book": [
         {"key": "End", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": false},
         {"key": "g", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": true}
+      ],
+      "increase_font_size": [
+        {"key": "=", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": false},
+        {"key": "+", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": false},
+        {"key": "+", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": true},
+        {"key": "=", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": true},
+        {"key": "=", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
+      ],
+      "decrease_font_size": [
+        {"key": "-", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": false},
+        {"key": "_", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": false},
+        {"key": "-", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": true},
+        {"key": "_", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": true},
+        {"key": "-", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
+      ],
+      "default_font_size": [
+        {"key": "0", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": false},
+        {"key": "0", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
+      ],
+      "toggle_toc": [
+        {"key": "t", "altKey": false, "ctrlKey": true, "metaKey": false, "shiftKey": false},
+        {"key": "Tab", "altKey": false, "ctrlKey": false, "metaKey": false, "shiftKey": false}
       ]
     },
     "base_font_size": 27,
