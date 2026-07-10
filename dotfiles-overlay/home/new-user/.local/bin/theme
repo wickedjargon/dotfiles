@@ -9,6 +9,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -64,6 +65,7 @@ THEMES = {
         "feh_bg": "#000000",
         # Calibre
         "calibre_theme": "sepia-dark",
+        "calibre_palette": "dark",
         # Zathura
         "zathura_bg": "#0d0e1c",
         "zathura_fg": "#ebdbb2",
@@ -143,6 +145,7 @@ THEMES = {
         "feh_bg": "#CCCCCC",
         # Calibre
         "calibre_theme": "sepia-light",
+        "calibre_palette": "light",
         # Zathura
         "zathura_bg": "#fbf1c7",
         "zathura_fg": "#3c3836",
@@ -742,6 +745,31 @@ def switch_calibre(theme):
         ],
     )
     report("calibre", misses, f"calibre → {theme['calibre_theme']}", 1)
+    switch_calibre_palette(theme)
+
+
+def switch_calibre_palette(theme):
+    """Update color_palette in ~/.config/calibre/gui.json (calibre's gprefs).
+
+    The viewer's chrome (ToC panel, toolbars) is Qt, colored by the app-wide
+    color_palette pref rather than the book color scheme. Its default
+    'system' resolves to light under bspwm (no desktop portal reports dark),
+    so it must be set explicitly to follow the theme. Note it lives in
+    gui.json, not global.py.json — calibre splits GUI prefs from core prefs.
+    """
+    path = os.path.join(HOME, ".config", "calibre", "gui.json")
+    prefs = {}
+    if os.path.exists(path):
+        try:
+            with open(path) as f:
+                prefs = json.load(f)
+        except ValueError:
+            warn("calibre palette → gui.json unreadable; skipped")
+            return
+    prefs["color_palette"] = theme["calibre_palette"]
+    with open(path, "w") as f:
+        json.dump(prefs, f, indent=2)
+    print(f"  calibre palette → {theme['calibre_palette']}")
 
 
 def switch_zathura(theme):

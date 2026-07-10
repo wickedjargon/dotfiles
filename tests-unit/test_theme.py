@@ -540,6 +540,25 @@ class TestCalibre:
         os.remove(str(fake_home / ".config" / "calibre" / "viewer-webengine.json"))
         theme_mod.switch_calibre(theme_mod.THEMES["light"])
 
+    def test_palette_light(self, fake_home):
+        theme_mod.switch_calibre(theme_mod.THEMES["light"])
+        path = fake_home / ".config" / "calibre" / "gui.json"
+        assert json.loads(path.read_text())["color_palette"] == "light"
+
+    def test_palette_dark_preserves_other_prefs(self, fake_home):
+        path = fake_home / ".config" / "calibre" / "gui.json"
+        path.write_text('{"ui_style": "system"}')
+        theme_mod.switch_calibre(theme_mod.THEMES["dark"])
+        prefs = json.loads(path.read_text())
+        assert prefs["color_palette"] == "dark"
+        assert prefs["ui_style"] == "system"
+
+    def test_palette_unreadable_global_prefs_skipped(self, fake_home):
+        path = fake_home / ".config" / "calibre" / "gui.json"
+        path.write_text("not json{")
+        theme_mod.switch_calibre(theme_mod.THEMES["dark"])
+        assert path.read_text() == "not json{"
+
 
 class TestZathura:
     def test_switch_to_light(self, fake_home):
