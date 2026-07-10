@@ -3,7 +3,7 @@
 # Control MPD volume and update xob
 # Usage: xob-mpd [up|down]
 
-PIPE="/tmp/xobpipe"
+PIPE="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/xobpipe"
 
 # Ensure pipe exists
 if [ ! -p "$PIPE" ]; then

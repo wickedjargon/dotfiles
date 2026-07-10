@@ -3,7 +3,7 @@
 # Control volume and update xob
 # Usage: xob-volume [up|down|mute]
 
-PIPE="/tmp/xobpipe"
+PIPE="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/xobpipe"
 
 # Ensure pipe exists to avoid errors, though .xinitrc should manage it
 if [ ! -p "$PIPE" ]; then

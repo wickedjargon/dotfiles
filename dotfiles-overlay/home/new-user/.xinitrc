@@ -29,9 +29,12 @@ clipmenud &  # Start clipmenu daemon
 unclutter -idle 1 &  # makes cursor disappear
 
 # Start xob
-if [ ! -p /tmp/xobpipe ]; then
-    mkfifo /tmp/xobpipe
+# Pipe lives in XDG_RUNTIME_DIR, not /tmp: GTK file choosers sniff files in
+# browsed directories and block forever opening a FIFO with no writer.
+XOB_PIPE="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/xobpipe"
+if [ ! -p "$XOB_PIPE" ]; then
+    mkfifo "$XOB_PIPE"
 fi
-tail -f /tmp/xobpipe | xob &
+tail -f "$XOB_PIPE" | xob &
 
 exec bspwm

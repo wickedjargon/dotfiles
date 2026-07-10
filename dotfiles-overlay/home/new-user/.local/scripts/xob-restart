@@ -5,7 +5,7 @@
 # the position/length in ~/.config/xob/styles.cfg with absolute
 # pixel offsets so the bar always appears on the laptop screen.
 
-PIPE="/tmp/xobpipe"
+PIPE="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/xobpipe"
 STYLES="$HOME/.config/xob/styles.cfg"
 
 # Get internal display name (LVDS, eDP, etc.)
