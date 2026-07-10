@@ -38,11 +38,6 @@ cat > /tmp/policies.json << 'EOF'
         "install_url": "https://addons.mozilla.org/firefox/downloads/latest/istilldontcareaboutcookies/latest.xpi",
         "private_browsing": true
       },
-      "{ddc62400-f22d-4dd3-8b4a-05837de53c2e}": {
-        "installation_mode": "normal_installed",
-        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/read-aloud/latest.xpi",
-        "private_browsing": true
-      },
       "{9d6e7f41-8d33-4145-a164-5ca4358c7960}": {
         "installation_mode": "normal_installed",
         "install_url": "https://addons.mozilla.org/firefox/downloads/latest/defund-wikipedia/latest.xpi",
@@ -64,7 +59,6 @@ echo "  - Dark Reader (dark mode for websites)"
 echo "  - Vimium (keyboard navigation)"
 echo "  - SponsorBlock (skip YouTube sponsors)"
 echo "  - I Still Don't Care About Cookies (remove cookie banners)"
-echo "  - Read Aloud (text-to-speech)"
 echo "  - Defund Wikipedia (remove donation banners)"
 echo ""
 echo "Note: Extensions are enabled in private browsing mode by default"

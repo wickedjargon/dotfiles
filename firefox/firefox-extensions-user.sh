@@ -30,10 +30,6 @@ curl -L -o "$EXT_DIR/sponsorBlocker@ajay.app.xpi" \
 curl -L -o "$EXT_DIR/idcac-pub@guus.ninja.xpi" \
     "https://addons.mozilla.org/firefox/downloads/latest/istilldontcareaboutcookies/latest.xpi"
 
-# Read Aloud
-curl -L -o "$EXT_DIR/{ddc62400-f22d-4dd3-8b4a-05837de53c2e}.xpi" \
-    "https://addons.mozilla.org/firefox/downloads/latest/read-aloud/latest.xpi"
-
 # Defund Wikipedia
 curl -L -o "$EXT_DIR/{9d6e7f41-8d33-4145-a164-5ca4358c7960}.xpi" \
     "https://addons.mozilla.org/firefox/downloads/latest/defund-wikipedia/latest.xpi"
@@ -46,7 +42,6 @@ echo "  - Dark Reader (dark mode)"
 echo "  - Vimium (keyboard navigation)"
 echo "  - SponsorBlock (skip YouTube sponsors)"
 echo "  - I Still Don't Care About Cookies"
-echo "  - Read Aloud"
 echo "  - Defund Wikipedia"
 echo ""
 echo "Note: You must approve their installation inside Firefox."
