@@ -29,6 +29,15 @@ class TestBuildCommand:
         cmd = dl.build_command(urls)
         assert cmd[-2:] == urls
 
+    def test_paths_file_records_final_filepaths(self):
+        cmd = dl.build_command(["https://a.example/1"], paths_file="/tmp/p")
+        i = cmd.index("--print-to-file")
+        assert cmd[i + 1 : i + 3] == ["after_move:filepath", "/tmp/p"]
+        assert cmd[-1] == "https://a.example/1"
+
+    def test_no_paths_file_by_default(self):
+        assert "--print-to-file" not in dl.build_command(["https://a.example/1"])
+
 
 class TestValidateUrls:
     def test_http_and_https_accepted(self):

@@ -10,6 +10,7 @@ downloads land in the same place).
 """
 
 import os
+import shlex
 import subprocess
 import sys
 from shutil import which
@@ -79,7 +80,7 @@ def tool_available(prefix, tool):
     return result.returncode == 0
 
 
-def build_command(urls, audio=False):
+def build_command(urls, audio=False, paths_file=None):
     """Assemble the yt-dlp invocation for a batch of URLs."""
     target = AUDIO_DIR if audio else VIDEO_DIR
     cmd = [
@@ -90,6 +91,11 @@ def build_command(urls, audio=False):
     if audio:
         # -x keeps the best audio stream in its native container.
         cmd.append("-x")
+    if paths_file:
+        # Record each final path (post-extraction for audio) so we can
+        # print play hints — without capturing stdout, which would kill
+        # the live progress bar.
+        cmd += ["--print-to-file", "after_move:filepath", paths_file]
     cmd.extend(urls)
     return cmd
 
@@ -110,12 +116,27 @@ def do_download(urls, audio=False, prefix=()):
     via = f" {DIM}(via {ARCHBOX}){RESET}" if prefix else ""
     info(f"Downloading {kind} → {target}{via}")
 
-    # Run with inherited stdio so yt-dlp's progress bar shows live.
-    result = subprocess.run(list(prefix) + build_command(urls, audio=audio))
-    if result.returncode != 0:
-        die("yt-dlp reported errors")
+    # Lives under $HOME so it's the same file inside archbox.
+    paths_file = os.path.join(target, f".dl-paths-{os.getpid()}")
+    try:
+        # Run with inherited stdio so yt-dlp's progress bar shows live.
+        result = subprocess.run(
+            list(prefix) + build_command(urls, audio=audio, paths_file=paths_file)
+        )
+        if result.returncode != 0:
+            die("yt-dlp reported errors")
+
+        downloaded = []
+        if os.path.exists(paths_file):
+            with open(paths_file) as f:
+                downloaded = [line.strip() for line in f if line.strip()]
+    finally:
+        if os.path.exists(paths_file):
+            os.unlink(paths_file)
 
     ok(f"Done — saved under {target}")
+    for path in downloaded:
+        print(f"{DIM}Play with: mpv {shlex.quote(path)}{RESET}")
     print(f"{DIM}Send to the phone with: psync push --latest"
           f"{f' {len(urls)}' if len(urls) > 1 else ''}{RESET}")
 
