@@ -4,7 +4,9 @@
 Downloads land in the same directories psync syncs to the phone:
 video → ~/d/video, audio → ~/d/audio.
 
-Requires: yt-dlp; ffmpeg (for audio extraction)
+Requires: yt-dlp; ffmpeg (for audio extraction). On the Debian host
+both are reached through the archbox container (shared $HOME means
+downloads land in the same place).
 """
 
 import os
@@ -38,6 +40,44 @@ VIDEO_DIR = os.path.expanduser("~/d/video")
 AUDIO_DIR = os.path.expanduser("~/d/audio")
 OUTPUT_TEMPLATE = "%(title).150s.%(ext)s"
 
+ARCHBOX = "archbox"
+
+
+def container_prefix():
+    """Command prefix that reaches yt-dlp, or [] to run it directly.
+
+    The Debian host keeps no yt-dlp (the packaged one goes stale), so
+    from the host we run it inside the archbox container. Its $HOME is
+    shared, so downloads land in the same ~/d/ directories. Inside a
+    container, or when archbox isn't around, run directly.
+    """
+    if os.path.exists("/run/.containerenv") or not which("distrobox"):
+        return []
+    # Confirm the container exists first — `distrobox enter` on a
+    # missing container prompts interactively to create it.
+    result = subprocess.run(
+        ["distrobox", "list", "--no-color"],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        return []
+    for line in result.stdout.splitlines():
+        fields = [f.strip() for f in line.split("|")]
+        if len(fields) > 1 and fields[1] == ARCHBOX:
+            return ["distrobox", "enter", ARCHBOX, "--"]
+    return []
+
+
+def tool_available(prefix, tool):
+    """Check for a tool where the download will actually run."""
+    if not prefix:
+        return which(tool) is not None
+    result = subprocess.run(
+        prefix + ["sh", "-c", f"command -v {tool}"],
+        capture_output=True,
+    )
+    return result.returncode == 0
+
 
 def build_command(urls, audio=False):
     """Assemble the yt-dlp invocation for a batch of URLs."""
@@ -61,16 +101,17 @@ def validate_urls(urls):
 
 
 # ── Commands ────────────────────────────────────────────────────────
-def do_download(urls, audio=False):
+def do_download(urls, audio=False, prefix=()):
     validate_urls(urls)
     target = AUDIO_DIR if audio else VIDEO_DIR
     kind = "audio" if audio else "video"
 
     os.makedirs(target, exist_ok=True)
-    info(f"Downloading {kind} → {target}")
+    via = f" {DIM}(via {ARCHBOX}){RESET}" if prefix else ""
+    info(f"Downloading {kind} → {target}{via}")
 
     # Run with inherited stdio so yt-dlp's progress bar shows live.
-    result = subprocess.run(build_command(urls, audio=audio))
+    result = subprocess.run(list(prefix) + build_command(urls, audio=audio))
     if result.returncode != 0:
         die("yt-dlp reported errors")
 
@@ -104,18 +145,20 @@ def main():
         print(HELP_TEXT)
         sys.exit(0)
 
-    if not which("yt-dlp"):
-        die("yt-dlp not installed")
+    prefix = container_prefix()
+    where = f" (in {ARCHBOX})" if prefix else ""
+    if not tool_available(prefix, "yt-dlp"):
+        die(f"yt-dlp not installed{where}")
 
     args = sys.argv[1:]
     if args[0] == "audio":
-        if not which("ffmpeg"):
-            die("ffmpeg not installed (needed for audio extraction)")
+        if not tool_available(prefix, "ffmpeg"):
+            die(f"ffmpeg not installed{where} (needed for audio extraction)")
         if len(args) < 2:
             die("Usage: dl audio URL...")
-        do_download(args[1:], audio=True)
+        do_download(args[1:], audio=True, prefix=prefix)
     else:
-        do_download(args, audio=False)
+        do_download(args, audio=False, prefix=prefix)
 
 
 if __name__ == "__main__":
