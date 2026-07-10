@@ -32,6 +32,7 @@ nodejs
 npm
 nss-mdns
 openssh
+pacman-contrib
 pigz
 python
 python-black
