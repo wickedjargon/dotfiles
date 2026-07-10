@@ -223,6 +223,7 @@ They still require tldr pages and bash completions.
 | `svc`        | ✓             | systemctl          | ✓    | ✓          |
 | `vpn`        | ✓             | nmcli, curl        | ✓    | ✓          |
 | `mac`        | ✓             | ip (iproute2)      | ✓    | ✓          |
+| `win`        | ✓             | bspc, xdotool      | ✓    | ✓          |
 | `theme`      | ✗             | various            | ✓    | ✓          |
 | `browser`    | ✗             | (stdlib only)      | ✓    | ✓          |
 | `shorten-url`| ✗             | curl               | ✗    | ✗          |

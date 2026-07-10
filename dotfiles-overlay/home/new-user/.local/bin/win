@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""win — manage bspwm windows: list, hide, unhide, move, focus, close.
+
+Requires: bspwm (bspc), xdotool
+"""
+
+import json
+import subprocess
+import sys
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED   = "\033[0;31m"
+GREEN = "\033[0;32m"
+CYAN  = "\033[0;36m"
+BOLD  = "\033[1m"
+DIM   = "\033[2m"
+RESET = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd):
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
+# ── Domain-specific parsing ─────────────────────────────────────────
+def windows():
+    """Return one dict per managed window, sorted by desktop."""
+    focused = run(["bspc", "query", "-N", "-n", "focused.window"]).stdout.strip()
+    wins = []
+    for wid in run(["bspc", "query", "-N", "-n", ".window"]).stdout.split():
+        try:
+            node = json.loads(run(["bspc", "query", "-T", "-n", wid]).stdout)
+            cls = node["client"]["className"]
+            hidden = node["hidden"]
+        except (json.JSONDecodeError, KeyError, TypeError):
+            cls, hidden = "?", False
+        desktop = run(["bspc", "query", "-D", "-n", wid, "--names"]).stdout.strip() or "?"
+        title = run(["xdotool", "getwindowname", str(int(wid, 16))]).stdout.strip()
+        wins.append({
+            "wid": wid, "desktop": desktop, "cls": cls, "title": title,
+            "hidden": hidden, "focused": wid == focused,
+        })
+    wins.sort(key=lambda w: (w["desktop"], w["wid"]))
+    return wins
+
+
+def describe(win):
+    return f"{win['cls']} — {win['title']}"
+
+
+def resolve(wins, arg):
+    """Turn a list index argument into a window dict."""
+    try:
+        n = int(arg)
+    except ValueError:
+        die(f"Invalid window index: {arg}")
+    if not 1 <= n <= len(wins):
+        die(f"No such window: {n} (run 'win' to list)")
+    return wins[n - 1]
+
+
+def focused_window(wins):
+    for win in wins:
+        if win["focused"]:
+            return win
+    die("No focused window")
+
+
+def bspc_node(win, *args):
+    res = run(["bspc", "node", win["wid"], *args])
+    if res.returncode != 0:
+        die(f"bspc failed: {res.stderr.strip()}")
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_list(wins):
+    """Bare command — list windows."""
+    if not wins:
+        info("No windows.")
+        return
+    for i, win in enumerate(wins, 1):
+        mark = f"{DIM}○{RESET}" if win["hidden"] else f"{GREEN}●{RESET}"
+        line = (f"{mark} {BOLD}{i}{RESET}  {CYAN}{win['desktop']}{RESET}  "
+                f"{win['cls']:<14}{DIM}{win['title']}{RESET}")
+        if win["focused"]:
+            line += f"  {CYAN}(focused){RESET}"
+        print(line)
+
+
+def cmd_hide(wins, args):
+    """Hide window N (focused if no index given)."""
+    win = resolve(wins, args[0]) if args else focused_window(wins)
+    if win["hidden"]:
+        die(f"Already hidden: {describe(win)}")
+    bspc_node(win, "-g", "hidden=on")
+    ok(f"Hidden from workspace {win['desktop']}: {describe(win)}")
+
+
+def cmd_unhide(wins, args):
+    """Unhide window N, every window with 'all', or the only hidden one."""
+    hidden = [w for w in wins if w["hidden"]]
+    if not hidden:
+        info("No hidden windows.")
+        return
+
+    if args and args[0] == "all":
+        targets = hidden
+    elif args:
+        win = resolve(wins, args[0])
+        if not win["hidden"]:
+            die(f"Not hidden: {describe(win)}")
+        targets = [win]
+    elif len(hidden) == 1:
+        targets = hidden  # auto-select the only candidate
+    else:
+        print("Multiple hidden windows found:")
+        for i, win in enumerate(wins, 1):
+            if win["hidden"]:
+                print(f"  {DIM}○{RESET} {BOLD}{i}{RESET}  {CYAN}{win['desktop']}{RESET}  "
+                      f"{win['cls']:<14}{DIM}{win['title']}{RESET}")
+        first = next(i for i, w in enumerate(wins, 1) if w["hidden"])
+        print(f"\nSpecify one, e.g.: win unhide {first}")
+        return
+
+    for win in targets:
+        bspc_node(win, "-g", "hidden=off")
+        ok(f"Unhidden on workspace {win['desktop']}: {describe(win)}")
+
+
+def cmd_move(wins, args):
+    """Move window N (focused if only a desktop is given) to a desktop."""
+    if len(args) == 2:
+        win, desktop = resolve(wins, args[0]), args[1]
+    elif len(args) == 1:
+        win, desktop = focused_window(wins), args[0]
+    else:
+        die("Usage: win move [N] DESKTOP")
+    bspc_node(win, "-d", desktop)
+    ok(f"Moved to workspace {desktop}: {describe(win)}")
+
+
+def cmd_focus(wins, args):
+    """Focus window N, unhiding it first if needed."""
+    if not args:
+        die("Usage: win focus N")
+    win = resolve(wins, args[0])
+    if win["hidden"]:
+        bspc_node(win, "-g", "hidden=off")
+    bspc_node(win, "-f")
+    ok(f"Focused on workspace {win['desktop']}: {describe(win)}")
+
+
+def cmd_close(wins, args):
+    """Close window N (focused if no index given)."""
+    win = resolve(wins, args[0]) if args else focused_window(wins)
+    bspc_node(win, "-c")
+    ok(f"Closed: {describe(win)}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: win [command] [args]
+
+Manage bspwm windows: list, hide, unhide, move, focus, close.
+N refers to a window's index in the bare listing.
+
+commands:
+  (none)                        list windows
+  hide [N]                      hide window N (default: focused)
+  unhide [N|all]                unhide window N, all, or the only hidden one
+  move [N] DESKTOP              move window N (default: focused) to a desktop
+  focus N                       focus window N (unhides it if hidden)
+  close [N]                     close window N (default: focused)
+
+examples:
+  win                           list windows
+  win hide                      hide the focused window
+  win unhide                    unhide the only hidden window
+  win unhide all                unhide everything
+  win move 2                    move focused window to workspace 2
+  win move 3 2                  move window 3 to workspace 2
+  win focus 3                   jump to window 3"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    from shutil import which
+    if not which("bspc"):
+        die("bspc not installed")
+    if not which("xdotool"):
+        die("xdotool not installed")
+
+    if len(sys.argv) < 2:
+        cmd_list(windows())  # bare command = status
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "hide": cmd_hide,
+        "unhide": cmd_unhide,
+        "move": cmd_move,
+        "focus": cmd_focus,
+        "close": cmd_close,
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'win --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command](windows(), args)
+
+
+if __name__ == "__main__":
+    main()

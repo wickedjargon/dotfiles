@@ -1,0 +1,35 @@
+# bash completion for win
+_win() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "hide unhide move focus close help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        hide|move|focus|close)
+            # Window indices from the bare listing
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                local indices
+                indices=$(bspc query -N -n .window 2>/dev/null | awk '{print NR}')
+                COMPREPLY=( $(compgen -W "$indices" -- "$cur") )
+            elif [ "$cmd" = move ]; then
+                COMPREPLY=( $(compgen -W "$(bspc query -D --names 2>/dev/null)" -- "$cur") )
+            fi
+            ;;
+        unhide)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                local indices
+                indices=$(bspc query -N -n .window 2>/dev/null | awk '{print NR}')
+                COMPREPLY=( $(compgen -W "all $indices" -- "$cur") )
+            fi
+            ;;
+    esac
+}
+
+complete -F _win win
