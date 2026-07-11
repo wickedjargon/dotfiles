@@ -42,6 +42,7 @@ xinput                   # X11 input device tracking and configuration
 grabc                    # Command-line screen pixel color picker
 maim                     # Screenshot utility
 xclip                    # Command-line clipboard utility
+tesseract-ocr            # OCR engine (for ocr: extract text from screen)
 xdotool                  # Command-line X11 automation
 xcape                    # Remap modifier keys to other keys (X11)
 

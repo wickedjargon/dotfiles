@@ -1,0 +1,259 @@
+#!/usr/bin/env python3
+"""ocr — extract text from the screen or images with tesseract.
+
+Bare command selects a screen region; text is printed to stdout and
+copied to the clipboard. Small captures are upscaled for accuracy.
+
+Requires: tesseract (tesseract-ocr), maim, xclip
+Optional: imagemagick (upscales small captures for better accuracy)
+"""
+
+import os
+import subprocess
+import sys
+import tempfile
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+# Status goes to stderr: stdout is reserved for the recognized text,
+# so `ocr file page.png > page.txt` stays clean.
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}", file=sys.stderr)
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}", file=sys.stderr)
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}", file=sys.stderr)
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=120, **kwargs):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout, **kwargs,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+def magick(*args, timeout=120):
+    """Run an ImageMagick operation (IM7 magick, or legacy convert)."""
+    tool = ["magick"] if which("magick") else ["convert"]
+    return run(tool + list(args), timeout=timeout)
+
+
+def identify(*args):
+    tool = (["magick", "identify"] if which("magick")
+            else ["identify"])
+    return run(tool + list(args))
+
+
+# ── OCR core ────────────────────────────────────────────────────────
+def available_langs():
+    """Installed tesseract languages (excluding the osd model)."""
+    r = run(["tesseract", "--list-langs"])
+    if r.returncode != 0:
+        return []
+    langs = [l.strip() for l in r.stdout.splitlines()[1:] if l.strip()]
+    return [l for l in langs if l != "osd"]
+
+
+def check_lang(lang):
+    langs = available_langs()
+    if langs and lang not in langs:
+        die(f"language '{lang}' not installed — "
+            f"sudo apt install tesseract-ocr-{lang}")
+
+
+def upscale_if_small(path, tmpdir):
+    """Upscale small captures 3x — helps tesseract with screen fonts."""
+    if not (which("magick") or which("convert")):
+        return path
+    r = identify("-format", "%w %h", path)
+    try:
+        w, h = map(int, r.stdout.split())
+    except ValueError:
+        return path
+    if max(w, h) >= 1200:
+        return path
+    big = os.path.join(tmpdir, "upscaled.png")
+    r = magick(path, "-resize", "300%", big)
+    return big if r.returncode == 0 else path
+
+
+def recognize(path, lang):
+    """Run tesseract on an image file and return the text."""
+    with tempfile.TemporaryDirectory(prefix="ocr-") as tmpdir:
+        r = run(["tesseract", upscale_if_small(path, tmpdir),
+                 "stdout", "-l", lang])
+    if r.returncode != 0:
+        die(f"tesseract failed: {r.stderr.strip()}")
+    return r.stdout.strip()
+
+
+def to_clipboard(text):
+    if not which("xclip"):
+        warn("xclip not installed — text not copied to clipboard")
+        return
+    # Detach stdio: xclip's forked daemon would otherwise hold our
+    # stdout pipe open, hanging callers like $(ocr) until the
+    # clipboard is next replaced.
+    subprocess.run(["xclip", "-selection", "clipboard"],
+                   input=text, text=True,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def emit(text, clipboard):
+    """Print recognized text; optionally copy it to the clipboard."""
+    if not text:
+        warn("No text recognized")
+        sys.exit(1)
+    print(text)
+    if clipboard:
+        lines = text.count("\n") + 1
+        to_clipboard(text)
+        ok(f"Copied {len(text)} characters ({lines} "
+           f"line{'s' if lines != 1 else ''}) to clipboard")
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_region(lang):
+    """Select a screen region, OCR it, copy text to clipboard."""
+    if not which("maim"):
+        die("maim not installed")
+    check_lang(lang)
+    with tempfile.TemporaryDirectory(prefix="ocr-") as tmpdir:
+        shot = os.path.join(tmpdir, "region.png")
+        r = run(["maim", "-s", "-u", shot], timeout=120)
+        if r.returncode != 0:
+            warn("Selection cancelled")
+            sys.exit(1)
+        emit(recognize(shot, lang), clipboard=True)
+
+
+def cmd_screen(lang):
+    """OCR the entire screen."""
+    if not which("maim"):
+        die("maim not installed")
+    check_lang(lang)
+    with tempfile.TemporaryDirectory(prefix="ocr-") as tmpdir:
+        shot = os.path.join(tmpdir, "screen.png")
+        r = run(["maim", "-u", shot])
+        if r.returncode != 0:
+            die(f"screenshot failed: {r.stderr.strip()}")
+        emit(recognize(shot, lang), clipboard=True)
+
+
+def cmd_clip(lang):
+    """OCR the image currently in the clipboard."""
+    if not which("xclip"):
+        die("xclip not installed")
+    check_lang(lang)
+    targets = run(["xclip", "-selection", "clipboard", "-t", "TARGETS", "-o"])
+    if "image/png" not in targets.stdout:
+        die("no image in clipboard")
+    raw = subprocess.run(
+        ["xclip", "-selection", "clipboard", "-t", "image/png", "-o"],
+        capture_output=True)
+    if raw.returncode != 0:
+        die("could not read clipboard image")
+    with tempfile.TemporaryDirectory(prefix="ocr-") as tmpdir:
+        shot = os.path.join(tmpdir, "clip.png")
+        with open(shot, "wb") as f:
+            f.write(raw.stdout)
+        emit(recognize(shot, lang), clipboard=True)
+
+
+def cmd_file(args):
+    """OCR an image file; text goes to stdout only."""
+    if not args:
+        die("usage: ocr file FILE [lang]")
+    path = args[0]
+    lang = args[1] if len(args) > 1 else "eng"
+    if not os.path.isfile(path):
+        die(f"no such file: {path}")
+    check_lang(lang)
+    emit(recognize(path, lang), clipboard=False)
+
+
+def cmd_langs():
+    """List installed tesseract languages."""
+    langs = available_langs()
+    if not langs:
+        die("could not list languages")
+    for lang in langs:
+        print(f"  {GREEN}●{RESET} {lang}")
+    print(f"\n{DIM}More: sudo apt install tesseract-ocr-<lang>{RESET}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: ocr [command] [options]
+
+Extract text from the screen or images with tesseract. Recognized
+text is printed to stdout and (for screen/clipboard sources) copied
+to the clipboard. Language defaults to eng.
+
+commands:
+  (none) [lang]                 select a screen region and OCR it
+  region [lang]                 same as bare command
+  screen [lang]                 OCR the entire screen
+  clip [lang]                   OCR the image in the clipboard
+  file FILE [lang]              OCR an image file (stdout only)
+  langs                         list installed languages
+
+examples:
+  ocr                           select a region, text lands in clipboard
+  ocr deu                       same, recognizing German
+  ocr clip                      OCR a screenshot you copied earlier
+  ocr file scan.png > scan.txt  OCR a file into a text file"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not which("tesseract"):
+        die("tesseract not installed — sudo apt install tesseract-ocr")
+
+    if len(sys.argv) < 2:
+        cmd_region("eng")  # bare command = region select
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "region": lambda: cmd_region(args[0] if args else "eng"),
+        "screen": lambda: cmd_screen(args[0] if args else "eng"),
+        "clip":   lambda: cmd_clip(args[0] if args else "eng"),
+        "file":   lambda: cmd_file(args),
+        "langs":  lambda: cmd_langs(),
+    }
+
+    if command not in commands:
+        # `ocr deu` — bare region grab in another language
+        if command in available_langs():
+            cmd_region(command)
+            return
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'ocr --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,37 @@
+# bash completion for ocr
+_ocr() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    local langs=""
+    if command -v tesseract >/dev/null 2>&1; then
+        langs="$(tesseract --list-langs 2>/dev/null | tail -n +2 | grep -v '^osd$')"
+    fi
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "region screen clip file langs $langs help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        region|screen|clip)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                COMPREPLY=( $(compgen -W "$langs" -- "$cur") )
+                return
+            fi
+            ;;
+        file)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                COMPREPLY=( $(compgen -f -- "$cur") )
+                return
+            elif [ "$COMP_CWORD" -eq 3 ]; then
+                COMPREPLY=( $(compgen -W "$langs" -- "$cur") )
+                return
+            fi
+            ;;
+    esac
+}
+
+complete -o filenames -F _ocr ocr
