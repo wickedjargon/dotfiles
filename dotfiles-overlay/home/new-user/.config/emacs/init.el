@@ -302,6 +302,10 @@
       (define-key lisp-mode-map (kbd "M-\\") #'sly-eval-print-last-expression)))
   )
 
+(use-package fff-stt
+  :ensure nil
+  :commands (fff-stt-toggle fff-stt-cancel))
+
 (use-package delsel
   :ensure nil
   :hook (after-init . delete-selection-mode))
