@@ -1,7 +1,7 @@
 #!/bin/sh
 # rofi-system — System actions with Alt+c to copy command.
 
-selection=$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\nReload Desktop\nClean Local Bin\nDeploy Dotfiles\nScreenshot\nBrightness\nNight\nDay\nTheme Toggle\nTheme Dark\nTheme Light\nBattery Time Left\nStorage Free\nKill Window (xkill)" | rofi -dmenu -i -p "System" -kb-custom-1 "Alt+c")
+selection=$(printf "Lock\nKill X\nReboot\nPoweroff\nHibernate\nDisplay Off\nLogout\nReload Desktop\nClean Local Bin\nDeploy Dotfiles\nScreenshot\nOCR Region\nBrightness\nNight\nDay\nTheme Toggle\nTheme Dark\nTheme Light\nBattery Time Left\nStorage Free\nKill Window (xkill)" | rofi -dmenu -i -p "System" -kb-custom-1 "Alt+c")
 exit_code=$?
 
 [ $exit_code -eq 1 ] && exit 0
@@ -19,6 +19,7 @@ case "$selection" in
     'Clean Local Bin') cmd='clean-local-bin' ;;
     'Deploy Dotfiles') cmd='deploy-dotfiles' ;;
     'Screenshot') cmd='rofi-screenshot' ;;
+    'OCR Region') cmd='sleep 0.2; text=$(ocr 2>/dev/null) && notify-send "OCR (copied)" "$text" || notify-send -u critical "OCR failed" "Selection cancelled or no text recognized"' ;;
     'Brightness')
         level=$(seq 5 5 100 | rofi -dmenu -i -p "Brightness")
         [ -z "$level" ] && exit 0
