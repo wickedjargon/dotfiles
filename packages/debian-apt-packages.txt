@@ -138,6 +138,7 @@ fonts-noto-extra         # Extra weights for Noto families
 fonts-noto-unhinted      # Rare/historic scripts not in noto-core
 fonts-noto-cjk           # "No Tofu" CJK fonts (Chinese, Japanese, Korean)
 fonts-noto-cjk-extra     # Extra CJK weights (light, medium, black)
+fonts-vazirmatn          # Vazirmatn — modern Persian/Farsi UI font
 fonts-dejavu             # DejaVu fonts (includes Core, Extra, Mono)
 
 # Development & Build Dependencies
