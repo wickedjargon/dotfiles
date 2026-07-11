@@ -137,3 +137,9 @@ map H goBack
 map L goForward
 ```
 
+### 9. Install Offline Speech Models
+
+```bash
+kokoro --install   # ~380 MB
+stt --install      # ~200 MB
+```

@@ -1,0 +1,397 @@
+#!/usr/bin/env python3
+"""stt — offline speech-to-text with Whisper (via sherpa-onnx).
+
+Bare command records from the microphone until Enter, transcribes
+locally on the CPU, prints the text and copies it to the clipboard.
+`stt toggle` starts/stops recording from a hotkey or rofi, notifying
+and copying on stop. Reuses kokoro's sherpa-onnx runtime when present,
+so --install only downloads the Whisper model.
+
+Requires: pw-record (pipewire-bin) or parecord/arecord, xclip
+Optional: ffmpeg (transcribe non-wav audio files), notify-send
+"""
+
+import json
+import os
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+# Status goes to stderr: stdout is reserved for the transcribed text,
+# so `stt file talk.ogg > talk.txt` stays clean.
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}", file=sys.stderr)
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}", file=sys.stderr)
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}", file=sys.stderr)
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+DATA = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local/share")
+BASE = DATA / "stt"
+RUNTIME = Path(os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir())
+
+# Same runtime tarball kokoro installs; its bin/ also holds the ASR
+# binary, so an existing kokoro install is reused as-is.
+SHERPA_VERSION = "1.13.4"
+SHERPA_URL = (
+    "https://github.com/k2-fsa/sherpa-onnx/releases/download/"
+    f"v{SHERPA_VERSION}/sherpa-onnx-v{SHERPA_VERSION}-linux-x64-shared.tar.bz2"
+)
+
+MODEL_NAME = "sherpa-onnx-whisper-base.en"
+MODEL_URL = (
+    "https://github.com/k2-fsa/sherpa-onnx/releases/download/"
+    f"asr-models/{MODEL_NAME}.tar.bz2"
+)
+MODEL_DIR = BASE / MODEL_NAME
+ENCODER = MODEL_DIR / "base.en-encoder.int8.onnx"
+DECODER = MODEL_DIR / "base.en-decoder.int8.onnx"
+TOKENS = MODEL_DIR / "base.en-tokens.txt"
+
+PIDFILE = RUNTIME / "stt-toggle.pid"
+TOGGLE_WAV = RUNTIME / "stt-toggle.wav"
+
+
+def sherpa_dir():
+    """Our own runtime, or kokoro's if that is already installed."""
+    for base in (BASE / "sherpa-onnx", DATA / "kokoro" / "sherpa-onnx"):
+        if (base / "bin" / "sherpa-onnx-offline").is_file():
+            return base
+    return None
+
+
+def recorder():
+    for tool in ("pw-record", "parecord", "arecord"):
+        if which(tool):
+            return tool
+    return None
+
+
+def ready():
+    return sherpa_dir() is not None and ENCODER.is_file() and recorder()
+
+
+def notify(title, body, critical=False):
+    if which("notify-send"):
+        cmd = ["notify-send"] + (["-u", "critical"] if critical else [])
+        subprocess.run(cmd + [title, body], check=False)
+
+
+def to_clipboard(text):
+    if not which("xclip"):
+        warn("xclip not installed — text not copied to clipboard")
+        return
+    # Detach stdio: xclip's forked daemon would otherwise hold our
+    # stdout pipe open, hanging callers like $(stt) until the
+    # clipboard is next replaced.
+    subprocess.run(["xclip", "-selection", "clipboard"],
+                   input=text, text=True,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+# ── Install ─────────────────────────────────────────────────────────
+
+def fetch_and_extract(url, done_marker, rename_from=None, rename_to=None):
+    """Download a tarball into BASE and unpack it there, resumably."""
+    if done_marker.exists():
+        info(f"already installed: {done_marker}")
+        return
+    tarball = BASE / url.rpartition("/")[2]
+    info(f"downloading {tarball.name} ...")
+    rc = subprocess.run(
+        ["curl", "-L", "--fail", "-C", "-", "-o", str(tarball), url]
+    ).returncode
+    # 22/33 with an existing file usually means "already fully downloaded"
+    # (HTTP 416 on resume); let extraction be the judge then.
+    if rc != 0 and not (rc in (22, 33) and tarball.is_file()):
+        die(f"download failed: {url}\n(re-run to resume)")
+    info(f"extracting {tarball.name} ...")
+    if subprocess.run(["tar", "-xjf", str(tarball), "-C", str(BASE)]).returncode:
+        die(f"extraction failed: {tarball}")
+    if rename_from and rename_to:
+        if (BASE / rename_to).exists():  # leftover from a broken install
+            shutil.rmtree(BASE / rename_to)
+        (BASE / rename_from).rename(BASE / rename_to)
+    tarball.unlink()
+
+
+def install():
+    for tool in ("curl", "tar"):
+        if not which(tool):
+            die(f"{tool} is required for --install")
+    BASE.mkdir(parents=True, exist_ok=True)
+
+    if sherpa_dir():
+        info(f"sherpa-onnx runtime found: {sherpa_dir()}")
+    else:
+        fetch_and_extract(
+            SHERPA_URL, BASE / "sherpa-onnx" / "bin" / "sherpa-onnx-offline",
+            rename_from=f"sherpa-onnx-v{SHERPA_VERSION}-linux-x64-shared",
+            rename_to="sherpa-onnx",
+        )
+    fetch_and_extract(MODEL_URL, ENCODER)
+
+    missing = [f.name for f in (ENCODER, DECODER, TOKENS) if not f.is_file()]
+    if missing:
+        die(f"model files missing after extraction: {', '.join(missing)}")
+
+    info("running a test transcription ...")
+    test_wav = MODEL_DIR / "test_wavs" / "0.wav"
+    text = transcribe(test_wav)
+    if not text:
+        die("test transcription produced no text")
+    ok(f"test transcription: {text}")
+    if not recorder():
+        warn("no recorder found — install pipewire-bin for pw-record")
+    ok("installed. Try: stt")
+
+
+def ensure_ready():
+    """Offer a first-run install when interactive, else point at it."""
+    if ready():
+        return
+    if sherpa_dir() and ENCODER.is_file():
+        die("no recorder found — install pipewire-bin for pw-record")
+    if sys.stdin.isatty():
+        warn("stt is not installed yet")
+        answer = input(f"{CYAN}▸{RESET} download the Whisper base.en model "
+                       "(~200 MB)? [y/N] ")
+        if answer.strip().lower() not in ("y", "yes"):
+            die("not installed (run: stt --install)")
+        install()
+    else:
+        notify("stt not installed", "Run: stt --install", critical=True)
+        die("not installed (run: stt --install)")
+
+
+# ── Transcription ───────────────────────────────────────────────────
+
+def transcribe(wav):
+    """Run sherpa-onnx on a wav file and return the recognized text."""
+    sherpa = sherpa_dir()
+    cmd = [
+        str(sherpa / "bin" / "sherpa-onnx-offline"),
+        f"--whisper-encoder={ENCODER}",
+        f"--whisper-decoder={DECODER}",
+        f"--tokens={TOKENS}",
+        f"--num-threads={max(1, (os.cpu_count() or 2) // 2)}",
+        str(wav),
+    ]
+    # The shared build finds its libs via rpath, but belt-and-braces:
+    env = {**os.environ, "LD_LIBRARY_PATH": str(sherpa / "lib")}
+    r = subprocess.run(cmd, env=env, capture_output=True, text=True)
+    if r.returncode != 0:
+        die(f"transcription failed:\n{r.stderr.strip()}")
+    # The result is a one-line JSON object among the timing logs.
+    for line in (r.stdout + r.stderr).splitlines():
+        line = line.strip()
+        if line.startswith("{") and '"text"' in line:
+            try:
+                text = json.loads(line)["text"].strip()
+            except (json.JSONDecodeError, KeyError):
+                continue
+            # On silence Whisper hallucinates lone punctuation or a
+            # bracketed sound description like "[buzzing]"; treat both
+            # as no speech.
+            if not any(c.isalnum() for c in text):
+                return ""
+            if text[0] in "[(" and text[-1] in "])":
+                return ""
+            return text
+    return ""
+
+
+def record_cmd(wav):
+    """Command line to record 16 kHz mono s16 into `wav`."""
+    tool = recorder()
+    if tool == "pw-record":
+        return ["pw-record", "--rate", "16000", "--channels", "1",
+                "--format", "s16", str(wav)]
+    if tool == "parecord":
+        return ["parecord", "--rate=16000", "--channels=1",
+                "--format=s16le", "--file-format=wav", str(wav)]
+    return ["arecord", "-q", "-f", "S16_LE", "-r", "16000", "-c", "1",
+            str(wav)]
+
+
+def stop_recorder(pid):
+    """SIGINT the recorder so it finalizes the wav header, then wait."""
+    try:
+        os.kill(pid, signal.SIGINT)
+    except ProcessLookupError:
+        return
+    for _ in range(40):
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return
+        time.sleep(0.05)
+
+
+def emit(text, clipboard=True):
+    """Print transcribed text; optionally copy it to the clipboard."""
+    if not text:
+        warn("No speech recognized")
+        sys.exit(1)
+    print(text)
+    if clipboard:
+        to_clipboard(text)
+        ok(f"Copied {len(text)} characters to clipboard")
+
+
+# ── Commands ────────────────────────────────────────────────────────
+
+def cmd_record():
+    """Record until Enter, transcribe, print + copy."""
+    ensure_ready()
+    with tempfile.TemporaryDirectory(prefix="stt-", dir=RUNTIME) as tmpdir:
+        wav = Path(tmpdir) / "mic.wav"
+        rec = subprocess.Popen(record_cmd(wav),
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL)
+        info("Recording... press Enter to stop (Ctrl-C to cancel)")
+        try:
+            input()
+        except (KeyboardInterrupt, EOFError):
+            stop_recorder(rec.pid)
+            print(file=sys.stderr)
+            warn("Recording cancelled")
+            sys.exit(1)
+        stop_recorder(rec.pid)
+        info("Transcribing...")
+        emit(transcribe(wav))
+
+
+def cmd_toggle():
+    """Start recording, or stop + transcribe if already recording.
+
+    Made for a hotkey or the rofi system menu: feedback arrives as
+    notifications, and the text lands in the clipboard.
+    """
+    if PIDFILE.exists():
+        try:
+            pid = int(PIDFILE.read_text())
+        except ValueError:
+            pid = 0
+        PIDFILE.unlink(missing_ok=True)
+        stop_recorder(pid)
+        if not TOGGLE_WAV.is_file() or TOGGLE_WAV.stat().st_size <= 44:
+            notify("Dictation failed", "Nothing was recorded", critical=True)
+            die("nothing was recorded")
+        text = transcribe(TOGGLE_WAV)
+        TOGGLE_WAV.unlink(missing_ok=True)
+        if not text:
+            notify("Dictation failed", "No speech recognized", critical=True)
+            warn("No speech recognized")
+            sys.exit(1)
+        print(text)
+        to_clipboard(text)
+        notify("Dictation (copied)", text)
+        ok(f"Copied {len(text)} characters to clipboard")
+    else:
+        ensure_ready()
+        TOGGLE_WAV.unlink(missing_ok=True)
+        rec = subprocess.Popen(record_cmd(TOGGLE_WAV),
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL,
+                               start_new_session=True)
+        PIDFILE.write_text(str(rec.pid))
+        notify("Dictating...", "Run stt toggle again to stop")
+        info("Recording started — run `stt toggle` again to stop")
+
+
+def cmd_file(args):
+    """Transcribe an audio file; text goes to stdout only."""
+    if not args:
+        die("usage: stt file AUDIO")
+    ensure_ready()
+    path = Path(args[0])
+    if not path.is_file():
+        die(f"no such file: {path}")
+    if path.suffix.lower() == ".wav":
+        emit(transcribe(path), clipboard=False)
+        return
+    # sherpa-onnx only reads wav; convert anything else with ffmpeg.
+    if not which("ffmpeg"):
+        die("ffmpeg needed for non-wav files — sudo apt install ffmpeg")
+    with tempfile.TemporaryDirectory(prefix="stt-") as tmpdir:
+        wav = Path(tmpdir) / "converted.wav"
+        r = subprocess.run(
+            ["ffmpeg", "-loglevel", "error", "-i", str(path),
+             "-ar", "16000", "-ac", "1", str(wav)],
+            capture_output=True, text=True)
+        if r.returncode != 0:
+            die(f"ffmpeg failed: {r.stderr.strip()}")
+        emit(transcribe(wav), clipboard=False)
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: stt [command]
+
+Offline speech-to-text with Whisper (via sherpa-onnx). Runs fully
+locally on the CPU. The bare command and `toggle` copy the text to
+the clipboard; `file` prints to stdout only.
+
+commands:
+  (none)                        record until Enter, transcribe, copy
+  toggle                        start/stop recording (hotkey or rofi:
+                                notifies and copies the text on stop)
+  file AUDIO                    transcribe an audio file (stdout only)
+  --install                     download the Whisper base.en model
+                                (~200 MB; reuses kokoro's runtime)
+  --ready                       exit 0 if installed and a mic recorder
+                                is available
+
+examples:
+  stt                           dictate, then paste from the clipboard
+  stt toggle                    start dictating (again to stop)
+  stt file memo.ogg > memo.txt  transcribe a voice memo"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if len(sys.argv) < 2:
+        cmd_record()  # bare command = record from the mic
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "toggle": lambda: cmd_toggle(),
+        "file": lambda: cmd_file(args),
+        "--install": lambda: install(),
+        "--ready": lambda: sys.exit(0 if ready() else 1),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'stt --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,21 @@
+# bash completion for stt
+_stt() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "toggle file --install --ready help --help" \
+            -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        file)
+            COMPREPLY=( $(compgen -f -- "$cur") )
+            ;;
+    esac
+}
+
+complete -F _stt stt

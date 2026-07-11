@@ -225,6 +225,7 @@ They still require tldr pages and bash completions.
 | `mac`        | ✓             | ip (iproute2)      | ✓    | ✓          |
 | `win`        | ✓             | bspc, xdotool      | ✓    | ✓          |
 | `ocr`        | ✓             | tesseract, maim, xclip | ✓ | ✓         |
+| `stt`        | ✓             | sherpa-onnx, pw-record, xclip | ✓ | ✓  |
 | `theme`      | ✗             | various            | ✓    | ✓          |
 | `browser`    | ✗             | (stdlib only)      | ✓    | ✓          |
 | `shorten-url`| ✗             | curl               | ✗    | ✗          |
