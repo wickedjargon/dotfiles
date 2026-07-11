@@ -134,7 +134,10 @@ qt6-style-kvantum        # Kvantum theme engine for Qt6
 # Desktop Environment - Fonts
 fonts-noto-color-emoji   # Color emoji font from Google
 fonts-noto-core          # "No Tofu" font families (Latin, Greek, Cyrillic)
+fonts-noto-extra         # Extra weights for Noto families
+fonts-noto-unhinted      # Rare/historic scripts not in noto-core
 fonts-noto-cjk           # "No Tofu" CJK fonts (Chinese, Japanese, Korean)
+fonts-noto-cjk-extra     # Extra CJK weights (light, medium, black)
 fonts-dejavu             # DejaVu fonts (includes Core, Extra, Mono)
 
 # Development & Build Dependencies
