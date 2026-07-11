@@ -46,27 +46,12 @@ fwupdmgr get-updates
 fwupdmgr update
 ```
 
-### 2. Bluetooth Setup
-
-Pair and trust your Bluetooth devices via `bluetoothctl`:
-
-```bash
-bluetoothctl
-power on
-agent on
-default-agent
-scan on
-pair XX:XX:XX:XX:XX:XX
-trust XX:XX:XX:XX:XX:XX
-connect XX:XX:XX:XX:XX:XX
-```
-
-### 3. Restore Private Files
+### 2. Restore Private Files
 
 Configure `rclone` to authenticate with Google Drive, then pull down your private files:
 
 ```bash
-distrobox-host-exec rclone config
+rclone config
 rclone sync gdrive:Backup/new-user/d/      ~/d/      --progress
 rclone sync gdrive:Backup/new-user/.ssh/   ~/.ssh/   --progress
 rclone sync gdrive:Backup/new-user/.gnupg/ ~/.gnupg/ --progress
@@ -74,16 +59,15 @@ chmod 700 ~/.ssh ~/.gnupg
 chmod 600 ~/.ssh/id_ed25519
 ```
 
-### 4. Password Manager
+### 3. Password Manager
 
-Import the restored GPG key and clone the password store:
+Clone the password store (the GPG keyring is already in place from the restore above):
 
 ```bash
-gpg --import  # key is already restored from gdrive backup above
 pass git clone git@github.com:wickedjargon/pass-store.git ~/.password-store
 ```
 
-### 5. Android Password Sync
+### 4. Android Password Sync
 
 Install the following from F-Droid:
 
@@ -97,13 +81,13 @@ gpg --armor --export-secret-keys > /tmp/private-key.asc
 adb push /tmp/private-key.asc /sdcard/Download/private-key.asc
 ```
 
-### 6. Mullvad VPN Setup
+### 5. Mullvad VPN Setup
 
 To configure the `vpn` tool to manage your Mullvad WireGuard connections, including the required `sudoers` setup, follow the guide here:
 
 [How to Set Up Mullvad VPN](how-to/mullvad-vpn.md)
 
-### 7. archbox (Arch Distrobox)
+### 6. archbox (Arch Distrobox)
 
 ```bash
 # On the HOST:
@@ -113,6 +97,21 @@ To configure the `vpn` tool to manage your Mullvad WireGuard connections, includ
 distrobox enter archbox
 python3 ~/d/projects/dotfiles/scripts/install_arch_packages.py
 ~/d/projects/dotfiles/scripts/setup-steam.sh
+```
+
+### 7. Bluetooth Setup
+
+Pair and trust your Bluetooth devices via `bluetoothctl`:
+
+```bash
+bluetoothctl
+power on
+agent on
+default-agent
+scan on
+pair XX:XX:XX:XX:XX:XX
+trust XX:XX:XX:XX:XX:XX
+connect XX:XX:XX:XX:XX:XX
 ```
 
 ### 8. Vimium Key Mappings
