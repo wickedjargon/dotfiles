@@ -1,12 +1,11 @@
 #!/bin/sh
 
-# Path to apt-packages file
-PACKAGES_FILE="./apt-packages"
+# Install all packages from packages/debian-apt-packages.txt
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PACKAGES_FILE="$SCRIPT_DIR/../packages/debian-apt-packages.txt"
 
-# Ensure script is run from the project root or file exists
 if [ ! -f "$PACKAGES_FILE" ]; then
-    echo "Error: $PACKAGES_FILE not found in current directory."
-    echo "Please run this script from the root of the dotfiles project."
+    echo "Error: $PACKAGES_FILE not found."
     exit 1
 fi
 

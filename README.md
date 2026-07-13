@@ -42,7 +42,15 @@ After successfully running the deployment script, complete these manual steps:
 ~/d/projects/dotfiles/tests-live/run_tests.sh myuser
 ```
 
-### 2. Firmware Update
+### 2. Remove Xfce (if installed)
+
+If Xfce was selected during Debian installation:
+
+```bash
+~/d/projects/dotfiles/scripts/remove-debian-xfce.sh
+```
+
+### 3. Firmware Update
 
 Update system firmware. Keep laptop on AC power.
 
@@ -52,7 +60,7 @@ fwupdmgr get-updates
 fwupdmgr update
 ```
 
-### 3. Restore Private Files
+### 4. Restore Private Files
 
 Configure `rclone` to authenticate with Google Drive, then pull down your private files:
 
@@ -65,7 +73,7 @@ chmod 700 ~/.ssh ~/.gnupg
 chmod 600 ~/.ssh/id_ed25519
 ```
 
-### 4. Verify Keyring Unlock
+### 5. Verify Keyring Unlock
 
 Log out and back in, then confirm the login keyring unlocks without a prompt:
 
@@ -81,7 +89,7 @@ If prompted for a keyring password, delete stale keyrings and log in again:
 rm -rf ~/.local/share/keyrings/*
 ```
 
-### 5. Git & GitHub
+### 6. Git & GitHub
 
 ```bash
 git config --global user.name "Farzin Firouzi"
@@ -89,7 +97,15 @@ git config --global user.email "farzineff@gmail.com"
 gh auth login
 ```
 
-### 6. Password Manager
+### 7. SSH Remotes
+
+Convert the cloned repos from HTTPS to SSH remotes:
+
+```bash
+~/d/projects/dotfiles/scripts/setup-ssh-repos.py
+```
+
+### 8. Password Manager
 
 Clone the password store:
 
@@ -97,7 +113,7 @@ Clone the password store:
 pass git clone git@github.com:wickedjargon/pass-store.git ~/.password-store
 ```
 
-### 7. Android Password Sync
+### 9. Android Password Sync
 
 Install the following from F-Droid:
 
@@ -121,13 +137,13 @@ rm /tmp/private-key.asc
 adb shell rm /sdcard/Download/private-key.asc
 ```
 
-### 8. Mullvad VPN Setup
+### 10. Mullvad VPN Setup
 
 To configure the `vpn` tool to manage your Mullvad WireGuard connections, follow the guide here:
 
 [How to Set Up Mullvad VPN](how-to/mullvad-vpn.md)
 
-### 9. Tailscale & psync
+### 11. Tailscale & psync
 
 Join the tailnet on the laptop:
 
@@ -152,7 +168,7 @@ ssh-copy-id -p 8022 pixel-8
 psync status
 ```
 
-### 10. archbox (Arch Distrobox)
+### 12. archbox (Arch Distrobox)
 
 ```bash
 # On the HOST:
@@ -164,7 +180,7 @@ python3 ~/d/projects/dotfiles/scripts/install_arch_packages.py
 ~/d/projects/dotfiles/scripts/setup-steam.sh
 ```
 
-### 11. Bluetooth Setup
+### 13. Bluetooth Setup
 
 Pair and trust your Bluetooth devices via `bluetoothctl`:
 
@@ -179,7 +195,7 @@ trust XX:XX:XX:XX:XX:XX
 connect XX:XX:XX:XX:XX:XX
 ```
 
-### 12. Vimium Key Mappings
+### 14. Vimium Key Mappings
 
 I set `Custom key mappings` in the Vimium extension to the below so that i only have a small subset of the keybindings the extension uses.
 
@@ -201,9 +217,17 @@ map H goBack
 map L goForward
 ```
 
-### 13. Install Offline Speech Models
+### 15. Install Offline Speech Models
 
 ```bash
 kokoro --install   # ~380 MB
 stt --install      # ~200 MB
+```
+
+### 16. Prefetch Emacs Packages
+
+Pre-clone all straight.el packages so Emacs's first launch is instant:
+
+```bash
+~/d/projects/dotfiles/scripts/emacs-sync-packages.sh
 ```
