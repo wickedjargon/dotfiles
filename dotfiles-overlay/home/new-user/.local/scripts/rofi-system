@@ -33,7 +33,7 @@ case "$selection" in
     'Theme Dark') cmd='theme --dark' ;;
     'Theme Light') cmd='theme --light' ;;
     'Battery Time Left') cmd='notify-send "Battery Time Left" "$(battery-time)"' ;;
-    'Storage Free') cmd='storage-notify' ;;
+    'Storage Free') cmd='notify-send "Storage" "$(disk status)"' ;;
     'Kill Window (xkill)') cmd='xkill' ;;
     *) exit 1 ;;
 esac
