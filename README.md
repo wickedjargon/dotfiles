@@ -36,9 +36,15 @@ python3 deploy.py --username myuser --password mypass --yes
 
 After successfully running the deployment script, complete these manual steps:
 
-### 1. Firmware Update
+### 1. Verify Deployment
 
-Update system firmware Keep laptop on AC power.
+```bash
+~/d/projects/dotfiles/tests-live/run_tests.sh myuser
+```
+
+### 2. Firmware Update
+
+Update system firmware. Keep laptop on AC power.
 
 ```bash
 fwupdmgr refresh --force
@@ -46,7 +52,7 @@ fwupdmgr get-updates
 fwupdmgr update
 ```
 
-### 2. Restore Private Files
+### 3. Restore Private Files
 
 Configure `rclone` to authenticate with Google Drive, then pull down your private files:
 
@@ -59,7 +65,23 @@ chmod 700 ~/.ssh ~/.gnupg
 chmod 600 ~/.ssh/id_ed25519
 ```
 
-### 3. Git & GitHub
+### 4. Verify Keyring Unlock
+
+Log out and back in, then confirm the login keyring unlocks without a prompt:
+
+```bash
+echo -n test | secret-tool store --label=test check me
+secret-tool lookup check me
+secret-tool clear check me
+```
+
+If prompted for a keyring password, delete stale keyrings and log in again:
+
+```bash
+rm -rf ~/.local/share/keyrings/*
+```
+
+### 5. Git & GitHub
 
 ```bash
 git config --global user.name "Farzin Firouzi"
@@ -67,15 +89,15 @@ git config --global user.email "farzineff@gmail.com"
 gh auth login
 ```
 
-### 4. Password Manager
+### 6. Password Manager
 
-Clone the password store (the GPG keyring is already in place from the restore above):
+Clone the password store:
 
 ```bash
 pass git clone git@github.com:wickedjargon/pass-store.git ~/.password-store
 ```
 
-### 5. Android Password Sync
+### 7. Android Password Sync
 
 Install the following from F-Droid:
 
@@ -89,21 +111,51 @@ gpg --armor --export-secret-keys > /tmp/private-key.asc
 adb push /tmp/private-key.asc /sdcard/Download/private-key.asc
 ```
 
-### 6. Mullvad VPN Setup
+On the phone, import the key in OpenKeychain, then clone
+`git@github.com:wickedjargon/pass-store.git` inside Password Store.
 
-To configure the `vpn` tool to manage your Mullvad WireGuard connections, including the required `sudoers` setup, follow the guide here:
+Delete the exported private key from both devices afterwards:
+
+```bash
+rm /tmp/private-key.asc
+adb shell rm /sdcard/Download/private-key.asc
+```
+
+### 8. Mullvad VPN Setup
+
+To configure the `vpn` tool to manage your Mullvad WireGuard connections, follow the guide here:
 
 [How to Set Up Mullvad VPN](how-to/mullvad-vpn.md)
 
-### 7. Tailscale
+### 9. Tailscale & psync
 
-Join the tailnet — required by `psync` (see [phone setup](how-to/psync.md)):
+Join the tailnet on the laptop:
 
 ```bash
 sudo tailscale up
 ```
 
-### 8. archbox (Arch Distrobox)
+Then complete the one-time `psync` setup (see [how-to/psync.md](how-to/psync.md)):
+
+1. **Phone:** install the Tailscale app and join the tailnet.
+2. **Phone (Termux):**
+
+   ```bash
+   pkg install openssh rsync termux-services
+   termux-setup-storage
+   passwd                # set SSH password
+   sshd                  # start SSH server
+   sv-enable sshd        # auto-start on Termux launch (after restart)
+   ```
+
+3. **Laptop:** install the SSH key and verify:
+
+   ```bash
+   ssh-copy-id -p 8022 pixel-8
+   psync status
+   ```
+
+### 10. archbox (Arch Distrobox)
 
 ```bash
 # On the HOST:
@@ -115,7 +167,7 @@ python3 ~/d/projects/dotfiles/scripts/install_arch_packages.py
 ~/d/projects/dotfiles/scripts/setup-steam.sh
 ```
 
-### 9. Bluetooth Setup
+### 11. Bluetooth Setup
 
 Pair and trust your Bluetooth devices via `bluetoothctl`:
 
@@ -130,7 +182,7 @@ trust XX:XX:XX:XX:XX:XX
 connect XX:XX:XX:XX:XX:XX
 ```
 
-### 10. Vimium Key Mappings
+### 12. Vimium Key Mappings
 
 I set `Custom key mappings` in the Vimium extension to the below so that i only have a small subset of the keybindings the extension uses.
 
@@ -152,7 +204,7 @@ map H goBack
 map L goForward
 ```
 
-### 11. Install Offline Speech Models
+### 13. Install Offline Speech Models
 
 ```bash
 kokoro --install   # ~380 MB
