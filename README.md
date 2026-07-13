@@ -135,25 +135,22 @@ Join the tailnet on the laptop:
 sudo tailscale up
 ```
 
-Then complete the one-time `psync` setup (see [how-to/psync.md](how-to/psync.md)):
+On the phone, install the Tailscale app and join the tailnet. Then in Termux:
 
-1. **Phone:** install the Tailscale app and join the tailnet.
-2. **Phone (Termux):**
+```bash
+pkg install openssh rsync termux-services
+termux-setup-storage
+passwd                # set SSH password
+sshd                  # start SSH server
+sv-enable sshd        # auto-start on Termux launch (after restart)
+```
 
-   ```bash
-   pkg install openssh rsync termux-services
-   termux-setup-storage
-   passwd                # set SSH password
-   sshd                  # start SSH server
-   sv-enable sshd        # auto-start on Termux launch (after restart)
-   ```
+Back on the laptop, install the SSH key and verify:
 
-3. **Laptop:** install the SSH key and verify:
-
-   ```bash
-   ssh-copy-id -p 8022 pixel-8
-   psync status
-   ```
+```bash
+ssh-copy-id -p 8022 pixel-8
+psync status
+```
 
 ### 10. archbox (Arch Distrobox)
 
