@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+"""tz — show and set the system timezone.
+
+Requires: systemd (timedatectl)
+"""
+
+import json
+import subprocess
+import sys
+import time
+import urllib.request
+from datetime import datetime, timezone
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(cmd, timeout=15):
+    """Run a command and return the CompletedProcess."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
+
+
+# ── Timezone State ──────────────────────────────────────────────────
+GEO_URL = "https://ipinfo.io/json"
+
+
+def timedatectl_show():
+    """timedatectl properties as a dict."""
+    result = run(["timedatectl", "show"])
+    if result.returncode != 0:
+        die(f"timedatectl failed: {result.stderr.strip()}")
+    props = {}
+    for line in result.stdout.strip().splitlines():
+        key, _, value = line.partition("=")
+        props[key] = value
+    return props
+
+
+def all_zones():
+    result = run(["timedatectl", "list-timezones"])
+    if result.returncode != 0:
+        die(f"timedatectl failed: {result.stderr.strip()}")
+    return result.stdout.split()
+
+
+def match_zones(query, zones):
+    """Zones matching a query: exact first, then substring."""
+    for zone in zones:
+        if zone.lower() == query.lower():
+            return [zone]
+    return [z for z in zones if query.lower() in z.lower()]
+
+
+def local_offset():
+    """Current UTC offset as '+HH:MM'."""
+    offset = datetime.now().astimezone().strftime("%z")
+    return f"{offset[:3]}:{offset[3:]}"
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Show timezone, local/UTC time, and NTP state."""
+    props = timedatectl_show()
+    zone = props.get("Timezone", "unknown")
+    abbr = datetime.now().astimezone().tzname()
+    print(f"{GREEN}●{RESET} {BOLD}{zone}{RESET}  "
+          f"{DIM}({abbr}, UTC{local_offset()}){RESET}")
+    print(f"  Local     {datetime.now().strftime('%a %Y-%m-%d %H:%M')}")
+    print(f"  UTC       "
+          f"{datetime.now(timezone.utc).strftime('%a %Y-%m-%d %H:%M')}")
+
+    if props.get("NTPSynchronized") == "yes":
+        print(f"  NTP       {GREEN}synchronized{RESET}")
+    elif props.get("NTP") == "yes":
+        warn("NTP enabled but not synchronized")
+    else:
+        warn("NTP is disabled — clock may drift")
+
+    if props.get("LocalRTC") == "yes":
+        warn("RTC is in local time (can confuse dual-boot setups)")
+
+
+def cmd_list(args):
+    """List available zones, optionally filtered."""
+    zones = all_zones()
+    if args:
+        zones = match_zones(args[0], zones)
+        if not zones:
+            die(f"No timezone matches '{args[0]}'")
+    print("\n".join(zones))
+
+
+def cmd_set(args):
+    """Set the system timezone, fuzzy-matching the zone name."""
+    if not args:
+        die("Usage: tz set <ZONE>  (e.g. 'tz set manila')")
+
+    matches = match_zones(args[0], all_zones())
+    if not matches:
+        die(f"No timezone matches '{args[0]}' — try 'tz list'")
+    if len(matches) > 1:
+        print(f"Multiple zones match '{args[0]}':", file=sys.stderr)
+        for zone in matches:
+            print(f"  ○ {zone}", file=sys.stderr)
+        print(f"\nSpecify one, e.g.: tz set {matches[0]}",
+              file=sys.stderr)
+        sys.exit(1)
+
+    zone = matches[0]
+    info(f"Setting timezone → {BOLD}{zone}{RESET}...")
+    result = run(["timedatectl", "set-timezone", zone])
+    if result.returncode != 0:
+        die(f"Failed: {result.stderr.strip()}")
+    time.tzset()
+    ok(f"{zone} — local time is now "
+       f"{time.strftime('%a %Y-%m-%d %H:%M')}")
+
+
+def cmd_ip():
+    """Compare the system timezone with IP geolocation."""
+    try:
+        with urllib.request.urlopen(GEO_URL, timeout=10) as response:
+            geo = json.load(response)
+    except OSError as e:
+        die(f"Geolocation lookup failed: {e}")
+
+    system_zone = timedatectl_show().get("Timezone", "unknown")
+    org = geo.get("org", "")
+    print(f"{CYAN}▸{RESET} {BOLD}{geo.get('ip', '?')}{RESET}"
+          f"{f'  {DIM}({org}){RESET}' if org else ''}")
+    print(f"  Location  {geo.get('city', '?')}, "
+          f"{geo.get('country', '?')}")
+    print(f"  IP zone   {geo.get('timezone', '?')}")
+    print(f"  System    {system_zone}")
+
+    if geo.get("timezone") == system_zone:
+        ok("IP geolocation matches the system timezone")
+    else:
+        warn("IP geolocation disagrees with the system timezone "
+             "(VPN or roaming eSIM?)")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: tz [command] [options]
+
+Show and set the system timezone (via timedatectl).
+
+commands:
+  (none)                        show timezone, local/UTC time, NTP state
+  set <ZONE>                    set the timezone (fuzzy-matched)
+  list [FILTER]                 list available timezones
+  ip                            compare system timezone with IP location
+
+Zone names match case-insensitively and by substring; when exactly one
+zone matches, it is applied. 'tz ip' helps spot mismatches when a VPN
+or travel eSIM makes IP geolocation point somewhere else.
+
+examples:
+  tz                            what timezone am I on?
+  tz set manila                 set Asia/Manila
+  tz set Europe/Amsterdam       set an exact zone
+  tz list asia                  zones matching 'asia'
+  tz ip                         where does my IP geolocate?"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not which("timedatectl"):
+        die("timedatectl not installed (need systemd)")
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "set":  lambda: cmd_set(args),
+        "list": lambda: cmd_list(args),
+        "ip":   lambda: cmd_ip(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'tz --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

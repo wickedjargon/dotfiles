@@ -1,0 +1,22 @@
+# bash completion for tz
+_tz() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "set list ip help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        set|list)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                COMPREPLY=( $(compgen -W "$(timedatectl list-timezones 2>/dev/null)" -- "$cur") )
+            fi
+            ;;
+    esac
+}
+
+complete -F _tz tz
