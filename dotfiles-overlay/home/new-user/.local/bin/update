@@ -2,9 +2,9 @@
 """update — one view of everything updatable on this machine.
 
 Covers apt, flatpak, firmware (fwupd), self-updating tools
-(yt-dlp), and the archbox distrobox container. Status is read-only;
-applying updates uses sudo where needed and runs interactively so
-prompts are visible.
+(yt-dlp), and the archbox distrobox container. Strictly read-only:
+it reports what is pending and prints the commands to apply the
+updates, but never runs them itself.
 
 Requires: apt; optional: flatpak, fwupdmgr, yt-dlp, distrobox
 """
@@ -17,7 +17,6 @@ import time
 from shutil import which
 
 # ── Colors ──────────────────────────────────────────────────────────
-RED    = "\033[0;31m"
 GREEN  = "\033[0;32m"
 YELLOW = "\033[0;33m"
 CYAN   = "\033[0;36m"
@@ -27,14 +26,6 @@ RESET  = "\033[0m"
 
 
 # ── Helpers ─────────────────────────────────────────────────────────
-def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
-def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
-def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
-def die(msg):
-    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
-    sys.exit(1)
-
-
 def run(cmd, timeout=60):
     """Run a command captured (for status checks)."""
     try:
@@ -45,11 +36,6 @@ def run(cmd, timeout=60):
         return subprocess.CompletedProcess(cmd, 1, "", "Timed out")
     except FileNotFoundError:
         return subprocess.CompletedProcess(cmd, 1, "", "Command not found")
-
-
-def run_live(cmd):
-    """Run a command with inherited stdio (sudo/apt prompts visible)."""
-    return subprocess.run(cmd).returncode
 
 
 APT_LISTS = "/var/lib/apt/lists"
@@ -130,151 +116,78 @@ def _count_line(label, count, stale_note=""):
               f"update{'s' if count != 1 else ''} pending{stale_note}")
 
 
-# ── Commands ────────────────────────────────────────────────────────
+UPDATE_COMMANDS = {
+    "apt":      "sudo apt update && sudo apt full-upgrade",
+    "flatpak":  "flatpak update",
+    "firmware": "fwupdmgr refresh; fwupdmgr update",
+    "archbox":  "distrobox enter archbox -- sudo pacman -Syu",
+}
+
+
 def cmd_status():
-    """Show pending updates per source."""
+    """Show pending updates per source and how to apply them."""
     age = apt_lists_age_hours()
-    note = ""
+    lists_stale = age is None or age > 48
     if age is None:
         note = f"  {DIM}(lists never refreshed){RESET}"
     elif age > 48:
-        note = f"  {YELLOW}(lists {age / 24:.0f}d old — run: " \
-               f"update apt){RESET}"
+        note = f"  {YELLOW}(lists {age / 24:.0f}d old){RESET}"
     else:
         note = f"  {DIM}(lists {age:.0f}h old){RESET}"
-    _count_line("apt", apt_upgradable(), note)
-    _count_line("flatpak", flatpak_updates())
-    _count_line("firmware", firmware_updates())
-    _count_line("archbox", archbox_updates())
+
+    counts = {
+        "apt":      apt_upgradable(),
+        "flatpak":  flatpak_updates(),
+        "firmware": firmware_updates(),
+        "archbox":  archbox_updates(),
+    }
+
+    _count_line("apt", counts["apt"], note)
+    _count_line("flatpak", counts["flatpak"])
+    _count_line("firmware", counts["firmware"])
+    _count_line("archbox", counts["archbox"])
     if which("yt-dlp"):
         print(f"  {DIM}○{RESET} {'yt-dlp':<10} "
-              f"{DIM}check with: update tools{RESET}")
+              f"{DIM}check with: yt-dlp -U{RESET}")
 
+    pending = [name for name, count in counts.items() if count]
+    if lists_stale and "apt" not in pending:
+        # Stale lists mean the apt count can't be trusted; refresh first.
+        pending.insert(0, "apt")
 
-def cmd_apt():
-    """Refresh lists and apply apt upgrades (interactive)."""
-    info("Updating apt package lists...")
-    if run_live(["sudo", "apt", "update"]) != 0:
-        die("apt update failed")
-    info("Upgrading packages...")
-    if run_live(["sudo", "apt", "full-upgrade"]) != 0:
-        die("apt full-upgrade failed")
-    ok("apt up to date")
-
-
-def cmd_flatpak():
-    if not which("flatpak"):
-        die("flatpak not installed")
-    info("Updating flatpaks...")
-    if run_live(["flatpak", "update", "-y"]) != 0:
-        die("flatpak update failed")
-    ok("flatpak up to date")
-
-
-def cmd_firmware():
-    if not which("fwupdmgr"):
-        die("fwupd not installed")
-    info("Refreshing firmware metadata...")
-    run_live(["fwupdmgr", "refresh"])  # exits nonzero when fresh; fine
-    info("Applying firmware updates...")
-    rc = run_live(["fwupdmgr", "update"])
-    if rc == 0:
-        ok("Firmware up to date")
-    else:
-        # fwupdmgr exits 2 for "nothing to do"
-        info("No firmware updates applied")
-
-
-def cmd_archbox():
-    if not which("distrobox"):
-        die("distrobox not installed")
-    info("Updating archbox packages...")
-    if run_live(["distrobox", "enter", "archbox", "--", "sudo", "pacman", "-Syu"]) != 0:
-        die("archbox update failed")
-    ok("archbox up to date")
-
-
-def cmd_tools():
-    """Self-update tools that manage their own binaries."""
-    if not which("yt-dlp"):
-        die("No self-updating tools found (yt-dlp)")
-    info("Updating yt-dlp...")
-    rc = run_live(["yt-dlp", "-U"])
-    if rc != 0:
-        warn("yt-dlp self-update failed (apt-managed copies "
-             "update via apt instead)")
-    else:
-        ok("Tools checked")
-
-
-def cmd_all():
-    """Everything, in order."""
-    cmd_apt()
-    if which("flatpak"):
-        cmd_flatpak()
-    if which("fwupdmgr"):
-        cmd_firmware()
-    if which("distrobox"):
-        cmd_archbox()
-    if which("yt-dlp"):
-        cmd_tools()
-    ok("All sources updated")
+    if pending:
+        print()
+        print("to update:")
+        for name in pending:
+            print(f"  {CYAN}{UPDATE_COMMANDS[name]}{RESET}")
 
 
 # ── Help + Main ─────────────────────────────────────────────────────
 HELP_TEXT = """\
-usage: update [command]
+usage: update
 
-One view of everything updatable: apt, flatpak, firmware, tools.
-
-commands:
-  (none)                        show pending updates per source
-  all                           update everything, in order
-  apt                           apt update + full-upgrade
-  flatpak                       update flatpaks
-  firmware                      refresh + apply firmware (fwupd)
-  archbox                       update archbox container (pacman)
-  tools                         self-update yt-dlp
-
-Status is read-only. Applying updates runs interactively (sudo and
-apt prompts are visible) — nothing is auto-confirmed except flatpak.
-
-examples:
-  update                        what's pending?
-  update all                    patch everything
-  update apt                    just the system packages
-  update firmware               just device firmware"""
+One view of everything updatable: apt, flatpak, firmware, archbox,
+tools. Read-only — reports pending updates and prints the commands
+to apply them, but never runs them itself."""
 
 
 def main():
-    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
-        print(HELP_TEXT)
-        sys.exit(0)
-
-    if not which("apt-get"):
-        die("apt not found (Debian-family only)")
-
-    if len(sys.argv) < 2:
-        cmd_status()
-        return
-
-    command = sys.argv[1]
-
-    commands = {
-        "all":      cmd_all,
-        "apt":      cmd_apt,
-        "flatpak":  cmd_flatpak,
-        "firmware": cmd_firmware,
-        "archbox":  cmd_archbox,
-        "tools":    cmd_tools,
-    }
-
-    if command not in commands:
-        print(f"Error: unknown command '{command}'", file=sys.stderr)
-        print("Run 'update --help' for usage.", file=sys.stderr)
+    if len(sys.argv) >= 2:
+        if sys.argv[1] in ("-h", "--help", "help"):
+            print(HELP_TEXT)
+            sys.exit(0)
+        print(f"Error: unexpected argument '{sys.argv[1]}'",
+              file=sys.stderr)
+        print("update takes no arguments; it only reports status.",
+              file=sys.stderr)
         sys.exit(1)
 
-    commands[command]()
+    if not which("apt-get"):
+        print("Error: apt not found (Debian-family only)",
+              file=sys.stderr)
+        sys.exit(1)
+
+    cmd_status()
 
 
 if __name__ == "__main__":

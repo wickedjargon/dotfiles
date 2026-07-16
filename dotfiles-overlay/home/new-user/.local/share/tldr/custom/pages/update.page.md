@@ -1,28 +1,8 @@
 # update
 
-> One view of everything updatable: apt, flatpak, firmware (fwupd), and self-updating tools.
-> Status is read-only; applying updates runs interactively so sudo/apt prompts are visible.
+> One view of everything updatable: apt, flatpak, firmware (fwupd), archbox, and self-updating tools.
+> Read-only: reports pending updates and prints the commands to apply them, but never runs them itself.
 
-- Show pending updates per source:
+- Show pending updates per source and the commands to apply them:
 
 `update`
-
-- Update everything, in order:
-
-`update all`
-
-- Just the system packages (apt update + full-upgrade):
-
-`update apt`
-
-- Just flatpaks:
-
-`update flatpak`
-
-- Refresh and apply device firmware:
-
-`update firmware`
-
-- Self-update yt-dlp:
-
-`update tools`
