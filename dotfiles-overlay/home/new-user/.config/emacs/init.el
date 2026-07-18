@@ -214,9 +214,17 @@
   ;; load `lisp' directory
   (add-to-list 'load-path (expand-file-name "fff-lisp" user-emacs-directory))
 
-  ;; Automatically load all .el files in that directory
-  (dolist (file (directory-files (expand-file-name "fff-lisp" user-emacs-directory) t "\\.el$"))
-    (load (file-name-sans-extension file)))
+  (require 'fff-files)
+  (require 'fff-buffers)
+  (require 'fff-text)
+  (require 'fff-evil)
+  (require 'fff-shell)
+  (require 'fff-ui)
+  (require 'fff-misc)
+  (require 'fff-stt)
+  (require 'fff-transient-find)
+  (require 'hide-comnt)
+  (require 'htop-style-monitor)
 
   (unless (display-graphic-p)
     (with-eval-after-load 'evil
@@ -602,10 +610,10 @@ TTY frames (standalone non-daemon only) get tty-dark."
   (evil-leader/set-key "v v" 'eval-expression)
 
   ;; left / right new window prefix and move current window
-  (evil-leader/set-key "x h" 'other-window-prefix-left)
-  (evil-leader/set-key "x l" 'other-window-prefix-right)
-  (evil-leader/set-key "x H" 'move-current-window-left)
-  (evil-leader/set-key "x L" 'move-current-window-right)
+  (evil-leader/set-key "x h" 'fff-other-window-prefix-left)
+  (evil-leader/set-key "x l" 'fff-other-window-prefix-right)
+  (evil-leader/set-key "x H" 'fff-move-current-window-left)
+  (evil-leader/set-key "x L" 'fff-move-current-window-right)
 
   ;; yasnippet
   (evil-leader/set-key "c s" 'yas-insert-snippet)
