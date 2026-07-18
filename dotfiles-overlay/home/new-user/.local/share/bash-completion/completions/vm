@@ -16,14 +16,18 @@ _vm() {
             COMPREPLY=( $(compgen -W "x86_64 aarch64" -- "$cur") )
             return
             ;;
-        --name|--ram|--disk)
+        --os)
+            COMPREPLY=( $(compgen -W "win10 win11 linux" -- "$cur") )
+            return
+            ;;
+        --name|--ram|--disk|--cpus)
             return
             ;;
     esac
     case "$cmd" in
         install)
             if [ "$COMP_CWORD" -eq 2 ]; then
-                COMPREPLY=( $(compgen -W "debian arch alpine ubuntu" -- "$cur") )
+                COMPREPLY=( $(compgen -W "debian arch alpine ubuntu win10 win11" -- "$cur") )
             else
                 COMPREPLY=( $(compgen -W "--name --ram --disk --arch" -- "$cur") )
             fi
@@ -32,7 +36,7 @@ _vm() {
             if [ "$COMP_CWORD" -eq 2 ]; then
                 COMPREPLY=( $(compgen -f -X '!*.iso' -- "$cur") $(compgen -d -- "$cur") )
             else
-                COMPREPLY=( $(compgen -W "--name --ram --disk --arch" -- "$cur") )
+                COMPREPLY=( $(compgen -W "--name --os --ram --disk --cpus --arch" -- "$cur") )
             fi
             ;;
         start|stop|ssh|delete)

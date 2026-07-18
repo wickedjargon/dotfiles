@@ -88,6 +88,8 @@ qemu-system-x86          # QEMU full-system emulator for x86/x86_64 (run VMs)
 qemu-utils               # QEMU disk image tools (qemu-img, qemu-nbd)
 qemu-user-static         # QEMU user-mode emulation (run foreign-arch binaries via binfmt)
 binfmt-support           # Register extra binary formats (transparent foreign-arch exec)
+ovmf                     # UEFI firmware for VMs (vm: Windows guests)
+swtpm                    # TPM 2.0 emulator (vm: Windows 11 guests)
 
 # Graphical Applications
 firefox-esr              # Web browser (Extended Support Release)

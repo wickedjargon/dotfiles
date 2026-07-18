@@ -3,16 +3,19 @@
 
 Download an installer ISO, create a VM, run it, ssh in, and delete
 it. Images live in ~/virtual-machines as <name>.<arch>.<RAM>.qcow2 —
-the same convention create-qemu-vm writes and rofi-explorer (super+e)
-launches, so VMs made here show up everywhere.
+the same convention rofi-explorer (super+e) launches, so VMs made
+here show up everywhere. Windows guests get UEFI, TPM 2.0 (Win11)
+and in-box-driver devices automatically.
 
-Requires: qemu-system-x86_64 / qemu-system-aarch64, curl (install)
+Requires: qemu-system-x86_64 / qemu-system-aarch64, qemu-img,
+          curl (install), ovmf + swtpm (Windows guests)
 """
 
 import hashlib
 import json
 import os
 import re
+import shutil
 import signal
 import socket
 import subprocess
@@ -48,6 +51,58 @@ DEFAULT_PORTS = {"x86_64": 2222, "aarch64": 2223}
 
 FILENAME_RE = re.compile(
     r"^(?P<name>.+)\.(?P<arch>x86_64|aarch64)\.(?P<ram>\d+[GM]B?)\.qcow2$")
+
+OVMF_DIR = "/usr/share/OVMF"
+
+# ── OS Profiles ─────────────────────────────────────────────────────
+# What `create` provisions and `start` boots per guest OS. Windows
+# needs UEFI (plus TPM 2.0 and Secure Boot keys for 11) and devices
+# it has in-box drivers for (SATA disk, e1000e NIC); Linux guests
+# get virtio. `create` writes the chosen profile to a <image>.json
+# sidecar so `start` applies it on every boot; no sidecar = linux.
+OS_PROFILES = {
+    "linux": {"uefi": False, "tpm": False, "secure": False,
+              "ram": "1G", "disk": "12G", "cpus": 2},
+    "win10": {"uefi": True,  "tpm": False, "secure": False,
+              "ram": "4G", "disk": "64G", "cpus": 4},
+    "win11": {"uefi": True,  "tpm": True,  "secure": True,
+              "ram": "4G", "disk": "64G", "cpus": 4},
+}
+
+
+def detect_os(iso_filename):
+    """Guess the guest OS from an ISO filename: 'win10', 'win11' or
+    'linux'."""
+    name = iso_filename.lower()
+    m = re.search(r"win(?:dows)?[-_ ]?(10|11)", name)
+    if m:
+        return "win" + m.group(1)
+    if "windows" in name:
+        return "win11"  # unversioned — assume the stricter profile
+    return "linux"
+
+
+def profile_for(vm):
+    return OS_PROFILES.get(vm.get("os"), OS_PROFILES["linux"])
+
+
+def conf_path(image_path):
+    return image_path + ".json"
+
+
+def read_conf(image_path):
+    """Per-VM overrides written by `create`: {'os', 'cpus'}."""
+    try:
+        with open(conf_path(image_path)) as f:
+            conf = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+    os_name = conf.get("os")
+    if os_name not in OS_PROFILES:
+        os_name = "linux"
+    return {"os": os_name,
+            "cpus": int(conf.get("cpus",
+                                 OS_PROFILES[os_name]["cpus"]))}
 
 
 def parse_vm_filename(filename):
@@ -119,6 +174,7 @@ def get_vms():
         pid = state["pid"] if state else qemu_pid_for(path)
         vms.append({
             **parsed,
+            **read_conf(path),
             "path": path,
             "pid": pid,
             "port": (state or {}).get("port",
@@ -140,6 +196,7 @@ def vm_from_path(path):
     pid = state["pid"] if state else qemu_pid_for(path)
     return {
         **parsed,
+        **read_conf(path),
         "path": path,
         "pid": pid,
         "port": (state or {}).get("port", DEFAULT_PORTS[parsed["arch"]]),
@@ -191,19 +248,93 @@ def resolve_vm(name=None, want_running=None):
 
 
 # ── Launch ──────────────────────────────────────────────────────────
-def build_qemu_command(vm, port, monitor, headless=False):
-    """qemu argv for booting an installed VM from its disk."""
-    cmd = [f"qemu-system-{vm['arch']}", "-m", vm["ram"]]
+def ensure_uefi(vm):
+    """Firmware for a UEFI guest: (code_path, per-VM vars copy, smm).
+
+    The .ms build ships Microsoft's Secure Boot keys (Windows 11
+    setup checks for them) and requires SMM; fall back to the plain
+    build when it's absent. The vars store is copied next to the
+    disk image so boot entries persist.
+    """
+    candidates = [(".fd", False)]
+    if profile_for(vm)["secure"]:
+        candidates.insert(0, (".ms.fd", True))
+    for suffix, smm in candidates:
+        code = os.path.join(OVMF_DIR, "OVMF_CODE_4M" + suffix)
+        template = os.path.join(OVMF_DIR, "OVMF_VARS_4M" + suffix)
+        if os.path.exists(code) and os.path.exists(template):
+            break
+    else:
+        die("OVMF firmware not found — install it: sudo apt install ovmf")
+    vars_path = vm["path"] + ".vars.fd"
+    if not os.path.exists(vars_path):
+        shutil.copyfile(template, vars_path)
+    return code, vars_path, smm
+
+
+def start_swtpm(vm):
+    """Launch a TPM 2.0 emulator for this VM; returns its socket.
+
+    TPM state lives next to the disk image so it survives reboots
+    (BitLocker would otherwise lose its keys); swtpm exits together
+    with QEMU (--terminate).
+    """
+    if not which("swtpm"):
+        die("swtpm not installed (needed for a TPM 2.0 guest): "
+            "sudo apt install swtpm")
+    state_dir = vm["path"] + ".tpm"
+    os.makedirs(state_dir, exist_ok=True)
+    sock = os.path.join(RUNTIME, f"vm-{vm['name']}-tpm.sock")
+    try:
+        os.unlink(sock)
+    except OSError:
+        pass
+    subprocess.Popen(
+        ["swtpm", "socket", "--tpm2", "--terminate",
+         "--tpmstate", f"dir={state_dir}",
+         "--ctrl", f"type=unixio,path={sock}"],
+        start_new_session=True)
+    for _ in range(50):
+        if os.path.exists(sock):
+            return sock
+        time.sleep(0.1)
+    die("swtpm did not come up")
+
+
+def build_qemu_command(vm, port, monitor, headless=False, iso=None,
+                       uefi=None, tpm_sock=None):
+    """qemu argv for a VM — booting from disk, or the installer when
+    `iso` is given. `uefi` is ensure_uefi()'s triple, `tpm_sock`
+    start_swtpm()'s socket."""
+    profile = profile_for(vm)
+    windows = vm.get("os", "linux").startswith("win")
+    cmd = [f"qemu-system-{vm['arch']}", "-m", vm["ram"],
+           "-smp", str(vm.get("cpus", profile["cpus"]))]
     if vm["arch"] == "x86_64":
         if os.path.exists("/dev/kvm"):
-            cmd.append("-enable-kvm")
+            cmd += ["-enable-kvm", "-cpu", "host"]
+        if uefi:
+            code, vars_path, smm = uefi
+            cmd += ["-machine", "q35,smm=on" if smm else "q35"]
+            if smm:
+                cmd += ["-global",
+                        "driver=cfi.pflash01,property=secure,value=on"]
+            cmd += [
+                "-drive", f"if=pflash,format=raw,readonly=on,file={code}",
+                "-drive", f"if=pflash,format=raw,file={vars_path}",
+            ]
         cmd += [
+            # On q35 (Windows) the default bus is AHCI/SATA, which
+            # Windows can drive without extra drivers.
             "-drive", f"file={vm['path']},format=qcow2",
             "-netdev", f"user,id=net0,hostfwd=tcp::{port}-:22",
-            "-device", "virtio-net-pci,netdev=net0",
+            "-device",
+            ("e1000e" if windows else "virtio-net-pci") + ",netdev=net0",
             "-device", "intel-hda", "-device", "hda-output",
         ]
-    else:  # aarch64, mirroring create-qemu-vm
+        if windows:
+            cmd += ["-device", "qemu-xhci", "-device", "usb-tablet"]
+    else:  # aarch64
         cmd += [
             "-machine", "virt", "-cpu", "cortex-a57",
             "-drive", f"file={vm['path']},format=qcow2,if=virtio",
@@ -214,21 +345,37 @@ def build_qemu_command(vm, port, monitor, headless=False):
             "-device", "qemu-xhci",
             "-device", "usb-kbd", "-device", "usb-mouse",
         ]
-    cmd += ["-monitor", f"unix:{monitor},server,nowait"]
+    if tpm_sock:
+        cmd += [
+            "-chardev", f"socket,id=chrtpm,path={tpm_sock}",
+            "-tpmdev", "emulator,id=tpm0,chardev=chrtpm",
+            "-device", "tpm-tis,tpmdev=tpm0",
+        ]
+    if iso:
+        cmd += ["-cdrom", iso]
+        if not uefi:
+            cmd += ["-boot", "d"]  # BIOS; OVMF boots the CD on its own
+    if monitor:
+        cmd += ["-monitor", f"unix:{monitor},server,nowait"]
     cmd += ["-display", "none" if headless else "gtk,zoom-to-fit=on"]
     return cmd
 
 
 # ── ISO Catalog ─────────────────────────────────────────────────────
-# create-qemu-vm boots the installer and writes the qcow2 with the
-# filename convention above; `vm install` just gets it a fresh ISO.
-CREATE_SCRIPT = os.path.expanduser("~/.local/scripts/create-qemu-vm")
-
 DISTRO_HELP = {
     "debian": "netinst (x86_64, aarch64)",
     "arch":   "official iso (x86_64)",
     "alpine": "virt iso (x86_64, aarch64)",
     "ubuntu": "live server (x86_64)",
+    "win10":  "prints the ISO download URL (browser-gated)",
+    "win11":  "prints the ISO download URL (browser-gated)",
+}
+
+# Microsoft gates ISO downloads behind a browser session, so
+# `vm install win10/win11` can only point at the right page.
+WINDOWS_ISO_PAGES = {
+    "win10": "https://www.microsoft.com/software-download/windows10ISO",
+    "win11": "https://www.microsoft.com/software-download/windows11",
 }
 
 
@@ -385,12 +532,13 @@ def download_iso(url, checksum_url):
 
 def parse_create_opts(args):
     """Split install/create args into positionals and creation options."""
-    opts = {"name": None, "ram": None, "disk": None, "arch": "x86_64"}
+    opts = {"name": None, "ram": None, "disk": None, "arch": "x86_64",
+            "os": None, "cpus": None}
     positional = []
     i = 0
     while i < len(args):
         a = args[i]
-        if a in ("--name", "--ram", "--disk", "--arch"):
+        if a in ("--name", "--ram", "--disk", "--arch", "--os", "--cpus"):
             if i + 1 >= len(args):
                 die(f"{a} needs a value")
             opts[a[2:]] = args[i + 1]
@@ -400,32 +548,76 @@ def parse_create_opts(args):
         i += 1
     if opts["arch"] not in ("x86_64", "aarch64"):
         die("--arch must be x86_64 or aarch64")
+    if opts["os"]:
+        opts["os"] = {"windows": "win11"}.get(opts["os"], opts["os"])
+        if opts["os"] not in OS_PROFILES:
+            valid = ", ".join(sorted(OS_PROFILES))
+            die(f"--os must be one of: {valid}")
+    if opts["cpus"] and not str(opts["cpus"]).isdigit():
+        die("--cpus must be a number")
     return positional, opts
 
 
-def build_create_command(iso_path, opts):
-    """argv for create-qemu-vm from parsed options."""
-    script = which("create-qemu-vm") or CREATE_SCRIPT
-    cmd = [script, iso_path, "--arch", opts["arch"]]
-    if opts["name"]:
-        cmd += ["--name", opts["name"]]
-    if opts["ram"]:
-        cmd += ["--ram", opts["ram"]]
-    if opts["disk"]:
-        cmd += ["--disk-size", opts["disk"]]
-    return cmd
+def default_name(iso_path, os_name):
+    """A VM name nobody typed: the OS for Windows, the leading word
+    of the ISO for Linux ('debian-13.0-...' → 'debian')."""
+    if os_name != "linux":
+        return os_name
+    m = re.match(r"[a-z]+", os.path.basename(iso_path).lower())
+    return m.group(0) if m else "vm"
 
 
-def _run_create(iso_path, opts):
-    script = which("create-qemu-vm") or CREATE_SCRIPT
-    if not os.path.exists(script):
-        die("create-qemu-vm not found (expected in ~/.local/scripts)")
-    info("Handing off to create-qemu-vm — the installer will boot "
-         "in a QEMU window...")
-    rc = subprocess.run(build_create_command(iso_path, opts)).returncode
+def create_vm(iso_path, opts):
+    """Provision a VM for an ISO and boot its installer (foreground)."""
+    os_name = opts["os"] or detect_os(os.path.basename(iso_path))
+    profile = OS_PROFILES[os_name]
+    if os_name != "linux" and opts["arch"] != "x86_64":
+        die("Windows guests are x86_64 only")
+    if os_name != "linux" and not opts["os"]:
+        extras = " + TPM 2.0 + Secure Boot" if profile["tpm"] else ""
+        info(f"Windows ISO detected — using the {os_name} profile "
+             f"(UEFI{extras}, SATA disk, e1000e NIC). "
+             f"{DIM}Override with --os linux.{RESET}")
+
+    name = opts["name"] or default_name(iso_path, os_name)
+    arch = opts["arch"]
+    ram = re.sub(r"B$", "", (opts["ram"] or profile["ram"]).upper())
+    disk = opts["disk"] or profile["disk"]
+    cpus = int(opts["cpus"] or profile["cpus"])
+
+    for tool in ("qemu-img", f"qemu-system-{arch}"):
+        if not which(tool):
+            die(f"{tool} not installed")
+
+    os.makedirs(VM_DIR, exist_ok=True)
+    path = os.path.join(VM_DIR, f"{name}.{arch}.{ram}.qcow2")
+    if os.path.exists(path):
+        die(f"VM disk already exists: {path}")
+
+    info(f"Creating {os.path.basename(path)} ({disk})...")
+    rc = subprocess.run(["qemu-img", "create", "-f", "qcow2", path, disk],
+                        stdout=subprocess.DEVNULL).returncode
     if rc != 0:
-        die(f"create-qemu-vm exited with code {rc}")
-    ok("VM created — it now shows up in `vm` and the super+e explorer")
+        die("qemu-img failed")
+
+    vm = {"name": name, "arch": arch, "ram": ram, "path": path,
+          "os": os_name, "cpus": cpus}
+    if os_name != "linux" or opts["cpus"]:
+        with open(conf_path(path), "w") as f:
+            json.dump({"os": os_name, "cpus": cpus}, f)
+
+    uefi = ensure_uefi(vm) if profile["uefi"] else None
+    tpm_sock = start_swtpm(vm) if profile["tpm"] else None
+
+    info(f"Booting the installer ({os_name}, {ram}, {cpus} cpus) — "
+         "Ctrl+Alt+G releases the mouse...")
+    cmd = build_qemu_command(vm, DEFAULT_PORTS[arch], None, iso=iso_path,
+                             uefi=uefi, tpm_sock=tpm_sock)
+    rc = subprocess.run(cmd).returncode
+    if rc not in (0, 1):  # 1 = window closed normally
+        die(f"QEMU exited with code {rc} — clean up with: vm delete {name}")
+    ok(f"{name} created — boot it with `vm start {name}`; it also "
+       "shows up in `vm` and the super+e explorer")
 
 
 # ── Commands ────────────────────────────────────────────────────────
@@ -434,19 +626,20 @@ def cmd_status():
     vms = get_vms()
     if not vms:
         print(f"{DIM}No VMs in {VM_DIR}.{RESET} "
-              f"Create one with: create-qemu-vm")
+              f"Create one with: vm install debian, or vm create <iso>")
         return
     width = max(len(v["name"]) for v in vms)
     for v in vms:
         size = os.path.getsize(v["path"])
         size_str = f"{size / 1024**3:.1f}G"
+        os_tag = f"  {v['os']}" if v.get("os", "linux") != "linux" else ""
         if v["pid"]:
             print(f"  {GREEN}●{RESET} {BOLD}{v['name']:<{width}}{RESET}  "
-                  f"{v['arch']}  {v['ram']}  {size_str}  "
+                  f"{v['arch']}  {v['ram']}  {size_str}{os_tag}  "
                   f"{DIM}pid {v['pid']}, ssh -p {v['port']}{RESET}")
         else:
             print(f"  {DIM}○{RESET} {v['name']:<{width}}  "
-                  f"{DIM}{v['arch']}  {v['ram']}  {size_str}{RESET}")
+                  f"{DIM}{v['arch']}  {v['ram']}  {size_str}{os_tag}{RESET}")
 
 
 def cmd_start(args):
@@ -463,7 +656,11 @@ def cmd_start(args):
 
     port = port_override or DEFAULT_PORTS[vm["arch"]]
     monitor = os.path.join(RUNTIME, f"vm-{vm['name']}.monitor")
-    cmd = build_qemu_command(vm, port, monitor, headless=headless)
+    profile = profile_for(vm)
+    uefi = ensure_uefi(vm) if profile["uefi"] else None
+    tpm_sock = start_swtpm(vm) if profile["tpm"] else None
+    cmd = build_qemu_command(vm, port, monitor, headless=headless,
+                             uefi=uefi, tpm_sock=tpm_sock)
 
     mode = "headless" if headless else "with display"
     info(f"Starting {BOLD}{vm['name']}{RESET} ({vm['arch']}, {vm['ram']}, "
@@ -557,15 +754,24 @@ def cmd_install(args):
     """Download a distro's latest ISO (verified) and create a VM."""
     positional, opts = parse_create_opts(args)
     if not positional:
-        print(f"{BOLD}Available distros{RESET}")
+        print(f"{BOLD}Available targets{RESET}")
         for name, desc in sorted(DISTRO_HELP.items()):
             print(f"  {name:<8} {DIM}{desc}{RESET}")
         print(f"\n{DIM}Usage: vm install <distro> [--name N] [--ram 2G] "
               f"[--disk 12G] [--arch aarch64]{RESET}")
         return
     distro = positional[0].lower()
+    distro = {"windows": "win11", "windows10": "win10",
+              "windows11": "win11"}.get(distro, distro)
     if not opts["name"]:
         opts["name"] = distro
+
+    if distro in WINDOWS_ISO_PAGES:
+        info(f"Microsoft gates {distro} ISO downloads behind a browser "
+             f"session — download it yourself from:")
+        print(f"  {BOLD}{WINDOWS_ISO_PAGES[distro]}{RESET}")
+        info("then create the VM from it: vm create <file.iso>")
+        return
 
     info(f"Resolving the latest {distro} ISO...")
     try:
@@ -574,19 +780,19 @@ def cmd_install(args):
         die(f"Could not reach the {distro} mirror: {e}")
 
     iso_path = download_iso(iso_url, checksum_url)
-    _run_create(iso_path, opts)
+    create_vm(iso_path, opts)
 
 
 def cmd_create(args):
-    """Create a VM from a local ISO (wraps create-qemu-vm)."""
+    """Create a VM from a local ISO."""
     positional, opts = parse_create_opts(args)
     if not positional:
-        die("Usage: vm create <file.iso> [--name N] [--ram 2G] "
-            "[--disk 12G] [--arch aarch64]")
+        die("Usage: vm create <file.iso> [--name N] [--os win11] "
+            "[--ram 4G] [--disk 64G] [--cpus 4] [--arch aarch64]")
     iso_path = os.path.expanduser(positional[0])
     if not os.path.isfile(iso_path):
         die(f"ISO not found: {iso_path}")
-    _run_create(iso_path, opts)
+    create_vm(iso_path, opts)
 
 
 def cmd_delete(args):
@@ -610,6 +816,13 @@ def cmd_delete(args):
         info("Nothing deleted")
         return
     os.unlink(vm["path"])
+    # Sidecars: profile conf, UEFI vars store, TPM state.
+    for extra in (conf_path(vm["path"]), vm["path"] + ".vars.fd"):
+        try:
+            os.unlink(extra)
+        except OSError:
+            pass
+    shutil.rmtree(vm["path"] + ".tpm", ignore_errors=True)
     try:
         os.unlink(state_path(vm["name"]))
     except OSError:
@@ -633,21 +846,33 @@ commands:
   delete <NAME>                 delete the disk image (asks first)
   list                          machine-parseable VM list
 
-install/create options: --name N  --ram 2G  --disk 12G  --arch aarch64
-Distros: debian, arch, alpine, ubuntu (bare `vm install` lists them).
+install/create options:
+  --name N  --os win11|win10|linux  --ram 2G  --disk 12G  --cpus 4
+  --arch aarch64
+Targets: debian, arch, alpine, ubuntu, win10, win11 (bare
+`vm install` lists them). Windows ISOs can't be auto-downloaded
+(Microsoft gates them) — `vm install win11` prints the download
+URL; then `vm create` the downloaded ISO. Windows VMs get UEFI,
+TPM 2.0 + Secure Boot (Win11), a SATA disk and an e1000e NIC, with
+4G RAM / 64G disk / 4 cpus by default (needs the ovmf and swtpm
+packages), all detected from the ISO's filename.
 
 Images live in ~/virtual-machines as <name>.<arch>.<RAM>.qcow2 — the
 same convention rofi-explorer (super+e) launches, so VMs made here
-appear there too. ISO downloads are checksum-verified. SSH forwards
-default to 2222 (x86_64) / 2223 (aarch64). NAME can be omitted when
-only one VM qualifies, or can be a path to a qcow2 file anywhere
-(this is what xdg-open uses for application/x-qemu-disk).
+appear there too. Per-VM settings (OS profile, cpus) live in a
+<image>.json sidecar that create writes and start applies. ISO
+downloads are checksum-verified. SSH forwards default to 2222
+(x86_64) / 2223 (aarch64). NAME can be omitted when only one VM
+qualifies, or can be a path to a qcow2 file anywhere (this is what
+xdg-open uses for application/x-qemu-disk).
 
 examples:
   vm                            what VMs exist, what's running?
   vm install debian             fetch latest netinst, boot installer
   vm install alpine --ram 512M  small VM
+  vm install win11              where to get the Windows ISO
   vm create ~/dl/custom.iso     install from a local ISO
+  vm create Win11_24H2.iso      Windows 11 VM (UEFI + TPM, auto)
   vm start                      boot the only VM
   vm start debian --headless    boot without a window
   vm ssh                        ssh into the running VM

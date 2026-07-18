@@ -82,8 +82,8 @@ class TestParseCreateOpts:
             ["alpine", "--name", "test", "--ram", "512M",
              "--disk", "4G", "--arch", "aarch64"])
         assert positional == ["alpine"]
-        assert opts == {"name": "test", "ram": "512M",
-                        "disk": "4G", "arch": "aarch64"}
+        assert opts == {"name": "test", "ram": "512M", "disk": "4G",
+                        "arch": "aarch64", "os": None, "cpus": None}
 
     def test_bad_arch_dies(self):
         with pytest.raises(SystemExit):
@@ -93,24 +93,62 @@ class TestParseCreateOpts:
         with pytest.raises(SystemExit):
             vm.parse_create_opts(["debian", "--name"])
 
+    def test_windows_alias_maps_to_win11(self):
+        _, opts = vm.parse_create_opts(["x.iso", "--os", "windows"])
+        assert opts["os"] == "win11"
 
-class TestBuildCreateCommand:
-    def test_passes_options_through(self):
-        cmd = vm.build_create_command(
-            "/tmp/d.iso",
-            {"name": "test", "ram": "2G", "disk": "20G",
-             "arch": "x86_64"})
-        assert "/tmp/d.iso" in cmd
-        assert cmd[cmd.index("--name") + 1] == "test"
-        assert cmd[cmd.index("--ram") + 1] == "2G"
-        assert cmd[cmd.index("--disk-size") + 1] == "20G"
+    def test_unknown_os_dies(self):
+        with pytest.raises(SystemExit):
+            vm.parse_create_opts(["x.iso", "--os", "beos"])
 
-    def test_omits_unset_options(self):
-        cmd = vm.build_create_command(
-            "/tmp/d.iso",
-            {"name": None, "ram": None, "disk": None, "arch": "x86_64"})
-        assert "--name" not in cmd
-        assert "--ram" not in cmd
+    def test_non_numeric_cpus_dies(self):
+        with pytest.raises(SystemExit):
+            vm.parse_create_opts(["x.iso", "--cpus", "many"])
+
+
+class TestDetectOs:
+    def test_win11_release_iso(self):
+        assert vm.detect_os("Win11_24H2_English_x64.iso") == "win11"
+
+    def test_win10_release_iso(self):
+        assert vm.detect_os("Win10_22H2_English_x64.iso") == "win10"
+
+    def test_techbench_style_name(self):
+        assert vm.detect_os(
+            "en-us_windows_11_consumer_editions_x64.iso") == "win11"
+
+    def test_unversioned_windows_assumes_win11(self):
+        assert vm.detect_os("windows_custom.iso") == "win11"
+
+    def test_linux_isos(self):
+        assert vm.detect_os("debian-13.0.0-amd64-netinst.iso") == "linux"
+        assert vm.detect_os("archlinux-x86_64.iso") == "linux"
+
+
+class TestDefaultName:
+    def test_windows_uses_os_name(self):
+        assert vm.default_name("/tmp/Win11_24H2.iso", "win11") == "win11"
+
+    def test_linux_uses_leading_word(self):
+        assert vm.default_name(
+            "/tmp/debian-13.0.0-amd64-netinst.iso", "linux") == "debian"
+
+
+class TestReadConf:
+    def test_missing_sidecar_is_empty(self, tmp_path):
+        assert vm.read_conf(str(tmp_path / "a.qcow2")) == {}
+
+    def test_sidecar_read(self, tmp_path):
+        img = tmp_path / "w.x86_64.4G.qcow2"
+        (tmp_path / "w.x86_64.4G.qcow2.json").write_text(
+            json.dumps({"os": "win11", "cpus": 8}))
+        assert vm.read_conf(str(img)) == {"os": "win11", "cpus": 8}
+
+    def test_unknown_os_falls_back_to_linux(self, tmp_path):
+        img = tmp_path / "w.x86_64.4G.qcow2"
+        (tmp_path / "w.x86_64.4G.qcow2.json").write_text(
+            json.dumps({"os": "beos"}))
+        assert vm.read_conf(str(img))["os"] == "linux"
 
 
 class TestBuildQemuCommand:
@@ -142,6 +180,49 @@ class TestBuildQemuCommand:
         assert cmd[0] == "qemu-system-aarch64"
         assert "virt" in cmd
         assert any("QEMU_EFI.fd" in a for a in cmd)
+
+    def test_linux_uses_virtio_nic(self):
+        cmd = vm.build_qemu_command(self._vm(), 2222, "/run/mon")
+        assert "virtio-net-pci,netdev=net0" in cmd
+
+    def _win(self):
+        return {"name": "win11", "arch": "x86_64", "ram": "4G",
+                "path": "/vms/win11.x86_64.4G.qcow2",
+                "os": "win11", "cpus": 4}
+
+    def test_windows_gets_uefi_tpm_and_inbox_devices(self):
+        cmd = vm.build_qemu_command(
+            self._win(), 2222, "/run/mon",
+            uefi=("/fw/CODE.ms.fd", "/vms/vars.fd", True),
+            tpm_sock="/run/tpm.sock")
+        assert cmd[cmd.index("-machine") + 1] == "q35,smm=on"
+        assert any("if=pflash" in a and "CODE.ms.fd" in a for a in cmd)
+        assert any("if=pflash" in a and "vars.fd" in a for a in cmd)
+        assert "e1000e,netdev=net0" in cmd
+        assert "virtio-net-pci,netdev=net0" not in cmd
+        assert "usb-tablet" in cmd
+        assert "tpm-tis,tpmdev=tpm0" in cmd
+        assert any("path=/run/tpm.sock" in a for a in cmd)
+
+    def test_smp_from_conf(self):
+        cmd = vm.build_qemu_command(self._win(), 2222, "/run/mon",
+                                    uefi=("/c", "/v", False))
+        assert cmd[cmd.index("-smp") + 1] == "4"
+        assert cmd[cmd.index("-machine") + 1] == "q35"
+
+    def test_installer_iso_bios_forces_cd_boot(self):
+        cmd = vm.build_qemu_command(self._vm(), 2222, None,
+                                    iso="/tmp/d.iso")
+        assert cmd[cmd.index("-cdrom") + 1] == "/tmp/d.iso"
+        assert "-boot" in cmd
+        assert "-monitor" not in cmd
+
+    def test_installer_iso_uefi_skips_boot_flag(self):
+        cmd = vm.build_qemu_command(self._win(), 2222, None,
+                                    iso="/tmp/w.iso",
+                                    uefi=("/c", "/v", True))
+        assert "-cdrom" in cmd
+        assert "-boot" not in cmd
 
 
 class TestReadState:
