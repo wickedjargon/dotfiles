@@ -303,3 +303,108 @@ class TestResolveVmByPath:
         img.touch()
         with pytest.raises(SystemExit):
             vm.resolve_vm(str(img), want_running=False)
+
+
+class TestCmdResize:
+    def _setup(self, tmp_path, monkeypatch, filename="win11.x86_64.4G.qcow2",
+               conf=None):
+        vmdir = tmp_path / "vms"
+        vmdir.mkdir()
+        monkeypatch.setattr(vm, "VM_DIR", str(vmdir))
+        monkeypatch.setattr(vm, "RUNTIME", str(tmp_path))
+        monkeypatch.setattr(vm, "qemu_pid_for", lambda p: None)
+        img = vmdir / filename
+        img.touch()
+        if conf is not None:
+            (vmdir / (filename + ".json")).write_text(json.dumps(conf))
+        return vmdir, img
+
+    def test_no_options_dies(self, tmp_path, monkeypatch):
+        self._setup(tmp_path, monkeypatch)
+        with pytest.raises(SystemExit):
+            vm.cmd_resize(["win11"])
+
+    def test_running_vm_dies(self, tmp_path, monkeypatch):
+        self._setup(tmp_path, monkeypatch)
+        monkeypatch.setattr(vm, "qemu_pid_for", lambda p: 12345)
+        with pytest.raises(SystemExit):
+            vm.cmd_resize(["win11", "--ram", "8G"])
+
+    def test_ram_renames_image_and_sidecars(self, tmp_path, monkeypatch):
+        vmdir, img = self._setup(tmp_path, monkeypatch,
+                                 conf={"os": "win11", "cpus": 4})
+        (vmdir / (img.name + ".vars.fd")).touch()
+        (vmdir / (img.name + ".tpm")).mkdir()
+        vm.cmd_resize(["win11", "--ram", "8G"])
+        new = vmdir / "win11.x86_64.8G.qcow2"
+        assert new.exists() and not img.exists()
+        assert (vmdir / (new.name + ".json")).exists()
+        assert (vmdir / (new.name + ".vars.fd")).exists()
+        assert (vmdir / (new.name + ".tpm")).is_dir()
+        assert not (vmdir / (img.name + ".json")).exists()
+
+    def test_ram_gb_suffix_normalized(self, tmp_path, monkeypatch):
+        vmdir, img = self._setup(tmp_path, monkeypatch)
+        vm.cmd_resize(["win11", "--ram", "8GB"])
+        assert (vmdir / "win11.x86_64.8G.qcow2").exists()
+
+    def test_bad_ram_dies(self, tmp_path, monkeypatch):
+        self._setup(tmp_path, monkeypatch)
+        with pytest.raises(SystemExit):
+            vm.cmd_resize(["win11", "--ram", "lots"])
+
+    def test_ram_collision_dies(self, tmp_path, monkeypatch):
+        vmdir, img = self._setup(tmp_path, monkeypatch)
+        (vmdir / "win11.x86_64.8G.qcow2").touch()
+        with pytest.raises(SystemExit):
+            vm.cmd_resize([str(img), "--ram", "8G"])
+        assert img.exists()
+
+    def test_same_ram_is_noop(self, tmp_path, monkeypatch):
+        vmdir, img = self._setup(tmp_path, monkeypatch)
+        vm.cmd_resize(["win11", "--ram", "4G"])
+        assert img.exists()
+
+    def test_disk_calls_qemu_img(self, tmp_path, monkeypatch):
+        vmdir, img = self._setup(tmp_path, monkeypatch)
+        calls = []
+        monkeypatch.setattr(vm, "which", lambda t: "/usr/bin/qemu-img")
+        monkeypatch.setattr(
+            vm.subprocess, "run",
+            lambda cmd, **kw: (calls.append(cmd),
+                               type("P", (), {"returncode": 0}))[-1])
+        vm.cmd_resize(["win11", "--disk", "+40G"])
+        assert calls == [["qemu-img", "resize", str(img), "+40G"]]
+
+    def test_disk_failure_dies(self, tmp_path, monkeypatch):
+        self._setup(tmp_path, monkeypatch)
+        monkeypatch.setattr(vm, "which", lambda t: "/usr/bin/qemu-img")
+        monkeypatch.setattr(
+            vm.subprocess, "run",
+            lambda cmd, **kw: type("P", (), {"returncode": 1}))
+        with pytest.raises(SystemExit):
+            vm.cmd_resize(["win11", "--disk", "10G"])
+
+    def test_cpus_written_to_sidecar(self, tmp_path, monkeypatch):
+        vmdir, img = self._setup(tmp_path, monkeypatch,
+                                 conf={"os": "win11", "cpus": 4})
+        vm.cmd_resize(["win11", "--cpus", "6"])
+        conf = json.loads((vmdir / (img.name + ".json")).read_text())
+        assert conf == {"os": "win11", "cpus": 6}
+
+    def test_cpus_creates_sidecar_for_linux_vm(self, tmp_path,
+                                               monkeypatch):
+        vmdir, img = self._setup(tmp_path, monkeypatch,
+                                 filename="debian.x86_64.1G.qcow2")
+        vm.cmd_resize(["debian", "--cpus", "4"])
+        conf = json.loads((vmdir / (img.name + ".json")).read_text())
+        assert conf == {"os": "linux", "cpus": 4}
+
+    def test_ram_and_cpus_together_use_new_path(self, tmp_path,
+                                                monkeypatch):
+        vmdir, img = self._setup(tmp_path, monkeypatch,
+                                 conf={"os": "win11", "cpus": 4})
+        vm.cmd_resize(["win11", "--ram", "8G", "--cpus", "6"])
+        new = vmdir / "win11.x86_64.8G.qcow2"
+        conf = json.loads((vmdir / (new.name + ".json")).read_text())
+        assert conf == {"os": "win11", "cpus": 6}

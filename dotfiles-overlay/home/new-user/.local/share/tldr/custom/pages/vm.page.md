@@ -51,6 +51,10 @@
 
 `vm stop`
 
+- Resize a stopped VM (disk only grows — expand the partition in-guest after; RAM renames the image + sidecars):
+
+`vm resize {{win11}} --disk {{+40G}} --ram {{8G}} --cpus {{4}}`
+
 - Delete a VM's disk image (asks first):
 
 `vm delete {{debian}}`

@@ -830,6 +830,78 @@ def cmd_delete(args):
     ok(f"Deleted {vm['name']}")
 
 
+def parse_resize_opts(args):
+    """Split resize args into positionals and size options."""
+    opts = {"ram": None, "disk": None, "cpus": None}
+    positional = []
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a in ("--ram", "--disk", "--cpus"):
+            if i + 1 >= len(args):
+                die(f"{a} needs a value")
+            opts[a[2:]] = args[i + 1]
+            i += 2
+            continue
+        positional.append(a)
+        i += 1
+    if opts["cpus"] and not str(opts["cpus"]).isdigit():
+        die("--cpus must be a number")
+    return positional, opts
+
+
+def cmd_resize(args):
+    """Change a stopped VM's RAM, disk capacity or cpu count."""
+    positional, opts = parse_resize_opts(args)
+    if not any(opts.values()):
+        die("Usage: vm resize [NAME] [--ram 8G] [--disk +40G] [--cpus 4]")
+    vm = resolve_vm(positional[0] if positional else None)
+    if vm["pid"]:
+        die(f"{vm['name']} is running — stop it first: "
+            f"vm stop {vm['name']}")
+
+    if opts["ram"]:
+        ram = re.sub(r"B$", "", opts["ram"].upper())
+        if not re.fullmatch(r"\d+[GM]", ram):
+            die("--ram must look like 8G or 512M")
+        if ram == vm["ram"]:
+            info(f"RAM is already {ram}")
+        else:
+            # RAM lives in the filename, so the image moves — and every
+            # sidecar is keyed on the image name, so they move with it.
+            old, new = vm["path"], os.path.join(
+                os.path.dirname(vm["path"]),
+                f"{vm['name']}.{vm['arch']}.{ram}.qcow2")
+            if os.path.exists(new):
+                die(f"Already exists: {new}")
+            for suffix in ("", ".json", ".vars.fd", ".tpm"):
+                if os.path.exists(old + suffix):
+                    os.rename(old + suffix, new + suffix)
+            ok(f"RAM {vm['ram']} → {ram}  "
+               f"{DIM}({os.path.basename(new)}){RESET}")
+            vm["path"], vm["ram"] = new, ram
+
+    if opts["disk"]:
+        if not which("qemu-img"):
+            die("qemu-img not installed")
+        # No --shrink: qemu-img refuses to shrink, which is the point —
+        # cutting a qcow2 short destroys guest filesystems.
+        rc = subprocess.run(["qemu-img", "resize", vm["path"],
+                             opts["disk"]],
+                            stdout=subprocess.DEVNULL).returncode
+        if rc != 0:
+            die("qemu-img resize failed (shrinking is not supported)")
+        ok(f"Disk resized ({opts['disk']})")
+        info("Grow the partition inside the guest to use the new space "
+             "(Windows: Disk Management, Linux: growpart/parted)")
+
+    if opts["cpus"]:
+        cpus = int(opts["cpus"])
+        with open(conf_path(vm["path"]), "w") as f:
+            json.dump({"os": vm.get("os", "linux"), "cpus": cpus}, f)
+        ok(f"CPUs → {cpus}")
+
+
 # ── Help + Main ─────────────────────────────────────────────────────
 HELP_TEXT = """\
 usage: vm [command] [options]
@@ -843,6 +915,7 @@ commands:
   start [NAME] [PORT]           boot a VM (add --headless for no window)
   stop [NAME]                   ACPI powerdown, SIGTERM fallback
   ssh [NAME] [USER]             ssh via the forwarded port
+  resize [NAME] [opts]          change RAM, disk or cpus (stopped VM)
   delete <NAME>                 delete the disk image (asks first)
   list                          machine-parseable VM list
 
@@ -856,6 +929,11 @@ URL; then `vm create` the downloaded ISO. Windows VMs get UEFI,
 TPM 2.0 + Secure Boot (Win11), a SATA disk and an e1000e NIC, with
 4G RAM / 64G disk / 4 cpus by default (needs the ovmf and swtpm
 packages), all detected from the ISO's filename.
+
+resize options: --ram 8G  --disk +40G|100G  --cpus 4
+RAM renames the image (and its sidecars — it's in the filename);
+disk only grows (shrinking destroys guest filesystems) and the
+partition must then be expanded inside the guest.
 
 Images live in ~/virtual-machines as <name>.<arch>.<RAM>.qcow2 — the
 same convention rofi-explorer (super+e) launches, so VMs made here
@@ -874,6 +952,8 @@ examples:
   vm create ~/dl/custom.iso     install from a local ISO
   vm create Win11_24H2.iso      Windows 11 VM (UEFI + TPM, auto)
   vm start                      boot the only VM
+  vm resize win11 --disk +40G   grow the disk (then extend in-guest)
+  vm resize debian --ram 2G --cpus 4
   vm start debian --headless    boot without a window
   vm ssh                        ssh into the running VM
   vm stop                       shut the running VM down
@@ -898,6 +978,7 @@ def main():
         "start":   lambda: cmd_start(args),
         "stop":    lambda: cmd_stop(args),
         "ssh":     lambda: cmd_ssh(args),
+        "resize":  lambda: cmd_resize(args),
         "delete":  lambda: cmd_delete(args),
         "list":    lambda: cmd_list(),
     }
