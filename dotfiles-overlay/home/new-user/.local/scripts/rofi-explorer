@@ -220,60 +220,9 @@ def open_file(path, run_executables=False):
     elif ext in VIDEO_EXTENSIONS:
         subprocess.Popen(["mpv", str(path)])
     elif ext in VM_EXTENSIONS:
-        parts = path.stem.rsplit(".", 2)
-        arch = parts[1] if len(parts) >= 3 else "x86_64"
-        ram = parts[2].replace("GB", "G") if len(parts) >= 3 else "1G"
-        cmd = [
-            f"qemu-system-{arch}",
-            "-m",
-            ram,
-        ]
-        if arch == "x86_64":
-            cmd.extend(
-                [
-                    "-drive",
-                    f"file={path},format=qcow2",
-                    "-enable-kvm",
-                    "-net",
-                    "user,hostfwd=tcp::2222-:22",
-                    "-net",
-                    "nic",
-                    "-device",
-                    "intel-hda",
-                    "-device",
-                    "hda-output",
-                    "-display",
-                    "gtk,zoom-to-fit=on",
-                ]
-            )
-        elif arch == "aarch64":
-            cmd.extend(
-                [
-                    "-machine",
-                    "virt",
-                    "-cpu",
-                    "cortex-a57",
-                    "-drive",
-                    f"file={path},format=qcow2,if=virtio",
-                    "-net",
-                    "user,hostfwd=tcp::2223-:22",
-                    "-net",
-                    "nic,model=virtio",
-                    "-display",
-                    "gtk,zoom-to-fit=on",
-                    "-bios",
-                    "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd",
-                    "-device",
-                    "virtio-gpu-pci",
-                    "-device",
-                    "qemu-xhci",
-                    "-device",
-                    "usb-kbd",
-                    "-device",
-                    "usb-mouse",
-                ]
-            )
-        subprocess.Popen(cmd)
+        # vm knows each image's boot profile (UEFI/TPM for Windows
+        # guests, virtio for Linux) — don't rebuild qemu argv here.
+        subprocess.Popen(["vm", "start", str(path)])
     elif path.is_file() and is_text_file(path):
         # Any other non-binary file -> emacs, matching the text/* mime defaults.
         subprocess.Popen(["emacsclient", "-c", "-a", "", str(path)])
