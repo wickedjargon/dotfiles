@@ -871,6 +871,49 @@ def install_pipx_packages(packages, username, tui, start_row):
     return True, None, start_row
 
 
+def install_claude_code(username, script_dir, tui, row):
+    """Install Claude Code for the target user
+
+    Runs the install-debian-claude-code.sh script as the target user so the
+    binary lands in ~/.local/bin/claude with correct ownership. The script is
+    idempotent: an existing install is skipped (the binary self-updates).
+    """
+    install_script = script_dir / "scripts/install-debian-claude-code.sh"
+
+    if not install_script.exists():
+        return True, None, row  # Script not present, skip silently
+
+    tui.show_progress(row, "Installing Claude Code...", success=None)
+    tui.stdscr.refresh()
+
+    try:
+        # Read script content as root (who can access the dotfiles dir)
+        # and pipe it to bash running as the target user
+        with open(install_script, "r") as f:
+            script_content = f.read()
+
+        # Run as target user, passing script via stdin
+        subprocess.run(
+            ["su", "-c", "bash -s", username],
+            input=script_content.encode(),
+            check=True,
+            capture_output=True,
+            timeout=600,  # 10 minute timeout for download
+        )
+        tui.show_progress(row, "Installing Claude Code...", success=True)
+        return True, None, row + 1
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        error_msg = e.stderr.decode() if hasattr(e, "stderr") and e.stderr else str(e)
+
+        log_error(
+            f"Claude Code Installation Error for user {username}",
+            e,
+            context=f"Script: {install_script}",
+        )
+        tui.show_progress(row, "Installing Claude Code...", success=False)
+        return False, error_msg, row + 1
+
+
 def get_backup_dir(home_dir):
     """Find next available backup directory name"""
     backup_base = home_dir / ".backup"

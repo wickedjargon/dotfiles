@@ -766,6 +766,21 @@ def main(argv=None):
         had_errors = True
         row += 3
 
+    # ── Install Claude Code ────────────────────────────────────────
+
+    success, error, row = deploy_lib.install_claude_code(username, script_dir, cli, row)
+    if not success:
+        error_last_line = error.strip().splitlines()[-1] if error else "Unknown"
+        err = f"Claude Code installation failed: {error_last_line}"
+        json_result["errors"].append(err)
+        if not handle_error(args, cli, err):
+            json_result["success"] = False
+            if args.json:
+                print(json_mod.dumps(json_result))
+            sys.exit(1)
+        had_errors = True
+        row += 3
+
     # ── Apply system patches ───────────────────────────────────────
 
     cli.show_progress(row, "Applying system patches...", success=None)
