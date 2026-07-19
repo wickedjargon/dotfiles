@@ -1,0 +1,7 @@
+# npm global packages, installed inside the archbox container by
+# scripts/install_arch_packages.py. Globals land in ~/.npm-global
+# (prefix set in ~/.npmrc) and ~/.npm-global/bin is on PATH, so the
+# home-shared install is usable from the Debian host too.
+
+# ACP adapter so Emacs agent-shell can drive Claude Code (SPC g g)
+@agentclientprotocol/claude-agent-acp

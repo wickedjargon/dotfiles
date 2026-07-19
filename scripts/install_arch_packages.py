@@ -21,6 +21,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PACMAN_PACKAGES_FILE = REPO_ROOT / "packages" / "arch-pacman-packages.txt"
 AUR_PACKAGES_FILE = REPO_ROOT / "packages" / "arch-aur-packages.txt"
+NPM_PACKAGES_FILE = REPO_ROOT / "packages" / "arch-npm-packages.txt"
 
 YAY_GIT_URL = "https://aur.archlinux.org/yay.git"
 
@@ -124,6 +125,41 @@ def install_aur_packages(packages: list[str]) -> list[str]:
     return failed
 
 
+def is_npm_installed(package: str) -> bool:
+    """Check if an npm package is already installed globally."""
+    result = subprocess.run(
+        ["npm", "ls", "-g", "--depth=0", package],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return result.returncode == 0
+
+
+def install_npm_packages(packages: list[str]) -> list[str]:
+    """Install global npm packages. Returns failed packages.
+
+    Globals land in ~/.npm-global via the prefix in ~/.npmrc, so no sudo is
+    needed and the home-shared install is visible outside the container.
+    """
+    to_install = [p for p in packages if not is_npm_installed(p)]
+
+    if not to_install:
+        print("All npm packages are already installed.")
+        return []
+
+    print(f"\nInstalling {len(to_install)} npm package(s):")
+    for p in to_install:
+        print(f"  - {p}")
+
+    failed = []
+    for pkg in to_install:
+        result = subprocess.run(["npm", "install", "-g", pkg])
+        if result.returncode != 0 or not is_npm_installed(pkg):
+            failed.append(pkg)
+
+    return failed
+
+
 def main():
     # Refuse to run as root
     if os.geteuid() == 0:
@@ -155,8 +191,15 @@ def main():
         print("\nSkipping AUR packages because yay is not available.")
         aur_failed = ["(all AUR packages skipped — yay not installed)"]
 
+    # --- npm packages ---
+    print(f"\nReading npm packages from: {NPM_PACKAGES_FILE}")
+    npm_packages = read_package_list(NPM_PACKAGES_FILE)
+    print(f"Found {len(npm_packages)} package(s) in list.")
+
+    npm_failed = install_npm_packages(npm_packages)
+
     # --- Report ---
-    all_failed = pacman_failed + aur_failed
+    all_failed = pacman_failed + aur_failed + npm_failed
     print("\n" + "=" * 40)
     if all_failed:
         print("The following packages FAILED to install:")
