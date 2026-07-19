@@ -321,6 +321,20 @@ class TestStageOsxInstaller:
             vm.stage_osx_installer()
 
 
+class TestCreateVmNameClash:
+    def test_same_name_different_ram_dies(self, tmp_path, monkeypatch):
+        vmdir = tmp_path / "vms"
+        vmdir.mkdir()
+        monkeypatch.setattr(vm, "VM_DIR", str(vmdir))
+        monkeypatch.setattr(vm, "RUNTIME", str(tmp_path))
+        monkeypatch.setattr(vm, "qemu_pid_for", lambda p: None)
+        (vmdir / "debian.x86_64.1G.qcow2").touch()
+        opts = {"name": None, "ram": "2G", "disk": None,
+                "arch": "x86_64", "os": None, "cpus": None}
+        with pytest.raises(SystemExit):
+            vm.create_vm("/tmp/debian-13.0.0-amd64-netinst.iso", opts)
+
+
 class TestReadState:
     def test_live_state(self, tmp_path, monkeypatch):
         monkeypatch.setattr(vm, "RUNTIME", str(tmp_path))

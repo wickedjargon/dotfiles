@@ -707,6 +707,14 @@ def create_vm(iso_path, opts):
                  f"{DIM}Override with --os linux.{RESET}")
 
     name = opts["name"] or default_name(iso_path, os_name)
+    # RAM is part of the filename, so a plain exists-check wouldn't
+    # catch a same-name VM with different RAM — and duplicate names
+    # break every by-name lookup (start, ssh, resize, delete).
+    clash = next((v for v in get_vms() if v["name"] == name), None)
+    if clash:
+        die(f"A VM named '{name}' already exists "
+            f"({os.path.basename(clash['path'])}) — delete it first "
+            "or pick another name: --name N")
     arch = opts["arch"]
     ram = re.sub(r"B$", "", (opts["ram"] or profile["ram"]).upper())
     disk = opts["disk"] or profile["disk"]
