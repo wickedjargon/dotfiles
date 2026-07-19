@@ -27,7 +27,7 @@
 
 `vm create {{~/dl/custom.iso}} --name {{custom}}`
 
-- Create a Windows VM (detected from the filename; UEFI + TPM 2.0 + Secure Boot for 11, SATA + e1000e, 4G/64G/4cpu defaults):
+- Create a Windows VM (detected from the filename; UEFI + TPM 2.0 + Secure Boot for 11, SATA + e1000e, 8G/200G/4cpu defaults):
 
 `vm create {{~/dl/Win11_24H2_English_x64.iso}}`
 

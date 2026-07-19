@@ -68,11 +68,11 @@ OS_PROFILES = {
     "linux": {"uefi": False, "tpm": False, "secure": False,
               "ram": "1G", "disk": "12G", "cpus": 2},
     "win10": {"uefi": True,  "tpm": False, "secure": False,
-              "ram": "4G", "disk": "64G", "cpus": 4},
+              "ram": "8G", "disk": "200G", "cpus": 4},
     "win11": {"uefi": True,  "tpm": True,  "secure": True,
-              "ram": "4G", "disk": "64G", "cpus": 4},
+              "ram": "8G", "disk": "200G", "cpus": 4},
     "osx":   {"uefi": True,  "tpm": False, "secure": False,
-              "ram": "4G", "disk": "128G", "cpus": 4},
+              "ram": "8G", "disk": "200G", "cpus": 4},
 }
 
 # macOS refuses to boot without an AppleSMC exposing this key. The
@@ -1071,7 +1071,7 @@ Targets: debian, arch, alpine, ubuntu, win10, win11, osx (bare
 (Microsoft gates them) — `vm install win11` prints the download
 URL; then `vm create` the downloaded ISO. Windows VMs get UEFI,
 TPM 2.0 + Secure Boot (Win11), a SATA disk and an e1000e NIC, with
-4G RAM / 64G disk / 4 cpus by default (needs the ovmf and swtpm
+8G RAM / 200G disk / 4 cpus by default (needs the ovmf and swtpm
 packages), all detected from the ISO's filename.
 
 macOS guests (--os osx, detected from BaseSystem-style names) boot
@@ -1080,7 +1080,7 @@ osx` downloads a recovery image straight from Apple's CDN via a
 cached OSX-KVM checkout (needs git and dmg2img); `create` stages
 OpenCore.qcow2 and the recovery image as <image> sidecars so the
 install survives reboots — delete <image>.basesystem.img once
-macOS is installed. 4G RAM / 128G disk / 4 cpus by default.
+macOS is installed. 8G RAM / 200G disk / 4 cpus by default.
 
 resize options: --ram 8G  --disk +40G|100G  --cpus 4
 RAM renames the image (and its sidecars — it's in the filename);
