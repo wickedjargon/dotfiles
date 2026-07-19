@@ -56,7 +56,7 @@ complete -F _name name
 
 ## Pass-Inspired Scripts
 
-The following scripts follow the `pass` design philosophy: **`drives`**, **`wifi`**, **`bt`**, **`displays`**, **`psync`**, **`upload`**, **`sched`**, **`rss`**, **`svc`**, **`vpn`**, **`mac`**.
+The following scripts follow the `pass` design philosophy: **`drives`**, **`wifi`**, **`bt`**, **`displays`**, **`psync`**, **`upload`**, **`sched`**, **`rss`**, **`svc`**, **`vpn`**, **`mac`**, **`dsync`**.
 
 ### Core Principles (from `pass`)
 
@@ -226,6 +226,7 @@ They still require tldr pages and bash completions.
 | `win`        | ✓             | bspc, xdotool      | ✓    | ✓          |
 | `ocr`        | ✓             | tesseract, maim, xclip | ✓ | ✓         |
 | `stt`        | ✓             | sherpa-onnx, pw-record, xclip | ✓ | ✓  |
+| `dsync`      | ✓             | git                | ✓    | ✓          |
 | `theme`      | ✗             | various            | ✓    | ✓          |
 | `browser`    | ✗             | (stdlib only)      | ✓    | ✓          |
 | `shorten-url`| ✗             | curl               | ✗    | ✗          |

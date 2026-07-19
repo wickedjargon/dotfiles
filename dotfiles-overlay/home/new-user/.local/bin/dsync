@@ -1,0 +1,399 @@
+#!/usr/bin/env python3
+"""dsync — true dotfile sync from the repo overlay to $HOME.
+
+Deploys the files under dotfiles-overlay/home/new-user into the home
+directory and, unlike a plain rsync, also removes files it previously
+deployed once they leave the overlay. What dsync has deployed is
+recorded in a manifest (~/.local/state/dsync); files it never deployed
+are never touched. `prune` additionally cleans up paths deleted from
+the overlay before the manifest existed, using git history.
+
+Requires: git
+"""
+
+import filecmp
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from shutil import which
+
+# ── Colors ──────────────────────────────────────────────────────────
+RED    = "\033[0;31m"
+GREEN  = "\033[0;32m"
+YELLOW = "\033[0;33m"
+CYAN   = "\033[0;36m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+RESET  = "\033[0m"
+
+
+# ── Helpers ─────────────────────────────────────────────────────────
+def info(msg):  print(f"{CYAN}▸{RESET} {msg}")
+def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
+def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
+def die(msg):
+    print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+# ── Configuration ───────────────────────────────────────────────────
+REPO = Path(os.environ.get("DSYNC_REPO")
+            or Path.home() / "d/projects/dotfiles")
+OVERLAY_REL = "dotfiles-overlay/home/new-user"
+STATE_DIR = Path(os.environ.get("XDG_STATE_HOME")
+                 or Path.home() / ".local/state") / "dsync"
+MANIFEST = STATE_DIR / "manifest"
+# Live state the repo deliberately doesn't own.
+EXCLUDES = (".config/theme-mode",)
+
+
+def excluded(rel):
+    return any(rel == e or rel.startswith(e + "/") for e in EXCLUDES)
+
+
+# ── Overlay inventory ───────────────────────────────────────────────
+def overlay_files(repo):
+    """Deployable files as paths relative to $HOME.
+
+    Asks git for tracked plus untracked-but-not-ignored files, so
+    repo junk (__pycache__, ignored caches) never deploys but a
+    just-created, not-yet-committed dotfile still does. Staged files
+    deleted from the working tree are skipped.
+    """
+    proc = subprocess.run(
+        ["git", "-C", str(repo), "ls-files", "--cached", "--others",
+         "--exclude-standard", "-z", "--", OVERLAY_REL],
+        capture_output=True)
+    if proc.returncode != 0:
+        die(f"git ls-files failed in {repo}: "
+            f"{proc.stderr.decode().strip()}")
+    prefix = OVERLAY_REL + "/"
+    overlay = repo / OVERLAY_REL
+    rels = set()
+    for path in proc.stdout.decode().split("\0"):
+        if not path.startswith(prefix):
+            continue
+        rel = path[len(prefix):]
+        src = overlay / rel
+        if rel and not excluded(rel) and \
+                (src.is_file() or src.is_symlink()):
+            rels.add(rel)
+    return sorted(rels)
+
+
+# ── Manifest ────────────────────────────────────────────────────────
+def read_manifest(path):
+    try:
+        with open(path) as f:
+            return [line.rstrip("\n") for line in f if line.strip()]
+    except OSError:
+        return []
+
+
+def write_manifest(path, rels):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w") as f:
+        f.write("\n".join(rels) + "\n")
+
+
+# ── Planning ────────────────────────────────────────────────────────
+def files_differ(src, dst):
+    if os.path.islink(src) or os.path.islink(dst):
+        if not (os.path.islink(src) and os.path.islink(dst)):
+            return True
+        return os.readlink(src) != os.readlink(dst)
+    if os.path.getsize(src) != os.path.getsize(dst):
+        return True
+    return not filecmp.cmp(src, dst, shallow=False)
+
+
+def build_plan(overlay, home, rels, manifest):
+    """Classify every managed path: what sync would copy or remove.
+
+    'stale' means: previously deployed (in the manifest), gone from
+    the overlay, still present in $HOME.
+    """
+    plan = {"new": [], "changed": [], "same": [], "stale": []}
+    current = set(rels)
+    for rel in rels:
+        dst = home / rel
+        if not (dst.exists() or dst.is_symlink()):
+            plan["new"].append(rel)
+        elif files_differ(overlay / rel, dst):
+            plan["changed"].append(rel)
+        else:
+            plan["same"].append(rel)
+    for rel in manifest:
+        if rel in current or excluded(rel):
+            continue
+        dst = home / rel
+        if dst.exists() or dst.is_symlink():
+            plan["stale"].append(rel)
+    return plan
+
+
+def copy_file(src, dst):
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.is_symlink() or os.path.islink(src):
+        if dst.exists() or dst.is_symlink():
+            dst.unlink()
+    if os.path.islink(src):
+        os.symlink(os.readlink(src), dst)
+    else:
+        shutil.copy2(src, dst)
+
+
+# ── Git history (prune) ─────────────────────────────────────────────
+def parse_deleted_paths(log_output, current):
+    """Home-relative paths deleted from the overlay per git history.
+
+    Paths that came back (present in `current`) are not candidates.
+    """
+    prefix = OVERLAY_REL + "/"
+    rels = set()
+    for line in log_output.splitlines():
+        line = line.strip()
+        if not line.startswith(prefix):
+            continue
+        rel = line[len(prefix):]
+        if rel and not excluded(rel) and rel not in current:
+            rels.add(rel)
+    return sorted(rels)
+
+
+def deleted_paths(repo, current):
+    proc = subprocess.run(
+        ["git", "-C", str(repo), "log", "--diff-filter=D",
+         "--name-only", "--pretty=format:", "--", OVERLAY_REL],
+        capture_output=True)
+    if proc.returncode != 0:
+        die(f"git log failed in {repo}: {proc.stderr.decode().strip()}")
+    return parse_deleted_paths(proc.stdout.decode(), set(current))
+
+
+# ── Shared ──────────────────────────────────────────────────────────
+def ensure_overlay():
+    overlay = REPO / OVERLAY_REL
+    if not overlay.is_dir():
+        die(f"Overlay not found: {overlay}")
+    return overlay
+
+
+def sync_time():
+    try:
+        mtime = MANIFEST.stat().st_mtime
+    except OSError:
+        return None
+    import time
+    return time.strftime("%Y-%m-%d %H:%M", time.localtime(mtime))
+
+
+# ── Commands ────────────────────────────────────────────────────────
+def cmd_status():
+    """Bare command — what would sync do."""
+    ensure_overlay()
+    rels = overlay_files(REPO)
+    plan = build_plan(REPO / OVERLAY_REL, Path.home(), rels,
+                      read_manifest(MANIFEST))
+    dirty = subprocess.run(
+        ["git", "-C", str(REPO), "status", "--porcelain", "--",
+         OVERLAY_REL], capture_output=True).stdout.decode().splitlines()
+
+    print(f"  {BOLD}{len(rels)}{RESET} files managed  "
+          f"{DIM}{REPO}{RESET}")
+    if dirty:
+        warn(f"{len(dirty)} uncommitted overlay change(s) in the repo")
+    pending = []
+    if plan["new"]:
+        pending.append(f"{len(plan['new'])} new")
+    if plan["changed"]:
+        pending.append(f"{len(plan['changed'])} changed")
+    if plan["stale"]:
+        pending.append(f"{len(plan['stale'])} stale")
+    if pending:
+        print(f"  {YELLOW}○{RESET} pending: {', '.join(pending)}  "
+              f"{DIM}(dsync diff to inspect, dsync sync to apply){RESET}")
+    else:
+        print(f"  {GREEN}●{RESET} $HOME is up to date")
+    last = sync_time()
+    print(f"  {DIM}last sync: {last or 'never'}{RESET}")
+
+
+def cmd_diff(args):
+    """List pending changes, or show one file's diff (live vs repo)."""
+    ensure_overlay()
+    rels = overlay_files(REPO)
+    if args:
+        rel = args[0].replace(str(Path.home()) + "/", "", 1)
+        src = REPO / OVERLAY_REL / rel
+        dst = Path.home() / rel
+        if rel not in rels:
+            die(f"Not a managed file: {rel}")
+        if not dst.exists():
+            info(f"{rel} is not deployed yet")
+            return
+        import difflib
+        diff = difflib.unified_diff(
+            dst.read_text(errors="replace").splitlines(keepends=True),
+            src.read_text(errors="replace").splitlines(keepends=True),
+            fromfile=f"home/{rel}", tofile=f"repo/{rel}")
+        sys.stdout.writelines(diff)
+        return
+
+    plan = build_plan(REPO / OVERLAY_REL, Path.home(), rels,
+                      read_manifest(MANIFEST))
+    for rel in plan["new"]:
+        print(f"  {GREEN}+{RESET} {rel}")
+    for rel in plan["changed"]:
+        print(f"  {YELLOW}~{RESET} {rel}")
+    for rel in plan["stale"]:
+        print(f"  {RED}-{RESET} {rel}")
+    if not (plan["new"] or plan["changed"] or plan["stale"]):
+        ok("$HOME is up to date")
+
+
+def cmd_sync():
+    """Deploy the overlay: copy new/changed, remove stale, record."""
+    ensure_overlay()
+    home = Path.home()
+    overlay = REPO / OVERLAY_REL
+    rels = overlay_files(REPO)
+    manifest = read_manifest(MANIFEST)
+    first_run = not manifest
+    plan = build_plan(overlay, home, rels, manifest)
+
+    for rel in plan["new"] + plan["changed"]:
+        tag = "+" if rel in plan["new"] else "~"
+        print(f"  {tag} {rel}")
+        copy_file(overlay / rel, home / rel)
+    for rel in plan["stale"]:
+        print(f"  {RED}-{RESET} {rel}")
+        (home / rel).unlink()
+
+    write_manifest(MANIFEST, rels)
+    copied = len(plan["new"]) + len(plan["changed"])
+    removed = len(plan["stale"])
+    if copied or removed:
+        summary = f"Synced: {copied} copied, {removed} removed"
+        ok(summary)
+    else:
+        summary = "Already up to date"
+        ok(summary)
+    if first_run:
+        info("First sync: manifest recorded — deletions in the overlay "
+             "now propagate. For leftovers from before dsync, run: "
+             "dsync prune")
+
+    if which("apply-theme"):
+        subprocess.run(["apply-theme"], stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL)
+    # Callers like rofi-system run without a terminal; notify there.
+    if not sys.stdout.isatty() and which("notify-send"):
+        subprocess.run(["notify-send", "dsync", summary])
+
+
+def cmd_prune():
+    """Remove files deleted from the overlay before dsync's manifest
+    existed (found via git history; asks first)."""
+    ensure_overlay()
+    home = Path.home()
+    candidates = [rel for rel in deleted_paths(REPO, overlay_files(REPO))
+                  if (home / rel).exists() or (home / rel).is_symlink()]
+    if not candidates:
+        ok("Nothing to prune")
+        return
+    print(f"{BOLD}Deleted from the overlay, still in $HOME:{RESET}")
+    for rel in candidates:
+        print(f"  {RED}-{RESET} {rel}")
+    try:
+        answer = input(f"{CYAN}▸{RESET} Remove "
+                       f"{len(candidates)} file(s)? [y/N] ")
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return
+    if answer.strip().lower() not in ("y", "yes"):
+        info("Nothing removed")
+        return
+    for rel in candidates:
+        (home / rel).unlink()
+    ok(f"Pruned {len(candidates)} file(s)")
+
+
+def cmd_list():
+    """Machine-parseable: state<TAB>path for every managed file."""
+    ensure_overlay()
+    rels = overlay_files(REPO)
+    plan = build_plan(REPO / OVERLAY_REL, Path.home(), rels,
+                      read_manifest(MANIFEST))
+    states = {}
+    for state in ("new", "changed", "same", "stale"):
+        for rel in plan[state]:
+            states[rel] = state
+    for rel in sorted(states):
+        print(f"{states[rel]}\t{rel}")
+
+
+# ── Help + Main ─────────────────────────────────────────────────────
+HELP_TEXT = """\
+usage: dsync [command]
+
+True dotfile sync: deploy the repo overlay to $HOME, including
+deletions. Only files dsync itself deployed are ever removed.
+
+commands:
+  (none)                        status: managed files, pending changes
+  sync                          copy new/changed files, remove stale ones
+  diff [FILE]                   list pending changes, or one file's diff
+  prune                         clean up pre-dsync leftovers (git history)
+  list                          machine-parseable state of every file
+
+The overlay is dotfiles-overlay/home/new-user in the dotfiles repo
+(override the repo with DSYNC_REPO). Deployable files are what git
+tracks plus untracked-but-not-ignored, so ignored junk never lands in
+$HOME. Deployed files are recorded in ~/.local/state/dsync/manifest;
+sync removes a file only when it was in the manifest, left the
+overlay, and still exists in $HOME. .config/theme-mode is never
+touched, and apply-theme runs after each sync.
+
+examples:
+  dsync                         what would a sync do?
+  dsync diff                    list every pending copy/removal
+  dsync diff .bashrc            how does repo .bashrc differ from live?
+  dsync sync                    deploy the overlay
+  dsync prune                   remove files deleted before dsync existed"""
+
+
+def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help", "help"):
+        print(HELP_TEXT)
+        sys.exit(0)
+
+    if not which("git"):
+        die("git not installed")
+
+    if len(sys.argv) < 2:
+        cmd_status()
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "sync":  lambda: cmd_sync(),
+        "diff":  lambda: cmd_diff(args),
+        "prune": lambda: cmd_prune(),
+        "list":  lambda: cmd_list(),
+    }
+
+    if command not in commands:
+        print(f"Error: unknown command '{command}'", file=sys.stderr)
+        print("Run 'dsync --help' for usage.", file=sys.stderr)
+        sys.exit(1)
+
+    commands[command]()
+
+
+if __name__ == "__main__":
+    main()

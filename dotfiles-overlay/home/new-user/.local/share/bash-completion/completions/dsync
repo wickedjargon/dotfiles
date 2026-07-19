@@ -1,0 +1,22 @@
+# bash completion for dsync
+_dsync() {
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "sync diff prune list help --help" -- "$cur") )
+        return
+    fi
+
+    local cmd="${COMP_WORDS[1]}"
+    case "$cmd" in
+        diff)
+            # managed files, home-relative
+            COMPREPLY=( $(compgen -W "$(dsync list 2>/dev/null | cut -f2)" -- "$cur") )
+            ;;
+    esac
+}
+
+complete -F _dsync dsync
