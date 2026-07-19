@@ -19,6 +19,10 @@
 
 `vm install {{win11}}`
 
+- Download a macOS recovery image from Apple's CDN (via a cached OSX-KVM checkout) and boot the installer:
+
+`vm install {{osx}}`
+
 - Create a VM from a local ISO:
 
 `vm create {{~/dl/custom.iso}} --name {{custom}}`

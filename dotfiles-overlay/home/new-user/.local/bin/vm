@@ -426,6 +426,7 @@ DISTRO_HELP = {
     "ubuntu": "live server (x86_64)",
     "win10":  "prints the ISO download URL (browser-gated)",
     "win11":  "prints the ISO download URL (browser-gated)",
+    "osx":    "recovery image from Apple's CDN via OSX-KVM (x86_64)",
 }
 
 # Microsoft gates ISO downloads behind a browser session, so
@@ -434,6 +435,12 @@ WINDOWS_ISO_PAGES = {
     "win10": "https://www.microsoft.com/software-download/windows10ISO",
     "win11": "https://www.microsoft.com/software-download/windows11",
 }
+
+# `vm install osx` keeps a shallow OSX-KVM checkout here: its
+# fetch-macOS-v2.py downloads recovery images straight from Apple's
+# CDN, and it ships the OpenCore boot disk macOS guests need.
+OSXKVM_DIR = os.path.expanduser("~/.cache/osx-kvm")
+OSXKVM_REPO = "https://github.com/kholia/OSX-KVM"
 
 
 def fetch_text(url, timeout=20):
@@ -627,17 +634,53 @@ def default_name(iso_path, os_name):
 
 def find_opencore(installer_dir):
     """Locate an OpenCore boot image for a macOS guest: next to the
-    recovery image, or in an OSX-KVM checkout there."""
+    recovery image, in an OSX-KVM checkout there, or in the checkout
+    `vm install osx` maintains."""
     candidates = [
         os.path.join(installer_dir, "OpenCore.qcow2"),
         os.path.join(installer_dir, "OpenCore", "OpenCore.qcow2"),
+        os.path.join(OSXKVM_DIR, "OpenCore", "OpenCore.qcow2"),
     ]
     for c in candidates:
         if os.path.isfile(c):
             return c
-    die("OpenCore.qcow2 not found (macOS needs its bootloader) — put "
-        "it next to the recovery image; github.com/kholia/OSX-KVM "
-        "ships it as OpenCore/OpenCore.qcow2")
+    die("OpenCore.qcow2 not found (macOS needs its bootloader) — run "
+        "`vm install osx`, or put it next to the recovery image "
+        f"({OSXKVM_REPO} ships it as OpenCore/OpenCore.qcow2)")
+
+
+def stage_osx_installer():
+    """Fetch a macOS recovery image from Apple's CDN via OSX-KVM's
+    scripts and convert it to raw. Returns the BaseSystem.img path."""
+    for tool, hint in (("git", "sudo apt install git"),
+                       ("dmg2img", "sudo apt install dmg2img")):
+        if not which(tool):
+            die(f"{tool} not installed (needed for macOS): {hint}")
+    if not os.path.isdir(os.path.join(OSXKVM_DIR, ".git")):
+        info("Cloning OSX-KVM (Apple CDN fetch script + OpenCore)...")
+        rc = subprocess.run(["git", "clone", "--depth", "1",
+                             OSXKVM_REPO, OSXKVM_DIR]).returncode
+        if rc != 0:
+            die("Could not clone OSX-KVM")
+    img = os.path.join(OSXKVM_DIR, "BaseSystem.img")
+    if os.path.isfile(img):
+        ok("Using already-downloaded BaseSystem.img "
+           f"{DIM}(delete it to fetch another macOS version){RESET}")
+        return img
+    # Interactive: prompts for the macOS version, then downloads and
+    # chunklist-verifies BaseSystem.dmg from Apple's own servers. An
+    # already-downloaded dmg (say, from an aborted run) is reused.
+    dmg = os.path.join(OSXKVM_DIR, "BaseSystem.dmg")
+    if not os.path.isfile(dmg):
+        rc = subprocess.run([sys.executable, "fetch-macOS-v2.py"],
+                            cwd=OSXKVM_DIR).returncode
+        if rc != 0 or not os.path.isfile(dmg):
+            die("fetch-macOS-v2.py did not produce BaseSystem.dmg")
+    info("Converting BaseSystem.dmg to a raw image...")
+    if subprocess.run(["dmg2img", "-i", dmg, img]).returncode != 0:
+        die("dmg2img failed")
+    os.unlink(dmg)
+    return img
 
 
 def create_vm(iso_path, opts):
@@ -855,9 +898,13 @@ def cmd_install(args):
         return
     distro = positional[0].lower()
     distro = {"windows": "win11", "windows10": "win10",
-              "windows11": "win11"}.get(distro, distro)
+              "windows11": "win11", "macos": "osx"}.get(distro, distro)
     if not opts["name"]:
         opts["name"] = distro
+
+    if distro == "osx":
+        create_vm(stage_osx_installer(), opts)
+        return
 
     if distro in WINDOWS_ISO_PAGES:
         info(f"Microsoft gates {distro} ISO downloads behind a browser "
@@ -1019,7 +1066,7 @@ commands:
 install/create options:
   --name N  --os win11|win10|osx|linux  --ram 2G  --disk 12G
   --cpus 4  --arch aarch64
-Targets: debian, arch, alpine, ubuntu, win10, win11 (bare
+Targets: debian, arch, alpine, ubuntu, win10, win11, osx (bare
 `vm install` lists them). Windows ISOs can't be auto-downloaded
 (Microsoft gates them) — `vm install win11` prints the download
 URL; then `vm create` the downloaded ISO. Windows VMs get UEFI,
@@ -1028,11 +1075,12 @@ TPM 2.0 + Secure Boot (Win11), a SATA disk and an e1000e NIC, with
 packages), all detected from the ISO's filename.
 
 macOS guests (--os osx, detected from BaseSystem-style names) boot
-through OpenCore + AppleSMC with all disks on AHCI; `create` stages
-OpenCore.qcow2 (found next to the recovery image, e.g. in an
-OSX-KVM checkout) and the recovery image itself as <image> sidecars
-so the install survives reboots — delete <image>.basesystem.img
-once macOS is installed. 4G RAM / 128G disk / 4 cpus by default.
+through OpenCore + AppleSMC with all disks on AHCI. `vm install
+osx` downloads a recovery image straight from Apple's CDN via a
+cached OSX-KVM checkout (needs git and dmg2img); `create` stages
+OpenCore.qcow2 and the recovery image as <image> sidecars so the
+install survives reboots — delete <image>.basesystem.img once
+macOS is installed. 4G RAM / 128G disk / 4 cpus by default.
 
 resize options: --ram 8G  --disk +40G|100G  --cpus 4
 RAM renames the image (and its sidecars — it's in the filename);
@@ -1053,6 +1101,7 @@ examples:
   vm install debian             fetch latest netinst, boot installer
   vm install alpine --ram 512M  small VM
   vm install win11              where to get the Windows ISO
+  vm install osx                macOS VM, image fetched from Apple
   vm create ~/dl/custom.iso     install from a local ISO
   vm create Win11_24H2.iso      Windows 11 VM (UEFI + TPM, auto)
   vm create BaseSystem.img      macOS VM (OpenCore + AppleSMC, auto)

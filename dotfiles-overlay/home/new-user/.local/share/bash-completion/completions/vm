@@ -27,7 +27,7 @@ _vm() {
     case "$cmd" in
         install)
             if [ "$COMP_CWORD" -eq 2 ]; then
-                COMPREPLY=( $(compgen -W "debian arch alpine ubuntu win10 win11" -- "$cur") )
+                COMPREPLY=( $(compgen -W "debian arch alpine ubuntu win10 win11 osx" -- "$cur") )
             else
                 COMPREPLY=( $(compgen -W "--name --ram --disk --arch" -- "$cur") )
             fi

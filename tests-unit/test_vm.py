@@ -289,9 +289,36 @@ class TestFindOpencore:
         oc.touch()
         assert vm.find_opencore(str(tmp_path)) == str(oc)
 
-    def test_missing_dies(self, tmp_path):
+    def test_cached_checkout_fallback(self, tmp_path, monkeypatch):
+        cache = tmp_path / "cache"
+        (cache / "OpenCore").mkdir(parents=True)
+        oc = cache / "OpenCore" / "OpenCore.qcow2"
+        oc.touch()
+        monkeypatch.setattr(vm, "OSXKVM_DIR", str(cache))
+        assert vm.find_opencore(str(tmp_path)) == str(oc)
+
+    def test_missing_dies(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(vm, "OSXKVM_DIR", str(tmp_path / "none"))
         with pytest.raises(SystemExit):
             vm.find_opencore(str(tmp_path))
+
+
+class TestStageOsxInstaller:
+    def test_reuses_downloaded_image(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(vm, "OSXKVM_DIR", str(tmp_path))
+        monkeypatch.setattr(vm, "which", lambda t: "/usr/bin/" + t)
+        (tmp_path / ".git").mkdir()
+        img = tmp_path / "BaseSystem.img"
+        img.touch()
+        assert vm.stage_osx_installer() == str(img)
+
+    def test_missing_dmg2img_dies(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(vm, "OSXKVM_DIR", str(tmp_path))
+        monkeypatch.setattr(
+            vm, "which",
+            lambda t: None if t == "dmg2img" else "/usr/bin/" + t)
+        with pytest.raises(SystemExit):
+            vm.stage_osx_installer()
 
 
 class TestReadState:
