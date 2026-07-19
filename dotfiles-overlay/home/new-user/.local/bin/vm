@@ -61,7 +61,8 @@ OVMF_DIR = "/usr/share/OVMF"
 # What `create` provisions and `start` boots per guest OS. Windows
 # needs UEFI (plus TPM 2.0 and Secure Boot keys for 11) and devices
 # it has in-box drivers for (SATA disk, e1000e NIC); Linux guests
-# get virtio. `create` writes the chosen profile to a <image>.json
+# get virtio; macOS boots through OpenCore + AppleSMC with all disks
+# on AHCI. `create` writes the chosen profile to a <image>.json
 # sidecar so `start` applies it on every boot; no sidecar = linux.
 OS_PROFILES = {
     "linux": {"uefi": False, "tpm": False, "secure": False,
@@ -70,18 +71,34 @@ OS_PROFILES = {
               "ram": "4G", "disk": "64G", "cpus": 4},
     "win11": {"uefi": True,  "tpm": True,  "secure": True,
               "ram": "4G", "disk": "64G", "cpus": 4},
+    "osx":   {"uefi": True,  "tpm": False, "secure": False,
+              "ram": "4G", "disk": "128G", "cpus": 4},
 }
+
+# macOS refuses to boot without an AppleSMC exposing this key. The
+# value is public knowledge (it surfaced in Apple v. Psystar) and is
+# identical on every Mac ever made.
+OSK = ("ourhardworkbythesewordsguardedpleasedontsteal"
+       "(c)AppleComputerInc")
+
+# qemu64 lacks features macOS requires; this Penryn + flags line is
+# the OSX-KVM-proven combination.
+OSX_CPU = ("Penryn,kvm=on,vendor=GenuineIntel,+invtsc,"
+           "vmware-cpuid-freq=on,+ssse3,+sse4.2,+popcnt,+avx,+aes,"
+           "+xsave,+xsaveopt,check")
 
 
 def detect_os(iso_filename):
-    """Guess the guest OS from an ISO filename: 'win10', 'win11' or
-    'linux'."""
+    """Guess the guest OS from an installer filename: 'win10',
+    'win11', 'osx' or 'linux'."""
     name = iso_filename.lower()
     m = re.search(r"win(?:dows)?[-_ ]?(10|11)", name)
     if m:
         return "win" + m.group(1)
     if "windows" in name:
         return "win11"  # unversioned — assume the stricter profile
+    if re.search(r"basesystem|mac[-_ ]?os|osx", name):
+        return "osx"
     return "linux"
 
 
@@ -313,9 +330,14 @@ def build_qemu_command(vm, port, monitor, headless=False, iso=None,
     windows = vm.get("os", "linux").startswith("win")
     cmd = [f"qemu-system-{vm['arch']}", "-m", vm["ram"],
            "-smp", str(vm.get("cpus", profile["cpus"]))]
+    osx = vm.get("os") == "osx"
     if vm["arch"] == "x86_64":
         if os.path.exists("/dev/kvm"):
-            cmd += ["-enable-kvm", "-cpu", "host"]
+            cmd += ["-enable-kvm"]
+        if osx:
+            cmd += ["-cpu", OSX_CPU]
+        elif os.path.exists("/dev/kvm"):
+            cmd += ["-cpu", "host"]
         if uefi:
             code, vars_path, smm = uefi
             cmd += ["-machine", "q35,smm=on" if smm else "q35"]
@@ -326,17 +348,49 @@ def build_qemu_command(vm, port, monitor, headless=False, iso=None,
                 "-drive", f"if=pflash,format=raw,readonly=on,file={code}",
                 "-drive", f"if=pflash,format=raw,file={vars_path}",
             ]
-        cmd += [
+        if osx:
+            cmd += [
+                "-device", f"isa-applesmc,osk={OSK}",
+                "-smbios", "type=2",
+                # macOS only drives AHCI here; OpenCore is the boot
+                # disk, snapshot=on keeps it pristine.
+                "-device", "ich9-ahci,id=sata",
+                "-drive", ("id=OpenCoreBoot,if=none,snapshot=on,"
+                           "format=qcow2,"
+                           f"file={vm['path']}.opencore.qcow2"),
+                "-device", "ide-hd,bus=sata.2,drive=OpenCoreBoot",
+            ]
+            basesystem = vm["path"] + ".basesystem.img"
+            if os.path.exists(basesystem):
+                # Staged by `create`; delete the sidecar once the
+                # install is done.
+                cmd += [
+                    "-drive", ("id=InstallMedia,if=none,format=raw,"
+                               f"file={basesystem}"),
+                    "-device", "ide-hd,bus=sata.3,drive=InstallMedia",
+                ]
+            cmd += [
+                "-drive", ("id=MacHDD,if=none,format=qcow2,"
+                           f"file={vm['path']}"),
+                "-device", "ide-hd,bus=sata.4,drive=MacHDD",
+            ]
+        else:
             # On q35 (Windows) the default bus is AHCI/SATA, which
             # Windows can drive without extra drivers.
-            "-drive", f"file={vm['path']},format=qcow2",
+            cmd += ["-drive", f"file={vm['path']},format=qcow2"]
+        cmd += [
             "-netdev", f"user,id=net0,hostfwd=tcp::{port}-:22",
             "-device",
             ("e1000e" if windows else "virtio-net-pci") + ",netdev=net0",
-            "-device", "intel-hda", "-device", "hda-output",
         ]
-        if windows:
+        if osx:
+            cmd += ["-device", "ich9-intel-hda", "-device", "hda-duplex"]
+        else:
+            cmd += ["-device", "intel-hda", "-device", "hda-output"]
+        if windows or osx:
             cmd += ["-device", "qemu-xhci", "-device", "usb-tablet"]
+        if osx:
+            cmd += ["-device", "usb-kbd"]
     else:  # aarch64
         cmd += [
             "-machine", "virt", "-cpu", "cortex-a57",
@@ -552,7 +606,8 @@ def parse_create_opts(args):
     if opts["arch"] not in ("x86_64", "aarch64"):
         die("--arch must be x86_64 or aarch64")
     if opts["os"]:
-        opts["os"] = {"windows": "win11"}.get(opts["os"], opts["os"])
+        opts["os"] = {"windows": "win11",
+                      "macos": "osx"}.get(opts["os"], opts["os"])
         if opts["os"] not in OS_PROFILES:
             valid = ", ".join(sorted(OS_PROFILES))
             die(f"--os must be one of: {valid}")
@@ -570,17 +625,43 @@ def default_name(iso_path, os_name):
     return m.group(0) if m else "vm"
 
 
+def find_opencore(installer_dir):
+    """Locate an OpenCore boot image for a macOS guest: next to the
+    recovery image, or in an OSX-KVM checkout there."""
+    candidates = [
+        os.path.join(installer_dir, "OpenCore.qcow2"),
+        os.path.join(installer_dir, "OpenCore", "OpenCore.qcow2"),
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    die("OpenCore.qcow2 not found (macOS needs its bootloader) — put "
+        "it next to the recovery image; github.com/kholia/OSX-KVM "
+        "ships it as OpenCore/OpenCore.qcow2")
+
+
 def create_vm(iso_path, opts):
     """Provision a VM for an ISO and boot its installer (foreground)."""
     os_name = opts["os"] or detect_os(os.path.basename(iso_path))
     profile = OS_PROFILES[os_name]
     if os_name != "linux" and opts["arch"] != "x86_64":
-        die("Windows guests are x86_64 only")
-    if os_name != "linux" and not opts["os"]:
+        die(f"{os_name} guests are x86_64 only")
+    if os_name.startswith("win") and not opts["os"]:
         extras = " + TPM 2.0 + Secure Boot" if profile["tpm"] else ""
         info(f"Windows ISO detected — using the {os_name} profile "
              f"(UEFI{extras}, SATA disk, e1000e NIC). "
              f"{DIM}Override with --os linux.{RESET}")
+    opencore = None
+    if os_name == "osx":
+        if iso_path.lower().endswith(".dmg"):
+            die("Convert the recovery image to raw first: "
+                f"dmg2img -i {os.path.basename(iso_path)} BaseSystem.img")
+        opencore = find_opencore(os.path.dirname(
+            os.path.abspath(os.path.expanduser(iso_path))))
+        if not opts["os"]:
+            info("macOS recovery image detected — using the osx profile "
+                 "(OpenCore + AppleSMC, AHCI disks). "
+                 f"{DIM}Override with --os linux.{RESET}")
 
     name = opts["name"] or default_name(iso_path, os_name)
     arch = opts["arch"]
@@ -608,6 +689,15 @@ def create_vm(iso_path, opts):
     if os_name != "linux" or opts["cpus"]:
         with open(conf_path(path), "w") as f:
             json.dump({"os": os_name, "cpus": cpus}, f)
+
+    if os_name == "osx":
+        # The recovery image rides along as a sidecar so `vm start`
+        # keeps offering the installer across macOS's several install
+        # reboots; delete it once the install is done.
+        info("Staging OpenCore and the recovery image as sidecars...")
+        shutil.copyfile(opencore, path + ".opencore.qcow2")
+        shutil.copyfile(iso_path, path + ".basesystem.img")
+        iso_path = None  # attached as an AHCI disk, not a cdrom
 
     uefi = ensure_uefi(vm) if profile["uefi"] else None
     tpm_sock = start_swtpm(vm) if profile["tpm"] else None
@@ -790,7 +880,7 @@ def cmd_create(args):
     """Create a VM from a local ISO."""
     positional, opts = parse_create_opts(args)
     if not positional:
-        die("Usage: vm create <file.iso> [--name N] [--os win11] "
+        die("Usage: vm create <file.iso|img> [--name N] [--os win11|osx] "
             "[--ram 4G] [--disk 64G] [--cpus 4] [--arch aarch64]")
     iso_path = os.path.expanduser(positional[0])
     if not os.path.isfile(iso_path):
@@ -819,8 +909,11 @@ def cmd_delete(args):
         info("Nothing deleted")
         return
     os.unlink(vm["path"])
-    # Sidecars: profile conf, UEFI vars store, TPM state.
-    for extra in (conf_path(vm["path"]), vm["path"] + ".vars.fd"):
+    # Sidecars: profile conf, UEFI vars store, OpenCore boot disk,
+    # macOS recovery image, TPM state.
+    for extra in (conf_path(vm["path"]), vm["path"] + ".vars.fd",
+                  vm["path"] + ".opencore.qcow2",
+                  vm["path"] + ".basesystem.img"):
         try:
             os.unlink(extra)
         except OSError:
@@ -877,7 +970,8 @@ def cmd_resize(args):
                 f"{vm['name']}.{vm['arch']}.{ram}.qcow2")
             if os.path.exists(new):
                 die(f"Already exists: {new}")
-            for suffix in ("", ".json", ".vars.fd", ".tpm"):
+            for suffix in ("", ".json", ".vars.fd", ".tpm",
+                           ".opencore.qcow2", ".basesystem.img"):
                 if os.path.exists(old + suffix):
                     os.rename(old + suffix, new + suffix)
             ok(f"RAM {vm['ram']} → {ram}  "
@@ -923,8 +1017,8 @@ commands:
   list                          machine-parseable VM list
 
 install/create options:
-  --name N  --os win11|win10|linux  --ram 2G  --disk 12G  --cpus 4
-  --arch aarch64
+  --name N  --os win11|win10|osx|linux  --ram 2G  --disk 12G
+  --cpus 4  --arch aarch64
 Targets: debian, arch, alpine, ubuntu, win10, win11 (bare
 `vm install` lists them). Windows ISOs can't be auto-downloaded
 (Microsoft gates them) — `vm install win11` prints the download
@@ -932,6 +1026,13 @@ URL; then `vm create` the downloaded ISO. Windows VMs get UEFI,
 TPM 2.0 + Secure Boot (Win11), a SATA disk and an e1000e NIC, with
 4G RAM / 64G disk / 4 cpus by default (needs the ovmf and swtpm
 packages), all detected from the ISO's filename.
+
+macOS guests (--os osx, detected from BaseSystem-style names) boot
+through OpenCore + AppleSMC with all disks on AHCI; `create` stages
+OpenCore.qcow2 (found next to the recovery image, e.g. in an
+OSX-KVM checkout) and the recovery image itself as <image> sidecars
+so the install survives reboots — delete <image>.basesystem.img
+once macOS is installed. 4G RAM / 128G disk / 4 cpus by default.
 
 resize options: --ram 8G  --disk +40G|100G  --cpus 4
 RAM renames the image (and its sidecars — it's in the filename);
@@ -954,6 +1055,7 @@ examples:
   vm install win11              where to get the Windows ISO
   vm create ~/dl/custom.iso     install from a local ISO
   vm create Win11_24H2.iso      Windows 11 VM (UEFI + TPM, auto)
+  vm create BaseSystem.img      macOS VM (OpenCore + AppleSMC, auto)
   vm start                      boot the only VM
   vm resize win11 --disk +40G   grow the disk (then extend in-guest)
   vm resize debian --ram 2G --cpus 4

@@ -17,7 +17,7 @@ _vm() {
             return
             ;;
         --os)
-            COMPREPLY=( $(compgen -W "win10 win11 linux" -- "$cur") )
+            COMPREPLY=( $(compgen -W "win10 win11 osx linux" -- "$cur") )
             return
             ;;
         --name|--ram|--disk|--cpus)
@@ -34,7 +34,7 @@ _vm() {
             ;;
         create)
             if [ "$COMP_CWORD" -eq 2 ]; then
-                COMPREPLY=( $(compgen -f -X '!*.iso' -- "$cur") $(compgen -d -- "$cur") )
+                COMPREPLY=( $(compgen -f -X '!*.iso' -- "$cur") $(compgen -f -X '!*.img' -- "$cur") $(compgen -d -- "$cur") )
             else
                 COMPREPLY=( $(compgen -W "--name --os --ram --disk --cpus --arch" -- "$cur") )
             fi

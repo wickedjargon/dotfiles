@@ -27,9 +27,13 @@
 
 `vm create {{~/dl/Win11_24H2_English_x64.iso}}`
 
+- Create a macOS VM from a recovery image (OpenCore + AppleSMC, AHCI disks; OpenCore.qcow2 must sit next to the image, e.g. an OSX-KVM checkout — delete the .basesystem.img sidecar after installing):
+
+`vm create {{~/OSX-KVM/BaseSystem.img}}`
+
 - Force a guest OS profile when detection guesses wrong:
 
-`vm create {{image.iso}} --os {{win10|win11|linux}} --cpus {{8}}`
+`vm create {{image.iso}} --os {{win10|win11|osx|linux}} --cpus {{8}}`
 
 - Boot a VM (the only one, or by name):
 

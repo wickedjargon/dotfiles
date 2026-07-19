@@ -97,6 +97,10 @@ class TestParseCreateOpts:
         _, opts = vm.parse_create_opts(["x.iso", "--os", "windows"])
         assert opts["os"] == "win11"
 
+    def test_macos_alias_maps_to_osx(self):
+        _, opts = vm.parse_create_opts(["x.img", "--os", "macos"])
+        assert opts["os"] == "osx"
+
     def test_unknown_os_dies(self):
         with pytest.raises(SystemExit):
             vm.parse_create_opts(["x.iso", "--os", "beos"])
@@ -123,6 +127,11 @@ class TestDetectOs:
     def test_linux_isos(self):
         assert vm.detect_os("debian-13.0.0-amd64-netinst.iso") == "linux"
         assert vm.detect_os("archlinux-x86_64.iso") == "linux"
+
+    def test_macos_recovery_images(self):
+        assert vm.detect_os("BaseSystem.img") == "osx"
+        assert vm.detect_os("macos-sonoma-recovery.img") == "osx"
+        assert vm.detect_os("OSX-Ventura.img") == "osx"
 
 
 class TestDefaultName:
@@ -223,6 +232,66 @@ class TestBuildQemuCommand:
                                     uefi=("/c", "/v", True))
         assert "-cdrom" in cmd
         assert "-boot" not in cmd
+
+
+class TestBuildQemuCommandOsx:
+    def _osx(self, path="/vms/osx.x86_64.4G.qcow2"):
+        return {"name": "osx", "arch": "x86_64", "ram": "4G",
+                "path": path, "os": "osx", "cpus": 4}
+
+    def test_applesmc_and_penryn_cpu(self):
+        cmd = vm.build_qemu_command(self._osx(), 2222, "/run/mon",
+                                    uefi=("/c", "/v", False))
+        assert f"isa-applesmc,osk={vm.OSK}" in cmd
+        assert cmd[cmd.index("-cpu") + 1] == vm.OSX_CPU
+        assert "host" not in cmd
+
+    def test_disks_on_ahci_with_opencore_boot(self):
+        cmd = vm.build_qemu_command(self._osx(), 2222, "/run/mon",
+                                    uefi=("/c", "/v", False))
+        assert "ich9-ahci,id=sata" in cmd
+        assert any("opencore.qcow2" in a and "snapshot=on" in a
+                   for a in cmd)
+        assert "ide-hd,bus=sata.2,drive=OpenCoreBoot" in cmd
+        assert "ide-hd,bus=sata.4,drive=MacHDD" in cmd
+        # The main disk must not also land on the default bus.
+        assert not any(a.startswith("file=") for a in cmd)
+
+    def test_recovery_sidecar_attached_only_while_staged(self, tmp_path):
+        img = tmp_path / "osx.x86_64.4G.qcow2"
+        img.touch()
+        osx = self._osx(str(img))
+        cmd = vm.build_qemu_command(osx, 2222, None,
+                                    uefi=("/c", "/v", False))
+        assert not any("InstallMedia" in a for a in cmd)
+        (tmp_path / (img.name + ".basesystem.img")).touch()
+        cmd = vm.build_qemu_command(osx, 2222, None,
+                                    uefi=("/c", "/v", False))
+        assert "ide-hd,bus=sata.3,drive=InstallMedia" in cmd
+
+    def test_virtio_nic_and_usb_input(self):
+        cmd = vm.build_qemu_command(self._osx(), 2222, "/run/mon",
+                                    uefi=("/c", "/v", False))
+        assert "virtio-net-pci,netdev=net0" in cmd
+        assert "usb-kbd" in cmd
+        assert "usb-tablet" in cmd
+
+
+class TestFindOpencore:
+    def test_next_to_installer(self, tmp_path):
+        oc = tmp_path / "OpenCore.qcow2"
+        oc.touch()
+        assert vm.find_opencore(str(tmp_path)) == str(oc)
+
+    def test_osx_kvm_checkout_layout(self, tmp_path):
+        (tmp_path / "OpenCore").mkdir()
+        oc = tmp_path / "OpenCore" / "OpenCore.qcow2"
+        oc.touch()
+        assert vm.find_opencore(str(tmp_path)) == str(oc)
+
+    def test_missing_dies(self, tmp_path):
+        with pytest.raises(SystemExit):
+            vm.find_opencore(str(tmp_path))
 
 
 class TestReadState:
@@ -342,6 +411,18 @@ class TestCmdResize:
         assert (vmdir / (new.name + ".vars.fd")).exists()
         assert (vmdir / (new.name + ".tpm")).is_dir()
         assert not (vmdir / (img.name + ".json")).exists()
+
+    def test_ram_renames_osx_sidecars(self, tmp_path, monkeypatch):
+        vmdir, img = self._setup(tmp_path, monkeypatch,
+                                 filename="osx.x86_64.4G.qcow2",
+                                 conf={"os": "osx", "cpus": 4})
+        (vmdir / (img.name + ".opencore.qcow2")).touch()
+        (vmdir / (img.name + ".basesystem.img")).touch()
+        vm.cmd_resize(["osx", "--ram", "8G"])
+        new = "osx.x86_64.8G.qcow2"
+        assert (vmdir / (new + ".opencore.qcow2")).exists()
+        assert (vmdir / (new + ".basesystem.img")).exists()
+        assert not (vmdir / (img.name + ".opencore.qcow2")).exists()
 
     def test_ram_gb_suffix_normalized(self, tmp_path, monkeypatch):
         vmdir, img = self._setup(tmp_path, monkeypatch)
