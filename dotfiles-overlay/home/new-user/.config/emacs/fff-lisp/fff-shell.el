@@ -100,13 +100,14 @@ Windows redirects the desktop into OneDrive when it's enabled;
 without OneDrive it's plain \"Desktop\".")
 
 (defun fff-dired-send-to-vm-desktop ()
-  "Copy the marked files (or file at point) to the VM's Desktop over scp.
-Needs OpenSSH Server and key-based auth in the guest (scp runs
-without a tty, so it can't prompt for a password)."
+  "Copy the marked files or directories (or the one at point) to the
+VM's Desktop over scp. Directories copy recursively. Needs OpenSSH
+Server and key-based auth in the guest (scp runs without a tty, so it
+can't prompt for a password)."
   (interactive)
   (let* ((files (dired-get-marked-files))
          (proc (apply #'start-process "vm-scp" "*vm-scp*"
-                      "scp" "-P" (number-to-string fff-vm-scp-port)
+                      "scp" "-r" "-P" (number-to-string fff-vm-scp-port)
                       "-o" "StrictHostKeyChecking=accept-new"
                       "-o" "BatchMode=yes"
                       "-o" "ConnectTimeout=5"
