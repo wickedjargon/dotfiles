@@ -40,6 +40,9 @@ def ok(msg):    print(f"{GREEN}✓{RESET} {msg}")
 def warn(msg):  print(f"{YELLOW}!{RESET} {msg}")
 def die(msg):
     print(f"{RED}✗{RESET} {msg}", file=sys.stderr)
+    # GUI callers (xdg-open, rofi) have no terminal to show the error.
+    if not sys.stderr.isatty() and which("notify-send"):
+        subprocess.run(["notify-send", "-u", "critical", "vm", msg])
     sys.exit(1)
 
 
