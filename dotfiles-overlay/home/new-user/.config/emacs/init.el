@@ -1709,3 +1709,9 @@ With a prefix ARG always prompt for command to use."
   (setq agent-shell-anthropic-default-session-mode-id "bypassPermissions")
   (setq agent-shell-anthropic-authentication
         (agent-shell-anthropic-make-authentication :login t)))
+
+(use-package key-chord
+  :straight t
+  :config
+  (key-chord-mode 1)
+  (key-chord-define-global ";;" ":"))
