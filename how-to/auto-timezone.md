@@ -16,14 +16,27 @@ On every interface up/down and connectivity change, the script:
    follows the VPN country. Tailscale without an exit node does not count
    as a tunnel. Disconnecting the VPN fires a `down` event, so the timezone
    corrects itself right after.
-3. Asks `ipapi.co`, then `ip-api.com`, for the timezone of the public IP.
-4. Validates the answer against `/usr/share/zoneinfo` and applies it with
-   `timedatectl set-timezone` only if it differs from the current one.
+3. Asks several independent geolocation services (`ipinfo.io`, `geojs.io`,
+   `reallyfreegeoip.org`, `ip-api.com`) for the timezone of the public IP,
+   and validates each answer against `/usr/share/zoneinfo`.
+4. Picks a zone by corroboration, because any single database can be wrong
+   (`ipapi.co` used to mis-locate some TELUS BC ranges to `America/Toronto`,
+   so it was dropped):
+   - if **two or more services agree**, that zone wins;
+   - otherwise (a service is down, or they disagree) it uses the first valid
+     answer;
+   - if nothing usable remains, it does nothing.
+5. Applies the chosen zone with `timedatectl set-timezone`, only if it
+   differs from the current one.
 
-Any failure (API down, no answer, garbage response) means "do nothing and
+Any failure (APIs down, no answer, garbage response) means "do nothing and
 retry on the next network event". The wall clock itself is kept correct in
 UTC by systemd-timesyncd throughout — only the timezone label is managed
 here.
+
+To add or remove a source, edit the `SERVICES` list in the script: each line
+is `url<space>parser`, where `parser` is `-` for a plaintext body or the JSON
+key holding the zone (e.g. `timezone`, `time_zone`).
 
 Timezone changes are logged to the journal:
 

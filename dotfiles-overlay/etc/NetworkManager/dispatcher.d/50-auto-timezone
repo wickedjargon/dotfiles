@@ -36,25 +36,70 @@ case "$egress_dev" in
     mullvad|tailscale*|tun*|wg*|ppp*) exit 0 ;;
 esac
 
-# Ask independent geolocation services for the timezone; first answer wins.
-# (ip-api.com's free tier is HTTP-only; the response is validated below.)
-tz=""
-for url in "https://ipapi.co/timezone" "http://ip-api.com/line/?fields=timezone"; do
-    tz=$(curl -sf --max-time 10 "$url" | tr -d '[:space:]')
-    [ -n "$tz" ] && break
-done
-[ -n "$tz" ] || exit 0
+# Ask several independent geolocation services and require corroboration —
+# any single database can be wrong. (ipapi.co was dropped from this list: it
+# geolocated TELUS BC ranges to America/Toronto while every other service
+# correctly reported America/Vancouver.) The rule:
+#   1. if two or more services agree on a zone, use it (strongest signal);
+#   2. else (a service is down, or they disagree) use the first valid answer;
+#   3. if nothing usable remains, do nothing and retry on the next event.
+#
+# Each entry is "url<space>parser": parser "-" means the response body is
+# already the zone (plaintext); otherwise it names the JSON key holding the
+# zone. HTTPS sources are listed first so a lone fallback prefers them
+# (ip-api.com's free tier is HTTP-only).
+SERVICES="https://ipinfo.io/timezone -
+https://get.geojs.io/v1/ip/geo.json timezone
+https://reallyfreegeoip.org/json/ time_zone
+http://ip-api.com/line/?fields=timezone -"
 
-# Validate: must look like Area/City, contain no junk or path traversal,
-# and name a real zoneinfo entry.
-case "$tz" in
-    */*) ;;
-    *) exit 0 ;;
-esac
-case "$tz" in
-    /*|*..*|*[!A-Za-z0-9/_+-]*) exit 0 ;;
-esac
-[ -f "/usr/share/zoneinfo/$tz" ] || exit 0
+# Pull a "key":"value" string out of a flat JSON body and unescape any \/.
+json_field() {
+    grep -oE "\"$1\"[[:space:]]*:[[:space:]]*\"[^\"]+\"" | head -1 |
+        sed -E 's#.*:[[:space:]]*"##; s#"$##; s#\\/#/#g'
+}
+
+# Validate a candidate: must look like Area/City, carry no junk or path
+# traversal, and name a real zoneinfo entry.
+valid_zone() {
+    case "$1" in
+        */*) ;;
+        *) return 1 ;;
+    esac
+    case "$1" in
+        /*|*..*|*[!A-Za-z0-9/_+-]*) return 1 ;;
+    esac
+    [ -f "/usr/share/zoneinfo/$1" ]
+}
+
+votes=""        # newline-separated valid answers, duplicates kept for the vote
+fallback=""     # first valid answer seen (used when no zone reaches a majority)
+OIFS=$IFS
+IFS='
+'
+for entry in $SERVICES; do
+    url=${entry%% *}; parser=${entry##* }
+    body=$(curl -sf --max-time 10 "$url") || continue
+    if [ "$parser" = "-" ]; then
+        ans=$(printf '%s' "$body" | tr -d '[:space:]')
+    else
+        ans=$(printf '%s' "$body" | json_field "$parser")
+    fi
+    valid_zone "$ans" || continue
+    votes="$votes$ans
+"
+    [ -z "$fallback" ] && fallback=$ans
+done
+IFS=$OIFS
+
+# Prefer a zone returned by two or more services; else the first valid answer;
+# else give up until the next network event.
+tz=""
+for cand in $votes; do
+    [ "$(printf '%s\n' "$votes" | grep -cxF "$cand")" -ge 2 ] && { tz=$cand; break; }
+done
+tz=${tz:-$fallback}
+[ -n "$tz" ] || exit 0
 
 current=$(timedatectl show -p Timezone --value 2>/dev/null)
 [ "$tz" = "$current" ] && exit 0
