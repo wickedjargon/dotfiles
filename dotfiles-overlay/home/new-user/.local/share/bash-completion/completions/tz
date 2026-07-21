@@ -16,6 +16,11 @@ _tz() {
                 COMPREPLY=( $(compgen -W "$(timedatectl list-timezones 2>/dev/null)" -- "$cur") )
             fi
             ;;
+        ip)
+            if [ "$COMP_CWORD" -eq 2 ]; then
+                COMPREPLY=( $(compgen -W "--set" -- "$cur") )
+            fi
+            ;;
     esac
 }
 

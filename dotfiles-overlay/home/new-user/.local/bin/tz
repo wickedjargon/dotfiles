@@ -113,6 +113,17 @@ def cmd_list(args):
     print("\n".join(zones))
 
 
+def apply_zone(zone):
+    """Set the system timezone to an exact zone name and report it."""
+    info(f"Setting timezone → {BOLD}{zone}{RESET}...")
+    result = run(["timedatectl", "set-timezone", zone])
+    if result.returncode != 0:
+        die(f"Failed: {result.stderr.strip()}")
+    time.tzset()
+    ok(f"{zone} — local time is now "
+       f"{time.strftime('%a %Y-%m-%d %H:%M')}")
+
+
 def cmd_set(args):
     """Set the system timezone, fuzzy-matching the zone name."""
     if not args:
@@ -129,18 +140,12 @@ def cmd_set(args):
               file=sys.stderr)
         sys.exit(1)
 
-    zone = matches[0]
-    info(f"Setting timezone → {BOLD}{zone}{RESET}...")
-    result = run(["timedatectl", "set-timezone", zone])
-    if result.returncode != 0:
-        die(f"Failed: {result.stderr.strip()}")
-    time.tzset()
-    ok(f"{zone} — local time is now "
-       f"{time.strftime('%a %Y-%m-%d %H:%M')}")
+    apply_zone(matches[0])
 
 
-def cmd_ip():
-    """Compare the system timezone with IP geolocation."""
+def cmd_ip(args):
+    """Compare the system timezone with IP geolocation, optionally set it."""
+    do_set = bool(args) and args[0] in ("--set", "-s")
     try:
         with urllib.request.urlopen(GEO_URL, timeout=10) as response:
             geo = json.load(response)
@@ -148,19 +153,25 @@ def cmd_ip():
         die(f"Geolocation lookup failed: {e}")
 
     system_zone = timedatectl_show().get("Timezone", "unknown")
+    ip_zone = geo.get("timezone")
     org = geo.get("org", "")
     print(f"{CYAN}▸{RESET} {BOLD}{geo.get('ip', '?')}{RESET}"
           f"{f'  {DIM}({org}){RESET}' if org else ''}")
     print(f"  Location  {geo.get('city', '?')}, "
           f"{geo.get('country', '?')}")
-    print(f"  IP zone   {geo.get('timezone', '?')}")
+    print(f"  IP zone   {ip_zone or '?'}")
     print(f"  System    {system_zone}")
 
-    if geo.get("timezone") == system_zone:
+    if ip_zone == system_zone:
         ok("IP geolocation matches the system timezone")
+    elif do_set:
+        if not ip_zone:
+            die("IP geolocation returned no timezone")
+        apply_zone(ip_zone)
     else:
         warn("IP geolocation disagrees with the system timezone "
              "(VPN or roaming eSIM?)")
+        info("Run 'tz ip --set' to adopt the IP timezone")
 
 
 # ── Help + Main ─────────────────────────────────────────────────────
@@ -173,7 +184,8 @@ commands:
   (none)                        show timezone, local/UTC time, NTP state
   set <ZONE>                    set the timezone (fuzzy-matched)
   list [FILTER]                 list available timezones
-  ip                            compare system timezone with IP location
+  ip [--set]                    compare system timezone with IP location,
+                                --set adopts the IP timezone
 
 Zone names match case-insensitively and by substring; when exactly one
 zone matches, it is applied. 'tz ip' helps spot mismatches when a VPN
@@ -184,7 +196,8 @@ examples:
   tz set manila                 set Asia/Manila
   tz set Europe/Amsterdam       set an exact zone
   tz list asia                  zones matching 'asia'
-  tz ip                         where does my IP geolocate?"""
+  tz ip                         where does my IP geolocate?
+  tz ip --set                   set the timezone from my IP"""
 
 
 def main():
@@ -205,7 +218,7 @@ def main():
     commands = {
         "set":  lambda: cmd_set(args),
         "list": lambda: cmd_list(args),
-        "ip":   lambda: cmd_ip(),
+        "ip":   lambda: cmd_ip(args),
     }
 
     if command not in commands:

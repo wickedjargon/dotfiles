@@ -18,3 +18,7 @@
 - Compare the system timezone with IP geolocation (spots VPN/eSIM mismatches):
 
 `tz ip`
+
+- Set the timezone from IP geolocation:
+
+`tz ip --set`
