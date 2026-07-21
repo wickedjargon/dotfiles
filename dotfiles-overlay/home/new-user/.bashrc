@@ -36,6 +36,7 @@ alias grep='grep --color=auto'
 alias z='zathura'
 alias em='emacs'
 alias emc='emacsclient -c -a ""'
+alias emsync='~/d/projects/dotfiles/scripts/emacs-sync-packages.sh'
 alias neofetch="fastfetch"
 
 # bind ctrl+l to cls (using macro to force full prompt redraw)
