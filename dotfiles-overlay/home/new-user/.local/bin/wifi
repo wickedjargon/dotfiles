@@ -117,9 +117,11 @@ def get_active_connection():
     # duplicates like "MyNet 1", hidden SSIDs).
     info_dict = {"name": wifi_name, "ssid": wifi_name, "device": wifi_device}
 
-    # Get SSID and signal from wifi list for current AP
+    # Get SSID and signal from wifi list for current AP.
+    # --rescan no: read cached scan results; a fresh scan blocks ~2s+ and
+    # isn't needed for info about the AP we're already associated with.
     wifi_result = nmcli("-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY,FREQ,RATE",
-                        "device", "wifi", "list")
+                        "device", "wifi", "list", "--rescan", "no")
     if wifi_result.returncode == 0:
         for line in wifi_result.stdout.strip().splitlines():
             parts = nmcli_split_line(line)
