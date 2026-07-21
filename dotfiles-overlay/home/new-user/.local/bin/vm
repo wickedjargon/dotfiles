@@ -765,8 +765,11 @@ def create_vm(iso_path, opts):
 
     info(f"Booting the installer ({os_name}, {ram}, {cpus} cpus) — "
          "Ctrl+Alt+G releases the mouse...")
-    cmd = build_qemu_command(vm, DEFAULT_PORTS[arch], None, iso=iso_path,
-                             uefi=uefi, tpm_sock=tpm_sock)
+    # A monitor socket even for this foreground boot, so `vm pause`
+    # works during long installs (macOS streams ~13G from Apple).
+    monitor = os.path.join(RUNTIME, f"vm-{name}.monitor")
+    cmd = build_qemu_command(vm, DEFAULT_PORTS[arch], monitor,
+                             iso=iso_path, uefi=uefi, tpm_sock=tpm_sock)
     rc = subprocess.run(cmd).returncode
     if rc not in (0, 1):  # 1 = window closed normally
         die(f"QEMU exited with code {rc} — clean up with: vm delete {name}")
@@ -788,9 +791,12 @@ def cmd_status():
         size_str = f"{size / 1024**3:.1f}G"
         os_tag = f"  {v['os']}" if v.get("os", "linux") != "linux" else ""
         if v["pid"]:
-            print(f"  {GREEN}●{RESET} {BOLD}{v['name']:<{width}}{RESET}  "
+            paused = vm_paused(v)
+            dot = f"{YELLOW}●{RESET}" if paused else f"{GREEN}●{RESET}"
+            tag = "paused, " if paused else ""
+            print(f"  {dot} {BOLD}{v['name']:<{width}}{RESET}  "
                   f"{v['arch']}  {v['ram']}  {size_str}{os_tag}  "
-                  f"{DIM}pid {v['pid']}, ssh -p {v['port']}{RESET}")
+                  f"{DIM}{tag}pid {v['pid']}, ssh -p {v['port']}{RESET}")
         else:
             print(f"  {DIM}○{RESET} {v['name']:<{width}}  "
                   f"{DIM}{v['arch']}  {v['ram']}  {size_str}{os_tag}{RESET}")
@@ -836,29 +842,88 @@ def cmd_start(args):
        f"{DIM}(ssh: vm ssh {vm['name']}, stop: vm stop {vm['name']}){RESET}")
 
 
-def _monitor_powerdown(monitor):
-    """Ask the guest to power down via the QEMU monitor socket."""
+def _monitor_path(vm):
+    """The VM's QEMU monitor socket (from the state file, or the
+    conventional path — `create` boots have no state file)."""
+    state = read_state(vm["name"]) or {}
+    return state.get("monitor",
+                     os.path.join(RUNTIME, f"vm-{vm['name']}.monitor"))
+
+
+def _monitor_send(monitor, command):
+    """Send one command to the QEMU monitor socket."""
     try:
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.settimeout(3)
         s.connect(monitor)
         s.recv(4096)  # banner
-        s.sendall(b"system_powerdown\n")
+        s.sendall(command.encode() + b"\n")
         s.close()
         return True
     except OSError:
         return False
 
 
+def _monitor_query(monitor, command):
+    """Send a command and return the monitor's reply ('' if
+    unreachable)."""
+    # Replies are framed by "(qemu)" prompts; the banner ends with one
+    # too, and can arrive split across reads.
+    def read_to_prompt(s):
+        out = b""
+        while b"(qemu)" not in out:
+            chunk = s.recv(4096)
+            if not chunk:
+                break
+            out += chunk
+        return out
+
+    try:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(1)
+        s.connect(monitor)
+        read_to_prompt(s)  # banner
+        s.sendall(command.encode() + b"\n")
+        reply = read_to_prompt(s)
+        s.close()
+        return reply.decode(errors="replace")
+    except OSError:
+        return ""
+
+
+def vm_paused(vm):
+    """True if a running VM sits paused at the QEMU level."""
+    return "paused" in _monitor_query(_monitor_path(vm), "info status")
+
+
+def cmd_pause(args):
+    """Freeze a running VM in RAM (QEMU stop)."""
+    vm = resolve_vm(args[0] if args else None, want_running=True)
+    if not _monitor_send(_monitor_path(vm), "stop"):
+        die(f"No monitor socket for '{vm['name']}' — it was started "
+            "outside this tool")
+    ok(f"{vm['name']} paused  {DIM}(state lives in RAM — survives host "
+       f"suspend, not a QEMU exit; vm resume {vm['name']}){RESET}")
+
+
+def cmd_resume(args):
+    """Continue a paused VM (QEMU cont)."""
+    vm = resolve_vm(args[0] if args else None, want_running=True)
+    if not _monitor_send(_monitor_path(vm), "cont"):
+        die(f"No monitor socket for '{vm['name']}' — it was started "
+            "outside this tool")
+    ok(f"{vm['name']} resumed")
+
+
 def cmd_stop(args):
     """Shut a VM down (ACPI powerdown, SIGTERM fallback)."""
     vm = resolve_vm(args[0] if args else None, want_running=True)
-    state = read_state(vm["name"]) or {}
-    monitor = state.get("monitor",
-                        os.path.join(RUNTIME, f"vm-{vm['name']}.monitor"))
+    monitor = _monitor_path(vm)
 
     info(f"Stopping {BOLD}{vm['name']}{RESET}...")
-    if _monitor_powerdown(monitor):
+    if vm_paused(vm):
+        _monitor_send(monitor, "cont")  # a paused guest can't see ACPI
+    if _monitor_send(monitor, "system_powerdown"):
         # Give the guest a chance to shut down cleanly.
         for _ in range(30):
             if not vm["pid"] or not _alive(vm["pid"]):
@@ -1076,6 +1141,8 @@ commands:
   create <ISO> [opts]           create a VM from a local ISO
   start [NAME] [PORT]           boot a VM (add --headless for no window)
   stop [NAME]                   ACPI powerdown, SIGTERM fallback
+  pause [NAME]                  freeze a running VM in RAM
+  resume [NAME]                 continue a paused VM
   ssh [NAME] [USER]             ssh via the forwarded port
   resize [NAME] [opts]          change RAM, disk or cpus (stopped VM)
   delete <NAME>                 delete the disk image (asks first)
@@ -1105,6 +1172,11 @@ RAM renames the image (and its sidecars — it's in the filename);
 disk only grows (shrinking destroys guest filesystems) and the
 partition must then be expanded inside the guest.
 
+pause freezes the guest in place — no CPU, no I/O — and resume
+continues it. The state lives in QEMU's RAM: it survives a host
+suspend, but not a QEMU exit or host reboot. Paused VMs show a
+yellow dot in the `vm` listing.
+
 Images live in ~/virtual-machines as <name>.<arch>.<RAM>.qcow2 — the
 same convention rofi-explorer (super+e) launches, so VMs made here
 appear there too. Per-VM settings (OS profile, cpus) live in a
@@ -1128,6 +1200,7 @@ examples:
   vm resize debian --ram 2G --cpus 4
   vm start debian --headless    boot without a window
   vm ssh                        ssh into the running VM
+  vm pause                      freeze the running VM (resume later)
   vm stop                       shut the running VM down
   vm delete debian              remove the disk image"""
 
@@ -1149,6 +1222,8 @@ def main():
         "create":  lambda: cmd_create(args),
         "start":   lambda: cmd_start(args),
         "stop":    lambda: cmd_stop(args),
+        "pause":   lambda: cmd_pause(args),
+        "resume":  lambda: cmd_resume(args),
         "ssh":     lambda: cmd_ssh(args),
         "resize":  lambda: cmd_resize(args),
         "delete":  lambda: cmd_delete(args),

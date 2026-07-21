@@ -6,7 +6,7 @@ _vm() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     if [ "$COMP_CWORD" -eq 1 ]; then
-        COMPREPLY=( $(compgen -W "install create start stop ssh resize delete list help --help" -- "$cur") )
+        COMPREPLY=( $(compgen -W "install create start stop pause resume ssh resize delete list help --help" -- "$cur") )
         return
     fi
 
@@ -39,7 +39,7 @@ _vm() {
                 COMPREPLY=( $(compgen -W "--name --os --ram --disk --cpus --arch" -- "$cur") )
             fi
             ;;
-        start|stop|ssh|delete)
+        start|stop|pause|resume|ssh|delete)
             if [ "$COMP_CWORD" -eq 2 ]; then
                 local -a names
                 mapfile -t names < <(ls -1 "$HOME/virtual-machines" 2>/dev/null | sed -n 's/\.\(x86_64\|aarch64\)\..*\.qcow2$//p')

@@ -55,6 +55,14 @@
 
 `vm ssh`
 
+- Freeze the running VM in RAM — no CPU or I/O; survives host suspend, not a QEMU exit (handy mid-install):
+
+`vm pause`
+
+- Continue a paused VM:
+
+`vm resume {{osx}}`
+
 - Shut down cleanly (ACPI powerdown, SIGTERM fallback):
 
 `vm stop`
