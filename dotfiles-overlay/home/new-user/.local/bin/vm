@@ -349,6 +349,15 @@ def build_qemu_command(vm, port, monitor, headless=False, iso=None,
                 "-drive", f"if=pflash,format=raw,file={vars_path}",
             ]
         if osx:
+            # macOS's installer flushes on nearly every write, and the
+            # default cache mode turns each guest flush into a host
+            # fsync — on a qcow2 that crawls (a ~30-minute install
+            # reports a 27-hour ETA). cache=unsafe ignores guest
+            # flushes so the disk keeps up; the trade-off is that a
+            # host crash can corrupt the image (fine here — these are
+            # rebuildable test VMs). aio=threads keeps the
+            # emulated-AHCI I/O off the vCPU thread.
+            installing = os.path.exists(vm["path"] + ".basesystem.img")
             cmd += [
                 "-device", f"isa-applesmc,osk={OSK}",
                 "-smbios", "type=2",
@@ -356,21 +365,22 @@ def build_qemu_command(vm, port, monitor, headless=False, iso=None,
                 # disk, snapshot=on keeps it pristine.
                 "-device", "ich9-ahci,id=sata",
                 "-drive", ("id=OpenCoreBoot,if=none,snapshot=on,"
-                           "format=qcow2,"
+                           "format=qcow2,cache=writeback,aio=threads,"
                            f"file={vm['path']}.opencore.qcow2"),
                 "-device", "ide-hd,bus=sata.2,drive=OpenCoreBoot",
             ]
-            basesystem = vm["path"] + ".basesystem.img"
-            if os.path.exists(basesystem):
+            if installing:
                 # Staged by `create`; delete the sidecar once the
                 # install is done.
                 cmd += [
                     "-drive", ("id=InstallMedia,if=none,format=raw,"
-                               f"file={basesystem}"),
+                               "cache=unsafe,aio=threads,"
+                               f"file={vm['path']}.basesystem.img"),
                     "-device", "ide-hd,bus=sata.3,drive=InstallMedia",
                 ]
             cmd += [
                 "-drive", ("id=MacHDD,if=none,format=qcow2,"
+                           "cache=unsafe,aio=threads,"
                            f"file={vm['path']}"),
                 "-device", "ide-hd,bus=sata.4,drive=MacHDD",
             ]
