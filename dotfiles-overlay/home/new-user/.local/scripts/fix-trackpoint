@@ -1,7 +1,12 @@
 #!/bin/sh
 # Reset the Elan i2c device (touchpad + trackpoint) without rebooting.
 # Fixes a firmware stall where the trackpoint/touchpad stops responding.
-# Run with: sudo sh fix-trackpoint.sh
-echo 0-0015 > /sys/bus/i2c/drivers/elan_i2c/unbind
+# Self-elevates, so just run: fix-trackpoint
+
+[ "$(id -u)" -ne 0 ] && exec sudo "$0" "$@"
+
+# Unbind may return EIO while talking to the hung device; the unbind
+# itself still happens, so ignore the error.
+echo 0-0015 > /sys/bus/i2c/drivers/elan_i2c/unbind 2>/dev/null || true
 sleep 1
 echo 0-0015 > /sys/bus/i2c/drivers/elan_i2c/bind
