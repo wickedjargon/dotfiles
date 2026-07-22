@@ -73,10 +73,18 @@
 (use-package emacs :ensure nil
   :config
 
-  ;; Must be set before evil and evil-collection load
+  ;; Must be set before evil loads. Note: evil is loaded as a dependency
+  ;; of evil-leader, so setting these in `use-package evil' :init is too
+  ;; late — they would silently have no effect.
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
   (setq evil-undo-system 'undo-fu)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-d-scroll t)
+  (setq evil-want-fine-undo t)
+
+  ;; Must be set before evil-leader loads (global-evil-leader-mode reads it)
+  (setq evil-leader/in-all-states t)
 
   ;; for youtube change it to this:
   ;; (set-face-attribute 'default nil :height 150)
@@ -701,15 +709,12 @@ TTY frames (standalone non-daemon only) get tty-dark."
 
 (use-package evil :defer nil :straight t
   :init
-  ;; Must be set before evil and evil-collection load
+  ;; evil-want-* options live in the `use-package emacs' block at the top:
+  ;; evil is already loaded (by evil-leader) when this :init runs.
   (setq evil-regexp-search nil)
-  (setq evil-want-C-u-scroll t)
-  (setq evil-want-C-d-scroll t)
   (setq evil-insert-state-message nil)
-  (setq evil-want-fine-undo t)
   (setq evil-search-wrap nil)
   (setq evil-kill-on-visual-paste nil)
-  (setq evil-leader/in-all-states t)  ;; Make the leader key available in all states.
 
   :config
   (progn
