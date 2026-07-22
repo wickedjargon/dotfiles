@@ -238,21 +238,15 @@
     (with-eval-after-load 'evil
       (define-key evil-insert-state-map (kbd "ESC ESC <escape>") #'evil-normal-state)))
 
-  ;; Override `package-install` to do nothing
-  (defun package-install (&rest args)
-    "This has been overridden to do nothing because we use straight.el."
+  ;; Disable package.el commands — this config uses straight.el.
+  ;; Advice (unlike redefining the functions) survives package.el loading.
+  (defun fff-package-el-disabled (&rest _)
+    "Refuse to run package.el commands; this config uses straight.el."
     (interactive)
-    (message "`package-install` is disabled. Use straight.el instead."))
+    (user-error "package.el is disabled — use straight.el (see fff-open-straight-repo, emacs-sync-packages.sh)"))
 
-  ;; Prevent `package-list-packages` from running
-  (defun package-list-packages (&rest args)
-    "This has been overridden to do nothing because we use straight.el."
-    (interactive)
-    (message "`package-list-packages` is disabled. Use straight.el instead."))
-
-  ;; Prevent package menu from displaying
-  (eval-after-load 'package
-    '(defalias 'list-packages 'straight-list-packages))
+  (dolist (cmd '(package-install package-list-packages list-packages package-refresh-contents))
+    (advice-add cmd :override #'fff-package-el-disabled))
 
   ;; when new window opens, move cursor there
   (defun fff-focus-new-window-or-buffer (orig-fun &rest args)
