@@ -2,12 +2,28 @@
 
 import json
 import os
+import subprocess
 
 import pytest
 
 from helpers import get_bin_path, import_script
 
 vm = import_script(get_bin_path("vm"))
+
+
+@pytest.fixture(autouse=True)
+def _no_desktop_notifications(monkeypatch):
+    """die() falls back to notify-send when stderr is not a tty — always
+    the case under pytest's capture. Stub just that call so error-path
+    tests don't fire real desktop notifications on the host."""
+    real_run = subprocess.run
+
+    def run(cmd, *args, **kwargs):
+        if cmd and cmd[0] == "notify-send":
+            return subprocess.CompletedProcess(cmd, 0)
+        return real_run(cmd, *args, **kwargs)
+
+    monkeypatch.setattr(vm.subprocess, "run", run)
 
 
 class TestParseVmFilename:
