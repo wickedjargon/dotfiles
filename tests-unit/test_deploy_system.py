@@ -117,6 +117,16 @@ class TestDeploySystem(unittest.TestCase):
         update_calls = [c for c in calls if c[0][0][:2] == ['apt-get', 'update']]
         self.assertEqual(len(update_calls), 1)
 
+        # Pre-installed packages must be pinned as manually installed so a
+        # later autoremove can't take them out; new packages need no pin.
+        mark_calls = [
+            c for c in calls if c[0][0][:2] == ['apt-mark', 'manual']
+        ]
+        self.assertEqual(len(mark_calls), 1)
+        mark_cmd = mark_calls[0][0][0]
+        self.assertIn('already-there', mark_cmd)
+        self.assertNotIn('new-pkg', mark_cmd)
+
     @patch('subprocess.Popen')
     def test_set_user_password(self, mock_popen):
         # Mock Popen context manager and communicate

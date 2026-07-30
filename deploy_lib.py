@@ -796,6 +796,7 @@ def install_packages(packages, tui, start_row):
 
     # Install packages one by one
     failed_packages = []
+    already_installed = []
 
     progress_row = start_row
     start_row += 1
@@ -808,6 +809,7 @@ def install_packages(packages, tui, start_row):
 
         # Check if already installed
         if is_package_installed(package):
+            already_installed.append(package)
             continue
 
         # Install the package
@@ -816,6 +818,25 @@ def install_packages(packages, tui, start_row):
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             log_error(f"Failed to install package: {package}", e)
             failed_packages.append(package)
+
+    # Packages that predate this deploy (e.g. pulled in by the installer's
+    # desktop task) carry apt's "automatic" mark, so a later autoremove deletes
+    # them once their original parent package is removed. Pin them as manually
+    # installed so they survive. Freshly installed packages are already manual.
+    if already_installed:
+        try:
+            subprocess.run(
+                ["apt-mark", "manual"] + already_installed,
+                check=True,
+                capture_output=True,
+                timeout=300,
+            )
+        except (
+            subprocess.CalledProcessError,
+            subprocess.TimeoutExpired,
+            FileNotFoundError,
+        ) as e:
+            log_error("Failed to apt-mark pre-installed packages as manual", e)
 
     # Summary
     if failed_packages:
