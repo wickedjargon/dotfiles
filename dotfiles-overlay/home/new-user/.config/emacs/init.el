@@ -1288,7 +1288,17 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
 (use-package git-gutter :straight t
   :config
   (global-git-gutter-mode +1)
-  (setq git-gutter:update-interval 0.02)
+  ;; A non-zero interval live-diffs the current buffer on idle — including
+  ;; freshly opened binary files (e.g. images from dired), where writing
+  ;; the git blob to the diff temp file prompts "Select coding system".
+  ;; With 0 the gutter still refreshes on save and revert.
+  (setq git-gutter:update-interval 0)
+  ;; If live updates are ever re-enabled, the diff temp files must be
+  ;; written verbatim, not through text encoding.
+  (advice-add 'git-gutter:live-update :around
+              (lambda (orig &rest args)
+                (let ((coding-system-for-write 'binary))
+                  (apply orig args))))
   (add-hook 'find-file-hook
             (lambda ()
               (when (and (fboundp 'tramp-tramp-file-p)
@@ -1496,6 +1506,18 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
   (defun fff-eshell-clear-1-binding ()
     "Bind C-c c to fff-eshell-clear-1 in eshell."
     (local-set-key (kbd "C-c c") #'fff-eshell-clear-1)))
+
+(use-package vterm :straight t :defer t
+  :hook (vterm-mode . fff-vterm-clear-binding)
+  :config
+  (defun fff-vterm-clear ()
+    "Clear vterm buffer and scrollback."
+    (interactive)
+    (vterm-clear-scrollback)
+    (vterm-clear))
+  (defun fff-vterm-clear-binding ()
+    "Bind C-c c to fff-vterm-clear in vterm."
+    (local-set-key (kbd "C-c c") #'fff-vterm-clear)))
 
 ;;; UI Packages
 
@@ -1708,6 +1730,33 @@ With a prefix ARG always prompt for command to use."
   (setq agent-shell-anthropic-default-session-mode-id "bypassPermissions")
   (setq agent-shell-anthropic-authentication
         (agent-shell-anthropic-make-authentication :login t)))
+
+(use-package gptel
+  :straight t
+  :defer t
+  :commands (gptel gptel-send gptel-menu)
+  :config
+  (defun fff-groq-api-key ()
+    "Read the Groq API key from ~/.secrets/groq-key."
+    (let ((key-file (expand-file-name "~/.secrets/groq-key")))
+      (unless (file-exists-p key-file)
+        (user-error "Groq key file not found: %s" key-file))
+      (string-trim
+       (with-temp-buffer
+         (insert-file-contents key-file)
+         (buffer-string)))))
+  (setq gptel-backend
+        (gptel-make-openai "Groq"
+          :host "api.groq.com"
+          :endpoint "/openai/v1/chat/completions"
+          :stream t
+          :key #'fff-groq-api-key
+          :models '(llama-3.3-70b-versatile
+                    llama-3.1-8b-instant
+                    moonshotai/kimi-k2-instruct
+                    qwen/qwen3-32b
+                    deepseek-r1-distill-llama-70b))
+        gptel-model 'llama-3.3-70b-versatile))
 
 (use-package key-chord
   :straight t
