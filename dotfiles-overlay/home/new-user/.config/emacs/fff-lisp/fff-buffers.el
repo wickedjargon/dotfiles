@@ -232,6 +232,16 @@
                                         (append alist '((direction . right))))
            'window))))
 
+(defun fff-split-window-below-and-focus ()
+  "Split the window below and move focus to the new window."
+  (interactive)
+  (select-window (split-window-below)))
+
+(defun fff-split-window-right-and-focus ()
+  "Split the window right and move focus to the new window."
+  (interactive)
+  (select-window (split-window-right)))
+
 (defun fff-move-current-window-left ()
   "Swap the current window with the window to the left and follow focus."
   (interactive)

@@ -2,8 +2,9 @@
 ;;; Run with: emacs --batch -l /path/to/emacs-sync-packages.el
 
 ;;; Commentary:
-;; Parses init.el, extracts all use-package declarations with :straight,
-;; and clones each package via straight-use-package with error handling.
+;; Parses init.el and fff-modules/*.el, extracts all use-package
+;; declarations with :straight, and clones each package via
+;; straight-use-package with error handling.
 ;; Packages that fail to clone are skipped and reported at the end.
 ;; This ensures Emacs startup never needs to clone anything.
 
@@ -12,6 +13,13 @@
 (defvar fff-sync--init-file
   (expand-file-name "init.el" user-emacs-directory)
   "Path to the Emacs init.el to parse for packages.")
+
+(defun fff-sync--config-files ()
+  "Return the list of config files to parse for packages.
+init.el plus every file in fff-modules/, if that directory exists."
+  (cons fff-sync--init-file
+        (file-expand-wildcards
+         (expand-file-name "fff-modules/*.el" user-emacs-directory))))
 
 (defvar fff-sync--succeeded '()
   "List of packages that were successfully synced.")
@@ -114,8 +122,10 @@ straight-use-package is a no-op for already-cloned repos."
     (message "✗ init.el not found at %s" fff-sync--init-file)
     (kill-emacs 1))
 
-  (message "Parsing %s..." fff-sync--init-file)
-  (let ((packages (fff-sync--extract-packages fff-sync--init-file)))
+  (let ((packages '()))
+    (dolist (file (fff-sync--config-files))
+      (message "Parsing %s..." file)
+      (setq packages (append packages (fff-sync--extract-packages file))))
     (message "Found %d packages with :straight" (length packages))
     (message "")
 
