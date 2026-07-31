@@ -14,6 +14,7 @@
 (use-package read-aloud :defer t :straight t)
 
 (use-package gif-screencast
+  :defer t
   :init
   (setq gif-screencast-output-directory (expand-file-name "gif-screencast/" user-emacs-directory))
   :straight (gif-screencast

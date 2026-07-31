@@ -37,7 +37,7 @@
   ;; single key
   (evil-leader/set-key "SPC" 'execute-extended-command)
   (evil-leader/set-key "d" 'delete-blank-lines)
-  (evil-leader/set-key "k" 'fff-hydra-expand-region/er/expand-region)
+  (evil-leader/set-key "k" 'er/expand-region)
   (evil-leader/set-key "o" 'other-window)
   (evil-leader/set-key "q" 'fff-delete-window-and-bury-buffer)
   (evil-leader/set-key "w" 'save-buffer)
@@ -52,12 +52,12 @@
   ;; popper
   (evil-leader/set-key "TAB TAB" 'popper-toggle)
   (evil-leader/set-key "TAB t" 'popper-toggle-type)
-  (evil-leader/set-key "TAB c" 'fff-popper/popper-cycle)
+  (evil-leader/set-key "TAB c" 'popper-cycle)
 
   ;; text scaling
   (evil-leader/set-key "0" 'fff-set-scale-to-zero)
-  (evil-leader/set-key "=" 'fff-hydra-zoom/text-scale-increase)
-  (evil-leader/set-key "-" 'fff-hydra-zoom/text-scale-decrease)
+  (evil-leader/set-key "=" 'text-scale-increase)
+  (evil-leader/set-key "-" 'text-scale-decrease)
 
   ;; embark
   (evil-leader/set-key "RET" 'embark-dwim)
@@ -79,14 +79,14 @@
   (evil-leader/set-key "c s" 'yas-insert-snippet)
 
   ;; paragraph navigation
-  (evil-leader/set-key "[" 'fff-hydra-paragraph-movement/evil-backward-paragraph)
-  (evil-leader/set-key "]" 'fff-hydra-paragraph-movement/evil-forward-paragraph)
+  (evil-leader/set-key "[" 'evil-backward-paragraph)
+  (evil-leader/set-key "]" 'evil-forward-paragraph)
 
   ;; window size adjustment
-  (evil-leader/set-key "H" 'fff-hydra-windsize/windsize-left)
-  (evil-leader/set-key "L" 'fff-hydra-windsize/windsize-right)
-  (evil-leader/set-key "J" 'fff-hydra-windsize/windsize-down)
-  (evil-leader/set-key "K" 'fff-hydra-windsize/windsize-up)
+  (evil-leader/set-key "H" 'windsize-left)
+  (evil-leader/set-key "L" 'windsize-right)
+  (evil-leader/set-key "J" 'windsize-down)
+  (evil-leader/set-key "K" 'windsize-up)
 
   ;; search and replace
   (evil-leader/set-key "r r" 'fff-evil-regex-search)
@@ -206,8 +206,6 @@
     (define-key evil-visual-state-map (kbd "C-e") #'move-end-of-line)
     (define-key evil-visual-state-map (kbd "<backspace>") #'delete-char)
     (define-key evil-visual-state-map (kbd "C-/") #'fff-comment)
-    (define-key evil-visual-state-map (kbd "j") #'evil-next-visual-line)
-    (define-key evil-visual-state-map (kbd "k") #'evil-previous-visual-line)
 
     (define-key evil-insert-state-map (kbd "C-<backspace>") #'fff-delete-till-beginning-of-line)
     (define-key evil-insert-state-map (kbd "C-a") #'beginning-of-line)
@@ -231,8 +229,6 @@
     (define-key evil-normal-state-map (kbd "M-o") #'evil-jump-forward)
     (define-key evil-normal-state-map (kbd "gp") #'fff-evil-paste-and-indent-after)
     (define-key evil-normal-state-map (kbd "gP") #'fff-evil-paste-and-indent-before)
-    (define-key evil-normal-state-map (kbd "j") #'evil-next-visual-line)
-    (define-key evil-normal-state-map (kbd "k") #'evil-previous-visual-line)
     (define-key evil-normal-state-map (kbd "C-/") #'fff-comment)
     (define-key evil-normal-state-map (kbd "C-c a") #'evil-numbers/inc-at-pt)
     (define-key evil-normal-state-map (kbd "C-c x") #'evil-numbers/dec-at-pt)
@@ -326,33 +322,41 @@
 
 ;;; Other Key Binding Packages
 
-(use-package hydra :straight t :defer t :commands defhydra
+;; Repeat maps replace the old hydras: the leader key runs the command
+;; once, then the single keys below repeat it while the repeat map is
+;; active.  Any other key (or ESC) exits the repeat state.
+(use-package repeat
+  :ensure nil
+  :init
+  (setq repeat-exit-key "<escape>")
   :config
+  (defvar-keymap fff-windsize-repeat-map
+    :repeat t
+    "H" #'windsize-left
+    "L" #'windsize-right
+    "J" #'windsize-down
+    "K" #'windsize-up)
 
-  ;; Only repeating hydra for cycling
-  (defhydra fff-popper (:pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-    "Popper"
-    ("TAB" popper-toggle :exit t)
-    ("c" popper-cycle :exit nil)
-    ("t" popper-toggle-type :exit t))
+  (defvar-keymap fff-text-scale-repeat-map
+    :repeat t
+    "=" #'text-scale-increase
+    "-" #'text-scale-decrease
+    "0" #'fff-set-scale-to-zero)
 
-  (defhydra fff-hydra-windsize (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-    ("H" windsize-left nil)
-    ("L" windsize-right nil)
-    ("J" windsize-down nil)
-    ("K" windsize-up nil))
+  (defvar-keymap fff-expand-region-repeat-map
+    :repeat t
+    "k" #'er/expand-region
+    "j" #'er/contract-region)
 
-  (defhydra fff-hydra-zoom (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-    ( "=" text-scale-increase)
-    ( "-" text-scale-decrease)
-    ( "0"  (text-scale-set 0)))
+  (defvar-keymap fff-paragraph-repeat-map
+    :repeat t
+    "[" #'evil-backward-paragraph
+    "]" #'evil-forward-paragraph)
 
-  (defhydra fff-hydra-expand-region (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-    ("k" er/expand-region)
-    ("j" er/contract-region))
+  (defvar-keymap fff-popper-repeat-map
+    :repeat t
+    "c" #'popper-cycle)
 
-  (defhydra fff-hydra-paragraph-movement (:color red :pre (setq hydra-is-helpful nil) :after-exit (setq hydra-is-helpful t))
-    ("[" evil-backward-paragraph)
-    ("]" evil-forward-paragraph)))
+  (repeat-mode +1))
 
 (provide 'fff-emacs-evil)

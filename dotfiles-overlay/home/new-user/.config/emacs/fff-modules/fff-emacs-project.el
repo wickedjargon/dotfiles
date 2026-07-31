@@ -39,7 +39,7 @@
   :hook
   (help-fns-describe-function-functions . shortdoc-help-fns-examples-function))
 
-(use-package Info :ensure nil :defer t
+(use-package info :ensure nil :defer t
   :init
   (add-hook 'Info-mode-hook (lambda ()
                               (define-key Info-mode-map  (kbd "M-n") #'Info-search-next)
@@ -59,9 +59,9 @@
   ((emacs-lisp-mode lisp-mode lisp-interaction-mode) . aggressive-indent-mode))
 
 ;; sets indentation variables
-(use-package dtrt-indent :straight t :defer nil
+(use-package dtrt-indent :straight t :defer t
+  :hook (prog-mode . dtrt-indent-mode)
   :config
-  (dtrt-indent-global-mode +1)
   ;; run `dtrt-indent-try-set-offset` whenever running a function that changes the indentation
   (dolist (fn '(eglot-format-buffer
                 eglot-format-region

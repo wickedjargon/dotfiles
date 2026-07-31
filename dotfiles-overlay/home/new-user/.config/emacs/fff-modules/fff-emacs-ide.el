@@ -39,9 +39,12 @@
   (add-to-list 'eglot-server-programs
                '(csharp-mode . ("csharp-ls"))))
 
-(use-package flimenu :straight t :defer nil
-  :config
-  (flimenu-global-mode))
+(use-package flimenu :straight t :defer t
+  :init
+  ;; load on first imenu use (e.g. `SPC i m' consult-imenu)
+  (with-eval-after-load 'imenu
+    (require 'flimenu)
+    (flimenu-global-mode)))
 
 (use-package saveplace :ensure nil :init (save-place-mode))
 

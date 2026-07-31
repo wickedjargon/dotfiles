@@ -162,7 +162,9 @@
     (imenu-add-menubar-index))
   :hook (emacs-lisp-mode . fff-emacs-lisp-mode-setup))
 
-;; inline evaluation
+;; inline evaluation.  Loaded eagerly on purpose: deferring it to an
+;; emacs-lisp-mode hook means no inline overlays when the first eval
+;; happens in a fundamental-mode scratch buffer.
 (use-package eros :defer nil :straight t :config (eros-mode +1))
 
 ;;; Other Language Support Packages

@@ -23,7 +23,13 @@
   (setq prescient-filter-method  '(literal regexp initialism))
   (vertico-prescient-mode +1))
 
-(use-package savehist :ensure nil :config (savehist-mode))
+(use-package savehist :ensure nil
+  :init
+  (setq history-length 100)
+  (setq history-delete-duplicates t)
+  (setq savehist-additional-variables '(kill-ring))       ;; persist the kill-ring across sessions
+  :config
+  (savehist-mode))
 
 (use-package marginalia
   :straight t
@@ -48,7 +54,6 @@
 
 (use-package consult :straight t :defer nil
   :init
-  (setq consult-preview-key nil)
   (setq consult-preview-key "C-<return>"))
 
 (use-package corfu
@@ -138,7 +143,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
 
 ;;; Snippets
 
-(use-package hippie-expand :ensure nil :defer t
+(use-package hippie-exp :ensure nil :defer t
   :init
   (setq hippie-expand-try-functions-list
         '(try-expand-dabbrev

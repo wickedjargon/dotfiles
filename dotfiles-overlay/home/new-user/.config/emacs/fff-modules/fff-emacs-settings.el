@@ -91,7 +91,8 @@
   (setq auto-save-file-name-transforms
         `((".*" ,(expand-file-name "auto-save-list/" user-emacs-directory) t)))
   (setq backup-directory-alist
-        `(("." . ,(expand-file-name "backups/" user-emacs-directory)))))
+        `(("." . ,(expand-file-name "backups/" user-emacs-directory))))
+  (setq create-lockfiles nil))                            ;; no .#file lockfile litter
 
 (fff-configure
   (setq custom-safe-themes t)                             ;; make all themes safe
@@ -105,7 +106,6 @@
   (setq auth-source-save-behavior nil)                    ;; don't prompt to save auth info in home dir
   (setq-default tab-width 4)                              ;; I prefer a tab length of 4, not 8
   (setq-default indent-tabs-mode nil)                     ;; Use spaces instead of tabs
-  (setq indent-tabs-mode nil)                             ;; Use spaces instead of tabs
 
   (setq disabled-command-function nil)                    ;; enable all disabled commands
   (setq ring-bell-function 'ignore)                       ;; don't ring my bell

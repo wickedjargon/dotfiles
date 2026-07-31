@@ -23,6 +23,7 @@
   (setq dired-dwim-target t)
   (setq dired-clean-confirm-killing-deleted-buffers nil)
   (setq dired-free-space nil)
+  (setq delete-by-moving-to-trash t)
   :config
   (add-hook 'dired-mode-hook #'dired-hide-details-mode))
 
@@ -38,7 +39,7 @@
   :config
   (setq dired-subtree-use-backgrounds nil))
 
-(use-package casual :straight t)
+(use-package casual :straight t :defer t)
 
 (use-package ibuffer  :ensure nil
   :config

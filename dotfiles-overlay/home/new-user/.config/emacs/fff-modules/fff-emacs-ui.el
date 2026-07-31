@@ -72,6 +72,7 @@
 (use-package keycast :straight t :defer t)
 
 (use-package posframe
+  :defer t
   :straight (posframe :type git :host github :repo "tumashu/posframe"))
 
 (use-package rainbow-mode :straight t :defer t)
