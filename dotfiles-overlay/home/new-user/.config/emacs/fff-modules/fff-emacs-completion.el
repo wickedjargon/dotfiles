@@ -101,7 +101,7 @@
                  (window-parameters (mode-line-format . none))))
 
   ;; Existing actions
-  (define-key embark-file-map (kbd "o") #'crux-open-with)
+  (define-key embark-file-map (kbd "o") #'fff-open-with)
   (define-key embark-file-map (kbd "y") #'yt-dlp-play-current-entry)
 
   ;; Open in Firefox (URL or file)
@@ -134,7 +134,7 @@ Supports arguments and GUI programs. Expands path to avoid doubling."
 
   ;; DEFAULT DWIM ACTIONS
   (setf (alist-get 'file embark-default-action-overrides)
-        #'crux-open-with)
+        #'fff-open-with)
 
   (setf (alist-get 'url embark-default-action-overrides)
         #'fff-open-in-firefox))

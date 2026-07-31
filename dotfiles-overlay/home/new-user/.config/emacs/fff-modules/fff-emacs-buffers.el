@@ -24,6 +24,11 @@
   (setq dired-clean-confirm-killing-deleted-buffers nil)
   (setq dired-free-space nil)
   (setq delete-by-moving-to-trash t)
+  ;; default suggestions for ! and & shell commands on files
+  (setq dired-guess-shell-alist-user
+        '(("\\.\\(mp4\\|mkv\\|webm\\|avi\\|mov\\|mp3\\|flac\\|opus\\|m4a\\|ogg\\)\\'" "mpv")
+          ("\\.\\(png\\|jpe?g\\|gif\\|webp\\|svg\\)\\'" "feh")
+          (".*" "xdg-open")))
   :config
   (add-hook 'dired-mode-hook #'dired-hide-details-mode))
 
