@@ -44,6 +44,17 @@
   :config
   (setq dired-subtree-use-backgrounds nil))
 
+(use-package dired-rainbow
+  :straight t
+  :after dired
+  :config
+  ;; color real binaries (ELF, etc.) by permission bits, but leave text
+  ;; scripts plain black -- they're just text and the x bit is noise.  the
+  ;; script rule must be defined first: earlier rules end up on top of the
+  ;; face stack, so :inherit default wins over the executable red for .sh files.
+  (dired-rainbow-define script (:inherit default) ("sh" "bash" "zsh"))
+  (dired-rainbow-define-chmod executable (:inherit error) "-.*x.*"))
+
 (use-package casual :straight t :defer t)
 
 (use-package ibuffer  :ensure nil
